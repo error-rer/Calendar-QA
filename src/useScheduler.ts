@@ -184,7 +184,8 @@ export function useScheduler() {
   const toggleSidebar = () => setState((s) => ({ sidebarOpen: !s.sidebarOpen }));
   const closeSidebar = () => setState({ sidebarOpen: false });
   const setFilterEmp = (v: string) => setState({ filterEmp: v });
-  const setTimetableEng = (v: string) => setState({ timetableEng: v });
+  const openTimetable = (engId: string) => setState({ timetableOpenEng: engId, selected: null });
+  const closeTimetable = () => setState({ timetableOpenEng: null });
   const setFilterCust = (v: string) => setState({ filterCust: v });
   const setFilterPlant = (v: string) => setState({ filterPlant: v });
   const setFilterSubdept = (v: string) => setState({ filterSubdept: v });
@@ -205,7 +206,7 @@ export function useScheduler() {
   const createAssign = (orderId: string, engId: string, day: number, appointment: State['createDraft']['appointment']) => {
     const id = 'a' + ids.current.id++;
     setState((s) => ({
-      assignments: s.assignments.concat([{ id, eng: engId, order: orderId, day, appointment: appointment || 'Day', week: s.weekOffset }]),
+      assignments: s.assignments.concat([{ id, eng: engId, order: orderId, day, appointment: appointment || '08:00', week: s.weekOffset }]),
       selected: id,
     }));
     const ord = orderById(orderId);
@@ -266,10 +267,10 @@ export function useScheduler() {
       createOpen: true,
       userMenuOpen: false,
       sidebarOpen: false,
-      createDraft: { order: '', eng: '', day: s.selectedDay || 0, appointment: 'Day' },
+      createDraft: { order: '', eng: '', day: s.selectedDay || 0, appointment: '08:00' },
     }));
   const openCreateAt = (engId: string, day: number) =>
-    setState({ createOpen: true, userMenuOpen: false, createDraft: { order: '', eng: engId, day, appointment: 'Day' } });
+    setState({ createOpen: true, userMenuOpen: false, createDraft: { order: '', eng: engId, day, appointment: '08:00' } });
   const closeCreate = () => setState({ createOpen: false });
   const setDraft = (patch: Partial<CreateDraft>) =>
     setState((s) => ({ createDraft: { ...s.createDraft, ...patch } }));
@@ -418,10 +419,9 @@ export function useScheduler() {
       base.borderLeft = '3px solid #d23b3b';
       base.boxShadow = sel ? '0 0 0 2px rgba(210,59,59,.5)' : '0 0 0 1px rgba(210,59,59,.22)';
     }
-    const isNight = a.appointment === 'Night';
     return {
-      aid: a.id, code: ord.code, customer: ord.customer, style: base, appointment: isNight ? 'N' : 'D',
-      appointmentStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, padding: '1px 5px', borderRadius: '3px', background: isNight ? '#23282e' : '#fff4dd', color: isNight ? '#cfd6cc' : '#a96e08', border: '1px solid ' + (isNight ? '#23282e' : '#f1dcb0') }),
+      aid: a.id, code: ord.code, customer: ord.customer, style: base, appointment: a.appointment,
+      appointmentStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, padding: '1px 5px', borderRadius: '3px', background: '#eef2fd', color: '#5b7fd6', border: '1px solid #d8e2fa' }),
       warnGlyph: cf.has ? '⚠' : '',
       warnDotStyle: sx({ fontSize: '11px', color: '#d23b3b', lineHeight: 1, display: cf.has ? 'inline' : 'none' }),
       onClick: () => select(a.id),
@@ -438,7 +438,7 @@ export function useScheduler() {
     const ac = avatarColor(a.eng);
     const dim = chipDimmed(a);
     return {
-      aid: a.id, name: e.name, initials: initials(e.name), code: ord.code, plantCode: pl.code, appointment: a.appointment === 'Night' ? 'N' : 'D',
+      aid: a.id, name: e.name, initials: initials(e.name), code: ord.code, plantCode: pl.code, appointment: a.appointment,
       style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: '#fff', border: '1px solid ' + (cf.has ? '#e6a3a3' : '#e8ebe4'), borderLeft: '3px solid ' + (cf.has ? '#d23b3b' : accent || pl.color), borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none' }),
       avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: hexA(ac, 0.14), color: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       warnGlyph: cf.has ? '⚠' : '',
@@ -669,7 +669,7 @@ export function useScheduler() {
           ev.preventDefault();
           const d = state.drag;
           if (d) {
-            if (d.kind === 'order') createAssign(d.id, e.id, day, 'Day');
+            if (d.kind === 'order') createAssign(d.id, e.id, day, '08:00');
             else moveAssign(d.id, e.id, day);
           }
           setState({ drag: null, overCell: null });
@@ -679,7 +679,8 @@ export function useScheduler() {
     return {
       engId: e.id, name: e.name, role: e.role, department: e.department, subDepartments: e.subDepartments, initials: initials(e.name),
       avatarStyle: sx({ width: '30px', height: '30px', borderRadius: '8px', background: hexA(ac, 0.14), color: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '11px', fontWeight: 600, flexShrink: 0 }),
-      nameCellStyle: sx({ borderBottom: '1px solid #e2e5de', borderRight: '1px solid #e2e5de', padding: '11px 13px', background: '#fff', position: 'sticky', left: 0, zIndex: 2 }),
+      nameCellStyle: sx({ borderBottom: '1px solid #e2e5de', borderRight: '1px solid #e2e5de', padding: '11px 13px', background: '#fff', position: 'sticky', left: 0, zIndex: 2, cursor: 'pointer' }),
+      onNameClick: () => openTimetable(e.id),
       cells,
     };
   });
@@ -735,33 +736,37 @@ export function useScheduler() {
     });
     return { name: sd, cells };
   });
-  const mobilePersonRows = personRows.map((r) => ({ engId: r.engId, name: r.name, role: r.role, department: r.department, subDepartments: r.subDepartments, initials: r.initials, avatarStyle: r.avatarStyle, cell: r.cells[selDay] }));
+  const mobilePersonRows = personRows.map((r) => ({ engId: r.engId, name: r.name, role: r.role, department: r.department, subDepartments: r.subDepartments, initials: r.initials, avatarStyle: r.avatarStyle, onNameClick: r.onNameClick, cell: r.cells[selDay] }));
   const mobileSiteRows = plantRows.map((r) => ({ name: r.name, loc: r.loc, swatchStyle: r.swatchStyle, cell: r.cells[selDay] }));
   const mobileCustomerRows = customerRows.map((r) => ({ name: r.name, sub: r.sub, initials: r.initials, swatchStyle: r.swatchStyle, cell: r.cells[selDay] }));
   const mobileSubDeptRows = subDeptRows.map((r) => ({ name: r.name, cell: r.cells[selDay] }));
 
-  // ---- timetable (per-employee calendar view) ----
-  const timeSlots = [
-    { id: 'day', label: 'Day', hours: '06:00 – 18:00' },
-    { id: 'night', label: 'Night', hours: '18:00 – 06:00' },
-  ] as const;
-  type TimeSlotId = (typeof timeSlots)[number]['id'];
-  const slotAppointmentMap: Record<TimeSlotId, string[]> = { day: ['Day'], night: ['Night'] };
+  // ---- timetable (per-employee calendar view, opened by clicking a name) ----
+  const timeSlots: { id: string; label: string; hours: string; min: string; max: string }[] = [];
+  for (let h = 0; h < 24; h += 2) {
+    const from = String(h).padStart(2, '0') + ':00';
+    const to = String(h + 2).padStart(2, '0') + ':00';
+    timeSlots.push({ id: from, label: from + ' – ' + to, hours: from + ' – ' + to, min: from, max: to });
+  }
 
-  const timetableEngId = S.timetableEng || S.engineers[0]?.id || '';
-  const timetableEng = engById(timetableEngId);
-  const timetableEngOptions = S.engineers.map((e) => ({ value: e.id, label: e.name }));
+  function timeInSlot(t: string, sl: { min: string; max: string }): boolean {
+    if (sl.min <= sl.max) return t >= sl.min && t < sl.max;
+    return t >= sl.min || t < sl.max;
+  }
+
+  const timetableOpenEngId = S.timetableOpenEng;
+  const timetableEng = timetableOpenEngId ? engById(timetableOpenEngId) : null;
+  const showTimetable = !!timetableOpenEngId && !!timetableEng;
   const timetableRows = timeSlots.map((sl) => {
     const cells = [0, 1, 2, 3, 4].map((day) => {
-      const chips = wk
-        .filter((a) => a.eng === timetableEngId && a.day === day && slotAppointmentMap[sl.id].includes(a.appointment))
-        .map((a) => buildChip(a, cmap));
+      const chips = timetableOpenEngId ? wk
+        .filter((a) => a.eng === timetableOpenEngId && a.day === day && timeInSlot(a.appointment, sl))
+        .map((a) => buildChip(a, cmap)) : [];
       return { chips, empty: chips.length === 0, style: cellShell };
     });
     return { slotId: sl.id, label: sl.label, hours: sl.hours, cells };
   });
   const timetableGridCols = '200px repeat(5, minmax(168px, 1fr))';
-  const timetableHasEng = !!timetableEng;
   const mobileTimetableRows = timetableRows.map((r) => ({ slotId: r.slotId, label: r.label, hours: r.hours, cell: r.cells[selDay] }));
 
   const team = [
@@ -795,19 +800,16 @@ export function useScheduler() {
       who: m.who, initials: m.initials, text: m.text, ago: m.ago,
       avatarStyle: sx({ width: '24px', height: '24px', borderRadius: '7px', background: hexA(m.color, 0.15), color: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
     }));
-    const isNight = selA.appointment === 'Night';
-    const segOn = sx({ flex: 1, padding: '7px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", background: '#15191e', color: '#fff' });
-    const segOff = sx({ flex: 1, padding: '7px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", background: 'transparent', color: '#6a706a' });
     return {
       aid: selA.id, orderCode: ord.code, product: ord.product, customer: ord.customer, priority: ord.priority, plantName: pl.name + ' · ' + pl.loc,
       priorityStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: pc.c, background: pc.b, border: '1px solid ' + pc.bd, borderRadius: '3px', padding: '2px 6px' }),
       swatchStyle: sx({ width: '12px', height: '40px', borderRadius: '3px', background: pl.color, flexShrink: 0, marginTop: '2px' }),
       engName: eng.name, engRole: eng.role, engInitials: initials(eng.name), dayName: dayNames[selA.day],
+      apptTime: selA.appointment,
       avatarStyle: sx({ width: '34px', height: '34px', borderRadius: '9px', background: hexA(ac, 0.14), color: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '12px', fontWeight: 600, flexShrink: 0 }),
       department: eng.department, subDepartments: eng.subDepartments,
       hasConflict: cf.has, conflicts: cs,
-      dayBtnStyle: isNight ? segOff : segOn, nightBtnStyle: isNight ? segOn : segOff,
-      setDay: () => setAppointment(selA.id, 'Day'), setNight: () => setAppointment(selA.id, 'Night'),
+      onApptTime: (e: React.ChangeEvent<HTMLInputElement>) => setAppointment(selA.id, e.target.value),
       comments, commentCount: comments.length, noComments: comments.length === 0, draft: S.draft,
       onDraft: (e: React.ChangeEvent<HTMLInputElement>) => setState({ draft: e.target.value }),
       onKey: (e: React.KeyboardEvent) => { if (e.key === 'Enter') addComment(); },
@@ -858,13 +860,13 @@ export function useScheduler() {
     const onLeave = wleave.some((l) => l.eng === cd.eng && l.day === cd.day);
     const busy = wk.some((a) => a.eng === cd.eng && a.day === cd.day && a.appointment === cd.appointment);
     if (onLeave) warnText = `${engById(cd.eng)!.name.split(' ')[0]} is on leave on ${dayNames[cd.day]} — this will create a conflict.`;
-    else if (busy) warnText = `${engById(cd.eng)!.name.split(' ')[0]} already has a ${cd.appointment.toLowerCase()} appointment on ${dayNames[cd.day]}.`;
+    else if (busy) warnText = `${engById(cd.eng)!.name.split(' ')[0]} already has an appointment at ${cd.appointment} on ${dayNames[cd.day]}.`;
   }
   const canCreate = !!(cd.order && cd.eng);
   const create = {
     orders: cOrders, engineers: cEngs, dayBtns,
-    dayAppointmentStyle: segSm(cd.appointment === 'Day'), nightAppointmentStyle: segSm(cd.appointment === 'Night'),
-    setDay: () => setDraft({ appointment: 'Day' }), setNight: () => setDraft({ appointment: 'Night' }),
+    apptTime: cd.appointment,
+    onApptTime: (e: React.ChangeEvent<HTMLInputElement>) => setDraft({ appointment: e.target.value }),
     warn: !!warnText, warnText,
     submit: () => submitCreate(),
     submitStyle: sx({ background: canCreate ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 18px', fontSize: '12.5px', fontWeight: 600, cursor: canCreate ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
@@ -1093,16 +1095,16 @@ export function useScheduler() {
     goSchedule, goAdmin, goProfile,
     navSchedStyle: S.page === 'schedule' ? tabOn : tabOff, navAdminStyle: S.page === 'admin' ? tabOn : tabOff,
     userMenuOpen: S.userMenuOpen, toggleUserMenu,
-    isPerson: S.view === 'person', isPlant: S.view === 'plant', isCustomer: S.view === 'customer', isSubdept: S.view === 'subdept', isTimetable: S.view === 'timetable',
-    setPerson: () => setView('person'), setPlant: () => setView('plant'), setCustomer: () => setView('customer'), setSubdept: () => setView('subdept'), setTimetable: () => setView('timetable'),
-    personTabStyle: S.view === 'person' ? tabOn : tabOff, plantTabStyle: S.view === 'plant' ? tabOn : tabOff, customerTabStyle: S.view === 'customer' ? tabOn : tabOff, subdeptTabStyle: S.view === 'subdept' ? tabOn : tabOff, timetableTabStyle: S.view === 'timetable' ? tabOn : tabOff,
+    isPerson: S.view === 'person', isPlant: S.view === 'plant', isCustomer: S.view === 'customer', isSubdept: S.view === 'subdept',
+    setPerson: () => setView('person'), setPlant: () => setView('plant'), setCustomer: () => setView('customer'), setSubdept: () => setView('subdept'),
+    personTabStyle: S.view === 'person' ? tabOn : tabOff, plantTabStyle: S.view === 'plant' ? tabOn : tabOff, customerTabStyle: S.view === 'customer' ? tabOn : tabOff, subdeptTabStyle: S.view === 'subdept' ? tabOn : tabOff,
     showViewTabs: !isMonth,
     isMonth, weekScaleStyle: isMonth ? tabOff : tabOn, monthScaleStyle: isMonth ? tabOn : tabOff,
     setWeekScale: () => setScale('week'), setMonthScale: () => setScale('month'),
     monthDesktop: isMonth && !isMobile, monthMobile: isMonth && isMobile,
     monthCells, monthWeekdayHeads, monthName, monthOrders, monthScheduledCount, monthOrderCount: monthOrders.length,
-    gridPerson: S.view === 'person' && !isMobile && !isMonth, gridPlant: S.view === 'plant' && !isMobile && !isMonth, gridCustomer: S.view === 'customer' && !isMobile && !isMonth, gridSubdept: S.view === 'subdept' && !isMobile && !isMonth, gridTimetable: S.view === 'timetable' && !isMobile && !isMonth,
-    mobilePerson: isMobile && S.view === 'person' && !isMonth, mobileSite: isMobile && S.view === 'plant' && !isMonth, mobileCustomer: isMobile && S.view === 'customer' && !isMonth, mobileSubdept: isMobile && S.view === 'subdept' && !isMonth, mobileTimetable: isMobile && S.view === 'timetable' && !isMonth,
+    gridPerson: S.view === 'person' && !isMobile && !isMonth, gridPlant: S.view === 'plant' && !isMobile && !isMonth, gridCustomer: S.view === 'customer' && !isMobile && !isMonth, gridSubdept: S.view === 'subdept' && !isMobile && !isMonth,
+    mobilePerson: isMobile && S.view === 'person' && !isMonth, mobileSite: isMobile && S.view === 'plant' && !isMonth, mobileCustomer: isMobile && S.view === 'customer' && !isMonth, mobileSubdept: isMobile && S.view === 'subdept' && !isMonth,
     showDayStrip: isMobile && !isMonth,
     awayToday, awayLabel: dayNames[selDay], showAway: isMobile && !isMonth && awayToday.length > 0,
     weekLabel, weekTag, periodLabel, periodTag, gridCols, days, daySel,
@@ -1116,9 +1118,8 @@ export function useScheduler() {
     conflictPillStyle: sx({ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', background: conflicts ? '#fdeeee' : '#eef1ea', border: '1px solid ' + (conflicts ? '#f3cdcd' : '#e2e5de'), color: conflicts ? '#b32f2f' : '#6a706a' }),
     plants: plantsVm, pool, poolCount: pool.length, poolEmpty: pool.length === 0,
     personRows, plantRows, customerRows, subDeptRows, mobilePersonRows, mobileSiteRows, mobileCustomerRows, mobileSubDeptRows,
-    timetableRows, timetableGridCols, timetableEngOptions, timetableEng: timetableEngId, timetableHasEng, timetableEngName: timetableEng?.name || '',
-    setTimetableEng: (e: React.ChangeEvent<HTMLSelectElement>) => setTimetableEng(e.target.value),
-    mobileTimetableRows,
+    showTimetable, timetableRows, timetableGridCols, timetableEngName: timetableEng?.name || '',
+    closeTimetable, mobileTimetableRows,
     presence, activity, detail,
     emptyWeek: S.weekOffset !== 0 && wk.length === 0 && !isMonth, copyWeek,
     toggleSidebar, closeSidebar, showSidebarBackdrop: isMobile && S.sidebarOpen,

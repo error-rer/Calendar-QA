@@ -49,11 +49,8 @@ export function DetailPanel({ vm }: { vm: VM }) {
         </div>
 
         <div>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:9px")}>APPOINTMENT</div>
-          <div style={css('display:flex;background:#f1f3ee;border:1px solid #e0e3dc;border-radius:8px;padding:2px;gap:2px')}>
-            <button onClick={detail.setDay} style={detail.dayBtnStyle}>☀ Day</button>
-            <button onClick={detail.setNight} style={detail.nightBtnStyle}>☾ Night</button>
-          </div>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:9px")}>APPOINTMENT TIME</div>
+          <input type="time" value={detail.apptTime} onChange={detail.onApptTime} style={css("border:1px solid #dde0d9;border-radius:8px;padding:7px 10px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fff;width:100%;box-sizing:border-box")} />
         </div>
 
         <div>

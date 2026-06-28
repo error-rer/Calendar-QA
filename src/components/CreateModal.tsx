@@ -60,11 +60,8 @@ export function CreateModal({ vm }: { vm: VM }) {
             </div>
           </div>
           <div>
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:6px")}>APPOINTMENT</div>
-            <div style={css('display:flex;background:#f1f3ee;border:1px solid #e0e3dc;border-radius:8px;padding:2px;gap:2px')}>
-              <button onClick={create.setDay} style={create.dayAppointmentStyle}>☀ Day</button>
-              <button onClick={create.setNight} style={create.nightAppointmentStyle}>☾ Night</button>
-            </div>
+            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:6px")}>TIME</div>
+            <input type="time" value={create.apptTime} onChange={create.onApptTime} style={css("border:1px solid #dde0d9;border-radius:8px;padding:6px 10px;font-size:12px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fff;min-width:110px")} />
           </div>
         </div>
 

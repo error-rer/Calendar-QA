@@ -2,7 +2,7 @@ export type Department = 'QA-U1' | 'QA-U2' | 'QA-U3';
 export type SubDepartment = 'QMS' | 'EHS' | 'ESD';
 
 export type Priority = 'High' | 'Med' | 'Low';
-export type AppointmentKind = 'Day' | 'Night';
+export type AppointmentKind = string;
 export type EngStatus = 'Active' | 'On leave' | 'Onboarding';
 
 export interface Plant {
@@ -131,7 +131,7 @@ export interface State {
   filterCust: string;
   filterPlant: string;
   filterSubdept: string;
-  timetableEng: string;
+  timetableOpenEng: string | null;
   loginEmail: string;
   loginPass: string;
   userMenuOpen: boolean;
