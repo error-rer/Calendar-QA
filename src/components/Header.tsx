@@ -11,7 +11,7 @@ export function Header({ vm }: { vm: VM }) {
         <div style={css('line-height:1.05')}>
           <div style={css('font-size:14.5px;font-weight:700;letter-spacing:-.2px')}>Fab&nbsp;QA&nbsp;Ops</div>
           {vm.showPresence && (
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8a9088;letter-spacing:.3px;margin-top:1px")}>NEXSIL MICROSYSTEMS</div>
+            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8a9088;letter-spacing:.3px;margin-top:1px")}>UTAC</div>
           )}
         </div>
       </div>

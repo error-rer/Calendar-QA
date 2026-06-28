@@ -9,7 +9,7 @@ export function Login({ vm }: { vm: VM }) {
           <div style={css('width:32px;height:32px;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center')}>
             <div style={css('width:14px;height:14px;border:2px solid #15191e;border-radius:2px')} />
           </div>
-          <div style={css('font-size:15px;font-weight:700;letter-spacing:-.2px')}>Nexsil&nbsp;Microsystems</div>
+          <div style={css('font-size:15px;font-weight:700;letter-spacing:-.2px')}>UTAC</div>
         </div>
 
         {vm.isMobile && (
@@ -83,7 +83,7 @@ export function Login({ vm }: { vm: VM }) {
             Continue with Okta SSO
           </HButton>
           <div style={css('font-size:11px;color:#a6aca2;text-align:center;margin-top:24px;line-height:1.5')}>
-            QA Operations · Nexsil Microsystems<br />Protected internal system · authorized staff only
+            QA Operations · UTAC<br />Protected internal system · authorized staff only
           </div>
         </div>
       </div>
