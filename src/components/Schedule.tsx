@@ -183,7 +183,7 @@ function Sidebar({ vm }: { vm: VM }) {
           ))}
         </div>
       </div>
-    </div>
+    </aside>
   );
 }
 
