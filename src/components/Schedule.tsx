@@ -138,22 +138,6 @@ function Sidebar({ vm }: { vm: VM }) {
         </div>
       </div>
 
-      <div style={css('padding:13px 15px 11px;border-bottom:1px solid #e7eae3')}>
-        <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.6px;margin-bottom:9px")}>SYSTEM · INTERNAL</div>
-        <div style={css('display:flex;flex-direction:column;gap:3px')}>
-          {vm.plants.map((pl) => (
-            <div key={pl.id} onClick={pl.toggle} style={pl.rowStyle}>
-              <span style={pl.swatchStyle} />
-              <div style={css('flex:1;min-width:0')}>
-                <div style={css('font-size:12px;font-weight:600;color:#23282a')}>{pl.name}</div>
-                <div style={css('font-size:10.5px;color:#8a9088')}>{pl.loc}</div>
-              </div>
-              <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9aa097")}>{pl.count}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <div style={css('padding:13px 15px 6px;flex-shrink:0')}>
         <div style={css('display:flex;align-items:center;justify-content:space-between;margin-bottom:9px')}>
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.6px")}>UNSTAFFED ORDERS</div>
