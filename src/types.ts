@@ -129,6 +129,8 @@ export interface State {
   monthOffset: number;
   filterEmp: string;
   filterCust: string;
+  filterPlant: string;
+  filterSubdept: string;
   loginEmail: string;
   loginPass: string;
   userMenuOpen: boolean;

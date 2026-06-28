@@ -136,6 +136,11 @@ export function useScheduler() {
     if (!S.activePlants[o.plant]) return true;
     if (S.filterEmp && a.eng !== S.filterEmp) return true;
     if (S.filterCust && o.customer !== S.filterCust) return true;
+    if (S.filterPlant && o.plant !== S.filterPlant) return true;
+    if (S.filterSubdept) {
+      const e = engById(a.eng);
+      if (!e || !e.subDepartments.includes(S.filterSubdept as SubDepartment)) return true;
+    }
     return false;
   };
 
@@ -180,8 +185,10 @@ export function useScheduler() {
   const closeSidebar = () => setState({ sidebarOpen: false });
   const setFilterEmp = (v: string) => setState({ filterEmp: v });
   const setFilterCust = (v: string) => setState({ filterCust: v });
+  const setFilterPlant = (v: string) => setState({ filterPlant: v });
+  const setFilterSubdept = (v: string) => setState({ filterSubdept: v });
   const clearFilters = () =>
-    setState((s) => ({ filterEmp: '', filterCust: '', activePlants: Object.fromEntries(s.plants.map((p) => [p.id, true])) }));
+    setState((s) => ({ filterEmp: '', filterCust: '', filterPlant: '', filterSubdept: '', activePlants: Object.fromEntries(s.plants.map((p) => [p.id, true])) }));
 
   const copyWeek = () => {
     const off = S.weekOffset;
@@ -494,6 +501,11 @@ export function useScheduler() {
       if (S.filterCust && o.customer !== S.filterCust) return;
       if (!S.activePlants[o.plant]) return;
       if (S.filterEmp && a.eng !== S.filterEmp) return;
+      if (S.filterPlant && o.plant !== S.filterPlant) return;
+      if (S.filterSubdept) {
+        const e = engById(a.eng);
+        if (!e || !e.subDepartments.includes(S.filterSubdept as SubDepartment)) return;
+      }
       const g = monthOrderAgg[o.id] || (monthOrderAgg[o.id] = { appointments: 0, days: {}, engs: {}, conf: 0 });
       g.appointments++;
       g.days[dn] = 1;
@@ -531,6 +543,7 @@ export function useScheduler() {
     .filter((o) => {
       if (S.filterCust && o.customer !== S.filterCust) return false;
       if (!S.activePlants[o.plant]) return false;
+      if (S.filterPlant && o.plant !== S.filterPlant) return false;
       return true;
     })
     .map((o) => {
@@ -581,7 +594,7 @@ export function useScheduler() {
 
   const conflicts = wk.filter((a) => cmap[a.id] && cmap[a.id].has).length;
   const staffed = new Set(wk.map((a) => a.order));
-  const poolOrders = S.orders.filter((o) => !staffed.has(o.id));
+  const poolOrders = S.orders.filter((o) => !staffed.has(o.id) && S.activePlants[o.plant] && (!S.filterPlant || o.plant === S.filterPlant));
 
   const plantsVm = S.plants.map((p) => {
     const cnt = wk.filter((a) => {
@@ -1002,7 +1015,10 @@ export function useScheduler() {
   // ---- filters VM ----
   const employeeOptions = [{ value: '', label: 'All employees' }].concat(S.engineers.map((e) => ({ value: e.id, label: e.name })));
   const customerOptions = [{ value: '', label: 'All customers' }].concat(customers.map((c) => ({ value: c, label: c })));
-  const hasFilters = !!(S.filterEmp || S.filterCust) || S.plants.some((p) => !S.activePlants[p.id]);
+  const plantOptions = [{ value: '', label: 'All internal' }].concat(S.plants.map((p) => ({ value: p.id, label: p.name })));
+  const subDeptAll = [...new Set(S.engineers.flatMap((e) => e.subDepartments))];
+  const subDeptOptions = [{ value: '', label: 'All sub-departments' }].concat(subDeptAll.map((sd) => ({ value: sd, label: sd })));
+  const hasFilters = !!(S.filterEmp || S.filterCust || S.filterPlant || S.filterSubdept) || S.plants.some((p) => !S.activePlants[p.id]);
   const selStyle = sx({ width: '100%', padding: '7px 9px', border: '1px solid #dde0d9', borderRadius: '7px', background: '#fff', fontSize: '11.5px', fontFamily: "'Archivo',sans-serif", color: '#3c423d', cursor: 'pointer', outline: 'none' });
 
   // ---- responsive styles ----
@@ -1080,9 +1096,12 @@ export function useScheduler() {
     toggleSidebar, closeSidebar, showSidebarBackdrop: isMobile && S.sidebarOpen,
     sidebarStyle, toolbarStyle, detailAsideStyle, modalOverlayStyle, modalCardStyle, modalColsStyle, modalColLeftStyle, modalColRightStyle,
     adminMainStyle, adminWrapStyle, adminStatGridStyle, loginWrapStyle, loginBrandStyle, loginFormWrapStyle,
-    filterEmp: S.filterEmp, filterCust: S.filterCust, employeeOptions, customerOptions, hasFilters, selStyle,
+    filterEmp: S.filterEmp, filterCust: S.filterCust, filterPlant: S.filterPlant, filterSubdept: S.filterSubdept,
+    employeeOptions, customerOptions, plantOptions, subDeptOptions, hasFilters, selStyle,
     onFilterEmp: (e: React.ChangeEvent<HTMLSelectElement>) => setFilterEmp(e.target.value),
     onFilterCust: (e: React.ChangeEvent<HTMLSelectElement>) => setFilterCust(e.target.value),
+    onFilterPlant: (e: React.ChangeEvent<HTMLSelectElement>) => setFilterPlant(e.target.value),
+    onFilterSubdept: (e: React.ChangeEvent<HTMLSelectElement>) => setFilterSubdept(e.target.value),
     clearFilters,
     openCreate, closeCreate, createOpen: S.createOpen, create, stop: (e: React.MouseEvent) => e.stopPropagation(),
     adminStats,
