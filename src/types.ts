@@ -1,7 +1,7 @@
 export type CertCode = 'AEC' | 'REL' | 'CR1' | 'CR2' | 'FA' | 'XCT' | 'ATE';
 
 export type Priority = 'High' | 'Med' | 'Low';
-export type ShiftKind = 'Day' | 'Night';
+export type AppointmentKind = 'Day' | 'Night';
 export type EngStatus = 'Active' | 'On leave' | 'Onboarding';
 
 export interface Plant {
@@ -36,7 +36,7 @@ export interface Assignment {
   eng: string;
   order: string;
   day: number;
-  shift: ShiftKind;
+  appointment: AppointmentKind;
   week: number;
 }
 
@@ -63,7 +63,7 @@ export interface CreateDraft {
   order: string;
   eng: string;
   day: number;
-  shift: ShiftKind;
+  appointment: AppointmentKind;
 }
 
 export type Page = 'schedule' | 'admin' | 'profile';

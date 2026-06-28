@@ -61,7 +61,7 @@ export function DetailPanel({ vm }: { vm: VM }) {
         </div>
 
         <div>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:9px")}>SHIFT</div>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:9px")}>APPOINTMENT</div>
           <div style={css('display:flex;background:#f1f3ee;border:1px solid #e0e3dc;border-radius:8px;padding:2px;gap:2px')}>
             <button onClick={detail.setDay} style={detail.dayBtnStyle}>☀ Day</button>
             <button onClick={detail.setNight} style={detail.nightBtnStyle}>☾ Night</button>
@@ -101,7 +101,7 @@ export function DetailPanel({ vm }: { vm: VM }) {
 
       <div style={css('padding:12px 16px;border-top:1px solid #e7eae3;display:flex;gap:8px')}>
         <HButton onClick={detail.duplicate} style={css("flex:1;background:#f4f6f1;border:1px solid #e0e3dc;color:#3c423d;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#eaede6' }}>Duplicate ›</HButton>
-        <HButton onClick={detail.remove} style={css("flex:1;background:#fdeeee;border:1px solid #f3cdcd;color:#b32f2f;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#fae2e2' }}>Remove shift</HButton>
+        <HButton onClick={detail.remove} style={css("flex:1;background:#fdeeee;border:1px solid #f3cdcd;color:#b32f2f;border-radius:8px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#fae2e2' }}>Remove appointment</HButton>
       </div>
     </aside>
   );

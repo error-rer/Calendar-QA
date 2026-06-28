@@ -115,7 +115,7 @@ export function useScheduler() {
     const leaveSet = new Set(S.leave.filter((l) => l.week === wo).map((l) => l.eng + '|' + l.day));
     const slots: Record<string, string[]> = {};
     list.forEach((a) => {
-      const k = a.eng + '|' + a.day + '|' + a.shift;
+      const k = a.eng + '|' + a.day + '|' + a.appointment;
       (slots[k] = slots[k] || []).push(a.id);
     });
     const m: Record<string, { has: boolean }> = {};
@@ -127,7 +127,7 @@ export function useScheduler() {
         return;
       }
       const missing = ord.req.filter((c) => !eng.certs.includes(c));
-      const isDbl = slots[a.eng + '|' + a.day + '|' + a.shift].length > 1;
+      const isDbl = slots[a.eng + '|' + a.day + '|' + a.appointment].length > 1;
       const onLeave = leaveSet.has(a.eng + '|' + a.day);
       m[a.id] = { has: missing.length > 0 || isDbl || onLeave };
     });
@@ -154,7 +154,7 @@ export function useScheduler() {
     const leaveSet = new Set(weekLeave().map((l) => l.eng + '|' + l.day));
     const slots: Record<string, string[]> = {};
     wk.forEach((a) => {
-      const k = a.eng + '|' + a.day + '|' + a.shift;
+      const k = a.eng + '|' + a.day + '|' + a.appointment;
       (slots[k] = slots[k] || []).push(a.id);
     });
     const map: ConflictMap = {};
@@ -166,7 +166,7 @@ export function useScheduler() {
         return;
       }
       const missing = ord.req.filter((c) => !eng.certs.includes(c));
-      const isDbl = slots[a.eng + '|' + a.day + '|' + a.shift].length > 1;
+      const isDbl = slots[a.eng + '|' + a.day + '|' + a.appointment].length > 1;
       const onLeave = leaveSet.has(a.eng + '|' + a.day);
       map[a.id] = { missing, isDbl, onLeave, has: missing.length > 0 || isDbl || onLeave };
     });
@@ -211,10 +211,10 @@ export function useScheduler() {
 
   // ---- schedule mutations ----
   const select = (aid: string) => setState({ selected: aid, draft: '' });
-  const createAssign = (orderId: string, engId: string, day: number, shift: State['createDraft']['shift']) => {
+  const createAssign = (orderId: string, engId: string, day: number, appointment: State['createDraft']['appointment']) => {
     const id = 'a' + ids.current.id++;
     setState((s) => ({
-      assignments: s.assignments.concat([{ id, eng: engId, order: orderId, day, shift: shift || 'Day', week: s.weekOffset }]),
+      assignments: s.assignments.concat([{ id, eng: engId, order: orderId, day, appointment: appointment || 'Day', week: s.weekOffset }]),
       selected: id,
     }));
     const ord = orderById(orderId);
@@ -233,14 +233,14 @@ export function useScheduler() {
       if (ord && eng) log('You', `moved ${ord.code} → ${eng.name.split(' ')[0]}, ${dayLabels[day]}`, '#2756d6');
     }
   };
-  const setShift = (aid: string, shift: State['createDraft']['shift']) =>
-    setState((s) => ({ assignments: s.assignments.map((a) => (a.id === aid ? { ...a, shift } : a)) }));
+  const setAppointment = (aid: string, appointment: State['createDraft']['appointment']) =>
+    setState((s) => ({ assignments: s.assignments.map((a) => (a.id === aid ? { ...a, appointment } : a)) }));
   const removeAssign = (aid: string) => {
     const a = S.assignments.find((x) => x.id === aid);
     setState((s) => ({ assignments: s.assignments.filter((x) => x.id !== aid), selected: null }));
     if (a) {
       const ord = orderById(a.order);
-      if (ord) log('You', `removed ${ord.code} shift`, '#2756d6');
+      if (ord) log('You', `removed ${ord.code} appointment`, '#2756d6');
     }
   };
   const duplicate = (aid: string) => {
@@ -275,17 +275,17 @@ export function useScheduler() {
       createOpen: true,
       userMenuOpen: false,
       sidebarOpen: false,
-      createDraft: { order: '', eng: '', day: s.selectedDay || 0, shift: 'Day' },
+      createDraft: { order: '', eng: '', day: s.selectedDay || 0, appointment: 'Day' },
     }));
   const openCreateAt = (engId: string, day: number) =>
-    setState({ createOpen: true, userMenuOpen: false, createDraft: { order: '', eng: engId, day, shift: 'Day' } });
+    setState({ createOpen: true, userMenuOpen: false, createDraft: { order: '', eng: engId, day, appointment: 'Day' } });
   const closeCreate = () => setState({ createOpen: false });
   const setDraft = (patch: Partial<CreateDraft>) =>
     setState((s) => ({ createDraft: { ...s.createDraft, ...patch } }));
   const submitCreate = () => {
     const d = S.createDraft;
     if (!d.order || !d.eng) return;
-    createAssign(d.order, d.eng, d.day, d.shift);
+    createAssign(d.order, d.eng, d.day, d.appointment);
     setState({ createOpen: false });
   };
 
@@ -445,10 +445,10 @@ export function useScheduler() {
       base.borderLeft = '3px solid #d23b3b';
       base.boxShadow = sel ? '0 0 0 2px rgba(210,59,59,.5)' : '0 0 0 1px rgba(210,59,59,.22)';
     }
-    const isNight = a.shift === 'Night';
+    const isNight = a.appointment === 'Night';
     return {
-      aid: a.id, code: ord.code, customer: ord.customer, style: base, shift: isNight ? 'N' : 'D',
-      shiftStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, padding: '1px 5px', borderRadius: '3px', background: isNight ? '#23282e' : '#fff4dd', color: isNight ? '#cfd6cc' : '#a96e08', border: '1px solid ' + (isNight ? '#23282e' : '#f1dcb0') }),
+      aid: a.id, code: ord.code, customer: ord.customer, style: base, appointment: isNight ? 'N' : 'D',
+      appointmentStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, padding: '1px 5px', borderRadius: '3px', background: isNight ? '#23282e' : '#fff4dd', color: isNight ? '#cfd6cc' : '#a96e08', border: '1px solid ' + (isNight ? '#23282e' : '#f1dcb0') }),
       warnGlyph: cf.has ? '⚠' : '',
       warnDotStyle: sx({ fontSize: '11px', color: '#d23b3b', lineHeight: 1, display: cf.has ? 'inline' : 'none' }),
       onClick: () => select(a.id),
@@ -465,7 +465,7 @@ export function useScheduler() {
     const ac = avatarColor(a.eng);
     const dim = chipDimmed(a);
     return {
-      aid: a.id, name: e.name, initials: initials(e.name), code: ord.code, plantCode: pl.code, shift: a.shift === 'Night' ? 'N' : 'D',
+      aid: a.id, name: e.name, initials: initials(e.name), code: ord.code, plantCode: pl.code, appointment: a.appointment === 'Night' ? 'N' : 'D',
       style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: '#fff', border: '1px solid ' + (cf.has ? '#e6a3a3' : '#e8ebe4'), borderLeft: '3px solid ' + (cf.has ? '#d23b3b' : accent || pl.color), borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none' }),
       avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: hexA(ac, 0.14), color: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       warnGlyph: cf.has ? '⚠' : '',
@@ -514,29 +514,29 @@ export function useScheduler() {
   const blankCellStyle = (): CSSProperties => ({ background: '#f1f3ee', border: '1px solid #e6e9e2', borderRadius: '9px', minHeight: isMobile ? '52px' : '112px' });
   const monthCells: MonthCell[] = [];
   for (let i = 0; i < firstWd; i++) monthCells.push({ blank: true, style: blankCellStyle() });
-  const monthOrderAgg: Record<string, { shifts: number; days: Record<number, 1>; engs: Record<string, 1>; conf: number }> = {};
+  const monthOrderAgg: Record<string, { appointments: number; days: Record<number, 1>; engs: Record<string, 1>; conf: number }> = {};
   for (let dn = 1; dn <= daysInMonth; dn++) {
     const date = new Date(mYear, mMon, dn);
     const slot = dateSlot(date);
     const weekend = slot.wd > 4;
     const cm = confMapForWeek(slot.weekOffset, confCache);
     const all = weekend ? [] : S.assignments.filter((a) => a.week === slot.weekOffset && a.day === slot.wd);
-    const shifts = all.filter((a) => !chipDimmed(a));
-    const conf = shifts.filter((a) => cm[a.id] && cm[a.id].has).length;
+    const appointments = all.filter((a) => !chipDimmed(a));
+    const conf = appointments.filter((a) => cm[a.id] && cm[a.id].has).length;
     all.forEach((a) => {
       const o = orderById(a.order);
       if (!o) return;
       if (S.filterCust && o.customer !== S.filterCust) return;
       if (!S.activePlants[o.plant]) return;
       if (S.filterEmp && a.eng !== S.filterEmp) return;
-      const g = monthOrderAgg[o.id] || (monthOrderAgg[o.id] = { shifts: 0, days: {}, engs: {}, conf: 0 });
-      g.shifts++;
+      const g = monthOrderAgg[o.id] || (monthOrderAgg[o.id] = { appointments: 0, days: {}, engs: {}, conf: 0 });
+      g.appointments++;
       g.days[dn] = 1;
       g.engs[a.eng] = 1;
       if (cm[a.id] && cm[a.id].has) g.conf++;
     });
     const byOrder: Record<string, number> = {};
-    shifts.forEach((a) => { byOrder[a.order] = (byOrder[a.order] || 0) + 1; });
+    appointments.forEach((a) => { byOrder[a.order] = (byOrder[a.order] || 0) + 1; });
     const keys = Object.keys(byOrder);
     const chips: MonthChip[] = keys.slice(0, 3).map((oid) => {
       const o = orderById(oid)!;
@@ -551,12 +551,12 @@ export function useScheduler() {
     const isToday = mYear + '-' + mMon + '-' + dn === todayStr;
     const cur = slot.weekOffset === 0;
     monthCells.push({
-      blank: false, dateNum: String(dn), countTxt: shifts.length ? String(shifts.length) : '',
+      blank: false, dateNum: String(dn), countTxt: appointments.length ? String(appointments.length) : '',
       chips, more, moreTxt: more > 0 ? '+' + more + ' more' : '',
       onClick: weekend ? () => {} : () => drillToDay(slot.weekOffset, slot.wd),
       style: sx({ position: 'relative', background: weekend ? '#f3f5ef' : '#fff', border: '1px solid ' + (isToday ? '#15191e' : '#e6e9e2'), boxShadow: isToday ? '0 0 0 1px #15191e' : 'none', borderRadius: '9px', minHeight: isMobile ? '52px' : '112px', padding: isMobile ? '5px' : '8px 9px', cursor: weekend ? 'default' : 'pointer', opacity: weekend ? 0.6 : 1, display: 'flex', flexDirection: 'column', gap: isMobile ? '2px' : '6px', overflow: 'hidden' }),
       numStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: isMobile ? '11px' : '12px', fontWeight: isToday ? 700 : 600, color: cur ? '#15191e' : '#9aa097' }),
-      countDotStyle: shifts.length
+      countDotStyle: appointments.length
         ? sx({ minWidth: '16px', height: '16px', borderRadius: '8px', background: conf ? '#d23b3b' : '#15191e', color: '#fff', fontSize: '9px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' })
         : sx({ display: 'none' }),
     });
@@ -572,25 +572,25 @@ export function useScheduler() {
       const pl = plantById(o.plant)!;
       const pc = priorityColors(o.priority);
       const g = monthOrderAgg[o.id];
-      const shifts = g ? g.shifts : 0;
+      const appointments = g ? g.appointments : 0;
       const days = g ? Object.keys(g.days).length : 0;
       const engs = g ? Object.keys(g.engs).length : 0;
       const conf = g ? g.conf : 0;
       return {
         orderId: o.id, code: o.code, product: o.product, customer: o.customer, plantCode: pl.code, priority: o.priority,
-        scheduled: shifts > 0, shifts, days, engs, conf, hasConf: conf > 0,
-        shiftsTxt: shifts + (shifts === 1 ? ' shift' : ' shifts'), daysTxt: days + (days === 1 ? ' day' : ' days'),
-        statusLabel: shifts > 0 ? 'Scheduled' : 'Not scheduled',
-        statusStyle: sx({ fontFamily: "'Archivo',sans-serif", fontSize: '10px', fontWeight: 600, color: shifts > 0 ? '#1f8a5b' : '#9a7a3a', background: shifts > 0 ? '#e3f5ea' : '#fff3df', border: '1px solid ' + (shifts > 0 ? '#c4e6d2' : '#f1dcb0'), borderRadius: '20px', padding: '2px 9px' }),
+        scheduled: appointments > 0, appointments, days, engs, conf, hasConf: conf > 0,
+        appointmentsTxt: appointments + (appointments === 1 ? ' appointment' : ' appointments'), daysTxt: days + (days === 1 ? ' day' : ' days'),
+        statusLabel: appointments > 0 ? 'Scheduled' : 'Not scheduled',
+        statusStyle: sx({ fontFamily: "'Archivo',sans-serif", fontSize: '10px', fontWeight: 600, color: appointments > 0 ? '#1f8a5b' : '#9a7a3a', background: appointments > 0 ? '#e3f5ea' : '#fff3df', border: '1px solid ' + (appointments > 0 ? '#c4e6d2' : '#f1dcb0'), borderRadius: '20px', padding: '2px 9px' }),
         swatchStyle: sx({ width: '10px', height: '10px', borderRadius: '3px', background: pl.color, flexShrink: 0 }),
         priorityStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '8.5px', fontWeight: 600, color: pc.c, background: pc.b, border: '1px solid ' + pc.bd, borderRadius: '3px', padding: '1px 5px' }),
         confStyle: conf > 0
           ? sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9.5px', fontWeight: 600, color: '#b32f2f', background: '#fbe3e3', border: '1px solid #f0c4c4', borderRadius: '20px', padding: '1px 7px' })
           : sx({ display: 'none' }),
-        cardStyle: sx({ background: '#fff', border: '1px solid ' + (shifts > 0 ? '#e4e7e0' : '#eceee8'), borderRadius: '11px', padding: '13px 14px', opacity: shifts > 0 ? 1 : 0.66 }),
+        cardStyle: sx({ background: '#fff', border: '1px solid ' + (appointments > 0 ? '#e4e7e0' : '#eceee8'), borderRadius: '11px', padding: '13px 14px', opacity: appointments > 0 ? 1 : 0.66 }),
       };
     })
-    .sort((a, b) => Number(b.scheduled) - Number(a.scheduled) || b.shifts - a.shifts);
+    .sort((a, b) => Number(b.scheduled) - Number(a.scheduled) || b.appointments - a.appointments);
   const monthScheduledCount = monthOrders.filter((o) => o.scheduled).length;
   const periodLabel = isMonth ? monthName : weekLabel;
   const periodTag = isMonth
@@ -776,13 +776,13 @@ export function useScheduler() {
     const pc = priorityColors(ord.priority);
     const cs: string[] = [];
     if (cf.missing && cf.missing.length) cs.push(`${eng.name.split(' ')[0]} lacks required cert: ${cf.missing.map((c) => certName[c]).join(', ')}.`);
-    if (cf.isDbl) cs.push(`${eng.name.split(' ')[0]} is double-booked on ${dayNames[selA.day]} (${selA.shift} shift).`);
+    if (cf.isDbl) cs.push(`${eng.name.split(' ')[0]} is double-booked on ${dayNames[selA.day]} (${selA.appointment} appointment).`);
     if (cf.onLeave) cs.push(`${eng.name.split(' ')[0]} is on leave on ${dayNames[selA.day]}.`);
     const comments = (S.comments[selA.id] || []).map((m) => ({
       who: m.who, initials: m.initials, text: m.text, ago: m.ago,
       avatarStyle: sx({ width: '24px', height: '24px', borderRadius: '7px', background: hexA(m.color, 0.15), color: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
     }));
-    const isNight = selA.shift === 'Night';
+    const isNight = selA.appointment === 'Night';
     const segOn = sx({ flex: 1, padding: '7px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", background: '#15191e', color: '#fff' });
     const segOff = sx({ flex: 1, padding: '7px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", background: 'transparent', color: '#6a706a' });
     return {
@@ -802,7 +802,7 @@ export function useScheduler() {
       }),
       hasConflict: cf.has, conflicts: cs,
       dayBtnStyle: isNight ? segOff : segOn, nightBtnStyle: isNight ? segOn : segOff,
-      setDay: () => setShift(selA.id, 'Day'), setNight: () => setShift(selA.id, 'Night'),
+      setDay: () => setAppointment(selA.id, 'Day'), setNight: () => setAppointment(selA.id, 'Night'),
       comments, commentCount: comments.length, noComments: comments.length === 0, draft: S.draft,
       onDraft: (e: React.ChangeEvent<HTMLInputElement>) => setState({ draft: e.target.value }),
       onKey: (e: React.KeyboardEvent) => { if (e.key === 'Enter') addComment(); },
@@ -835,7 +835,7 @@ export function useScheduler() {
     if (selOrd) {
       const miss = selOrd.req.filter((c) => !e.certs.includes(c));
       const onLeave = wleave.some((l) => l.eng === e.id && l.day === cd.day);
-      const busy = wk.some((a) => a.eng === e.id && a.day === cd.day && a.shift === cd.shift);
+      const busy = wk.some((a) => a.eng === e.id && a.day === cd.day && a.appointment === cd.appointment);
       if (miss.length) { flag = 'missing ' + miss.join('/'); fs = sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: '#b32f2f', background: '#fbe3e3', border: '1px solid #f0c4c4', borderRadius: '4px', padding: '2px 6px' }); }
       else if (onLeave) { flag = 'on leave'; fs = sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: '#7a4ddb', background: '#efe9fb', border: '1px solid #dccdf5', borderRadius: '4px', padding: '2px 6px' }); }
       else if (busy) { flag = 'busy'; fs = sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: '#a96e08', background: '#fff3df', border: '1px solid #f1dcb0', borderRadius: '4px', padding: '2px 6px' }); }
@@ -855,16 +855,16 @@ export function useScheduler() {
     const e = engById(cd.eng)!;
     const miss = selOrd.req.filter((c) => !e.certs.includes(c));
     const onLeave = wleave.some((l) => l.eng === cd.eng && l.day === cd.day);
-    const busy = wk.some((a) => a.eng === cd.eng && a.day === cd.day && a.shift === cd.shift);
+    const busy = wk.some((a) => a.eng === cd.eng && a.day === cd.day && a.appointment === cd.appointment);
     if (miss.length) warnText = `${e.name.split(' ')[0]} is missing ${miss.map((c) => certName[c]).join(', ')} — this will create a conflict.`;
     else if (onLeave) warnText = `${e.name.split(' ')[0]} is on leave on ${dayNames[cd.day]} — this will create a conflict.`;
-    else if (busy) warnText = `${e.name.split(' ')[0]} already has a ${cd.shift.toLowerCase()} shift on ${dayNames[cd.day]}.`;
+    else if (busy) warnText = `${e.name.split(' ')[0]} already has a ${cd.appointment.toLowerCase()} appointment on ${dayNames[cd.day]}.`;
   }
   const canCreate = !!(cd.order && cd.eng);
   const create = {
     orders: cOrders, engineers: cEngs, dayBtns,
-    dayShiftStyle: segSm(cd.shift === 'Day'), nightShiftStyle: segSm(cd.shift === 'Night'),
-    setDay: () => setDraft({ shift: 'Day' }), setNight: () => setDraft({ shift: 'Night' }),
+    dayAppointmentStyle: segSm(cd.appointment === 'Day'), nightAppointmentStyle: segSm(cd.appointment === 'Night'),
+    setDay: () => setDraft({ appointment: 'Day' }), setNight: () => setDraft({ appointment: 'Night' }),
     warn: !!warnText, warnText,
     submit: () => submitCreate(),
     submitStyle: sx({ background: canCreate ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 18px', fontSize: '12.5px', fontWeight: 600, cursor: canCreate ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
@@ -905,11 +905,11 @@ export function useScheduler() {
   };
 
   // ---- profile VM ----
-  const myWeekShifts = S.assignments.filter((a) => a.week === 0).length;
+  const myWeekAppointments = S.assignments.filter((a) => a.week === 0).length;
   const profile = {
     name: 'Jordan Lee', role: 'QA Planner · Operations', email: 'jordan.lee@nexsil.com', phone: '+1 (480) 555-0173', team: 'Front-end Quality, Reliability', joined: 'Joined March 2023',
     stats: [
-      { label: 'SHIFTS PLANNED', value: String(myWeekShifts), sub: 'this week' },
+      { label: 'APPOINTMENTS PLANNED', value: String(myWeekAppointments), sub: 'this week' },
       { label: 'OPEN ORDERS', value: String(poolOrders.length), sub: 'awaiting staffing' },
       { label: 'SITES', value: String(S.plants.length), sub: 'under coverage' },
     ],
@@ -1003,7 +1003,7 @@ export function useScheduler() {
     { label: 'ENGINEERS', value: String(S.engineers.length), sub: activeEng + ' active' },
     { label: 'FAB SITES', value: activeSites + '/' + S.plants.length, sub: 'visible on grid' },
     { label: 'OPEN ORDERS', value: String(poolOrders.length), sub: 'awaiting staffing' },
-    { label: 'WEEK SHIFTS', value: String(wk.length), sub: conflicts + ' with conflicts' },
+    { label: 'WEEK APPOINTMENTS', value: String(wk.length), sub: conflicts + ' with conflicts' },
   ];
   const statusStyleFor = (label: 'Active' | 'On leave' | 'Onboarding') => {
     const m = { Active: { c: '#1f8a5b', b: '#e3f5ea', bd: '#c4e6d2' }, 'On leave': { c: '#a96e08', b: '#fff3df', bd: '#f1dcb0' }, Onboarding: { c: '#5b7fd6', b: '#eef2fd', bd: '#d8e2fa' } }[label];
@@ -1018,7 +1018,7 @@ export function useScheduler() {
       avatarStyle: sx({ width: '30px', height: '30px', borderRadius: '8px', background: hexA(ac, 0.14), color: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '11px', fontWeight: 600, flexShrink: 0 }),
       certs: held.map((c) => ({ code: c, onRemove: () => removeCert(e.id, c) })), noCerts: held.length === 0,
       addOpen: S.adminAddCertFor === e.id, addable, allHeld: addable.length === 0, toggleAdd: () => toggleAddCert(e.id),
-      shifts: wk.filter((a) => a.eng === e.id).length,
+      appointments: wk.filter((a) => a.eng === e.id).length,
       statusLabel: e.status, statusStyle: statusStyleFor(e.status), toggleStatus: () => toggleStatus(e.id),
     };
   });
@@ -1026,7 +1026,7 @@ export function useScheduler() {
     const on = S.activePlants[p.id];
     return {
       name: p.name, loc: p.loc, code: p.code, swatchStyle: sx({ width: '12px', height: '12px', borderRadius: '3px', background: p.color, flexShrink: 0 }),
-      shifts: wk.filter((a) => {
+      appointments: wk.filter((a) => {
         const o = orderById(a.order);
         return o && o.plant === p.id;
       }).length,

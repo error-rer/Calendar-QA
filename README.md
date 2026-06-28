@@ -27,13 +27,13 @@ The sign-in screen accepts any credentials (it's a seeded demo — the
   filters and per-site visibility toggles, presence avatars, and an
   activity feed.
 - **Month view** — a 7-column calendar (today outlined, weekends dimmed)
-  with per-day shift/conflict badges and order chips; click any weekday to
+  with per-day appointment/conflict badges and order chips; click any weekday to
   drill into that week. Below the grid, a "Customer orders · {month}"
-  card section summarises shifts / days / engineers / conflicts per order.
+  card section summarises appointments / days / engineers / conflicts per order.
   Month navigation and the period label/tag follow the active scale.
 - **Detail panel** — order/customer info, required-vs-held certs, day/night
   toggle, notes thread, duplicate/remove.
-- **Create-shift modal** — pick an order + engineer side-by-side with live
+- **Create-appointment modal** — pick an order + engineer side-by-side with live
   cert/busy validation and a conflict-warning banner; also opens prefilled
   from an empty grid cell.
 - **Create-order modal** — open a new customer order (code, product,
@@ -50,7 +50,7 @@ The sign-in screen accepts any credentials (it's a seeded demo — the
   unavailable. Leave days show as striped tags in the By-engineer grid
   (click to clear) and count as conflicts when an engineer is staffed on a
   day they're off — surfaced in the chip, day header, conflict pill, detail
-  panel, create-shift validation, and month badges. Opened from the
+  panel, create-appointment validation, and month badges. Opened from the
   schedule toolbar's "Leave" button or the user menu. On the mobile
   single-day layout, an "Away" banner lists who's off on the selected day
   and the day strip dots the days that have absences.

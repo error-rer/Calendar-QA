@@ -208,7 +208,7 @@ function Toolbar({ vm }: { vm: VM }) {
       {vm.showStats && (
         <div style={css('display:flex;align-items:center;gap:7px')}>
           <div style={css('display:flex;align-items:center;gap:6px;padding:5px 10px;background:#f6f7f4;border:1px solid #e4e7e0;border-radius:8px')}>
-            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600")}>{vm.stats.assignments}</span><span style={css('font-size:10.5px;color:#7a8079')}>shifts</span>
+            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600")}>{vm.stats.assignments}</span><span style={css('font-size:10.5px;color:#7a8079')}>appointments</span>
           </div>
           <div style={vm.conflictPillStyle}>
             <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600")}>{vm.stats.conflicts}</span><span style={css('font-size:10.5px;opacity:.85')}>conflicts</span>
@@ -222,7 +222,7 @@ function Toolbar({ vm }: { vm: VM }) {
         <span style={css('font-size:13px;line-height:1')}>☾</span>Leave
       </HButton>
       <HButton onClick={vm.openCreate} style={css("background:#15191e;color:#fff;border:none;border-radius:8px;padding:8px 13px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;display:flex;align-items:center;gap:6px;flex-shrink:0")} hover={{ background: '#23282e' }}>
-        <span style={css('font-size:14px;line-height:1')}>＋</span>New shift
+        <span style={css('font-size:14px;line-height:1')}>＋</span>New appointment
       </HButton>
       {vm.showDayStrip && (
         <div style={css('width:100%;display:flex;gap:5px')}>
@@ -296,13 +296,13 @@ function PersonGrid({ vm }: { vm: VM }) {
                     <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#15191e")}>{chip.code}</span>
                     <span style={css('flex:1')} />
                     <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
-                    <span style={chip.shiftStyle}>{chip.shift}</span>
+                    <span style={chip.appointmentStyle}>{chip.appointment}</span>
                   </div>
                   <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.customer}</div>
                 </div>
               ))}
               {cell.empty && !cell.leaveTag && (
-                <HDiv onClick={cell.onHintClick} title="Assign a shift here" style={cell.hintStyle} hover={{ background: '#eef2fd', borderColor: '#9bb0e8', color: '#5b7fd6' }}>＋</HDiv>
+                <HDiv onClick={cell.onHintClick} title="Assign an appointment here" style={cell.hintStyle} hover={{ background: '#eef2fd', borderColor: '#9bb0e8', color: '#5b7fd6' }}>＋</HDiv>
               )}
             </div>
           ))}
@@ -335,7 +335,7 @@ function SiteGrid({ vm }: { vm: VM }) {
                   <div style={chip.avatarStyle}>{chip.initials}</div>
                   <div style={css('min-width:0;flex:1')}>
                     <div style={css('font-size:11px;font-weight:600;color:#23282a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.name}</div>
-                    <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code} · {chip.shift}</div>
+                    <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code} · {chip.appointment}</div>
                   </div>
                   <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
                 </div>
@@ -411,13 +411,13 @@ function MobilePerson({ vm }: { vm: VM }) {
                   <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:#15191e")}>{chip.code}</span>
                   <span style={css('flex:1')} />
                   <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
-                  <span style={chip.shiftStyle}>{chip.shift}</span>
+                  <span style={chip.appointmentStyle}>{chip.appointment}</span>
                 </div>
                 <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.customer}</div>
               </div>
             ))}
             {!r.cell.leaveTag && (
-              <button onClick={r.cell.onHintClick} style={css("width:100%;padding:10px;border:1px dashed #cdd2c9;background:#fbfcfa;border-radius:9px;color:#7a807a;font-size:12px;font-weight:600;font-family:'Archivo',sans-serif;cursor:pointer")}>＋ Assign shift</button>
+               <button onClick={r.cell.onHintClick} style={css("width:100%;padding:10px;border:1px dashed #cdd2c9;background:#fbfcfa;border-radius:9px;color:#7a807a;font-size:12px;font-weight:600;font-family:'Archivo',sans-serif;cursor:pointer")}>＋ Assign appointment</button>
             )}
           </div>
         </div>
@@ -439,7 +439,7 @@ function MobileSite({ vm }: { vm: VM }) {
             {r.cell.chips.map((chip) => (
               <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
                 <div style={chip.avatarStyle}>{chip.initials}</div>
-                <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code} · {chip.shift}</div></div>
+                <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code} · {chip.appointment}</div></div>
                 <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
               </div>
             ))}
@@ -464,7 +464,7 @@ function MobileCustomer({ vm }: { vm: VM }) {
             {r.cell.chips.map((chip) => (
               <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
                 <div style={chip.avatarStyle}>{chip.initials}</div>
-                <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code} · {chip.plantCode} · {chip.shift}</div></div>
+                <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code} · {chip.plantCode} · {chip.appointment}</div></div>
                 <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
               </div>
             ))}
@@ -492,12 +492,12 @@ function MonthOrderCards({ vm, mobile }: { vm: VM; mobile?: boolean }) {
           </div>
           <div style={mobile ? css('font-size:12px;color:#3c423d;font-weight:600') : css('font-size:12.5px;color:#3c423d;font-weight:600')}>{o.product}</div>
           {mobile ? (
-            <div style={css('font-size:10.5px;color:#8a9088;margin-top:1px')}>{o.customer} · {o.plantCode} · {o.shiftsTxt} · {o.daysTxt}</div>
+            <div style={css('font-size:10.5px;color:#8a9088;margin-top:1px')}>{o.customer} · {o.plantCode} · {o.appointmentsTxt} · {o.daysTxt}</div>
           ) : (
             <>
               <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>{o.customer} · {o.plantCode}</div>
               <div style={css('display:flex;align-items:center;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid #f2f4ee')}>
-                <div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:#23282a")}>{o.shifts}</div><div style={css('font-size:9.5px;color:#9aa097;letter-spacing:.3px')}>SHIFTS</div></div>
+                <div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:#23282a")}>{o.appointments}</div><div style={css('font-size:9.5px;color:#9aa097;letter-spacing:.3px')}>APPOINTMENTS</div></div>
                 <div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:#23282a")}>{o.days}</div><div style={css('font-size:9.5px;color:#9aa097;letter-spacing:.3px')}>DAYS</div></div>
                 <div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:#23282a")}>{o.engs}</div><div style={css('font-size:9.5px;color:#9aa097;letter-spacing:.3px')}>ENGS</div></div>
                 <span style={css('flex:1')} />

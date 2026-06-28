@@ -9,7 +9,7 @@ export function CreateModal({ vm }: { vm: VM }) {
       <div onClick={vm.stop} style={vm.modalCardStyle}>
         <div style={css('padding:16px 20px;border-bottom:1px solid #eef1ea;display:flex;align-items:center;justify-content:space-between')}>
           <div>
-            <div style={css('font-size:15px;font-weight:700;letter-spacing:-.2px')}>New shift assignment</div>
+            <div style={css('font-size:15px;font-weight:700;letter-spacing:-.2px')}>New appointment</div>
             <div style={css('font-size:11.5px;color:#8a9088;margin-top:1px')}>{vm.weekLabel} · {vm.weekTag}</div>
           </div>
           <HButton onClick={vm.closeCreate} style={css('width:28px;height:28px;border:1px solid #e2e5de;background:#fff;border-radius:7px;cursor:pointer;color:#6a706a;font-size:14px')} hover={{ background: '#f1f3ee' }}>✕</HButton>
@@ -60,10 +60,10 @@ export function CreateModal({ vm }: { vm: VM }) {
             </div>
           </div>
           <div>
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:6px")}>SHIFT</div>
+            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:6px")}>APPOINTMENT</div>
             <div style={css('display:flex;background:#f1f3ee;border:1px solid #e0e3dc;border-radius:8px;padding:2px;gap:2px')}>
-              <button onClick={create.setDay} style={create.dayShiftStyle}>☀ Day</button>
-              <button onClick={create.setNight} style={create.nightShiftStyle}>☾ Night</button>
+              <button onClick={create.setDay} style={create.dayAppointmentStyle}>☀ Day</button>
+              <button onClick={create.setNight} style={create.nightAppointmentStyle}>☾ Night</button>
             </div>
           </div>
         </div>
@@ -76,7 +76,7 @@ export function CreateModal({ vm }: { vm: VM }) {
 
         <div style={css('padding:14px 18px;display:flex;justify-content:flex-end;gap:9px')}>
           <HButton onClick={vm.closeCreate} style={css("background:#f4f6f1;border:1px solid #e0e3dc;color:#3c423d;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#eaede6' }}>Cancel</HButton>
-          <button onClick={create.submit} style={create.submitStyle}>Create shift</button>
+          <button onClick={create.submit} style={create.submitStyle}>Create appointment</button>
         </div>
       </div>
     </div>

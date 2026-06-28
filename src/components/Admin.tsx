@@ -46,7 +46,7 @@ function EngineersTable({ vm }: { vm: VM }) {
         <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New engineer</HButton>
       </div>
       <div style={css(engGrid + ";padding:9px 18px;border-bottom:1px solid #eef1ea;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>
-        <div>ENGINEER</div><div>CERTIFICATIONS</div><div style={css('text-align:center')}>SHIFTS</div><div style={css('text-align:right')}>STATUS</div>
+        <div>ENGINEER</div><div>CERTIFICATIONS</div><div style={css('text-align:center')}>APPOINTMENTS</div><div style={css('text-align:right')}>STATUS</div>
       </div>
       {vm.adminEngineers.map((e) => (
         <div key={e.id} style={css(engGrid + ';padding:12px 18px;border-bottom:1px solid #f2f4ee;align-items:center')}>
@@ -78,7 +78,7 @@ function EngineersTable({ vm }: { vm: VM }) {
               </div>
             )}
           </div>
-          <div style={css("text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#3c423d")}>{e.shifts}</div>
+          <div style={css("text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#3c423d")}>{e.appointments}</div>
           <div style={css('display:flex;justify-content:flex-end')}>
             <button onClick={e.toggleStatus} style={e.statusStyle}>{e.statusLabel}</button>
           </div>
@@ -108,14 +108,14 @@ function SitesTable({ vm }: { vm: VM }) {
         <HButton onClick={vm.addSite} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New site</HButton>
       </div>
       <div style={css(siteGrid + ";padding:9px 18px;border-bottom:1px solid #eef1ea;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>
-        <div>SITE</div><div>LOCATION</div><div>CODE</div><div style={css('text-align:center')}>SHIFTS</div><div style={css('text-align:right')}>VISIBILITY</div>
+        <div>SITE</div><div>LOCATION</div><div>CODE</div><div style={css('text-align:center')}>APPOINTMENTS</div><div style={css('text-align:right')}>VISIBILITY</div>
       </div>
       {vm.adminSites.map((s, i) => (
         <div key={i} style={css(siteGrid + ';padding:13px 18px;border-bottom:1px solid #f2f4ee;align-items:center')}>
           <div style={css('display:flex;align-items:center;gap:10px')}><span style={s.swatchStyle} /><span style={css('font-size:12.5px;font-weight:600;color:#23282a')}>{s.name}</span></div>
           <div style={css('font-size:12px;color:#5c625c')}>{s.loc}</div>
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#5c625c")}>{s.code}</div>
-          <div style={css("text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#3c423d")}>{s.shifts}</div>
+          <div style={css("text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#3c423d")}>{s.appointments}</div>
           <div style={css('display:flex;justify-content:flex-end')}><button onClick={s.toggle} style={s.statusStyle}>{s.statusLabel}</button></div>
         </div>
       ))}
