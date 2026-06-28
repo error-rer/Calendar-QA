@@ -22,8 +22,7 @@ The sign-in screen accepts any credentials (it's a seeded demo — the
 - **Schedule** — a Week / Month scale toggle plus three grouping views
   (By engineer / By site / By customer). The weekly scale is a sticky grid
   with drag-and-drop staffing from the unstaffed-order pool,
-  drag-to-reschedule, live conflict detection (double-booking + missing
-  certifications), week navigation with "copy week", Employee/Customer
+  drag-to-reschedule,   live conflict detection (double-booking), week navigation with "copy week", Employee/Customer
   filters and per-site visibility toggles, presence avatars, and an
   activity feed.
 - **Month view** — a 7-column calendar (today outlined, weekends dimmed)
@@ -31,13 +30,13 @@ The sign-in screen accepts any credentials (it's a seeded demo — the
   drill into that week. Below the grid, a "Customer orders · {month}"
   card section summarises appointments / days / engineers / conflicts per order.
   Month navigation and the period label/tag follow the active scale.
-- **Detail panel** — order/customer info, required-vs-held certs, day/night
+- **Detail panel** — order/customer info, department + sub-department, day/night
   toggle, notes thread, duplicate/remove.
 - **Create-appointment modal** — pick an order + engineer side-by-side with live
-  cert/busy validation and a conflict-warning banner; also opens prefilled
+  busy validation and a conflict-warning banner; also opens prefilled
   from an empty grid cell.
 - **Create-order modal** — open a new customer order (code, product,
-  customer with suggestions, fab site, priority, required certs) into the
+  customer with suggestions, fab site, priority) into the
   unstaffed pool.
 - **Create engineer / fab site / customer** — modal forms (opened from the
   user menu, plus the Manage tabs for engineers and sites) that add real
@@ -57,7 +56,7 @@ The sign-in screen accepts any credentials (it's a seeded demo — the
 - **Profile** — banner header, planning stats, account details, sites under
   coverage, and a personal activity feed.
 - **Manage (admin)** — stat cards plus Engineers / Fab sites / Customer
-  orders tabs whose edits feed back into the schedule's conflict logic.
+  orders tabs.
 - **Responsive** — below ~860px the app reflows to a hamburger drawer,
   single-day card list, compact month calendar, full-screen modal/detail,
   and a stacked login.

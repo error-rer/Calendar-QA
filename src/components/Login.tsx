@@ -26,11 +26,11 @@ export function Login({ vm }: { vm: VM }) {
                 Plan site coverage<br />without the spreadsheet.
               </div>
               <div style={css('font-size:14px;line-height:1.55;color:#9aa0a0')}>
-                Schedule which QA engineers go to which fab, on which customer lot — together, in real time, with certification and conflict guardrails.
+                Schedule which QA engineers go to which fab, on which customer lot — together, in real time, with department and conflict guardrails.
               </div>
               <div style={css('display:flex;flex-direction:column;gap:11px;margin-top:28px')}>
                 <div style={css('display:flex;align-items:center;gap:10px;font-size:13px;color:#c4cac8')}><span style={css('color:#6fe3a0')}>▢</span>Cross-site weekly coverage grid</div>
-                <div style={css('display:flex;align-items:center;gap:10px;font-size:13px;color:#c4cac8')}><span style={css('color:#6fe3a0')}>▢</span>Live certification &amp; double-book checks</div>
+                <div style={css('display:flex;align-items:center;gap:10px;font-size:13px;color:#c4cac8')}><span style={css('color:#6fe3a0')}>▢</span>Live department &amp; double-book checks</div>
                 <div style={css('display:flex;align-items:center;gap:10px;font-size:13px;color:#c4cac8')}><span style={css('color:#6fe3a0')}>▢</span>Shared planning with your QA leads</div>
               </div>
             </div>

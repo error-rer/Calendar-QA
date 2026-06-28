@@ -63,19 +63,6 @@ export function OrderModal({ vm }: { vm: VM }) {
             </div>
           </div>
 
-          <div>
-            <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:8px')}>Required certifications</label>
-            <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:7px')}>
-              {f.reqOptions.map((c) => (
-                <div key={c.code} onClick={c.onClick} style={c.style}>
-                  <span style={c.boxStyle}>{c.check}</span>
-                  <div style={css('min-width:0')}>
-                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#5b7fd6")}>{c.code}</span> <span style={css('font-size:11.5px;color:#3c423d')}>{c.name}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div style={css('padding:14px 20px;border-top:1px solid #eef1ea;display:flex;justify-content:flex-end;gap:9px')}>

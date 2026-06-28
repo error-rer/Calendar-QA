@@ -1,16 +1,4 @@
-import type { CertCode, Plant, State } from './types';
-
-export const certName: Record<CertCode, string> = {
-  AEC: 'AEC-Q100 Qual',
-  REL: 'Reliability',
-  CR1: 'Cleanroom Class 1',
-  CR2: 'Cleanroom Class 2',
-  FA: 'Failure Analysis',
-  XCT: 'X-ray / CT',
-  ATE: 'ATE Programming',
-};
-
-export const certOrder: CertCode[] = ['AEC', 'REL', 'FA', 'XCT', 'ATE', 'CR1', 'CR2'];
+﻿import type { Plant, State } from './types';
 
 export const initialPlants: Plant[] = [
   { id: 'p1', name: 'Fab 7', loc: 'Chandler, AZ', code: 'FAB7', color: '#2f6df0', active: true },
@@ -52,12 +40,11 @@ export function initialState(): State {
     loginPass: 'directorqa',
     userMenuOpen: false,
     createOpen: false,
-    adminAddCertFor: null,
     createDraft: { order: '', eng: '', day: 0, appointment: 'Day' },
     orderFormOpen: false,
-    orderForm: { code: '', product: '', customer: '', plant: 'p1', priority: 'Med', req: [] },
+    orderForm: { code: '', product: '', customer: '', plant: 'p1', priority: 'Med' },
     engFormOpen: false,
-    engForm: { name: '', role: '', status: 'Active', certs: [] },
+    engForm: { name: '', role: '', department: 'QA-U1', subDepartments: [], status: 'Active' },
     siteFormOpen: false,
     siteForm: { name: '', loc: '', code: '', color: siteColors[0] },
     custFormOpen: false,
@@ -75,29 +62,29 @@ export function initialState(): State {
     leave: [
       { id: 'l1', eng: 'e9', week: 0, day: 0, type: 'Vacation', note: '' },
       { id: 'l2', eng: 'e9', week: 0, day: 1, type: 'Vacation', note: '' },
-      { id: 'l3', eng: 'e6', week: 0, day: 2, type: 'Training', note: 'AEC-Q100 recert' },
+      { id: 'l3', eng: 'e6', week: 0, day: 2, type: 'Training', note: 'QMS training' },
     ],
     engineers: [
-      { id: 'e1', name: 'Dana Okafor', role: 'Reliability Lead', certs: ['AEC', 'REL', 'CR1'], status: 'Active' },
-      { id: 'e2', name: 'Marco Ruiz', role: 'Failure Analysis', certs: ['FA', 'XCT', 'CR2'], status: 'Active' },
-      { id: 'e3', name: 'Priya Nair', role: 'ATE Engineer', certs: ['ATE', 'AEC'], status: 'Active' },
-      { id: 'e4', name: 'Sven Holt', role: 'Test Technician', certs: ['CR2', 'ATE'], status: 'Active' },
-      { id: 'e5', name: 'Lena Fischer', role: 'Reliability Eng', certs: ['REL', 'AEC', 'CR1'], status: 'Active' },
-      { id: 'e6', name: 'Tom Becker', role: 'FA Technician', certs: ['FA', 'XCT'], status: 'Active' },
-      { id: 'e7', name: 'Aiko Tan', role: 'ATE Engineer', certs: ['ATE', 'CR2'], status: 'Active' },
-      { id: 'e8', name: 'Raj Patel', role: 'Quality Engineer', certs: ['AEC', 'REL'], status: 'Active' },
-      { id: 'e9', name: 'Mia Cole', role: 'Test Technician', certs: ['ATE', 'CR2'], status: 'On leave' },
-      { id: 'e10', name: 'Omar Haddad', role: 'FA Engineer', certs: ['FA', 'XCT', 'CR1'], status: 'Active' },
+      { id: 'e1', name: 'Dana Okafor', role: 'Reliability Lead', department: 'QA-U1', subDepartments: ['QMS', 'EHS'], status: 'Active' },
+      { id: 'e2', name: 'Marco Ruiz', role: 'Failure Analysis', department: 'QA-U2', subDepartments: ['ESD'], status: 'Active' },
+      { id: 'e3', name: 'Priya Nair', role: 'ATE Engineer', department: 'QA-U1', subDepartments: ['QMS', 'ESD'], status: 'Active' },
+      { id: 'e4', name: 'Sven Holt', role: 'Test Technician', department: 'QA-U3', subDepartments: ['EHS'], status: 'Active' },
+      { id: 'e5', name: 'Lena Fischer', role: 'Reliability Eng', department: 'QA-U1', subDepartments: ['QMS'], status: 'Active' },
+      { id: 'e6', name: 'Tom Becker', role: 'FA Technician', department: 'QA-U2', subDepartments: ['ESD', 'EHS'], status: 'Active' },
+      { id: 'e7', name: 'Aiko Tan', role: 'ATE Engineer', department: 'QA-U1', subDepartments: ['QMS', 'EHS', 'ESD'], status: 'Active' },
+      { id: 'e8', name: 'Raj Patel', role: 'Quality Engineer', department: 'QA-U3', subDepartments: ['EHS', 'ESD'], status: 'Active' },
+      { id: 'e9', name: 'Mia Cole', role: 'Test Technician', department: 'QA-U3', subDepartments: ['QMS'], status: 'On leave' },
+      { id: 'e10', name: 'Omar Haddad', role: 'FA Engineer', department: 'QA-U2', subDepartments: ['ESD'], status: 'Active' },
     ],
     orders: [
-      { id: 'o1', code: 'NB-4471', customer: 'Nimbus Aero', product: 'Rad-hard FPGA', plant: 'p3', req: ['REL', 'CR1'], priority: 'High' },
-      { id: 'o2', code: 'VA-2207', customer: 'Vanta Auto', product: 'Automotive MCU', plant: 'p1', req: ['AEC'], priority: 'High' },
-      { id: 'o3', code: 'HC-9930', customer: 'Helio Compute', product: 'HPC GPU die', plant: 'p2', req: ['ATE'], priority: 'Med' },
-      { id: 'o4', code: 'OM-1185', customer: 'Orion Medical', product: 'Implant ASIC', plant: 'p3', req: ['FA', 'CR1'], priority: 'High' },
-      { id: 'o5', code: 'CN-7758', customer: 'Cirrus Networks', product: 'Switch SoC', plant: 'p1', req: ['ATE', 'AEC'], priority: 'Med' },
-      { id: 'o6', code: 'HC-9931', customer: 'Helio Compute', product: 'HBM stack test', plant: 'p4', req: ['XCT'], priority: 'Low' },
-      { id: 'o7', code: 'VA-2210', customer: 'Vanta Auto', product: 'Power IGBT qual', plant: 'p3', req: ['REL'], priority: 'Med' },
-      { id: 'o8', code: 'NB-4480', customer: 'Nimbus Aero', product: 'Sensor MEMS', plant: 'p4', req: ['FA'], priority: 'Med' },
+      { id: 'o1', code: 'NB-4471', customer: 'Nimbus Aero', product: 'Rad-hard FPGA', plant: 'p3', priority: 'High' },
+      { id: 'o2', code: 'VA-2207', customer: 'Vanta Auto', product: 'Automotive MCU', plant: 'p1', priority: 'High' },
+      { id: 'o3', code: 'HC-9930', customer: 'Helio Compute', product: 'HPC GPU die', plant: 'p2', priority: 'Med' },
+      { id: 'o4', code: 'OM-1185', customer: 'Orion Medical', product: 'Implant ASIC', plant: 'p3', priority: 'High' },
+      { id: 'o5', code: 'CN-7758', customer: 'Cirrus Networks', product: 'Switch SoC', plant: 'p1', priority: 'Med' },
+      { id: 'o6', code: 'HC-9931', customer: 'Helio Compute', product: 'HBM stack test', plant: 'p4', priority: 'Low' },
+      { id: 'o7', code: 'VA-2210', customer: 'Vanta Auto', product: 'Power IGBT qual', plant: 'p3', priority: 'Med' },
+      { id: 'o8', code: 'NB-4480', customer: 'Nimbus Aero', product: 'Sensor MEMS', plant: 'p4', priority: 'Med' },
     ],
     assignments: [
       { id: 'a1', eng: 'e1', order: 'o1', day: 0, appointment: 'Day', week: 0 },
@@ -116,13 +103,15 @@ export function initialState(): State {
       { id: 'a14', eng: 'e2', order: 'o8', day: 2, appointment: 'Night', week: 0 },
     ],
     comments: {
-      a8: [{ who: 'Marco Ruiz', initials: 'MR', text: 'Sven isn’t AEC-Q100 certified yet — needs Raj or Priya to co-sign the lot.', ago: '14m', color: '#0f9d8c' }],
+      a8: [{ who: 'Marco Ruiz', initials: 'MR', text: 'Sven isn\u2019t QA-U1 — needs Raj or Priya to co-sign the lot.', ago: '14m', color: '#0f9d8c' }],
       a6: [{ who: 'Priya Nair', initials: 'PN', text: 'Taking the Vanta MCU lot Monday, will hand to Raj for Thu.', ago: '9m', color: '#c2620c' }],
     },
     activity: [
       { who: 'Priya Nair', text: 'assigned VA-2207 → Mon', ago: '9 min ago', color: '#c2620c' },
-      { who: 'Marco Ruiz', text: 'flagged Sven Holt · missing AEC-Q100', ago: '14 min ago', color: '#0f9d8c' },
+      { who: 'Marco Ruiz', text: 'flagged Sven Holt · not QA-U1', ago: '14 min ago', color: '#0f9d8c' },
       { who: 'Lena Fischer', text: 'added 2 days on VA-2210', ago: '22 min ago', color: '#7a4ddb' },
     ],
   };
 }
+
+

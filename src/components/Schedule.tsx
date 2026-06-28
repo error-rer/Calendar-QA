@@ -281,9 +281,10 @@ function PersonGrid({ vm }: { vm: VM }) {
                 <div style={css('font-size:10px;color:#8a9088;line-height:1.2')}>{r.role}</div>
               </div>
             </div>
-            <div style={css('display:flex;gap:3px;margin-top:7px;flex-wrap:wrap')}>
-              {r.certs.map((c, i) => (
-                <span key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#7a807a;background:#eef1ea;border:1px solid #e2e5de;border-radius:3px;padding:1px 4px")}>{c}</span>
+            <div style={css('display:flex;flex-wrap:wrap;gap:4px;margin-top:7px')}>
+              <span style={css("font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:600;color:#3c423d;background:#eef3ee;border:1px solid #dde6dd;border-radius:3px;padding:1px 5px")}>{r.department}</span>
+              {r.subDepartments.map((sd, i) => (
+                <span key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:8px;color:#5b7fd6;background:#eef2fd;border:1px solid #d8e2fa;border-radius:3px;padding:1px 4px")}>{sd}</span>
               ))}
             </div>
           </div>
@@ -397,9 +398,10 @@ function MobilePerson({ vm }: { vm: VM }) {
               <div style={css('font-size:13px;font-weight:600;color:#23282a')}>{r.name}</div>
               <div style={css('font-size:10.5px;color:#8a9088')}>{r.role}</div>
             </div>
-            <div style={css('display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end;max-width:120px')}>
-              {r.certs.map((c, i) => (
-                <span key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#7a807a;background:#eef1ea;border:1px solid #e2e5de;border-radius:3px;padding:1px 4px")}>{c}</span>
+            <div style={css('display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:120px')}>
+              <span style={css("font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;color:#3c423d;background:#eef3ee;border:1px solid #dde6dd;border-radius:3px;padding:1px 4px")}>{r.department}</span>
+              {r.subDepartments.map((sd, i) => (
+                <span key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:7.5px;color:#5b7fd6;background:#eef2fd;border:1px solid #d8e2fa;border-radius:3px;padding:1px 3px")}>{sd}</span>
               ))}
             </div>
           </div>

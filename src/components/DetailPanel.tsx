@@ -40,22 +40,10 @@ export function DetailPanel({ vm }: { vm: VM }) {
               <div style={css('font-size:11px;color:#8a9088')}>{detail.engRole} · {detail.dayName}</div>
             </div>
           </div>
-          <div style={css('display:flex;gap:4px;margin-top:9px;flex-wrap:wrap')}>
-            {detail.engCerts.map((c, i) => (
-              <span key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#6a706a;background:#f1f3ee;border:1px solid #e2e5de;border-radius:4px;padding:2px 6px")}>{c}</span>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:9px")}>REQUIRED CERTIFICATIONS</div>
-          <div style={css('display:flex;flex-direction:column;gap:6px')}>
-            {detail.reqCerts.map((c, i) => (
-              <div key={i} style={css('display:flex;align-items:center;gap:8px')}>
-                <span style={c.iconStyle}>{c.icon}</span>
-                <span style={css('font-size:12px;color:#3c423d;flex:1')}>{c.name}</span>
-                <span style={c.tagStyle}>{c.tag}</span>
-              </div>
+          <div style={css('display:flex;flex-wrap:wrap;gap:6px;margin-top:9px')}>
+            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#3c423d;background:#eef3ee;border:1px solid #dde6dd;border-radius:5px;padding:2px 7px")}>{detail.department}</span>
+            {detail.subDepartments.map((sd, i) => (
+              <span key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#5b7fd6;background:#eef2fd;border:1px solid #d8e2fa;border-radius:4px;padding:2px 7px")}>{sd}</span>
             ))}
           </div>
         </div>

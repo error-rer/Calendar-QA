@@ -37,14 +37,21 @@ export function EngineerModal({ vm }: { vm: VM }) {
           </div>
 
           <div>
-            <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:8px')}>Certifications</label>
-            <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:7px')}>
-              {f.certOptions.map((c) => (
+            <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:8px')}>Department</label>
+            <div style={css('display:flex;gap:7px')}>
+              {f.departments.map((d, i) => (
+                <button key={i} onClick={d.onClick} style={d.style}>{d.label}</button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:8px')}>Sub-departments</label>
+            <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px')}>
+              {f.subDepartmentOptions.map((c) => (
                 <div key={c.code} onClick={c.onClick} style={c.style}>
                   <span style={c.boxStyle}>{c.check}</span>
-                  <div style={css('min-width:0')}>
-                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#5b7fd6")}>{c.code}</span> <span style={css('font-size:11.5px;color:#3c423d')}>{c.name}</span>
-                  </div>
+                  <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#5b7fd6")}>{c.name}</span>
                 </div>
               ))}
             </div>

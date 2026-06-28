@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import type {
   Assignment,
-  CertCode,
   CreateDraft,
   CustomerForm,
+  Department,
   EngineerForm,
   LeaveForm,
   LeaveType,
@@ -11,11 +11,10 @@ import type {
   Priority,
   SiteForm,
   State,
+  SubDepartment,
 } from './types';
 import {
   avatarPalette,
-  certName,
-  certOrder,
   custPalette,
   dayLabels,
   dayNames,
@@ -27,7 +26,6 @@ import {
 const sx = (o: CSSProperties): CSSProperties => o;
 
 interface Conflict {
-  missing: CertCode[];
   isDbl: boolean;
   onLeave: boolean;
   has: boolean;
@@ -120,16 +118,9 @@ export function useScheduler() {
     });
     const m: Record<string, { has: boolean }> = {};
     list.forEach((a) => {
-      const eng = engById(a.eng);
-      const ord = orderById(a.order);
-      if (!eng || !ord) {
-        m[a.id] = { has: false };
-        return;
-      }
-      const missing = ord.req.filter((c) => !eng.certs.includes(c));
       const isDbl = slots[a.eng + '|' + a.day + '|' + a.appointment].length > 1;
       const onLeave = leaveSet.has(a.eng + '|' + a.day);
-      m[a.id] = { has: missing.length > 0 || isDbl || onLeave };
+      m[a.id] = { has: isDbl || onLeave };
     });
     cache[wo] = m;
     return m;
@@ -159,16 +150,9 @@ export function useScheduler() {
     });
     const map: ConflictMap = {};
     wk.forEach((a) => {
-      const eng = engById(a.eng);
-      const ord = orderById(a.order);
-      if (!eng || !ord) {
-        map[a.id] = { missing: [], isDbl: false, onLeave: false, has: false };
-        return;
-      }
-      const missing = ord.req.filter((c) => !eng.certs.includes(c));
       const isDbl = slots[a.eng + '|' + a.day + '|' + a.appointment].length > 1;
       const onLeave = leaveSet.has(a.eng + '|' + a.day);
-      map[a.id] = { missing, isDbl, onLeave, has: missing.length > 0 || isDbl || onLeave };
+      map[a.id] = { isDbl, onLeave, has: isDbl || onLeave };
     });
     return map;
   };
@@ -291,18 +275,7 @@ export function useScheduler() {
 
   // ---- admin ----
   const toggleUserMenu = () => setState((s) => ({ userMenuOpen: !s.userMenuOpen }));
-  const setAdminTab = (t: State['adminTab']) => setState({ adminTab: t, adminAddCertFor: null });
-  const toggleAddCert = (id: string) =>
-    setState((s) => ({ adminAddCertFor: s.adminAddCertFor === id ? null : id }));
-  const addCert = (id: string, code: CertCode) =>
-    setState((s) => ({
-      engineers: s.engineers.map((e) => (e.id === id ? { ...e, certs: e.certs.concat([code]) } : e)),
-      adminAddCertFor: null,
-    }));
-  const removeCert = (id: string, code: CertCode) =>
-    setState((s) => ({
-      engineers: s.engineers.map((e) => (e.id === id ? { ...e, certs: e.certs.filter((c) => c !== code) } : e)),
-    }));
+  const setAdminTab = (t: State['adminTab']) => setState({ adminTab: t });
   const toggleStatus = (id: string) =>
     setState((s) => ({
       engineers: s.engineers.map((e) =>
@@ -311,20 +284,20 @@ export function useScheduler() {
     }));
   // ---- create-engineer modal ----
   const openEngForm = () =>
-    setState({ engFormOpen: true, userMenuOpen: false, sidebarOpen: false, engForm: { name: '', role: '', status: 'Active', certs: [] } });
+    setState({ engFormOpen: true, userMenuOpen: false, sidebarOpen: false, engForm: { name: '', role: '', department: 'QA-U1', subDepartments: [], status: 'Active' } });
   const closeEngForm = () => setState({ engFormOpen: false });
   const setEngForm = (patch: Partial<EngineerForm>) => setState((s) => ({ engForm: { ...s.engForm, ...patch } }));
-  const toggleEngCert = (c: CertCode) =>
+  const toggleEngSubDept = (c: SubDepartment) =>
     setState((s) => {
-      const has = s.engForm.certs.includes(c);
-      return { engForm: { ...s.engForm, certs: has ? s.engForm.certs.filter((x) => x !== c) : s.engForm.certs.concat([c]) } };
+      const has = s.engForm.subDepartments.includes(c);
+      return { engForm: { ...s.engForm, subDepartments: has ? s.engForm.subDepartments.filter((x) => x !== c) : s.engForm.subDepartments.concat([c]) } };
     });
   const submitEngForm = () => {
     const f = S.engForm;
     if (!f.name.trim()) return;
     const id = 'e' + ids.current.id++;
     setState((s) => ({
-      engineers: s.engineers.concat([{ id, name: f.name.trim(), role: f.role.trim() || 'QA Engineer', certs: f.certs.slice(), status: f.status }]),
+      engineers: s.engineers.concat([{ id, name: f.name.trim(), role: f.role.trim() || 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice(), status: f.status }]),
       engFormOpen: false,
     }));
     log('You', `added ${f.name.trim().split(' ')[0]} · ${f.status.toLowerCase()}`, '#2756d6');
@@ -401,18 +374,11 @@ export function useScheduler() {
       orderFormOpen: true,
       userMenuOpen: false,
       sidebarOpen: false,
-      orderForm: { code: '', product: '', customer: '', plant: 'p1', priority: 'Med', req: [] },
+      orderForm: { code: '', product: '', customer: '', plant: 'p1', priority: 'Med' },
     });
   const closeOrderForm = () => setState({ orderFormOpen: false });
   const setOrderForm = (patch: Partial<OrderForm>) =>
     setState((s) => ({ orderForm: { ...s.orderForm, ...patch } }));
-  const toggleOrderReq = (c: CertCode) =>
-    setState((s) => {
-      const has = s.orderForm.req.includes(c);
-      return {
-        orderForm: { ...s.orderForm, req: has ? s.orderForm.req.filter((x) => x !== c) : s.orderForm.req.concat([c]) },
-      };
-    });
   const submitOrderForm = () => {
     const f = S.orderForm;
     if (!f.product.trim() || !f.customer.trim()) return;
@@ -420,7 +386,7 @@ export function useScheduler() {
     const code = f.code.trim() || 'NX-' + (7000 + Math.floor(Math.random() * 900));
     setState((s) => ({
       orders: s.orders.concat([
-        { id, code, customer: f.customer.trim(), product: f.product.trim(), plant: f.plant, req: f.req.slice(), priority: f.priority },
+        { id, code, customer: f.customer.trim(), product: f.product.trim(), plant: f.plant, priority: f.priority },
       ]),
       orderFormOpen: false,
     }));
@@ -636,7 +602,7 @@ export function useScheduler() {
     const pl = plantById(o.plant)!;
     const pc = priorityColors(o.priority);
     return {
-      orderId: o.id, code: o.code, customer: o.customer, product: o.product, priority: o.priority, plantCode: pl.code, certs: o.req.slice(),
+      orderId: o.id, code: o.code, customer: o.customer, product: o.product, priority: o.priority, plantCode: pl.code,
       dotStyle: sx({ width: '9px', height: '9px', borderRadius: '2px', background: pl.color, flexShrink: 0 }),
       priorityStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '8.5px', fontWeight: 600, color: pc.c, background: pc.b, border: '1px solid ' + pc.bd, borderRadius: '3px', padding: '1px 5px' }),
       tileStyle: sx({ background: '#fff', border: '1px solid #e3e6e0', borderRadius: '9px', padding: '9px 10px', cursor: 'grab', boxShadow: '0 1px 2px rgba(20,25,30,.04)' }),
@@ -698,7 +664,7 @@ export function useScheduler() {
       };
     });
     return {
-      engId: e.id, name: e.name, role: e.role, initials: initials(e.name), certs: e.certs.slice(),
+      engId: e.id, name: e.name, role: e.role, department: e.department, subDepartments: e.subDepartments, initials: initials(e.name),
       avatarStyle: sx({ width: '30px', height: '30px', borderRadius: '8px', background: hexA(ac, 0.14), color: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '11px', fontWeight: 600, flexShrink: 0 }),
       nameCellStyle: sx({ borderBottom: '1px solid #e2e5de', borderRight: '1px solid #e2e5de', padding: '11px 13px', background: '#fff', position: 'sticky', left: 0, zIndex: 2 }),
       cells,
@@ -746,7 +712,7 @@ export function useScheduler() {
     };
   });
 
-  const mobilePersonRows = personRows.map((r) => ({ engId: r.engId, name: r.name, role: r.role, initials: r.initials, avatarStyle: r.avatarStyle, certs: r.certs, cell: r.cells[selDay] }));
+  const mobilePersonRows = personRows.map((r) => ({ engId: r.engId, name: r.name, role: r.role, department: r.department, subDepartments: r.subDepartments, initials: r.initials, avatarStyle: r.avatarStyle, cell: r.cells[selDay] }));
   const mobileSiteRows = plantRows.map((r) => ({ name: r.name, loc: r.loc, swatchStyle: r.swatchStyle, cell: r.cells[selDay] }));
   const mobileCustomerRows = customerRows.map((r) => ({ name: r.name, sub: r.sub, initials: r.initials, swatchStyle: r.swatchStyle, cell: r.cells[selDay] }));
 
@@ -775,7 +741,6 @@ export function useScheduler() {
     const ac = avatarColor(selA.eng);
     const pc = priorityColors(ord.priority);
     const cs: string[] = [];
-    if (cf.missing && cf.missing.length) cs.push(`${eng.name.split(' ')[0]} lacks required cert: ${cf.missing.map((c) => certName[c]).join(', ')}.`);
     if (cf.isDbl) cs.push(`${eng.name.split(' ')[0]} is double-booked on ${dayNames[selA.day]} (${selA.appointment} appointment).`);
     if (cf.onLeave) cs.push(`${eng.name.split(' ')[0]} is on leave on ${dayNames[selA.day]}.`);
     const comments = (S.comments[selA.id] || []).map((m) => ({
@@ -791,15 +756,7 @@ export function useScheduler() {
       swatchStyle: sx({ width: '12px', height: '40px', borderRadius: '3px', background: pl.color, flexShrink: 0, marginTop: '2px' }),
       engName: eng.name, engRole: eng.role, engInitials: initials(eng.name), dayName: dayNames[selA.day],
       avatarStyle: sx({ width: '34px', height: '34px', borderRadius: '9px', background: hexA(ac, 0.14), color: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '12px', fontWeight: 600, flexShrink: 0 }),
-      engCerts: eng.certs.map((c) => certName[c]),
-      reqCerts: ord.req.map((c) => {
-        const ok = eng.certs.includes(c);
-        return {
-          name: certName[c], icon: ok ? '✓' : '✕', tag: ok ? 'held' : 'missing',
-          iconStyle: sx({ width: '18px', height: '18px', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, background: ok ? '#e3f5ea' : '#fbe3e3', color: ok ? '#1f9d57' : '#d23b3b' }),
-          tagStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: ok ? '#1f9d57' : '#d23b3b' }),
-        };
-      }),
+      department: eng.department, subDepartments: eng.subDepartments,
       hasConflict: cf.has, conflicts: cs,
       dayBtnStyle: isNight ? segOff : segOn, nightBtnStyle: isNight ? segOn : segOff,
       setDay: () => setAppointment(selA.id, 'Day'), setNight: () => setAppointment(selA.id, 'Night'),
@@ -833,11 +790,9 @@ export function useScheduler() {
     let flag = '';
     let fs: CSSProperties = { display: 'none' };
     if (selOrd) {
-      const miss = selOrd.req.filter((c) => !e.certs.includes(c));
       const onLeave = wleave.some((l) => l.eng === e.id && l.day === cd.day);
       const busy = wk.some((a) => a.eng === e.id && a.day === cd.day && a.appointment === cd.appointment);
-      if (miss.length) { flag = 'missing ' + miss.join('/'); fs = sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: '#b32f2f', background: '#fbe3e3', border: '1px solid #f0c4c4', borderRadius: '4px', padding: '2px 6px' }); }
-      else if (onLeave) { flag = 'on leave'; fs = sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: '#7a4ddb', background: '#efe9fb', border: '1px solid #dccdf5', borderRadius: '4px', padding: '2px 6px' }); }
+      if (onLeave) { flag = 'on leave'; fs = sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: '#7a4ddb', background: '#efe9fb', border: '1px solid #dccdf5', borderRadius: '4px', padding: '2px 6px' }); }
       else if (busy) { flag = 'busy'; fs = sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: '#a96e08', background: '#fff3df', border: '1px solid #f1dcb0', borderRadius: '4px', padding: '2px 6px' }); }
       else { flag = '✓ fit'; fs = sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: '#1f9d57', background: '#e3f5ea', border: '1px solid #c4e6d2', borderRadius: '4px', padding: '2px 6px' }); }
     }
@@ -852,13 +807,10 @@ export function useScheduler() {
   const dayBtns = dayLabels.map((lbl, i) => ({ label: lbl, style: segSm(cd.day === i), select: () => setDraft({ day: i }) }));
   let warnText = '';
   if (selOrd && cd.eng) {
-    const e = engById(cd.eng)!;
-    const miss = selOrd.req.filter((c) => !e.certs.includes(c));
     const onLeave = wleave.some((l) => l.eng === cd.eng && l.day === cd.day);
     const busy = wk.some((a) => a.eng === cd.eng && a.day === cd.day && a.appointment === cd.appointment);
-    if (miss.length) warnText = `${e.name.split(' ')[0]} is missing ${miss.map((c) => certName[c]).join(', ')} — this will create a conflict.`;
-    else if (onLeave) warnText = `${e.name.split(' ')[0]} is on leave on ${dayNames[cd.day]} — this will create a conflict.`;
-    else if (busy) warnText = `${e.name.split(' ')[0]} already has a ${cd.appointment.toLowerCase()} appointment on ${dayNames[cd.day]}.`;
+    if (onLeave) warnText = `${engById(cd.eng)!.name.split(' ')[0]} is on leave on ${dayNames[cd.day]} — this will create a conflict.`;
+    else if (busy) warnText = `${engById(cd.eng)!.name.split(' ')[0]} already has a ${cd.appointment.toLowerCase()} appointment on ${dayNames[cd.day]}.`;
   }
   const canCreate = !!(cd.order && cd.eng);
   const create = {
@@ -890,15 +842,6 @@ export function useScheduler() {
       style: sx({ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '9px', cursor: 'pointer', border: '1px solid ' + (of.plant === p.id ? '#9bb0e8' : '#e2e5de'), background: of.plant === p.id ? '#eef2fd' : '#fff' }),
     })),
     priorities: (['High', 'Med', 'Low'] as Priority[]).map((p) => ({ label: p, onClick: () => setOrderForm({ priority: p }), style: segMd(of.priority === p) })),
-    reqOptions: certOrder.map((c) => {
-      const on = of.req.includes(c);
-      return {
-        code: c, name: certName[c], onClick: () => toggleOrderReq(c),
-        style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '7px 10px', borderRadius: '8px', cursor: 'pointer', border: '1px solid ' + (on ? '#9bb0e8' : '#e2e5de'), background: on ? '#eef2fd' : '#fff' }),
-        boxStyle: sx({ width: '15px', height: '15px', borderRadius: '4px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#fff', background: on ? '#2756d6' : '#fff', border: '1px solid ' + (on ? '#2756d6' : '#cdd2c9') }),
-        check: on ? '✓' : '',
-      };
-    }),
     canSubmit: ofCanSubmit,
     submit: () => submitOrderForm(),
     submitStyle: sx({ background: ofCanSubmit ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '9px', padding: '10px 20px', fontSize: '13px', fontWeight: 600, cursor: ofCanSubmit ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
@@ -924,12 +867,15 @@ export function useScheduler() {
     boxStyle: sx({ width: '15px', height: '15px', borderRadius: '4px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#fff', background: on ? '#2756d6' : '#fff', border: '1px solid ' + (on ? '#2756d6' : '#cdd2c9') }),
     check: on ? '✓' : '',
   });
+  const allDepartments = ['QA-U1', 'QA-U2', 'QA-U3'] as const;
+  const allSubDepartments = ['QMS', 'EHS', 'ESD'] as const;
   const engForm = {
-    name: ef.name, role: ef.role, inStyle: ofInStyle,
+    name: ef.name, role: ef.role, department: ef.department, subDepartments: ef.subDepartments, inStyle: ofInStyle,
     onName: (e: React.ChangeEvent<HTMLInputElement>) => setEngForm({ name: e.target.value }),
     onRole: (e: React.ChangeEvent<HTMLInputElement>) => setEngForm({ role: e.target.value }),
     statuses: (['Active', 'On leave', 'Onboarding'] as const).map((st) => ({ label: st, onClick: () => setEngForm({ status: st }), style: segMd(ef.status === st) })),
-    certOptions: certOrder.map((c) => ({ code: c, name: certName[c], onClick: () => toggleEngCert(c), ...certPick(ef.certs.includes(c)) })),
+    departments: allDepartments.map((d) => ({ label: d, onClick: () => setEngForm({ department: d }), style: segMd(ef.department === d) })),
+    subDepartmentOptions: allSubDepartments.map((c) => ({ code: c, name: c, onClick: () => toggleEngSubDept(c), ...certPick(ef.subDepartments.includes(c)) })),
     canSubmit: !!ef.name.trim(),
     submit: () => submitEngForm(),
     submitStyle: sx({ background: ef.name.trim() ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '9px', padding: '10px 20px', fontSize: '13px', fontWeight: 600, cursor: ef.name.trim() ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
@@ -1011,13 +957,9 @@ export function useScheduler() {
   };
   const adminEngineers = S.engineers.map((e) => {
     const ac = avatarColor(e.id);
-    const held = e.certs;
-    const addable = certOrder.filter((c) => !held.includes(c)).map((c) => ({ code: c, name: certName[c], onAdd: () => addCert(e.id, c) }));
     return {
-      id: e.id, name: e.name, role: e.role, initials: initials(e.name),
+      id: e.id, name: e.name, role: e.role, department: e.department, subDepartments: e.subDepartments, initials: initials(e.name),
       avatarStyle: sx({ width: '30px', height: '30px', borderRadius: '8px', background: hexA(ac, 0.14), color: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '11px', fontWeight: 600, flexShrink: 0 }),
-      certs: held.map((c) => ({ code: c, onRemove: () => removeCert(e.id, c) })), noCerts: held.length === 0,
-      addOpen: S.adminAddCertFor === e.id, addable, allHeld: addable.length === 0, toggleAdd: () => toggleAddCert(e.id),
       appointments: wk.filter((a) => a.eng === e.id).length,
       statusLabel: e.status, statusStyle: statusStyleFor(e.status), toggleStatus: () => toggleStatus(e.id),
     };
@@ -1038,7 +980,7 @@ export function useScheduler() {
     const pc = priorityColors(o.priority);
     const isStaffed = staffed.has(o.id);
     return {
-      code: o.code, product: o.product, customer: o.customer, plantCode: pl.code, req: o.req.slice(), priority: o.priority,
+      code: o.code, product: o.product, customer: o.customer, plantCode: pl.code, priority: o.priority,
       swatchStyle: sx({ width: '9px', height: '9px', borderRadius: '2px', background: pl.color, flexShrink: 0 }),
       priorityStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '10px', fontWeight: 600, color: pc.c, background: pc.b, border: '1px solid ' + pc.bd, borderRadius: '5px', padding: '3px 10px', cursor: 'pointer' }),
       cyclePriority: () => cyclePriority(o.id),

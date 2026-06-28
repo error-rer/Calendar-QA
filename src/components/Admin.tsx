@@ -3,7 +3,7 @@ import { css, HButton } from '../ui';
 
 const engGrid = 'display:grid;grid-template-columns:minmax(180px,1.4fr) 2fr 80px 130px;gap:0';
 const siteGrid = 'display:grid;grid-template-columns:1.4fr 1.4fr 90px 80px 120px;gap:0';
-const orderGrid = 'display:grid;grid-template-columns:96px 1.3fr 1fr 90px 1.1fr 86px 96px;gap:0';
+const orderGrid = 'display:grid;grid-template-columns:96px 1.3fr 1fr 90px 86px 96px;gap:0';
 
 export function Admin({ vm }: { vm: VM }) {
   return (
@@ -46,7 +46,7 @@ function EngineersTable({ vm }: { vm: VM }) {
         <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New engineer</HButton>
       </div>
       <div style={css(engGrid + ";padding:9px 18px;border-bottom:1px solid #eef1ea;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>
-        <div>ENGINEER</div><div>CERTIFICATIONS</div><div style={css('text-align:center')}>APPOINTMENTS</div><div style={css('text-align:right')}>STATUS</div>
+        <div>ENGINEER</div><div>DEPT + SUB-DEPT</div><div style={css('text-align:center')}>APPOINTMENTS</div><div style={css('text-align:right')}>STATUS</div>
       </div>
       {vm.adminEngineers.map((e) => (
         <div key={e.id} style={css(engGrid + ';padding:12px 18px;border-bottom:1px solid #f2f4ee;align-items:center')}>
@@ -57,24 +57,13 @@ function EngineersTable({ vm }: { vm: VM }) {
               <div style={css('font-size:10.5px;color:#8a9088')}>{e.role}</div>
             </div>
           </div>
-          <div style={css('display:flex;gap:5px;flex-wrap:wrap;align-items:center;position:relative')}>
-            {e.certs.map((c) => (
-              <span key={c.code} style={css("display:inline-flex;align-items:center;gap:4px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#46504a;background:#eef3ee;border:1px solid #dde6dd;border-radius:5px;padding:2px 5px 2px 7px")}>
-                {c.code}<HoverX onClick={c.onRemove} />
-              </span>
-            ))}
-            {e.noCerts && (
-              <span style={css('font-size:10.5px;color:#c0392b;font-style:italic;background:#fdeeee;border:1px solid #f3cdcd;border-radius:5px;padding:2px 7px')}>no certifications</span>
-            )}
-            <button onClick={e.toggleAdd} style={css("font-size:10.5px;color:#5b7fd6;background:#eef2fd;border:1px solid #d8e2fa;border-radius:5px;padding:2px 8px;cursor:pointer;font-family:'Archivo',sans-serif;font-weight:600")}>+ cert</button>
-            {e.addOpen && (
-              <div style={css('position:absolute;left:0;top:28px;z-index:20;background:#fff;border:1px solid #e2e5de;border-radius:9px;box-shadow:0 10px 26px rgba(20,25,30,.14);padding:6px;min-width:172px;animation:fadeUp .12s ease')}>
-                {e.addable.map((a) => (
-                  <HButton key={a.code} onClick={a.onAdd} style={css("display:block;width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:7px 9px;border-radius:6px;font-size:11.5px;color:#3c423d;font-family:'Archivo',sans-serif")} hover={{ background: '#f4f6f1' }}>
-                    <span style={css("font-family:'IBM Plex Mono',monospace;font-weight:600;color:#5b7fd6")}>{a.code}</span> · {a.name}
-                  </HButton>
+          <div style={css('display:flex;flex-direction:column;gap:5px')}>
+            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#3c423d")}>{e.department}</span>
+            {e.subDepartments.length > 0 && (
+              <div style={css('display:flex;gap:4px;flex-wrap:wrap')}>
+                {e.subDepartments.map((sd, i) => (
+                  <span key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5b7fd6;background:#eef2fd;border:1px solid #d8e2fa;border-radius:4px;padding:1px 5px")}>{sd}</span>
                 ))}
-                {e.allHeld && <div style={css('font-size:11px;color:#a6aca2;padding:7px 9px;font-style:italic')}>All certs held</div>}
               </div>
             )}
           </div>
@@ -131,7 +120,7 @@ function OrdersTable({ vm }: { vm: VM }) {
         <HButton onClick={vm.addOrder} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New order</HButton>
       </div>
       <div style={css(orderGrid + ";padding:9px 18px;border-bottom:1px solid #eef1ea;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>
-        <div>ORDER</div><div>PRODUCT</div><div>CUSTOMER</div><div>SITE</div><div>REQ CERTS</div><div style={css('text-align:center')}>PRIORITY</div><div style={css('text-align:right')}>STATUS</div>
+        <div>ORDER</div><div>PRODUCT</div><div>CUSTOMER</div><div>SITE</div><div style={css('text-align:center')}>PRIORITY</div><div style={css('text-align:right')}>STATUS</div>
       </div>
       {vm.adminOrders.map((o, i) => (
         <div key={i} style={css(orderGrid + ';padding:12px 18px;border-bottom:1px solid #f2f4ee;align-items:center')}>
@@ -139,11 +128,6 @@ function OrdersTable({ vm }: { vm: VM }) {
           <div style={css('font-size:12px;color:#3c423d;font-weight:500')}>{o.product}</div>
           <div style={css('font-size:11.5px;color:#5c625c')}>{o.customer}</div>
           <div style={css('display:flex;align-items:center;gap:6px')}><span style={o.swatchStyle} /><span style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5c625c")}>{o.plantCode}</span></div>
-          <div style={css('display:flex;gap:4px;flex-wrap:wrap')}>
-            {o.req.map((c, ci) => (
-              <span key={ci} style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;color:#6a706a;background:#f1f3ee;border:1px solid #e3e6e0;border-radius:3px;padding:1px 5px")}>{c}</span>
-            ))}
-          </div>
           <div style={css('display:flex;justify-content:center')}><button onClick={o.cyclePriority} style={o.priorityStyle}>{o.priority}</button></div>
           <div style={css('display:flex;justify-content:flex-end')}><span style={o.statusStyle}>{o.statusLabel}</span></div>
         </div>

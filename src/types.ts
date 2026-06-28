@@ -1,4 +1,5 @@
-export type CertCode = 'AEC' | 'REL' | 'CR1' | 'CR2' | 'FA' | 'XCT' | 'ATE';
+export type Department = 'QA-U1' | 'QA-U2' | 'QA-U3';
+export type SubDepartment = 'QMS' | 'EHS' | 'ESD';
 
 export type Priority = 'High' | 'Med' | 'Low';
 export type AppointmentKind = 'Day' | 'Night';
@@ -17,7 +18,8 @@ export interface Engineer {
   id: string;
   name: string;
   role: string;
-  certs: CertCode[];
+  department: Department;
+  subDepartments: SubDepartment[];
   status: EngStatus;
 }
 
@@ -27,7 +29,6 @@ export interface Order {
   customer: string;
   product: string;
   plant: string;
-  req: CertCode[];
   priority: Priority;
 }
 
@@ -77,14 +78,14 @@ export interface OrderForm {
   customer: string;
   plant: string;
   priority: Priority;
-  req: CertCode[];
 }
 
 export interface EngineerForm {
   name: string;
   role: string;
+  department: Department;
+  subDepartments: SubDepartment[];
   status: EngStatus;
-  certs: CertCode[];
 }
 
 export interface SiteForm {
@@ -132,7 +133,6 @@ export interface State {
   loginPass: string;
   userMenuOpen: boolean;
   createOpen: boolean;
-  adminAddCertFor: string | null;
   createDraft: CreateDraft;
   orderFormOpen: boolean;
   orderForm: OrderForm;
