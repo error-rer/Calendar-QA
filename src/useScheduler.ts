@@ -184,6 +184,7 @@ export function useScheduler() {
   const toggleSidebar = () => setState((s) => ({ sidebarOpen: !s.sidebarOpen }));
   const closeSidebar = () => setState({ sidebarOpen: false });
   const setFilterEmp = (v: string) => setState({ filterEmp: v });
+  const setTimetableEng = (v: string) => setState({ timetableEng: v });
   const setFilterCust = (v: string) => setState({ filterCust: v });
   const setFilterPlant = (v: string) => setState({ filterPlant: v });
   const setFilterSubdept = (v: string) => setState({ filterSubdept: v });
@@ -739,6 +740,30 @@ export function useScheduler() {
   const mobileCustomerRows = customerRows.map((r) => ({ name: r.name, sub: r.sub, initials: r.initials, swatchStyle: r.swatchStyle, cell: r.cells[selDay] }));
   const mobileSubDeptRows = subDeptRows.map((r) => ({ name: r.name, cell: r.cells[selDay] }));
 
+  // ---- timetable (per-employee calendar view) ----
+  const timeSlots = [
+    { id: 'day', label: 'Day', hours: '06:00 – 18:00' },
+    { id: 'night', label: 'Night', hours: '18:00 – 06:00' },
+  ] as const;
+  type TimeSlotId = (typeof timeSlots)[number]['id'];
+  const slotAppointmentMap: Record<TimeSlotId, string[]> = { day: ['Day'], night: ['Night'] };
+
+  const timetableEngId = S.timetableEng || S.engineers[0]?.id || '';
+  const timetableEng = engById(timetableEngId);
+  const timetableEngOptions = S.engineers.map((e) => ({ value: e.id, label: e.name }));
+  const timetableRows = timeSlots.map((sl) => {
+    const cells = [0, 1, 2, 3, 4].map((day) => {
+      const chips = wk
+        .filter((a) => a.eng === timetableEngId && a.day === day && slotAppointmentMap[sl.id].includes(a.appointment))
+        .map((a) => buildChip(a, cmap));
+      return { chips, empty: chips.length === 0, style: cellShell };
+    });
+    return { slotId: sl.id, label: sl.label, hours: sl.hours, cells };
+  });
+  const timetableGridCols = '200px repeat(5, minmax(168px, 1fr))';
+  const timetableHasEng = !!timetableEng;
+  const mobileTimetableRows = timetableRows.map((r) => ({ slotId: r.slotId, label: r.label, hours: r.hours, cell: r.cells[selDay] }));
+
   const team = [
     { name: 'You', initials: 'YO', color: '#15191e' },
     { name: 'Marco Ruiz', initials: 'MR', color: '#0f9d8c' },
@@ -1068,16 +1093,16 @@ export function useScheduler() {
     goSchedule, goAdmin, goProfile,
     navSchedStyle: S.page === 'schedule' ? tabOn : tabOff, navAdminStyle: S.page === 'admin' ? tabOn : tabOff,
     userMenuOpen: S.userMenuOpen, toggleUserMenu,
-    isPerson: S.view === 'person', isPlant: S.view === 'plant', isCustomer: S.view === 'customer', isSubdept: S.view === 'subdept',
-    setPerson: () => setView('person'), setPlant: () => setView('plant'), setCustomer: () => setView('customer'), setSubdept: () => setView('subdept'),
-    personTabStyle: S.view === 'person' ? tabOn : tabOff, plantTabStyle: S.view === 'plant' ? tabOn : tabOff, customerTabStyle: S.view === 'customer' ? tabOn : tabOff, subdeptTabStyle: S.view === 'subdept' ? tabOn : tabOff,
+    isPerson: S.view === 'person', isPlant: S.view === 'plant', isCustomer: S.view === 'customer', isSubdept: S.view === 'subdept', isTimetable: S.view === 'timetable',
+    setPerson: () => setView('person'), setPlant: () => setView('plant'), setCustomer: () => setView('customer'), setSubdept: () => setView('subdept'), setTimetable: () => setView('timetable'),
+    personTabStyle: S.view === 'person' ? tabOn : tabOff, plantTabStyle: S.view === 'plant' ? tabOn : tabOff, customerTabStyle: S.view === 'customer' ? tabOn : tabOff, subdeptTabStyle: S.view === 'subdept' ? tabOn : tabOff, timetableTabStyle: S.view === 'timetable' ? tabOn : tabOff,
     showViewTabs: !isMonth,
     isMonth, weekScaleStyle: isMonth ? tabOff : tabOn, monthScaleStyle: isMonth ? tabOn : tabOff,
     setWeekScale: () => setScale('week'), setMonthScale: () => setScale('month'),
     monthDesktop: isMonth && !isMobile, monthMobile: isMonth && isMobile,
     monthCells, monthWeekdayHeads, monthName, monthOrders, monthScheduledCount, monthOrderCount: monthOrders.length,
-    gridPerson: S.view === 'person' && !isMobile && !isMonth, gridPlant: S.view === 'plant' && !isMobile && !isMonth, gridCustomer: S.view === 'customer' && !isMobile && !isMonth, gridSubdept: S.view === 'subdept' && !isMobile && !isMonth,
-    mobilePerson: isMobile && S.view === 'person' && !isMonth, mobileSite: isMobile && S.view === 'plant' && !isMonth, mobileCustomer: isMobile && S.view === 'customer' && !isMonth, mobileSubdept: isMobile && S.view === 'subdept' && !isMonth,
+    gridPerson: S.view === 'person' && !isMobile && !isMonth, gridPlant: S.view === 'plant' && !isMobile && !isMonth, gridCustomer: S.view === 'customer' && !isMobile && !isMonth, gridSubdept: S.view === 'subdept' && !isMobile && !isMonth, gridTimetable: S.view === 'timetable' && !isMobile && !isMonth,
+    mobilePerson: isMobile && S.view === 'person' && !isMonth, mobileSite: isMobile && S.view === 'plant' && !isMonth, mobileCustomer: isMobile && S.view === 'customer' && !isMonth, mobileSubdept: isMobile && S.view === 'subdept' && !isMonth, mobileTimetable: isMobile && S.view === 'timetable' && !isMonth,
     showDayStrip: isMobile && !isMonth,
     awayToday, awayLabel: dayNames[selDay], showAway: isMobile && !isMonth && awayToday.length > 0,
     weekLabel, weekTag, periodLabel, periodTag, gridCols, days, daySel,
@@ -1091,6 +1116,9 @@ export function useScheduler() {
     conflictPillStyle: sx({ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', background: conflicts ? '#fdeeee' : '#eef1ea', border: '1px solid ' + (conflicts ? '#f3cdcd' : '#e2e5de'), color: conflicts ? '#b32f2f' : '#6a706a' }),
     plants: plantsVm, pool, poolCount: pool.length, poolEmpty: pool.length === 0,
     personRows, plantRows, customerRows, subDeptRows, mobilePersonRows, mobileSiteRows, mobileCustomerRows, mobileSubDeptRows,
+    timetableRows, timetableGridCols, timetableEngOptions, timetableEng: timetableEngId, timetableHasEng, timetableEngName: timetableEng?.name || '',
+    setTimetableEng: (e: React.ChangeEvent<HTMLSelectElement>) => setTimetableEng(e.target.value),
+    mobileTimetableRows,
     presence, activity, detail,
     emptyWeek: S.weekOffset !== 0 && wk.length === 0 && !isMonth, copyWeek,
     toggleSidebar, closeSidebar, showSidebarBackdrop: isMobile && S.sidebarOpen,

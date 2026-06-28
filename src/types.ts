@@ -68,7 +68,7 @@ export interface CreateDraft {
 }
 
 export type Page = 'schedule' | 'admin' | 'profile';
-export type View = 'person' | 'plant' | 'customer' | 'subdept';
+export type View = 'person' | 'plant' | 'customer' | 'subdept' | 'timetable';
 export type TimeScale = 'week' | 'month';
 export type AdminTab = 'engineers' | 'sites' | 'orders';
 
@@ -131,6 +131,7 @@ export interface State {
   filterCust: string;
   filterPlant: string;
   filterSubdept: string;
+  timetableEng: string;
   loginEmail: string;
   loginPass: string;
   userMenuOpen: boolean;

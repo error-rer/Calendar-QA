@@ -37,6 +37,7 @@ export function initialState(): State {
     filterCust: '',
     filterPlant: '',
     filterSubdept: '',
+    timetableEng: '',
     loginEmail: 'jordan.lee@nexsil.com',
     loginPass: 'directorqa',
     userMenuOpen: false,
