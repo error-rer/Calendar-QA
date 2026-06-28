@@ -70,8 +70,6 @@ export function Schedule({ vm }: { vm: VM }) {
           {vm.mobileCustomer && <MobileCustomer vm={vm} />}
           {vm.mobileSubdept && <MobileSubDept vm={vm} />}
           {vm.monthDesktop && <MonthGrid vm={vm} />}
-          {vm.showTimetable && !vm.isMobile && <TimetableGrid vm={vm} />}
-          {vm.showTimetable && vm.isMobile && <MobileTimetable vm={vm} />}
           {vm.monthMobile && <MonthMobile vm={vm} />}
 
           {vm.emptyWeek && (
@@ -87,6 +85,23 @@ export function Schedule({ vm }: { vm: VM }) {
       </div>
 
       <DetailPanel vm={vm} />
+
+      {vm.showTimetable && (
+        <div onClick={vm.closeTimetable} style={vm.modalOverlayStyle}>
+          <div onClick={vm.stop} style={css('position:relative;background:#fff;border-radius:14px;width:100%;max-width:1200px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.18);margin:20px')}>
+            <div style={css('display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e7eae3')}>
+              <div style={css('display:flex;align-items:center;gap:10px')}>
+                <span style={css('font-size:15px;font-weight:700;color:#23282a')}>{vm.timetableEngName}</span>
+                <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9aa097")}>WEEKLY TIMETABLE</span>
+              </div>
+              <button onClick={vm.closeTimetable} style={css('width:30px;height:30px;border:1px solid #e2e5de;background:#fff;border-radius:7px;cursor:pointer;color:#6a706a;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0')}>✕</button>
+            </div>
+            <div className="scrl" style={css('flex:1;overflow:auto;padding:4px')}>
+              {vm.isMobile ? <MobileTimetable vm={vm} /> : <TimetableGrid vm={vm} />}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -189,79 +204,61 @@ function Sidebar({ vm }: { vm: VM }) {
 
 function TimetableGrid({ vm }: { vm: VM }) {
   return (
-    <div>
-      <div style={css('display:flex;align-items:center;gap:12px;padding:11px 16px;background:#f3f5ef;border-bottom:1px solid #d8dcd4')}>
-        <button onClick={vm.closeTimetable} style={css("background:#fff;border:1px solid #dde0d9;border-radius:7px;padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;color:#3c423d")} title="Back to grid">← Back</button>
-        <span style={css('font-size:14px;font-weight:700;color:#23282a')}>{vm.timetableEngName}</span>
-        <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9aa097")}>WEEKLY TIMETABLE</span>
+    <div style={{ ...gridBase, gridTemplateColumns: vm.timetableGridCols }}>
+      <div style={css('position:sticky;top:0;left:0;z-index:4;background:#f3f5ef;border-bottom:1px solid #d8dcd4;border-right:1px solid #e2e5de;padding:10px 14px')}>
+        <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>TIME</span>
       </div>
-      <div style={{ ...gridBase, gridTemplateColumns: vm.timetableGridCols }}>
-        <div style={css('position:sticky;top:0;left:0;z-index:4;background:#f3f5ef;border-bottom:1px solid #d8dcd4;border-right:1px solid #e2e5de;padding:10px 14px')}>
-          <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>TIME</span>
-        </div>
-        <DayHeaders vm={vm} />
-        {vm.timetableRows.map((r) => (
-          <Fragment key={r.slotId}>
-            <div style={css('border-bottom:1px solid #e2e5de;border-right:1px solid #e2e5de;padding:12px 14px;background:#fff;position:sticky;left:0;z-index:2')}>
-              <div style={css('display:flex;flex-direction:column;gap:2px')}>
-                <span style={css('font-size:11.5px;font-weight:700;color:#23282a')}>{r.label}</span>
-              </div>
-            </div>
-            {r.cells.map((cell, ci) => (
-              <div key={ci} style={cell.style}>
-                {cell.chips.map((chip) => (
-                  <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
-                    <div style={css('display:flex;align-items:center;gap:6px')}>
-                      <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#15191e")}>{chip.code}</span>
-                      <span style={css('flex:1')} />
-                      <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
-                      <span style={chip.appointmentStyle}>{chip.appointment}</span>
-                    </div>
-                    <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.customer}</div>
+      <DayHeaders vm={vm} />
+      {vm.timetableRows.map((r) => (
+        <Fragment key={r.slotId}>
+          <div style={css('border-bottom:1px solid #e2e5de;border-right:1px solid #e2e5de;padding:12px 14px;background:#fff;position:sticky;left:0;z-index:2')}>
+            <span style={css('font-size:11.5px;font-weight:700;color:#23282a')}>{r.label}</span>
+          </div>
+          {r.cells.map((cell, ci) => (
+            <div key={ci} style={cell.style}>
+              {cell.chips.map((chip) => (
+                <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
+                  <div style={css('display:flex;align-items:center;gap:6px')}>
+                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#15191e")}>{chip.code}</span>
+                    <span style={css('flex:1')} />
+                    <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
+                    <span style={chip.appointmentStyle}>{chip.appointment}</span>
                   </div>
-                ))}
-                {cell.empty && <div style={css('font-size:10.5px;color:#bcc1b8;text-align:center;padding:8px 0')}>—</div>}
-              </div>
-            ))}
-          </Fragment>
-        ))}
-      </div>
+                  <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.customer}</div>
+                </div>
+              ))}
+              {cell.empty && <div style={css('font-size:10.5px;color:#bcc1b8;text-align:center;padding:8px 0')}>—</div>}
+            </div>
+          ))}
+        </Fragment>
+      ))}
     </div>
   );
 }
 
 function MobileTimetable({ vm }: { vm: VM }) {
   return (
-    <div style={css('padding:11px 11px 24px;display:flex;flex-direction:column;gap:10px')}>
-      <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:4px;padding:0 3px')}>
-        <button onClick={vm.closeTimetable} style={css("background:#f1f3ee;border:1px solid #dde0d9;border-radius:7px;padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;color:#3c423d")}>← Back</button>
-        <span style={css('font-size:14px;font-weight:700;color:#23282a')}>{vm.timetableEngName}</span>
-        <span style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;color:#9aa097")}>WEEKLY TIMETABLE</span>
-      </div>
-      <div style={css('background:#fff;border:1px solid #e4e7e0;border-radius:12px;padding:12px 13px')}>
-        <div style={css('display:flex;flex-direction:column;gap:8px')}>
-          {vm.mobileTimetableRows.map((r) => (
-            <div key={r.slotId}>
-              <div style={css('display:flex;align-items:center;gap:6px;margin-bottom:6px')}>
-                <span style={css('font-size:12px;font-weight:700;color:#23282a')}>{r.label}</span>
-              </div>
-              <div style={css('display:flex;flex-direction:column;gap:6px')}>
-                {r.cell.chips.map((chip) => (
-                  <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
-                    <div style={css('display:flex;align-items:center;gap:6px')}>
-                      <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:#15191e")}>{chip.code}</span>
-                      <span style={css('flex:1')} />
-                      <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
-                      <span style={chip.appointmentStyle}>{chip.appointment}</span>
-                    </div>
-                    <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.customer}</div>
+    <div style={css('padding:4px 0;display:flex;flex-direction:column;gap:10px')}>
+      <div style={css('display:flex;flex-direction:column;gap:8px')}>
+        {vm.mobileTimetableRows.map((r) => (
+          <div key={r.slotId}>
+            <div style={css('font-size:11px;font-weight:700;color:#9aa097;margin-bottom:5px;padding-left:2px')}>{r.label}</div>
+            <div style={css('display:flex;flex-direction:column;gap:6px')}>
+              {r.cell.chips.map((chip) => (
+                <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
+                  <div style={css('display:flex;align-items:center;gap:6px')}>
+                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:#15191e")}>{chip.code}</span>
+                    <span style={css('flex:1')} />
+                    <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
+                    <span style={chip.appointmentStyle}>{chip.appointment}</span>
                   </div>
-                ))}
-                {r.cell.empty && <div style={css('font-size:11px;color:#a6aca2;text-align:center;padding:8px 0;font-style:italic')}>No appointments</div>}
-              </div>
+                  <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.customer}</div>
+                </div>
+              ))}
+              {r.cell.empty && <div style={css('font-size:11px;color:#a6aca2;text-align:center;padding:8px 0;font-style:italic')}>No appointments</div>}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   );
