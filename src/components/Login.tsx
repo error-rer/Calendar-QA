@@ -34,7 +34,7 @@ export function Login({ vm }: { vm: VM }) {
                 <div style={css('display:flex;align-items:center;gap:10px;font-size:13px;color:#c4cac8')}><span style={css('color:#6fe3a0')}>▢</span>Shared planning with your QA leads</div>
               </div>
             </div>
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5a6160;position:relative;z-index:2")}>v2.4 · FAB7 · FAB12 · FAB22 · ATM</div>
+            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5a6160;position:relative;z-index:2")}>v2.4 · U1 · U2 · U3</div>
             <div style={css('position:absolute;inset:0;z-index:1;opacity:.5;background-image:linear-gradient(rgba(111,227,160,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(111,227,160,.06) 1px,transparent 1px);background-size:26px 26px')} />
             <div style={css('position:absolute;right:34px;bottom:34px;z-index:1;width:130px;height:130px;opacity:.55;background-image:radial-gradient(circle,rgba(111,227,160,.5) 2px,transparent 2.5px);background-size:26px 26px')} />
           </>

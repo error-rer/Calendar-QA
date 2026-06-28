@@ -1,10 +1,9 @@
 ﻿import type { Plant, State } from './types';
 
 export const initialPlants: Plant[] = [
-  { id: 'p1', name: 'Fab 7', loc: 'Chandler, AZ', code: 'FAB7', color: '#2f6df0', active: true },
-  { id: 'p2', name: 'Fab 12', loc: 'Hillsboro, OR', code: 'FAB12', color: '#0f9d8c', active: true },
-  { id: 'p3', name: 'Fab 22', loc: 'Dresden, DE', code: 'FAB22', color: '#c2620c', active: true },
-  { id: 'p4', name: 'ATM Penang', loc: 'Penang, MY', code: 'ATM', color: '#7a4ddb', active: true },
+  { id: 'p1', name: 'U1', loc: '', code: 'U1', color: '#2f6df0', active: true },
+  { id: 'p2', name: 'U2', loc: '', code: 'U2', color: '#0f9d8c', active: true },
+  { id: 'p3', name: 'U3', loc: '', code: 'U3', color: '#c2620c', active: true },
 ];
 
 /** Swatch options offered when creating a new fab site. */
@@ -84,9 +83,9 @@ export function initialState(): State {
       { id: 'o3', code: 'HC-9930', customer: 'Helio Compute', product: 'HPC GPU die', plant: 'p2', priority: 'Med' },
       { id: 'o4', code: 'OM-1185', customer: 'Orion Medical', product: 'Implant ASIC', plant: 'p3', priority: 'High' },
       { id: 'o5', code: 'CN-7758', customer: 'Cirrus Networks', product: 'Switch SoC', plant: 'p1', priority: 'Med' },
-      { id: 'o6', code: 'HC-9931', customer: 'Helio Compute', product: 'HBM stack test', plant: 'p4', priority: 'Low' },
+      { id: 'o6', code: 'HC-9931', customer: 'Helio Compute', product: 'HBM stack test', plant: 'p1', priority: 'Low' },
       { id: 'o7', code: 'VA-2210', customer: 'Vanta Auto', product: 'Power IGBT qual', plant: 'p3', priority: 'Med' },
-      { id: 'o8', code: 'NB-4480', customer: 'Nimbus Aero', product: 'Sensor MEMS', plant: 'p4', priority: 'Med' },
+      { id: 'o8', code: 'NB-4480', customer: 'Nimbus Aero', product: 'Sensor MEMS', plant: 'p3', priority: 'Med' },
     ],
     assignments: [
       { id: 'a1', eng: 'e1', order: 'o1', day: 0, appointment: 'Day', week: 0 },

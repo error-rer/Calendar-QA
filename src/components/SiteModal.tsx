@@ -19,7 +19,7 @@ export function SiteModal({ vm }: { vm: VM }) {
           <div style={css('display:flex;gap:14px;flex-wrap:wrap')}>
             <div style={css('flex:2;min-width:180px')}>
               <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>Site name</label>
-              <HInput value={f.name} onChange={f.onName} placeholder="e.g. Fab 30" style={f.inStyle} focus={{ borderColor: '#9bb0e8' }} />
+              <HInput value={f.name} onChange={f.onName} placeholder="e.g. U4" style={f.inStyle} focus={{ borderColor: '#9bb0e8' }} />
             </div>
             <div style={css('flex:1;min-width:120px')}>
               <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>Code <span style={css('color:#a6aca2;font-weight:400')}>· optional</span></label>
