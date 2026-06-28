@@ -77,18 +77,6 @@ function EngineersTable({ vm }: { vm: VM }) {
   );
 }
 
-function HoverX({ onClick }: { onClick: () => void }) {
-  return (
-    <HButton
-      onClick={onClick}
-      style={css('cursor:pointer;color:#9aa6a0;font-size:11px;line-height:1;background:none;border:none;padding:0')}
-      hover={{ color: '#d23b3b' }}
-    >
-      ×
-    </HButton>
-  );
-}
-
 function SitesTable({ vm }: { vm: VM }) {
   return (
     <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;overflow:hidden')}>

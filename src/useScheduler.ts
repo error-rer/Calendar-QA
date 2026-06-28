@@ -3,7 +3,6 @@ import type {
   Assignment,
   CreateDraft,
   CustomerForm,
-  Department,
   EngineerForm,
   LeaveForm,
   LeaveType,
