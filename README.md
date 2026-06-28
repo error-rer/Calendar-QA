@@ -19,10 +19,10 @@ The sign-in screen accepts any credentials (it's a seeded demo — the
 ## What's included
 
 - **Login** — split brand / sign-in layout, Okta SSO, Enter-to-submit.
-- **Schedule** — a Week / Month scale toggle plus three grouping views
-  (By engineer / By site / By customer). The weekly scale is a sticky grid
+- **Schedule** — a Week / Month scale toggle plus four grouping views
+  (By QA / By internal / By customer / By sub-department). The weekly scale is a sticky grid
   with drag-and-drop staffing from the unstaffed-order pool,
-  drag-to-reschedule,   live conflict detection (double-booking), week navigation with "copy week", Employee/Customer
+  drag-to-reschedule, live conflict detection (double-booking), week navigation with "copy week", Employee/Customer
   filters and per-site visibility toggles, presence avatars, and an
   activity feed.
 - **Month view** — a 7-column calendar (today outlined, weekends dimmed)
@@ -36,7 +36,7 @@ The sign-in screen accepts any credentials (it's a seeded demo — the
   busy validation and a conflict-warning banner; also opens prefilled
   from an empty grid cell.
 - **Create-order modal** — open a new customer order (code, product,
-  customer with suggestions, fab site, priority) into the
+  customer with suggestions, internal site, priority) into the
   unstaffed pool.
 - **Create engineer / fab site / customer** — modal forms (opened from the
   user menu, plus the Manage tabs for engineers and sites) that add real

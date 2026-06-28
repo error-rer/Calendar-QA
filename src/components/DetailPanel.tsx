@@ -32,7 +32,7 @@ export function DetailPanel({ vm }: { vm: VM }) {
         )}
 
         <div>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:9px")}>ASSIGNED ENGINEER</div>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:9px")}>ASSIGNED QA</div>
           <div style={css('display:flex;align-items:center;gap:10px')}>
             <div style={detail.avatarStyle}>{detail.engInitials}</div>
             <div>

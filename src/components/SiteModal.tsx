@@ -9,8 +9,8 @@ export function SiteModal({ vm }: { vm: VM }) {
       <div onClick={vm.stop} style={vm.modalCardStyle}>
         <div style={css('padding:16px 20px;border-bottom:1px solid #eef1ea;display:flex;align-items:center;justify-content:space-between')}>
           <div>
-            <div style={css('font-size:15px;font-weight:700;letter-spacing:-.2px')}>New fab site</div>
-            <div style={css('font-size:11.5px;color:#8a9088;margin-top:1px')}>Adds a fab / assembly site to the schedule and filters.</div>
+            <div style={css('font-size:15px;font-weight:700;letter-spacing:-.2px')}>New internal</div>
+            <div style={css('font-size:11.5px;color:#8a9088;margin-top:1px')}>Adds an internal site to the schedule and filters.</div>
           </div>
           <HButton onClick={vm.closeSiteForm} style={css('width:28px;height:28px;border:1px solid #e2e5de;background:#fff;border-radius:7px;cursor:pointer;color:#6a706a;font-size:14px')} hover={{ background: '#f1f3ee' }}>✕</HButton>
         </div>

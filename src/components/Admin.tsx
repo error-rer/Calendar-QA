@@ -11,7 +11,7 @@ export function Admin({ vm }: { vm: VM }) {
       <div style={vm.adminWrapStyle}>
         <div style={css('margin-bottom:20px')}>
           <div style={css('font-size:20px;font-weight:700;letter-spacing:-.3px')}>Manage workspace</div>
-          <div style={css('font-size:13px;color:#7a807a;margin-top:3px')}>Engineers, fab sites, and customer orders. Changes apply to the live schedule.</div>
+          <div style={css('font-size:13px;color:#7a807a;margin-top:3px')}>QA, internal sites, and customer orders. Changes apply to the live schedule.</div>
         </div>
 
         <div style={vm.adminStatGridStyle}>
@@ -26,7 +26,7 @@ export function Admin({ vm }: { vm: VM }) {
 
         <div style={css('display:flex;background:#fff;border:1px solid #e0e3dc;border-radius:9px;padding:2px;gap:2px;width:max-content;margin-bottom:16px')}>
           <button onClick={vm.setTabEng} style={vm.tabEngStyle}>Engineers</button>
-          <button onClick={vm.setTabSite} style={vm.tabSiteStyle}>Fab sites</button>
+          <button onClick={vm.setTabSite} style={vm.tabSiteStyle}>Internal</button>
           <button onClick={vm.setTabOrder} style={vm.tabOrderStyle}>Customer orders</button>
         </div>
 
@@ -42,11 +42,11 @@ function EngineersTable({ vm }: { vm: VM }) {
   return (
     <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;overflow:hidden')}>
       <div style={css('display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #eef1ea')}>
-        <div style={css('font-size:13px;font-weight:700')}>QA engineers <span style={css('color:#9aa097;font-weight:500')}>· {vm.engCount}</span></div>
-        <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New engineer</HButton>
+        <div style={css('font-size:13px;font-weight:700')}>QA <span style={css('color:#9aa097;font-weight:500')}>· {vm.engCount}</span></div>
+        <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New QA</HButton>
       </div>
       <div style={css(engGrid + ";padding:9px 18px;border-bottom:1px solid #eef1ea;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>
-        <div>ENGINEER</div><div>DEPT + SUB-DEPT</div><div style={css('text-align:center')}>APPOINTMENTS</div><div style={css('text-align:right')}>STATUS</div>
+        <div>QA</div><div>DEPT + SUB-DEPT</div><div style={css('text-align:center')}>APPOINTMENTS</div><div style={css('text-align:right')}>STATUS</div>
       </div>
       {vm.adminEngineers.map((e) => (
         <div key={e.id} style={css(engGrid + ';padding:12px 18px;border-bottom:1px solid #f2f4ee;align-items:center')}>
@@ -81,11 +81,11 @@ function SitesTable({ vm }: { vm: VM }) {
   return (
     <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;overflow:hidden')}>
       <div style={css('display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #eef1ea')}>
-        <div style={css('font-size:13px;font-weight:700')}>Fab &amp; assembly sites <span style={css('color:#9aa097;font-weight:500')}>· {vm.siteCount}</span></div>
-        <HButton onClick={vm.addSite} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New site</HButton>
+        <div style={css('font-size:13px;font-weight:700')}>Internal sites <span style={css('color:#9aa097;font-weight:500')}>· {vm.siteCount}</span></div>
+        <HButton onClick={vm.addSite} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New internal</HButton>
       </div>
       <div style={css(siteGrid + ";padding:9px 18px;border-bottom:1px solid #eef1ea;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>
-        <div>SITE</div><div>LOCATION</div><div>CODE</div><div style={css('text-align:center')}>APPOINTMENTS</div><div style={css('text-align:right')}>VISIBILITY</div>
+        <div>INTERNAL</div><div>LOCATION</div><div>CODE</div><div style={css('text-align:center')}>APPOINTMENTS</div><div style={css('text-align:right')}>VISIBILITY</div>
       </div>
       {vm.adminSites.map((s, i) => (
         <div key={i} style={css(siteGrid + ';padding:13px 18px;border-bottom:1px solid #f2f4ee;align-items:center')}>
@@ -108,7 +108,7 @@ function OrdersTable({ vm }: { vm: VM }) {
         <HButton onClick={vm.addOrder} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New order</HButton>
       </div>
       <div style={css(orderGrid + ";padding:9px 18px;border-bottom:1px solid #eef1ea;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>
-        <div>ORDER</div><div>PRODUCT</div><div>CUSTOMER</div><div>SITE</div><div style={css('text-align:center')}>PRIORITY</div><div style={css('text-align:right')}>STATUS</div>
+        <div>ORDER</div><div>PRODUCT</div><div>CUSTOMER</div><div>INTERNAL</div><div style={css('text-align:center')}>PRIORITY</div><div style={css('text-align:right')}>STATUS</div>
       </div>
       {vm.adminOrders.map((o, i) => (
         <div key={i} style={css(orderGrid + ';padding:12px 18px;border-bottom:1px solid #f2f4ee;align-items:center')}>

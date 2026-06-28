@@ -711,9 +711,20 @@ export function useScheduler() {
     };
   });
 
+  const allSubDepts = [...new Set(S.engineers.flatMap((e) => e.subDepartments))];
+  const subDeptColors: Record<string, string> = { QMS: '#2756d6', EHS: '#0f9d8c', ESD: '#b5503a' };
+  const subDeptRows = allSubDepts.map((sd) => {
+    const engIds = new Set(S.engineers.filter((e) => e.subDepartments.includes(sd)).map((e) => e.id));
+    const cells = [0, 1, 2, 3, 4].map((day) => {
+      const chips = wk.filter((a) => engIds.has(a.eng) && a.day === day).map((a) => buildPersonChip(a, cmap, subDeptColors[sd]));
+      return { chips, empty: chips.length === 0, style: cellShell };
+    });
+    return { name: sd, cells };
+  });
   const mobilePersonRows = personRows.map((r) => ({ engId: r.engId, name: r.name, role: r.role, department: r.department, subDepartments: r.subDepartments, initials: r.initials, avatarStyle: r.avatarStyle, cell: r.cells[selDay] }));
   const mobileSiteRows = plantRows.map((r) => ({ name: r.name, loc: r.loc, swatchStyle: r.swatchStyle, cell: r.cells[selDay] }));
   const mobileCustomerRows = customerRows.map((r) => ({ name: r.name, sub: r.sub, initials: r.initials, swatchStyle: r.swatchStyle, cell: r.cells[selDay] }));
+  const mobileSubDeptRows = subDeptRows.map((r) => ({ name: r.name, cell: r.cells[selDay] }));
 
   const team = [
     { name: 'You', initials: 'YO', color: '#15191e' },
@@ -945,8 +956,8 @@ export function useScheduler() {
   const activeEng = S.engineers.filter((e) => e.status === 'Active').length;
   const activeSites = S.plants.filter((p) => S.activePlants[p.id]).length;
   const adminStats = [
-    { label: 'ENGINEERS', value: String(S.engineers.length), sub: activeEng + ' active' },
-    { label: 'FAB SITES', value: activeSites + '/' + S.plants.length, sub: 'visible on grid' },
+    { label: 'QA', value: String(S.engineers.length), sub: activeEng + ' active' },
+    { label: 'INTERNAL', value: activeSites + '/' + S.plants.length, sub: 'visible on grid' },
     { label: 'OPEN ORDERS', value: String(poolOrders.length), sub: 'awaiting staffing' },
     { label: 'WEEK APPOINTMENTS', value: String(wk.length), sub: conflicts + ' with conflicts' },
   ];
@@ -1041,16 +1052,16 @@ export function useScheduler() {
     goSchedule, goAdmin, goProfile,
     navSchedStyle: S.page === 'schedule' ? tabOn : tabOff, navAdminStyle: S.page === 'admin' ? tabOn : tabOff,
     userMenuOpen: S.userMenuOpen, toggleUserMenu,
-    isPerson: S.view === 'person', isPlant: S.view === 'plant', isCustomer: S.view === 'customer',
-    setPerson: () => setView('person'), setPlant: () => setView('plant'), setCustomer: () => setView('customer'),
-    personTabStyle: S.view === 'person' ? tabOn : tabOff, plantTabStyle: S.view === 'plant' ? tabOn : tabOff, customerTabStyle: S.view === 'customer' ? tabOn : tabOff,
+    isPerson: S.view === 'person', isPlant: S.view === 'plant', isCustomer: S.view === 'customer', isSubdept: S.view === 'subdept',
+    setPerson: () => setView('person'), setPlant: () => setView('plant'), setCustomer: () => setView('customer'), setSubdept: () => setView('subdept'),
+    personTabStyle: S.view === 'person' ? tabOn : tabOff, plantTabStyle: S.view === 'plant' ? tabOn : tabOff, customerTabStyle: S.view === 'customer' ? tabOn : tabOff, subdeptTabStyle: S.view === 'subdept' ? tabOn : tabOff,
     showViewTabs: !isMonth,
     isMonth, weekScaleStyle: isMonth ? tabOff : tabOn, monthScaleStyle: isMonth ? tabOn : tabOff,
     setWeekScale: () => setScale('week'), setMonthScale: () => setScale('month'),
     monthDesktop: isMonth && !isMobile, monthMobile: isMonth && isMobile,
     monthCells, monthWeekdayHeads, monthName, monthOrders, monthScheduledCount, monthOrderCount: monthOrders.length,
-    gridPerson: S.view === 'person' && !isMobile && !isMonth, gridPlant: S.view === 'plant' && !isMobile && !isMonth, gridCustomer: S.view === 'customer' && !isMobile && !isMonth,
-    mobilePerson: isMobile && S.view === 'person' && !isMonth, mobileSite: isMobile && S.view === 'plant' && !isMonth, mobileCustomer: isMobile && S.view === 'customer' && !isMonth,
+    gridPerson: S.view === 'person' && !isMobile && !isMonth, gridPlant: S.view === 'plant' && !isMobile && !isMonth, gridCustomer: S.view === 'customer' && !isMobile && !isMonth, gridSubdept: S.view === 'subdept' && !isMobile && !isMonth,
+    mobilePerson: isMobile && S.view === 'person' && !isMonth, mobileSite: isMobile && S.view === 'plant' && !isMonth, mobileCustomer: isMobile && S.view === 'customer' && !isMonth, mobileSubdept: isMobile && S.view === 'subdept' && !isMonth,
     showDayStrip: isMobile && !isMonth,
     awayToday, awayLabel: dayNames[selDay], showAway: isMobile && !isMonth && awayToday.length > 0,
     weekLabel, weekTag, periodLabel, periodTag, gridCols, days, daySel,
@@ -1063,7 +1074,7 @@ export function useScheduler() {
     stats: { assignments: wk.length, conflicts, unassigned: poolOrders.length },
     conflictPillStyle: sx({ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', background: conflicts ? '#fdeeee' : '#eef1ea', border: '1px solid ' + (conflicts ? '#f3cdcd' : '#e2e5de'), color: conflicts ? '#b32f2f' : '#6a706a' }),
     plants: plantsVm, pool, poolCount: pool.length, poolEmpty: pool.length === 0,
-    personRows, plantRows, customerRows, mobilePersonRows, mobileSiteRows, mobileCustomerRows,
+    personRows, plantRows, customerRows, subDeptRows, mobilePersonRows, mobileSiteRows, mobileCustomerRows, mobileSubDeptRows,
     presence, activity, detail,
     emptyWeek: S.weekOffset !== 0 && wk.length === 0 && !isMonth, copyWeek,
     toggleSidebar, closeSidebar, showSidebarBackdrop: isMobile && S.sidebarOpen,

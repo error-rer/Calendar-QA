@@ -42,7 +42,7 @@ export function Profile({ vm }: { vm: VM }) {
               <Divider />
               <Row label="Tenure" value={p.joined} />
             </div>
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin:20px 0 11px")}>SITES UNDER COVERAGE</div>
+            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin:20px 0 11px")}>INTERNAL UNDER COVERAGE</div>
             <div style={css('display:flex;gap:7px;flex-wrap:wrap')}>
               {p.sites.map((st, i) => (
                 <div key={i} style={css('display:flex;align-items:center;gap:7px;padding:6px 11px;background:#f6f7f4;border:1px solid #e6e9e2;border-radius:8px')}>

@@ -68,7 +68,7 @@ export interface CreateDraft {
 }
 
 export type Page = 'schedule' | 'admin' | 'profile';
-export type View = 'person' | 'plant' | 'customer';
+export type View = 'person' | 'plant' | 'customer' | 'subdept';
 export type TimeScale = 'week' | 'month';
 export type AdminTab = 'engineers' | 'sites' | 'orders';
 

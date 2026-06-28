@@ -34,7 +34,7 @@ export function CreateModal({ vm }: { vm: VM }) {
             </div>
           </div>
           <div style={vm.modalColRightStyle}>
-            <div style={css("padding:13px 16px 9px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>ENGINEER</div>
+            <div style={css("padding:13px 16px 9px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>QA</div>
             <div className="scrl" style={css('overflow-y:auto;padding:0 12px 12px;display:flex;flex-direction:column;gap:5px')}>
               {create.engineers.map((e) => (
                 <div key={e.engId} onClick={e.select} style={e.style}>
