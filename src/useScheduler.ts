@@ -1041,7 +1041,7 @@ export function useScheduler() {
 
   // ---- filters VM ----
   const employeeOptions = [{ value: '', label: 'All employees' }].concat(S.engineers.map((e) => ({ value: e.id, label: e.name })));
-  const customerOptions = [{ value: '', label: 'All customers' }].concat(customers.map((c) => ({ value: c, label: c })));
+  const customerOptions = [{ value: '', label: 'All' }, { value: 'ESD Audit', label: 'ESD Audit' }, { value: 'QS Audit', label: 'QS Audit' }];
   const plantOptions = [{ value: '', label: 'All internal' }].concat(S.plants.map((p) => ({ value: p.id, label: p.name })));
   const subDeptAll = [...new Set(S.engineers.flatMap((e) => e.subDepartments))];
   const subDeptOptions = [{ value: '', label: 'All sub-departments' }].concat(subDeptAll.map((sd) => ({ value: sd, label: sd })));
