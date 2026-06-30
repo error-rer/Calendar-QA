@@ -8,6 +8,7 @@ import type {
   SiteForm,
   State,
   SubDepartment,
+  TimeScale,
 } from './types';
 import {
   custPalette,
