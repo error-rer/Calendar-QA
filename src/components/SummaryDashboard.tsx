@@ -26,11 +26,19 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
         </div>
 
         <div style={css('display:grid;grid-template-columns:repeat(3,1fr);gap:16px')}>
-          <SummaryCard
-            label="Employee"
-            value={vm.summaryEmpCount}
-            accent="#3c423d"
-          />
+          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;padding:20px')}>
+            <div style={css('color:#9aa097;font-size:11.5px;font-weight:600;margin-bottom:12px;letter-spacing:.3px')}>
+              Employee
+              <span style={css("font-family:'IBM Plex Mono',monospace;color:#3c423d;margin-left:6px;font-size:20px;font-weight:700")}>{vm.summaryEmpCount}</span>
+            </div>
+            {vm.summaryEmpBreakdown.map((e) => (
+              <div key={e.id} style={css('display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f2ec')}>
+                <div style={css('color:#2a302c;font-size:13px;font-weight:500')}>{e.name}</div>
+                <div style={css("font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:#5c625c")}>{e.count}</div>
+              </div>
+            ))}
+            {vm.summaryEmpBreakdown.length === 0 && <div style={css('color:#9aa097;font-size:13px;padding:6px 0')}>—</div>}
+          </div>
           <SummaryCard
             label="Internal Audit"
             value={vm.summaryInternalCount}

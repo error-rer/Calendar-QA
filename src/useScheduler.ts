@@ -743,6 +743,13 @@ export function useScheduler() {
   };
   const summaryAssignments = summaryIsWeek ? summaryWk : summaryMA();
   const summaryEmpCount = [...new Set(summaryAssignments.map((a) => a.eng))].length;
+  const summaryEmpMap = new Map<string, number>();
+  for (const a of summaryAssignments) {
+    summaryEmpMap.set(a.eng, (summaryEmpMap.get(a.eng) || 0) + 1);
+  }
+  const summaryEmpBreakdown = [...summaryEmpMap.entries()]
+    .map(([id, count]) => ({ id, name: S.engineers.find((e) => e.id === id)?.name || id, count }))
+    .sort((a, b) => b.count - a.count);
   const summaryInternalCount = [...new Set(summaryAssignments.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.plant).filter((p) => internalPlants.has(p)))].length;
   const summaryCustomerCount = [...new Set(summaryAssignments.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.customer))].length;
 
@@ -880,7 +887,7 @@ export function useScheduler() {
     summaryWeekStyle: S.summaryScale === 'week' ? tabOn : tabOff, summaryMonthStyle: S.summaryScale === 'month' ? tabOn : tabOff,
     summaryWeekLabel, summaryWeekTag, summaryWeekOffset: S.summaryWeekOffset,
     prevSummaryWeek: () => shiftSummaryWeek(-1), nextSummaryWeek: () => shiftSummaryWeek(1),
-    summaryEmpCount, summaryInternalCount, summaryCustomerCount, summaryAssignTotal: summaryAssignments.length,
+    summaryEmpCount, summaryEmpBreakdown, summaryInternalCount, summaryCustomerCount, summaryAssignTotal: summaryAssignments.length,
   };
 }
 
