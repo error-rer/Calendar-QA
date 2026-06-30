@@ -57,23 +57,6 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
             ))}
             {vm.summaryEmpBreakdown.length === 0 && <div style={css('color:#9aa097;font-size:13px;padding:6px 0')}>—</div>}
           </div>
-
-          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;padding:20px')}>
-            <div style={css('color:#9aa097;font-size:11.5px;font-weight:600;margin-bottom:12px;letter-spacing:.3px')}>Companies</div>
-            <div style={css('display:grid;grid-template-columns:1fr 1fr 70px;gap:2px;font-size:11px;font-weight:600;color:#8a9088;padding:4px 0 8px;border-bottom:2px solid #e4e7e0')}>
-              <div>Company</div>
-              <div style={css('text-align:right')}>Employees</div>
-              <div style={css('text-align:right')}>Total</div>
-            </div>
-            {vm.summaryCompanyBreakdown.map((c) => (
-              <div key={c.name} style={css('display:grid;grid-template-columns:1fr 1fr 70px;gap:2px;padding:6px 0;border-bottom:1px solid #f0f2ec;font-size:13px')}>
-                <div style={css('color:#2a302c;font-weight:500')}>{c.name}</div>
-                <div style={css('text-align:right;font-weight:600;color:#3c423d;font-size:12px')}>{c.emps.join(', ')}</div>
-                <div style={css('text-align:right;font-weight:600;color:#5c625c')}>{c.count}</div>
-              </div>
-            ))}
-            {vm.summaryCompanyBreakdown.length === 0 && <div style={css('color:#9aa097;font-size:13px;padding:6px 0')}>—</div>}
-          </div>
         </div>
       </div>
     </main>
