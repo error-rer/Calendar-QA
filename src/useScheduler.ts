@@ -455,6 +455,7 @@ export function useScheduler() {
   const monthCells: MonthCell[] = [];
   for (let i = 0; i < firstWd; i++) monthCells.push({ blank: true, style: blankCellStyle() });
   const monthOrderAgg: Record<string, { appointments: number; days: Record<number, 1>; engs: Record<string, 1>; conf: number }> = {};
+  const monthCustomerSet = new Set<string>();
   for (let dn = 1; dn <= daysInMonth; dn++) {
     const date = new Date(mYear, mMon, dn);
     const slot = dateSlot(date);
@@ -471,6 +472,7 @@ export function useScheduler() {
       if (S.filterEmp && a.eng !== S.filterEmp) return;
       if (S.filterAuditTopic && o.customer !== S.filterAuditTopic && o.plant !== S.filterAuditTopic) return;
       if (S.filterAuditType && o.purpose !== S.filterAuditType) return;
+      monthCustomerSet.add(o.customer);
       const g = monthOrderAgg[o.id] || (monthOrderAgg[o.id] = { appointments: 0, days: {}, engs: {}, conf: 0 });
       g.appointments++;
       g.days[dn] = 1;
@@ -559,6 +561,8 @@ export function useScheduler() {
   });
 
   const conflicts = wk.filter((a) => cmap[a.id] && cmap[a.id].has).length;
+  const weekCustomers = [...new Set(wk.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.customer))].length;
+  const monthCustomers = monthCustomerSet.size;
 
   const plantsVm = S.plants.map((p) => {
     const cnt = wk.filter((a) => {
@@ -1000,7 +1004,7 @@ export function useScheduler() {
     : { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', background: '#f4f6f1' };
 
   return {
-    isMobile, showLogin: !S.authed, showApp: S.authed, showPresence: !isMobile, showStats: !isMobile && !isMonth, showLoginExtras: !isMobile,
+    isMobile, showLogin: !S.authed, showApp: S.authed, showPresence: !isMobile, showStats: !isMobile, showLoginExtras: !isMobile,
     loginEmail: S.loginEmail, loginPass: S.loginPass,
     onEmail: (e: React.ChangeEvent<HTMLInputElement>) => setState({ loginEmail: e.target.value }),
     onPass: (e: React.ChangeEvent<HTMLInputElement>) => setState({ loginPass: e.target.value }),
@@ -1029,7 +1033,7 @@ export function useScheduler() {
     siteForm, siteFormOpen: S.siteFormOpen, openSiteForm, closeSiteForm,
     customerForm, custFormOpen: S.custFormOpen, openCustForm, closeCustForm,
     leaveForm, leaveFormOpen: S.leaveFormOpen, openLeaveForm, closeLeaveForm,
-    stats: { assignments: wk.length, conflicts },
+    stats: { assignments: wk.length, conflicts, weekCustomers, monthCustomers },
     conflictPillStyle: sx({ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', background: conflicts ? '#fdeeee' : '#eef1ea', border: '1px solid ' + (conflicts ? '#f3cdcd' : '#e2e5de'), color: conflicts ? '#b32f2f' : '#6a706a' }),
     plants: plantsVm,
     personRows, plantRows, customerRows, subDeptRows, mobilePersonRows, mobileSiteRows, mobileCustomerRows, mobileSubDeptRows,

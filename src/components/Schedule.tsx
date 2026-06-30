@@ -280,6 +280,9 @@ function Toolbar({ vm }: { vm: VM }) {
           <div style={vm.conflictPillStyle}>
             <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600")}>{vm.stats.conflicts}</span><span style={css('font-size:10.5px;opacity:.85')}>conflicts</span>
           </div>
+          <div style={css('display:flex;align-items:center;gap:6px;padding:5px 10px;background:#f0f4fa;border:1px solid #d4def0;border-radius:8px')}>
+            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;color:#3a6bc4")}>{vm.isMonth ? vm.stats.monthCustomers : vm.stats.weekCustomers}</span><span style={css('font-size:10.5px;color:#6a7da8')}>{vm.isMonth ? 'customers this month' : 'customers this week'}</span>
+          </div>
         </div>
       )}
       <HButton onClick={vm.addLeave} style={css("background:#fff;color:#3c423d;border:1px solid #dde0d9;border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;display:flex;align-items:center;gap:6px;flex-shrink:0")} hover={{ background: '#f1f3ee' }}>
