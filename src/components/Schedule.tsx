@@ -210,7 +210,6 @@ function TimetableGrid({ vm }: { vm: VM }) {
                   <div style={css('display:flex;align-items:center;gap:6px')}>
                     <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#15191e")}>{chip.code}</span>
                     <span style={css('flex:1')} />
-                    <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
                   </div>
                   <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.purpose}</div>
                 </div>
@@ -237,7 +236,6 @@ function MobileTimetable({ vm }: { vm: VM }) {
                   <div style={css('display:flex;align-items:center;gap:6px')}>
                     <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:#15191e")}>{chip.code}</span>
                     <span style={css('flex:1')} />
-                    <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
                   </div>
                   <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
                 </div>
@@ -274,8 +272,8 @@ function Toolbar({ vm }: { vm: VM }) {
           <div style={css('display:flex;align-items:center;gap:6px;padding:5px 10px;background:#f6f7f4;border:1px solid #e4e7e0;border-radius:8px')}>
             <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600")}>{vm.stats.assignments}</span><span style={css('font-size:10.5px;color:#7a8079')}>appointments</span>
           </div>
-          <div style={vm.conflictPillStyle}>
-            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600")}>{vm.stats.conflicts}</span><span style={css('font-size:10.5px;opacity:.85')}>conflicts</span>
+          <div style={css('display:flex;align-items:center;gap:6px;padding:5px 10px;background:#eef3ea;border:1px solid #c7d8bf;border-radius:8px')}>
+            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;color:#3d7840")}>{vm.isMonth ? vm.stats.monthInternals : vm.stats.weekInternals}</span><span style={css('font-size:10.5px;color:#477349')}>{vm.isMonth ? 'internals this month' : 'internals this week'}</span>
           </div>
           <div style={css('display:flex;align-items:center;gap:6px;padding:5px 10px;background:#f0f4fa;border:1px solid #d4def0;border-radius:8px')}>
             <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;color:#3a6bc4")}>{vm.isMonth ? vm.stats.monthCustomers : vm.stats.weekCustomers}</span><span style={css('font-size:10.5px;color:#6a7da8')}>{vm.isMonth ? 'customers this month' : 'customers this week'}</span>
@@ -294,7 +292,6 @@ function Toolbar({ vm }: { vm: VM }) {
             <button key={i} onClick={d.onClick} style={d.style}>
               <div style={d.labelStyle}>{d.label}</div>
               <div style={d.dateStyle}>{d.date}</div>
-              <span style={d.warnDotStyle}>{d.warn}</span>
               <span style={d.leaveDotStyle} />
             </button>
           ))}
@@ -304,18 +301,15 @@ function Toolbar({ vm }: { vm: VM }) {
   );
 }
 
-function DayHeaders({ vm, withWarn }: { vm: VM; withWarn?: boolean }) {
+function DayHeaders({ vm }: { vm: VM }) {
   return (
     <>
       {vm.days.map((d, i) => (
-        <div key={i} style={withWarn
-          ? css('position:sticky;top:0;z-index:3;background:#f3f5ef;border-bottom:1px solid #d8dcd4;border-right:1px solid #e2e5de;padding:9px 12px 8px;display:flex;align-items:center;justify-content:space-between')
-          : css('position:sticky;top:0;z-index:3;background:#f3f5ef;border-bottom:1px solid #d8dcd4;border-right:1px solid #e2e5de;padding:9px 12px 8px')}>
+        <div key={i} style={css('position:sticky;top:0;z-index:3;background:#f3f5ef;border-bottom:1px solid #d8dcd4;border-right:1px solid #e2e5de;padding:9px 12px 8px')}>
           <div>
             <div style={css('font-size:12px;font-weight:700;color:#23282a;letter-spacing:.2px')}>{d.label}</div>
             <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8a9088;margin-top:1px")}>{d.date}</div>
           </div>
-          {withWarn && <span style={d.warnStyle}>{d.warn}</span>}
         </div>
       ))}
     </>
@@ -334,7 +328,7 @@ function PersonGrid({ vm }: { vm: VM }) {
   return (
     <div style={{ ...gridBase, gridTemplateColumns: vm.gridCols }}>
       <CornerHeader label="QA" />
-      <DayHeaders vm={vm} withWarn />
+      <DayHeaders vm={vm} />
       {vm.personRows.map((r) => (
         <Fragment key={r.engId}>
           <div onClick={r.onNameClick} style={r.nameCellStyle} title="View weekly timetable">
@@ -354,7 +348,6 @@ function PersonGrid({ vm }: { vm: VM }) {
                   <div style={css('display:flex;align-items:center;gap:6px')}>
                     <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#15191e")}>{chip.code}</span>
                     <span style={css('flex:1')} />
-                    <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
                   </div>
                   <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.purpose}</div>
                 </div>
@@ -377,9 +370,8 @@ function SiteGrid({ vm }: { vm: VM }) {
       <DayHeaders vm={vm} />
       {vm.plantRows.map((r, ri) => (
         <Fragment key={ri}>
-          <div style={css('border-bottom:1px solid #e2e5de;border-right:1px solid #e2e5de;padding:12px 14px;background:#fff;position:sticky;left:0;z-index:2')}>
+            <div style={css('border-bottom:1px solid #e2e5de;border-right:1px solid #e2e5de;padding:12px 14px;background:#fff;position:sticky;left:0;z-index:2')}>
             <div style={css('display:flex;align-items:center;gap:9px')}>
-              <span style={r.swatchStyle} />
               <div>
                 <div style={css('font-size:12.5px;font-weight:700;color:#23282a')}>{r.name}</div>
                 <div style={css('font-size:10px;color:#8a9088')}>{r.loc}</div>
@@ -396,7 +388,6 @@ function SiteGrid({ vm }: { vm: VM }) {
                     <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div>
                     <div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div>
                   </div>
-                  <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
                 </div>
               ))}
               {cell.empty && <div style={css('font-size:10.5px;color:#bcc1b8;text-align:center;padding:8px 0')}>—</div>}
@@ -417,8 +408,7 @@ function CustomerGrid({ vm }: { vm: VM }) {
         <Fragment key={ri}>
           <div style={css('border-bottom:1px solid #e2e5de;border-right:1px solid #e2e5de;padding:12px 14px;background:#fff;position:sticky;left:0;z-index:2')}>
             <div style={css('display:flex;align-items:center;gap:9px')}>
-              <span style={r.swatchStyle}>{r.initials}</span>
-              <div style={css('min-width:0')}>
+              <div>
                 <div style={css('font-size:12.5px;font-weight:700;color:#23282a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{r.name}</div>
                 <div style={css('font-size:10px;color:#8a9088')}>{r.sub}</div>
               </div>
@@ -434,7 +424,6 @@ function CustomerGrid({ vm }: { vm: VM }) {
                     <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div>
                     <div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div>
                   </div>
-                  <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
                 </div>
               ))}
               {cell.empty && <div style={css('font-size:10.5px;color:#bcc1b8;text-align:center;padding:8px 0')}>—</div>}
@@ -465,7 +454,6 @@ function MobilePerson({ vm }: { vm: VM }) {
                 <div style={css('display:flex;align-items:center;gap:6px')}>
                   <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:#15191e")}>{chip.code}</span>
                   <span style={css('flex:1')} />
-                  <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
                 </div>
                 <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
               </div>
@@ -486,7 +474,6 @@ function MobileSite({ vm }: { vm: VM }) {
       {vm.mobileSiteRows.map((r, ri) => (
         <div key={ri} style={css('background:#fff;border:1px solid #e4e7e0;border-radius:12px;padding:12px 13px')}>
           <div style={css('display:flex;align-items:center;gap:9px;margin-bottom:10px')}>
-            <span style={r.swatchStyle} />
             <div><div style={css('font-size:13px;font-weight:700;color:#23282a')}>{r.name}</div><div style={css('font-size:10.5px;color:#8a9088')}>{r.loc}</div></div>
           </div>
           <div style={css('display:flex;flex-direction:column;gap:6px')}>
@@ -494,7 +481,6 @@ function MobileSite({ vm }: { vm: VM }) {
               <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
                 <div style={chip.avatarStyle}>{chip.initials}</div>
                 <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div><div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div></div>
-                <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
               </div>
             ))}
             {r.cell.empty && <div style={css('font-size:11px;color:#a6aca2;text-align:center;padding:8px 0;font-style:italic')}>No coverage scheduled</div>}
@@ -511,7 +497,6 @@ function MobileCustomer({ vm }: { vm: VM }) {
       {vm.mobileCustomerRows.map((r, ri) => (
         <div key={ri} style={css('background:#fff;border:1px solid #e4e7e0;border-radius:12px;padding:12px 13px')}>
           <div style={css('display:flex;align-items:center;gap:9px;margin-bottom:10px')}>
-            <span style={r.swatchStyle}>{r.initials}</span>
             <div><div style={css('font-size:13px;font-weight:700;color:#23282a')}>{r.name}</div><div style={css('font-size:10.5px;color:#8a9088')}>{r.sub}</div></div>
           </div>
           <div style={css('display:flex;flex-direction:column;gap:6px')}>
@@ -519,7 +504,6 @@ function MobileCustomer({ vm }: { vm: VM }) {
               <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
                 <div style={chip.avatarStyle}>{chip.initials}</div>
                 <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div><div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div></div>
-                <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
               </div>
             ))}
             {r.cell.empty && <div style={css('font-size:11px;color:#a6aca2;text-align:center;padding:8px 0;font-style:italic')}>No work scheduled</div>}

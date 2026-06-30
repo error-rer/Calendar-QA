@@ -12,7 +12,6 @@ import type {
   SubDepartment,
 } from './types';
 import {
-  avatarPalette,
   custPalette,
   dayLabels,
   dayNames,
@@ -22,13 +21,6 @@ import {
 
 /** Identity tag that supplies a contextual CSSProperties type to a style literal. */
 const sx = (o: CSSProperties): CSSProperties => o;
-
-interface Conflict {
-  isDbl: boolean;
-  onLeave: boolean;
-  has: boolean;
-}
-type ConflictMap = Record<string, Conflict>;
 
 /** Swatch / pill colour per leave type. */
 const leaveColor: Record<LeaveType, string> = {
@@ -89,10 +81,6 @@ export function useScheduler() {
   const plantById = (id: string) => S.plants.find((p) => p.id === id);
   const initials = (name: string) =>
     name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
-  const avatarColor = (id: string) => {
-    const i = S.engineers.findIndex((e) => e.id === id);
-    return avatarPalette[(i < 0 ? 0 : i) % avatarPalette.length];
-  };
   const fmtDate = (d: Date) => {
     const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()];
     return m + ' ' + d.getDate();
@@ -107,24 +95,6 @@ export function useScheduler() {
     return { weekOffset: Math.floor(diff / 7), wd: (d.getDay() + 6) % 7 };
   };
   /** Per-week conflict lookup (has-conflict only), memoised across the month grid. */
-  const confMapForWeek = (wo: number, cache: Record<number, Record<string, { has: boolean }>>) => {
-    if (cache[wo]) return cache[wo];
-    const list = S.assignments.filter((a) => a.week === wo);
-    const leaveSet = new Set(S.leave.filter((l) => l.week === wo).map((l) => l.eng + '|' + l.day));
-    const slots: Record<string, string[]> = {};
-    list.forEach((a) => {
-      const k = a.eng + '|' + a.day + '|' + a.appointment;
-      (slots[k] = slots[k] || []).push(a.id);
-    });
-    const m: Record<string, { has: boolean }> = {};
-    list.forEach((a) => {
-      const isDbl = slots[a.eng + '|' + a.day + '|' + a.appointment].length > 1;
-      const onLeave = leaveSet.has(a.eng + '|' + a.day);
-      m[a.id] = { has: isDbl || onLeave };
-    });
-    cache[wo] = m;
-    return m;
-  };
   const priorityColors = (p: Priority) =>
     ({
       High: { c: '#b32f2f', b: '#fbe3e3', bd: '#f0c4c4' },
@@ -140,23 +110,6 @@ export function useScheduler() {
     if (S.filterAuditTopic && o.customer !== S.filterAuditTopic && o.plant !== S.filterAuditTopic) return true;
     if (S.filterAuditType && o.purpose !== S.filterAuditType) return true;
     return false;
-  };
-
-  const conflictMap = (): ConflictMap => {
-    const wk = weekAssignments();
-    const leaveSet = new Set(weekLeave().map((l) => l.eng + '|' + l.day));
-    const slots: Record<string, string[]> = {};
-    wk.forEach((a) => {
-      const k = a.eng + '|' + a.day + '|' + a.appointment;
-      (slots[k] = slots[k] || []).push(a.id);
-    });
-    const map: ConflictMap = {};
-    wk.forEach((a) => {
-      const isDbl = slots[a.eng + '|' + a.day + '|' + a.appointment].length > 1;
-      const onLeave = leaveSet.has(a.eng + '|' + a.day);
-      map[a.id] = { isDbl, onLeave, has: isDbl || onLeave };
-    });
-    return map;
   };
 
   const log = (who: string, text: string, color: string) =>
@@ -366,10 +319,9 @@ export function useScheduler() {
   };
 
   // ---- chip builders ----
-  const buildChip = (a: Assignment, cmap: ConflictMap) => {
+  const buildChip = (a: Assignment) => {
     const ord = orderById(a.order)!;
     const pl = plantById(ord.plant)!;
-    const cf = cmap[a.id] || ({} as Conflict);
     const dim = chipDimmed(a);
     const sel = S.selected === a.id;
     const base: CSSProperties = {
@@ -378,34 +330,23 @@ export function useScheduler() {
       boxShadow: sel ? '0 0 0 2px ' + hexA(pl.color, 0.55) : '0 1px 1px rgba(20,25,30,.05)',
       opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', transition: 'box-shadow .12s',
     };
-    if (cf.has) {
-      base.border = '1px solid #e6a3a3';
-      base.borderLeft = '3px solid #d23b3b';
-      base.boxShadow = sel ? '0 0 0 2px rgba(210,59,59,.5)' : '0 0 0 1px rgba(210,59,59,.22)';
-    }
     return {
       aid: a.id, code: ord.customer, purpose: ord.purpose, style: base,
-      warnGlyph: cf.has ? '⚠' : '',
-      warnDotStyle: sx({ fontSize: '11px', color: '#d23b3b', lineHeight: 1, display: cf.has ? 'inline' : 'none' }),
       onClick: () => select(a.id),
       onDragStart: (e: React.DragEvent) => { e.stopPropagation(); setState({ drag: { kind: 'assign', id: a.id } }); },
       onDragEnd: () => setState({ drag: null, overCell: null }),
     };
   };
 
-  const buildPersonChip = (a: Assignment, cmap: ConflictMap, accent?: string) => {
+  const buildPersonChip = (a: Assignment, accent?: string) => {
     const e = engById(a.eng)!;
     const ord = orderById(a.order)!;
     const pl = plantById(ord.plant)!;
-    const cf = cmap[a.id] || ({} as Conflict);
-    const ac = avatarColor(a.eng);
     const dim = chipDimmed(a);
     return {
       aid: a.id, name: e.name, initials: initials(e.name), code: ord.customer, purpose: ord.purpose, plantCode: pl.code,
-      style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: '#fff', border: '1px solid ' + (cf.has ? '#e6a3a3' : '#e8ebe4'), borderLeft: '3px solid ' + (cf.has ? '#d23b3b' : accent || pl.color), borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none' }),
-      avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: hexA(ac, 0.14), color: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
-      warnGlyph: cf.has ? '⚠' : '',
-      warnDotStyle: sx({ fontSize: '11px', color: '#d23b3b', display: cf.has ? 'inline' : 'none' }),
+      style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: '#fff', border: '1px solid #e8ebe4', borderLeft: '3px solid ' + (accent || pl.color), borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none' }),
+      avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       onClick: () => select(a.id),
     };
   };
@@ -417,18 +358,13 @@ export function useScheduler() {
   const tabOn = sx({ padding: '6px 13px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", background: '#15191e', color: '#fff', whiteSpace: 'nowrap' });
   const tabOff = sx({ padding: '6px 13px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", background: 'transparent', color: '#5c625c', whiteSpace: 'nowrap' });
 
-  const cmap = conflictMap();
   const wk = weekAssignments();
   const baseDate = new Date(2026, 5, 29);
   const days = dayLabels.map((lbl, i) => {
     const d = new Date(baseDate);
     d.setDate(baseDate.getDate() + S.weekOffset * 7 + i);
-    const cnt = wk.filter((a) => a.day === i && cmap[a.id] && cmap[a.id].has).length;
     return {
-      label: lbl, date: fmtDate(d), warn: cnt ? String(cnt) : '',
-      warnStyle: cnt
-        ? sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '10px', fontWeight: 600, color: '#b32f2f', background: '#fbe3e3', border: '1px solid #f0c4c4', borderRadius: '20px', padding: '1px 7px' })
-        : sx({ display: 'none' }),
+      label: lbl, date: fmtDate(d),
     };
   });
   const weekLabel = days[0].date + ' – ' + days[4].date;
@@ -437,7 +373,6 @@ export function useScheduler() {
 
   // ======================= MONTH SCALE =======================
   const isMonth = S.timeScale === 'month';
-  const confCache: Record<number, Record<string, { has: boolean }>> = {};
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const mb = monthBaseDate();
   const mYear = mb.getFullYear();
@@ -450,16 +385,16 @@ export function useScheduler() {
   const blankCellStyle = (): CSSProperties => ({ background: '#f1f3ee', border: '1px solid #e6e9e2', borderRadius: '9px', minHeight: isMobile ? '52px' : '112px' });
   const monthCells: MonthCell[] = [];
   for (let i = 0; i < firstWd; i++) monthCells.push({ blank: true, style: blankCellStyle() });
-  const monthOrderAgg: Record<string, { appointments: number; days: Record<number, 1>; engs: Record<string, 1>; conf: number }> = {};
+  const monthOrderAgg: Record<string, { appointments: number; days: Record<number, 1>; engs: Record<string, 1> }> = {};
   const monthCustomerSet = new Set<string>();
+  const monthInternalSet = new Set<string>();
+  const internalPlants = new Set(['QMS', 'EHS', 'ESD']);
   for (let dn = 1; dn <= daysInMonth; dn++) {
     const date = new Date(mYear, mMon, dn);
     const slot = dateSlot(date);
     const weekend = slot.wd > 4;
-    const cm = confMapForWeek(slot.weekOffset, confCache);
     const all = weekend ? [] : S.assignments.filter((a) => a.week === slot.weekOffset && a.day === slot.wd);
     const appointments = all.filter((a) => !chipDimmed(a));
-    const conf = appointments.filter((a) => cm[a.id] && cm[a.id].has).length;
     all.forEach((a) => {
       const o = orderById(a.order);
       if (!o) return;
@@ -469,20 +404,19 @@ export function useScheduler() {
       if (S.filterAuditTopic && o.customer !== S.filterAuditTopic && o.plant !== S.filterAuditTopic) return;
       if (S.filterAuditType && o.purpose !== S.filterAuditType) return;
       monthCustomerSet.add(o.customer);
-      const g = monthOrderAgg[o.id] || (monthOrderAgg[o.id] = { appointments: 0, days: {}, engs: {}, conf: 0 });
+      if (internalPlants.has(o.plant)) monthInternalSet.add(o.plant);
+      const g = monthOrderAgg[o.id] || (monthOrderAgg[o.id] = { appointments: 0, days: {}, engs: {} });
       g.appointments++;
       g.days[dn] = 1;
       g.engs[a.eng] = 1;
-      if (cm[a.id] && cm[a.id].has) g.conf++;
     });
     const chips: MonthChip[] = appointments.slice(0, 3).map((a) => {
       const o = orderById(a.order)!;
       const e = engById(a.eng);
-      const p = plantById(o.plant);
       return {
         code: o.customer, purpose: o.purpose, engName: e ? e.name.split(' ')[0] : '',
         countTxt: '',
-        dotStyle: sx({ width: '7px', height: '7px', borderRadius: '2px', background: p ? p.color : '#999', flexShrink: 0 }),
+        dotStyle: sx({ width: '7px', height: '7px', borderRadius: '2px', background: '#999', flexShrink: 0 }),
         style: sx({ display: 'flex', alignItems: 'center', gap: '5px', padding: '2px 5px', background: '#f6f7f4', border: '1px solid #e6e9e2', borderRadius: '5px' }),
       };
     });
@@ -496,7 +430,7 @@ export function useScheduler() {
       style: sx({ position: 'relative', background: weekend ? '#f3f5ef' : '#fff', border: '1px solid ' + (isToday ? '#15191e' : '#e6e9e2'), boxShadow: isToday ? '0 0 0 1px #15191e' : 'none', borderRadius: '9px', minHeight: isMobile ? '52px' : '112px', padding: isMobile ? '5px' : '8px 9px', cursor: weekend ? 'default' : 'pointer', opacity: weekend ? 0.6 : 1, display: 'flex', flexDirection: 'column', gap: isMobile ? '2px' : '6px', overflow: 'hidden' }),
       numStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: isMobile ? '11px' : '12px', fontWeight: isToday ? 700 : 600, color: cur ? '#15191e' : '#9aa097' }),
       countDotStyle: appointments.length
-        ? sx({ minWidth: '16px', height: '16px', borderRadius: '8px', background: conf ? '#d23b3b' : '#15191e', color: '#fff', fontSize: '9px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' })
+        ? sx({ minWidth: '16px', height: '16px', borderRadius: '8px', background: '#15191e', color: '#fff', fontSize: '9px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' })
         : sx({ display: 'none' }),
     });
   }
@@ -516,18 +450,13 @@ export function useScheduler() {
       const appointments = g ? g.appointments : 0;
       const days = g ? Object.keys(g.days).length : 0;
       const engs = g ? Object.keys(g.engs).length : 0;
-      const conf = g ? g.conf : 0;
       return {
         orderId: o.id, code: o.code, product: o.product, customer: o.customer, plantCode: pl.code, priority: o.priority,
-        scheduled: appointments > 0, appointments, days, engs, conf, hasConf: conf > 0,
+        scheduled: appointments > 0, appointments, days, engs,
         appointmentsTxt: appointments + (appointments === 1 ? ' appointment' : ' appointments'), daysTxt: days + (days === 1 ? ' day' : ' days'),
         statusLabel: appointments > 0 ? 'Scheduled' : 'Not scheduled',
         statusStyle: sx({ fontFamily: "'Archivo',sans-serif", fontSize: '10px', fontWeight: 600, color: appointments > 0 ? '#1f8a5b' : '#9a7a3a', background: appointments > 0 ? '#e3f5ea' : '#fff3df', border: '1px solid ' + (appointments > 0 ? '#c4e6d2' : '#f1dcb0'), borderRadius: '20px', padding: '2px 9px' }),
-        swatchStyle: sx({ width: '10px', height: '10px', borderRadius: '3px', background: pl.color, flexShrink: 0 }),
         priorityStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '8.5px', fontWeight: 600, color: pc.c, background: pc.b, border: '1px solid ' + pc.bd, borderRadius: '3px', padding: '1px 5px' }),
-        confStyle: conf > 0
-          ? sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9.5px', fontWeight: 600, color: '#b32f2f', background: '#fbe3e3', border: '1px solid #f0c4c4', borderRadius: '20px', padding: '1px 7px' })
-          : sx({ display: 'none' }),
         cardStyle: sx({ background: '#fff', border: '1px solid ' + (appointments > 0 ? '#e4e7e0' : '#eceee8'), borderRadius: '11px', padding: '13px 14px', opacity: appointments > 0 ? 1 : 0.66 }),
       };
     })
@@ -541,10 +470,7 @@ export function useScheduler() {
   const daySel = days.map((d, i) => {
     const dayLeaveCount = S.leave.filter((l) => l.week === S.weekOffset && l.day === i).length;
     return {
-      label: d.label, date: d.date, warn: d.warn,
-      warnDotStyle: d.warn
-        ? sx({ position: 'absolute', top: '-5px', right: '-4px', minWidth: '15px', height: '15px', borderRadius: '8px', background: '#d23b3b', color: '#fff', fontSize: '9px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' })
-        : sx({ display: 'none' }),
+      label: d.label, date: d.date,
       leaveDotStyle: dayLeaveCount
         ? sx({ position: 'absolute', top: '-4px', left: '-4px', width: '8px', height: '8px', borderRadius: '50%', background: '#7a4ddb', border: '1.5px solid #fff' })
         : sx({ display: 'none' }),
@@ -555,9 +481,10 @@ export function useScheduler() {
     };
   });
 
-  const conflicts = wk.filter((a) => cmap[a.id] && cmap[a.id].has).length;
   const weekCustomers = [...new Set(wk.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.customer))].length;
+  const weekInternals = [...new Set(wk.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.plant).filter((p) => internalPlants.has(p)))].length;
   const monthCustomers = monthCustomerSet.size;
+  const monthInternals = monthInternalSet.size;
 
   const plantsVm = S.plants.map((p) => {
     const cnt = wk.filter((a) => {
@@ -586,10 +513,9 @@ export function useScheduler() {
       const e = engById(l.eng);
       if (!e) return [];
       const c = leaveColor[l.type];
-      const ac = avatarColor(e.id);
       return [{
         engId: e.id, name: e.name, type: l.type, note: l.note, initials: initials(e.name),
-        avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: hexA(ac, 0.16), color: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
+        avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
         pillStyle: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 8px 5px 6px', borderRadius: '8px', cursor: 'pointer', color: '#3c423d', border: '1px solid ' + hexA(c, 0.3), backgroundColor: hexA(c, 0.08) }),
         typeStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: c }),
         onRemove: () => removeLeaveAt(e.id, selDay),
@@ -597,10 +523,9 @@ export function useScheduler() {
     });
 
   const personRows = S.engineers.map((e) => {
-    const ac = avatarColor(e.id);
     const cells = [0, 1, 2, 3, 4].map((day) => {
       const cellId = e.id + '-' + day;
-      const chips = wk.filter((a) => a.eng === e.id && a.day === day).map((a) => buildChip(a, cmap));
+      const chips = wk.filter((a) => a.eng === e.id && a.day === day).map((a) => buildChip(a));
       const dayLeave = wleave.find((l) => l.eng === e.id && l.day === day);
       const over = S.overCell === cellId;
       return {
@@ -627,7 +552,7 @@ export function useScheduler() {
     });
     return {
       engId: e.id, name: e.name, role: e.role, department: e.department, subDepartments: e.subDepartments, initials: initials(e.name),
-      avatarStyle: sx({ width: '30px', height: '30px', borderRadius: '8px', background: hexA(ac, 0.14), color: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '11px', fontWeight: 600, flexShrink: 0 }),
+      avatarStyle: sx({ width: '30px', height: '30px', borderRadius: '8px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '11px', fontWeight: 600, flexShrink: 0 }),
       nameCellStyle: sx({ borderBottom: '1px solid #e2e5de', borderRight: '1px solid #e2e5de', padding: '11px 13px', background: '#fff', position: 'sticky', left: 0, zIndex: 2, cursor: 'pointer' }),
       onNameClick: () => openTimetable(e.id),
       cells,
@@ -642,22 +567,21 @@ export function useScheduler() {
           const o = orderById(a.order);
           return o && o.plant === p.id && a.day === day;
         })
-        .map((a) => buildPersonChip(a, cmap, p.color));
+        .map((a) => buildPersonChip(a, p.color));
       return { chips, empty: chips.length === 0, style: cellShell };
     });
-    return { name: p.name, loc: p.loc, swatchStyle: sx({ width: '12px', height: '12px', borderRadius: '3px', background: p.color, flexShrink: 0 }), cells };
+    return { name: p.name, loc: p.loc, cells };
   });
 
   const customers = [...new Set([...S.orders.map((o) => o.customer), ...S.customers])];
-  const customerRows = customers.map((cust, ci) => {
-    const col = custPalette[ci % custPalette.length];
+  const customerRows = customers.map((cust) => {
     const cells = [0, 1, 2, 3, 4].map((day) => {
       const chips = wk
         .filter((a) => {
           const o = orderById(a.order);
           return o && o.customer === cust && a.day === day;
         })
-        .map((a) => buildPersonChip(a, cmap));
+        .map((a) => buildPersonChip(a));
       return { chips, empty: chips.length === 0, style: cellShell };
     });
     const lots = new Set(
@@ -670,14 +594,14 @@ export function useScheduler() {
     ).size;
     return {
       name: cust, initials: initials(cust), sub: lots + (lots === 1 ? ' active lot' : ' active lots'),
-      swatchStyle: sx({ width: '28px', height: '28px', borderRadius: '8px', background: hexA(col, 0.14), color: col, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '10px', fontWeight: 700, flexShrink: 0 }),
+      avatarStyle: sx({ width: '28px', height: '28px', borderRadius: '8px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '10px', fontWeight: 700, flexShrink: 0 }),
       cells,
     };
   });
 
   const mobilePersonRows = personRows.map((r) => ({ engId: r.engId, name: r.name, role: r.role, department: r.department, subDepartments: r.subDepartments, initials: r.initials, avatarStyle: r.avatarStyle, onNameClick: r.onNameClick, cell: r.cells[selDay] }));
-  const mobileSiteRows = plantRows.map((r) => ({ name: r.name, loc: r.loc, swatchStyle: r.swatchStyle, cell: r.cells[selDay] }));
-  const mobileCustomerRows = customerRows.map((r) => ({ name: r.name, sub: r.sub, initials: r.initials, swatchStyle: r.swatchStyle, cell: r.cells[selDay] }));
+  const mobileSiteRows = plantRows.map((r) => ({ name: r.name, loc: r.loc, cell: r.cells[selDay] }));
+  const mobileCustomerRows = customerRows.map((r) => ({ name: r.name, sub: r.sub, initials: r.initials, cell: r.cells[selDay] }));
 
   // ---- timetable (per-employee calendar view, opened by clicking a name) ----
   const timeSlots: { id: string; label: string; hours: string; min: string; max: string }[] = [];
@@ -699,7 +623,7 @@ export function useScheduler() {
     const cells = [0, 1, 2, 3, 4].map((day) => {
       const chips = timetableOpenEngId ? wk
         .filter((a) => a.eng === timetableOpenEngId && a.day === day && timeInSlot(a.appointment, sl))
-        .map((a) => buildChip(a, cmap)) : [];
+        .map((a) => buildChip(a)) : [];
       return { chips, empty: chips.length === 0, style: cellShell };
     });
     return { slotId: sl.id, label: sl.label, hours: sl.hours, cells };
@@ -728,25 +652,18 @@ export function useScheduler() {
     const ord = orderById(selA.order)!;
     const pl = plantById(ord.plant)!;
     const eng = engById(selA.eng)!;
-    const cf = cmap[selA.id] || ({} as Conflict);
-    const ac = avatarColor(selA.eng);
     const pc = priorityColors(ord.priority);
-    const cs: string[] = [];
-    if (cf.isDbl) cs.push(`${eng.name.split(' ')[0]} is double-booked on ${dayNames[selA.day]} (${selA.appointment} appointment).`);
-    if (cf.onLeave) cs.push(`${eng.name.split(' ')[0]} is on leave on ${dayNames[selA.day]}.`);
     const comments = (S.comments[selA.id] || []).map((m) => ({
       who: m.who, initials: m.initials, text: m.text, ago: m.ago,
-      avatarStyle: sx({ width: '24px', height: '24px', borderRadius: '7px', background: hexA(m.color, 0.15), color: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
+      avatarStyle: sx({ width: '24px', height: '24px', borderRadius: '7px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
     }));
     return {
       aid: selA.id, orderCode: ord.code, product: ord.product, customer: ord.customer, priority: ord.priority, plantName: pl.name + ' · ' + pl.loc,
       priorityStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: pc.c, background: pc.b, border: '1px solid ' + pc.bd, borderRadius: '3px', padding: '2px 6px' }),
-      swatchStyle: sx({ width: '12px', height: '40px', borderRadius: '3px', background: pl.color, flexShrink: 0, marginTop: '2px' }),
       engName: eng.name, engRole: eng.role, engInitials: initials(eng.name), dayName: dayNames[selA.day],
       apptTime: selA.appointment,
-      avatarStyle: sx({ width: '34px', height: '34px', borderRadius: '9px', background: hexA(ac, 0.14), color: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '12px', fontWeight: 600, flexShrink: 0 }),
+      avatarStyle: sx({ width: '34px', height: '34px', borderRadius: '9px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '12px', fontWeight: 600, flexShrink: 0 }),
       department: eng.department, subDepartments: eng.subDepartments,
-      hasConflict: cf.has, conflicts: cs,
       onApptTime: (e: React.ChangeEvent<HTMLInputElement>) => setAppointment(selA.id, e.target.value),
       comments, commentCount: comments.length, noComments: comments.length === 0, draft: S.draft,
       onDraft: (e: React.ChangeEvent<HTMLInputElement>) => setState({ draft: e.target.value }),
@@ -773,7 +690,6 @@ export function useScheduler() {
   });
   const selOrd = cd.order ? orderById(cd.order) : null;
   const cEngs = S.engineers.map((e) => {
-    const ac = avatarColor(e.id);
     const onSel = cd.eng === e.id;
     let flag = '';
     let fs: CSSProperties = { display: 'none' };
@@ -786,26 +702,19 @@ export function useScheduler() {
     }
     return {
       engId: e.id, name: e.name, role: e.role, initials: initials(e.name), flag, flagStyle: fs,
-      avatarStyle: sx({ width: '26px', height: '26px', borderRadius: '7px', background: hexA(ac, 0.14), color: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '10px', fontWeight: 600, flexShrink: 0 }),
+      avatarStyle: sx({ width: '26px', height: '26px', borderRadius: '7px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '10px', fontWeight: 600, flexShrink: 0 }),
       style: sx({ display: 'flex', alignItems: 'center', gap: '9px', padding: '7px 9px', borderRadius: '8px', cursor: 'pointer', border: '1px solid ' + (onSel ? '#9bb0e8' : '#eef1ea'), background: onSel ? '#eef2fd' : '#fff' }),
       select: () => setDraft({ eng: e.id }),
     };
   });
   const segSm = (on: boolean) => sx({ padding: '6px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '11.5px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", background: on ? '#15191e' : 'transparent', color: on ? '#fff' : '#6a706a' });
   const dayBtns = dayLabels.map((lbl, i) => ({ label: lbl, style: segSm(cd.day === i), select: () => setDraft({ day: i }) }));
-  let warnText = '';
-  if (selOrd && cd.eng) {
-    const onLeave = wleave.some((l) => l.eng === cd.eng && l.day === cd.day);
-    const busy = wk.some((a) => a.eng === cd.eng && a.day === cd.day && a.appointment === cd.appointment);
-    if (onLeave) warnText = `${engById(cd.eng)!.name.split(' ')[0]} is on leave on ${dayNames[cd.day]} — this will create a conflict.`;
-    else if (busy) warnText = `${engById(cd.eng)!.name.split(' ')[0]} already has an appointment at ${cd.appointment} on ${dayNames[cd.day]}.`;
-  }
   const canCreate = !!(cd.order && cd.eng);
   const create = {
     orders: cOrders, engineers: cEngs, dayBtns,
     apptTime: cd.appointment,
     onApptTime: (e: React.ChangeEvent<HTMLInputElement>) => setDraft({ appointment: e.target.value }),
-    warn: !!warnText, warnText,
+    warn: false, warnText: '',
     submit: () => submitCreate(),
     submitStyle: sx({ background: canCreate ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 18px', fontSize: '12.5px', fontWeight: 600, cursor: canCreate ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
   };
@@ -890,11 +799,10 @@ export function useScheduler() {
   const leaveForm = {
     weekLabel, weekTag,
     engineers: S.engineers.map((e) => {
-      const ac = avatarColor(e.id);
       const onSel = lf.eng === e.id;
       return {
         engId: e.id, name: e.name, role: e.role, initials: initials(e.name),
-        avatarStyle: sx({ width: '26px', height: '26px', borderRadius: '7px', background: hexA(ac, 0.14), color: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '10px', fontWeight: 600, flexShrink: 0 }),
+      avatarStyle: sx({ width: '26px', height: '26px', borderRadius: '7px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '10px', fontWeight: 600, flexShrink: 0 }),
         style: sx({ display: 'flex', alignItems: 'center', gap: '9px', padding: '7px 9px', borderRadius: '8px', cursor: 'pointer', border: '1px solid ' + (onSel ? '#9bb0e8' : '#eef1ea'), background: onSel ? '#eef2fd' : '#fff' }),
         select: () => setLeaveForm({ eng: e.id }),
       };
@@ -917,7 +825,7 @@ export function useScheduler() {
   const adminStats = [
     { label: 'QA', value: String(S.engineers.length), sub: activeEng + ' active' },
     { label: 'INTERNAL', value: activeSites + '/' + S.plants.length, sub: 'visible on grid' },
-    { label: 'WEEK APPOINTMENTS', value: String(wk.length), sub: conflicts + ' with conflicts' },
+    { label: 'WEEK APPOINTMENTS', value: String(wk.length), sub: 'this week' },
   ];
   const statusStyleFor = (label: 'Active' | 'On leave' | 'Onboarding') => {
     const m = { Active: { c: '#1f8a5b', b: '#e3f5ea', bd: '#c4e6d2' }, 'On leave': { c: '#a96e08', b: '#fff3df', bd: '#f1dcb0' }, Onboarding: { c: '#5b7fd6', b: '#eef2fd', bd: '#d8e2fa' } }[label];
@@ -1018,8 +926,7 @@ export function useScheduler() {
     siteForm, siteFormOpen: S.siteFormOpen, openSiteForm, closeSiteForm,
     customerForm, custFormOpen: S.custFormOpen, openCustForm, closeCustForm,
     leaveForm, leaveFormOpen: S.leaveFormOpen, openLeaveForm, closeLeaveForm,
-    stats: { assignments: wk.length, conflicts, weekCustomers, monthCustomers },
-    conflictPillStyle: sx({ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', background: conflicts ? '#fdeeee' : '#eef1ea', border: '1px solid ' + (conflicts ? '#f3cdcd' : '#e2e5de'), color: conflicts ? '#b32f2f' : '#6a706a' }),
+    stats: { assignments: wk.length, weekCustomers, monthCustomers, weekInternals, monthInternals },
     plants: plantsVm,
     personRows, plantRows, customerRows, mobilePersonRows, mobileSiteRows, mobileCustomerRows,
     showTimetable, timetableRows, timetableGridCols, timetableEngName: timetableEng?.name || '',

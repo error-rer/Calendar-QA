@@ -65,12 +65,6 @@ export function CreateModal({ vm }: { vm: VM }) {
           </div>
         </div>
 
-        {create.warn && (
-          <div style={css('margin:0 18px;padding:9px 12px;background:#fff4e3;border:1px solid #f1dcb0;border-radius:8px;font-size:11.5px;color:#9a6e08;display:flex;align-items:center;gap:7px')}>
-            <span>⚠</span>{create.warnText}
-          </div>
-        )}
-
         <div style={css('padding:14px 18px;display:flex;justify-content:flex-end;gap:9px')}>
           <HButton onClick={vm.closeCreate} style={css("background:#f4f6f1;border:1px solid #e0e3dc;color:#3c423d;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#eaede6' }}>Cancel</HButton>
           <button onClick={create.submit} style={create.submitStyle}>Create appointment</button>

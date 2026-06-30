@@ -7,7 +7,6 @@ export function DetailPanel({ vm }: { vm: VM }) {
   return (
     <aside className="scrl" style={vm.detailAsideStyle}>
       <div style={css('padding:14px 16px;border-bottom:1px solid #e7eae3;display:flex;align-items:flex-start;gap:10px')}>
-        <span style={detail.swatchStyle} />
         <div style={css('flex:1;min-width:0')}>
           <div style={css('display:flex;align-items:center;gap:8px')}>
             <span style={css("font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:#15191e")}>{detail.orderCode}</span>
@@ -20,17 +19,6 @@ export function DetailPanel({ vm }: { vm: VM }) {
       </div>
 
       <div className="scrl" style={css('flex:1;overflow-y:auto;padding:15px 16px;display:flex;flex-direction:column;gap:16px')}>
-        {detail.hasConflict && (
-          <div style={css('background:#fdeeee;border:1px solid #f3cdcd;border-radius:9px;padding:11px 12px')}>
-            <div style={css('font-size:11px;font-weight:700;color:#b32f2f;letter-spacing:.2px;margin-bottom:7px;display:flex;align-items:center;gap:6px')}><span>⚠</span>SCHEDULING CONFLICT</div>
-            <div style={css('display:flex;flex-direction:column;gap:5px')}>
-              {detail.conflicts.map((c, i) => (
-                <div key={i} style={css('font-size:11.5px;color:#9a3333;line-height:1.35')}>{c}</div>
-              ))}
-            </div>
-          </div>
-        )}
-
         <div>
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:9px")}>ASSIGNED QA</div>
           <div style={css('display:flex;align-items:center;gap:10px')}>
