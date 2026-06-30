@@ -7,7 +7,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
       <div style={css('max-width:720px;margin:0 auto;padding:30px 24px 80px')}>
         <div style={css('margin-bottom:24px')}>
           <div style={css('font-size:22px;font-weight:700;letter-spacing:-.3px;color:#15191e')}>Summary Dashboard</div>
-          <div style={css('font-size:13px;color:#7a807a;margin-top:3px')}>Customer and Internal Audit activity by employee.</div>
+          <div style={css('font-size:13px;color:#7a807a;margin-top:3px')}>Number of customers managed per employee.</div>
         </div>
 
         <div style={css('display:flex;align-items:center;gap:16px;margin-bottom:28px')}>
@@ -48,36 +48,6 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
               </div>
             ))}
             {vm.summaryEmpBreakdown.length === 0 && <div style={css('color:#9aa097;font-size:13px;padding:6px 0')}>—</div>}
-          </div>
-
-          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;padding:20px')}>
-            <div style={css('color:#9aa097;font-size:11.5px;font-weight:600;margin-bottom:12px;letter-spacing:.3px')}>Customer — Site Inspection with Customer</div>
-            {vm.summaryCustomerTable.map((c) => (
-              <div key={c.name} style={css('margin-bottom:10px')}>
-                <div style={css('font-size:13px;font-weight:600;color:#2a302c;margin-bottom:4px')}>{c.name} <span style={css('color:#7a807a;font-weight:400;font-size:11.5px')}>({c.count})</span></div>
-                <div style={css('display:flex;flex-wrap:wrap;gap:4px')}>
-                  {c.emps.map((e) => (
-                    <span key={e.id} style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;background:#f0f4fa;color:#3a6bc4;border-radius:6px;padding:2px 8px;font-weight:500")}>{e.name} {e.count}</span>
-                  ))}
-                </div>
-              </div>
-            ))}
-            {vm.summaryCustomerTable.length === 0 && <div style={css('color:#9aa097;font-size:13px')}>—</div>}
-          </div>
-
-          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;padding:20px')}>
-            <div style={css('color:#9aa097;font-size:11.5px;font-weight:600;margin-bottom:12px;letter-spacing:.3px')}>Internal Audit — Site Inspection without Customer</div>
-            {vm.summaryInternalTable.map((p) => (
-              <div key={p.name} style={css('margin-bottom:10px')}>
-                <div style={css('font-size:13px;font-weight:600;color:#2a302c;margin-bottom:4px')}>{p.name} <span style={css('color:#7a807a;font-weight:400;font-size:11.5px')}>({p.count})</span></div>
-                <div style={css('display:flex;flex-wrap:wrap;gap:4px')}>
-                  {p.emps.map((e) => (
-                    <span key={e.id} style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;background:#eef3ea;color:#3d7840;border-radius:6px;padding:2px 8px;font-weight:500")}>{e.name} {e.count}</span>
-                  ))}
-                </div>
-              </div>
-            ))}
-            {vm.summaryInternalTable.length === 0 && <div style={css('color:#9aa097;font-size:13px')}>—</div>}
           </div>
         </div>
       </div>
