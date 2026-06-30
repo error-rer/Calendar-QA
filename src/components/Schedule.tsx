@@ -137,51 +137,31 @@ function Sidebar({ vm }: { vm: VM }) {
 
           <div>
             <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Company</div>
-            <div style={css('display:flex;flex-direction:column;gap:2px')}>
-              {vm.companyNames.map((co) => (
-                <div key={co}>
-                  <div
-                    onClick={() => vm.onFilterCompany(vm.filterCompany === co ? '' : co)}
-                    style={css('font-size:11.5px;font-weight:600;color:' + (vm.filterCompany === co ? '#2756d6' : '#3c423d') + ';cursor:pointer;padding:3px 6px;border-radius:4px;background:' + (vm.filterCompany === co ? '#eef2fd' : 'transparent') + ';display:flex;align-items:center;gap:4px')}
-                  >
-                    {co}
-                  </div>
-                  {vm.filterCompany === co && vm.auditTypes.map((at) => (
-                    <div
-                      key={at}
-                      onClick={() => vm.onFilterAuditType(vm.filterAuditType === at ? '' : at)}
-                      style={css('font-size:10.5px;padding:2px 6px 2px 18px;cursor:pointer;color:' + (vm.filterAuditType === at ? '#2756d6' : '#7a807a') + ';font-weight:' + (vm.filterAuditType === at ? '600' : '400') + ';border-radius:3px;background:' + (vm.filterAuditType === at ? '#eef2fd' : 'transparent') + '')}
-                    >
-                      {at}
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
+            <select value={vm.filterCompany} onChange={vm.onFilterCompany} style={vm.selStyle}>
+              <option value="">All companies</option>
+              {vm.companyNames.map((o) => (<option key={o} value={o}>{o}</option>))}
+            </select>
           </div>
 
           <div>
-            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Audit Topic</div>
-            <div style={css('font-size:9.5px;color:#a6aca2;margin-bottom:2px;font-weight:600')}>Customer topic</div>
-            <div style={css('display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px')}>
-              {vm.customerTopicOptions.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => vm.onFilterAuditTopic(vm.filterAuditTopic === t ? '' : t)}
-                  style={css('font-size:10px;padding:3px 8px;border-radius:12px;border:1px solid ' + (vm.filterAuditTopic === t ? '#9bb0e8' : '#dde0d9') + ';background:' + (vm.filterAuditTopic === t ? '#eef2fd' : '#fff') + ';color:' + (vm.filterAuditTopic === t ? '#2756d6' : '#5c625c') + ';font-weight:600;cursor:pointer;font-family:\'Archivo\',sans-serif')}
-                >{t}</button>
-              ))}
-            </div>
-            <div style={css('font-size:9.5px;color:#a6aca2;margin-bottom:2px;font-weight:600')}>Internal topic</div>
-            <div style={css('display:flex;gap:4px;flex-wrap:wrap')}>
-              {vm.internalTopicOptions.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => vm.onFilterAuditTopic(vm.filterAuditTopic === t ? '' : t)}
-                  style={css('font-size:10px;padding:3px 8px;border-radius:12px;border:1px solid ' + (vm.filterAuditTopic === t ? '#9bb0e8' : '#dde0d9') + ';background:' + (vm.filterAuditTopic === t ? '#eef2fd' : '#fff') + ';color:' + (vm.filterAuditTopic === t ? '#2756d6' : '#5c625c') + ';font-weight:600;cursor:pointer;font-family:\'Archivo\',sans-serif')}
-                >{t}</button>
-              ))}
-            </div>
+            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Purpose</div>
+            <select value={vm.filterAuditType} onChange={vm.onFilterAuditType} style={vm.selStyle}>
+              <option value="">All purposes</option>
+              {vm.auditTypes.map((o) => (<option key={o} value={o}>{o}</option>))}
+            </select>
+          </div>
+
+          <div>
+            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Topic</div>
+            <select value={vm.filterAuditTopic} onChange={vm.onFilterAuditTopic} style={vm.selStyle}>
+              <option value="">All topics</option>
+              <optgroup label="Customer topic">
+                {vm.customerTopicOptions.map((o) => (<option key={o} value={o}>{o}</option>))}
+              </optgroup>
+              <optgroup label="Internal topic">
+                {vm.internalTopicOptions.map((o) => (<option key={o} value={o}>{o}</option>))}
+              </optgroup>
+            </select>
           </div>
 
           <div>
