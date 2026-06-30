@@ -72,14 +72,6 @@ export type View = 'person' | 'plant' | 'customer' | 'subdept' | 'timetable';
 export type TimeScale = 'week' | 'month';
 export type AdminTab = 'engineers' | 'sites';
 
-export interface OrderForm {
-  code: string;
-  product: string;
-  customer: string;
-  plant: string;
-  priority: Priority;
-}
-
 export interface EngineerForm {
   name: string;
   role: string;
@@ -128,16 +120,16 @@ export interface State {
   timeScale: TimeScale;
   monthOffset: number;
   filterEmp: string;
-  filterCust: string;
-  filterPlant: string;
+  filterSite: string;
+  filterCompany: string;
+  filterAuditType: string;
+  filterAuditTopic: string;
   timetableOpenEng: string | null;
   loginEmail: string;
   loginPass: string;
   userMenuOpen: boolean;
   createOpen: boolean;
   createDraft: CreateDraft;
-  orderFormOpen: boolean;
-  orderForm: OrderForm;
   engFormOpen: boolean;
   engForm: EngineerForm;
   siteFormOpen: boolean;

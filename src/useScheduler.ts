@@ -6,6 +6,7 @@ import type {
   EngineerForm,
   LeaveForm,
   LeaveType,
+  Priority,
   SiteForm,
   State,
   SubDepartment,
@@ -133,8 +134,8 @@ export function useScheduler() {
     if (!o) return false;
     if (!S.activePlants[o.plant]) return true;
     if (S.filterEmp && a.eng !== S.filterEmp) return true;
-    if (S.filterCust && o.customer !== S.filterCust) return true;
-    if (S.filterPlant && o.plant !== S.filterPlant) return true;
+    if (S.filterCompany && o.customer !== S.filterCompany) return true;
+    if (S.filterAuditTopic && o.customer !== S.filterAuditTopic && o.plant !== S.filterAuditTopic) return true;
     return false;
   };
 
@@ -180,10 +181,12 @@ export function useScheduler() {
   const setFilterEmp = (v: string) => setState({ filterEmp: v });
   const openTimetable = (engId: string) => setState({ timetableOpenEng: engId, selected: null });
   const closeTimetable = () => setState({ timetableOpenEng: null });
-  const setFilterCust = (v: string) => setState({ filterCust: v });
-  const setFilterPlant = (v: string) => setState({ filterPlant: v });
+  const setFilterSite = (v: string) => setState({ filterSite: v });
+  const setFilterCompany = (v: string) => setState({ filterCompany: v });
+  const setFilterAuditType = (v: string) => setState({ filterAuditType: v });
+  const setFilterAuditTopic = (v: string) => setState({ filterAuditTopic: v });
   const clearFilters = () =>
-    setState((s) => ({ filterEmp: '', filterCust: '', filterPlant: '', activePlants: Object.fromEntries(s.plants.map((p) => [p.id, true])) }));
+    setState({ filterEmp: '', filterSite: '', filterCompany: '', filterAuditType: '', filterAuditTopic: '', activePlants: Object.fromEntries(S.plants.map((p) => [p.id, true])) });
 
   const copyWeek = () => {
     const off = S.weekOffset;
@@ -463,10 +466,10 @@ export function useScheduler() {
     all.forEach((a) => {
       const o = orderById(a.order);
       if (!o) return;
-      if (S.filterCust && o.customer !== S.filterCust) return;
+      if (S.filterCompany && o.customer !== S.filterCompany) return;
       if (!S.activePlants[o.plant]) return;
       if (S.filterEmp && a.eng !== S.filterEmp) return;
-      if (S.filterPlant && o.plant !== S.filterPlant) return;
+      if (S.filterAuditTopic && o.customer !== S.filterAuditTopic && o.plant !== S.filterAuditTopic) return;
       const g = monthOrderAgg[o.id] || (monthOrderAgg[o.id] = { appointments: 0, days: {}, engs: {}, conf: 0 });
       g.appointments++;
       g.days[dn] = 1;
@@ -502,9 +505,9 @@ export function useScheduler() {
   while (monthCells.length % 7 !== 0) monthCells.push({ blank: true, style: blankCellStyle() });
   const monthOrders = S.orders
     .filter((o) => {
-      if (S.filterCust && o.customer !== S.filterCust) return false;
+      if (S.filterCompany && o.customer !== S.filterCompany) return false;
       if (!S.activePlants[o.plant]) return false;
-      if (S.filterPlant && o.plant !== S.filterPlant) return false;
+      if (S.filterAuditTopic && o.customer !== S.filterAuditTopic && o.plant !== S.filterAuditTopic) return false;
       return true;
     })
     .map((o) => {
@@ -554,8 +557,6 @@ export function useScheduler() {
   });
 
   const conflicts = wk.filter((a) => cmap[a.id] && cmap[a.id].has).length;
-  const staffed = new Set(wk.map((a) => a.order));
-  const poolOrders = S.orders.filter((o) => !staffed.has(o.id) && S.activePlants[o.plant] && (!S.filterPlant || o.plant === S.filterPlant));
 
   const plantsVm = S.plants.map((p) => {
     const cnt = wk.filter((a) => {
@@ -568,19 +569,6 @@ export function useScheduler() {
       rowStyle: sx({ display: 'flex', alignItems: 'center', gap: '9px', padding: '7px 8px', borderRadius: '7px', cursor: 'pointer', background: on ? '#fff' : 'transparent', border: '1px solid ' + (on ? '#e6e9e2' : 'transparent'), opacity: on ? 1 : 0.5, transition: 'opacity .12s' }),
       swatchStyle: sx({ width: '11px', height: '11px', borderRadius: '3px', background: p.color, flexShrink: 0, boxShadow: on ? 'none' : 'inset 0 0 0 2px #fff, inset 0 0 0 3px ' + p.color }),
       toggle: () => togglePlant(p.id),
-    };
-  });
-
-  const pool = poolOrders.map((o) => {
-    const pl = plantById(o.plant)!;
-    const pc = priorityColors(o.priority);
-    return {
-      orderId: o.id, code: o.code, customer: o.customer, product: o.product, priority: o.priority, plantCode: pl.code,
-      dotStyle: sx({ width: '9px', height: '9px', borderRadius: '2px', background: pl.color, flexShrink: 0 }),
-      priorityStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '8.5px', fontWeight: 600, color: pc.c, background: pc.b, border: '1px solid ' + pc.bd, borderRadius: '3px', padding: '1px 5px' }),
-      tileStyle: sx({ background: '#fff', border: '1px solid #e3e6e0', borderRadius: '9px', padding: '9px 10px', cursor: 'grab', boxShadow: '0 1px 2px rgba(20,25,30,.04)' }),
-      onDragStart: () => setState({ drag: { kind: 'order', id: o.id } }),
-      onDragEnd: () => setState({ drag: null, overCell: null }),
     };
   });
 
@@ -832,31 +820,6 @@ export function useScheduler() {
     submitStyle: sx({ background: canCreate ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 18px', fontSize: '12.5px', fontWeight: 600, cursor: canCreate ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
   };
 
-  // ---- create-order modal VM ----
-  const of = S.orderForm;
-  const segMd = (on: boolean) => sx({ padding: '7px 13px', borderRadius: '7px', border: '1px solid ' + (on ? '#15191e' : '#dde0d9'), cursor: 'pointer', fontSize: '12px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", background: on ? '#15191e' : '#fff', color: on ? '#fff' : '#5c625c' });
-  const ofInStyle = sx({ width: '100%', border: '1px solid #dde0d9', borderRadius: '9px', padding: '10px 12px', fontSize: '13px', fontFamily: "'Archivo',sans-serif", color: '#23282a', outline: 'none', background: '#fff' });
-  const ofCanSubmit = !!(of.product.trim() && of.customer.trim());
-  const orderForm = {
-    code: of.code, product: of.product, customer: of.customer, inStyle: ofInStyle,
-    onCode: (e: React.ChangeEvent<HTMLInputElement>) => setOrderForm({ code: e.target.value }),
-    onProduct: (e: React.ChangeEvent<HTMLInputElement>) => setOrderForm({ product: e.target.value }),
-    onCustomer: (e: React.ChangeEvent<HTMLInputElement>) => setOrderForm({ customer: e.target.value }),
-    customerSuggestions: customers.map((c) => ({
-      name: c, onClick: () => setOrderForm({ customer: c }),
-      style: sx({ padding: '4px 10px', borderRadius: '20px', border: '1px solid ' + (of.customer === c ? '#9bb0e8' : '#e2e5de'), background: of.customer === c ? '#eef2fd' : '#fff', color: of.customer === c ? '#2756d6' : '#5c625c', fontSize: '11px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Archivo',sans-serif" }),
-    })),
-    plants: S.plants.map((p) => ({
-      id: p.id, name: p.name, code: p.code, onClick: () => setOrderForm({ plant: p.id }),
-      swatchStyle: sx({ width: '10px', height: '10px', borderRadius: '3px', background: p.color, flexShrink: 0 }),
-      style: sx({ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '9px', cursor: 'pointer', border: '1px solid ' + (of.plant === p.id ? '#9bb0e8' : '#e2e5de'), background: of.plant === p.id ? '#eef2fd' : '#fff' }),
-    })),
-    priorities: (['High', 'Med', 'Low'] as Priority[]).map((p) => ({ label: p, onClick: () => setOrderForm({ priority: p }), style: segMd(of.priority === p) })),
-    canSubmit: ofCanSubmit,
-    submit: () => submitOrderForm(),
-    submitStyle: sx({ background: ofCanSubmit ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '9px', padding: '10px 20px', fontSize: '13px', fontWeight: 600, cursor: ofCanSubmit ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
-  };
-
   // ---- profile VM ----
   const myWeekAppointments = S.assignments.filter((a) => a.week === 0).length;
   const profile = {
@@ -986,9 +949,12 @@ export function useScheduler() {
 
   // ---- filters VM ----
   const employeeOptions = [{ value: '', label: 'All employees' }].concat(S.engineers.map((e) => ({ value: e.id, label: e.name })));
-  const customerOptions = [{ value: '', label: 'All' }, { value: 'ESD Audit', label: 'ESD Audit' }, { value: 'QS Audit', label: 'QS Audit' }];
-  const plantOptions = [{ value: '', label: 'All' }, { value: 'QMS', label: 'QMS' }, { value: 'EHS', label: 'EHS' }, { value: 'ESD', label: 'ESD' }];
-  const hasFilters = !!(S.filterEmp || S.filterCust || S.filterPlant) || S.plants.some((p) => !S.activePlants[p.id]);
+  const siteOptions = [{ value: '', label: 'All sites' }, { value: 'U1', label: 'U1' }, { value: 'U2A', label: 'U2A' }, { value: 'U2B', label: 'U2B' }, { value: 'U3A', label: 'U3A' }, { value: 'U3T', label: 'U3T' }];
+  const customerTopicOptions = ['ESD Audit', 'QS Audit'];
+  const internalTopicOptions = ['QMS', 'EHS', 'ESD'];
+  const companyNames = ['Company A', 'Company B', 'Company C', 'Company D', 'Company E'];
+  const auditTypes = ['annual', 'end cust', 'VDA'];
+  const hasFilters = !!(S.filterEmp || S.filterSite || S.filterCompany || S.filterAuditType || S.filterAuditTopic) || S.plants.some((p) => !S.activePlants[p.id]);
   const selStyle = sx({ width: '100%', padding: '7px 9px', border: '1px solid #dde0d9', borderRadius: '7px', background: '#fff', fontSize: '11.5px', fontFamily: "'Archivo',sans-serif", color: '#3c423d', cursor: 'pointer', outline: 'none' });
 
   // ---- responsive styles ----
@@ -1068,11 +1034,13 @@ export function useScheduler() {
     toggleSidebar, closeSidebar, showSidebarBackdrop: isMobile && S.sidebarOpen,
     sidebarStyle, toolbarStyle, detailAsideStyle, modalOverlayStyle, modalCardStyle, modalColsStyle, modalColLeftStyle, modalColRightStyle,
     adminMainStyle, adminWrapStyle, adminStatGridStyle, loginWrapStyle, loginBrandStyle, loginFormWrapStyle,
-    filterEmp: S.filterEmp, filterCust: S.filterCust, filterPlant: S.filterPlant,
-    employeeOptions, customerOptions, plantOptions, hasFilters, selStyle,
+    filterEmp: S.filterEmp, filterSite: S.filterSite, filterCompany: S.filterCompany, filterAuditType: S.filterAuditType, filterAuditTopic: S.filterAuditTopic,
+    employeeOptions, siteOptions, customerTopicOptions, internalTopicOptions, companyNames, auditTypes, hasFilters, selStyle,
     onFilterEmp: (e: React.ChangeEvent<HTMLSelectElement>) => setFilterEmp(e.target.value),
-    onFilterCust: (e: React.ChangeEvent<HTMLSelectElement>) => setFilterCust(e.target.value),
-    onFilterPlant: (e: React.ChangeEvent<HTMLSelectElement>) => setFilterPlant(e.target.value),
+    onFilterSite: (e: React.ChangeEvent<HTMLSelectElement>) => setFilterSite(e.target.value),
+    onFilterCompany: (v: string) => setFilterCompany(v),
+    onFilterAuditType: (v: string) => setFilterAuditType(v),
+    onFilterAuditTopic: (v: string) => setFilterAuditTopic(v),
     clearFilters,
     openCreate, closeCreate, createOpen: S.createOpen, create, stop: (e: React.MouseEvent) => e.stopPropagation(),
     adminStats,
