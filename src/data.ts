@@ -57,6 +57,7 @@ export function initialState(): State {
     overCell: null,
     draft: '',
     summaryScale: 'week',
+    summaryWeekOffset: 0,
     plants: initialPlants.map((p) => ({ ...p })),
     customers: [],
     engineers: [

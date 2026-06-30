@@ -115,6 +115,7 @@ export function useScheduler() {
   const goProfile = () => setState({ page: 'profile', userMenuOpen: false, selected: null, sidebarOpen: false });
   const goSummary = () => setState({ page: 'summary', userMenuOpen: false, selected: null, sidebarOpen: false });
   const setSummaryScale = (s: TimeScale) => setState({ summaryScale: s });
+  const shiftSummaryWeek = (n: number) => setState((s) => ({ summaryWeekOffset: s.summaryWeekOffset + n }));
   const setView = (v: State['view']) => setState({ view: v, selected: null, sidebarOpen: false });
   const setScale = (sc: State['timeScale']) => setState({ timeScale: sc, selected: null, sidebarOpen: false });
   const togglePlant = (pid: string) =>
@@ -715,8 +716,17 @@ export function useScheduler() {
   };
 
   // ---- summary data ----
+  const summaryWk = S.assignments.filter((a) => a.week === S.summaryWeekOffset);
+  const summaryWeekBase = new Date(2026, 5, 29 + S.summaryWeekOffset * 7);
+  const summaryDays = [0, 1, 2, 3, 4].map((i) => {
+    const d = new Date(summaryWeekBase);
+    d.setDate(summaryWeekBase.getDate() + i);
+    return fmtDate(d);
+  });
+  const summaryWeekLabel = summaryDays[0] + ' – ' + summaryDays[4];
+  const summaryWeekTag = S.summaryWeekOffset === 0 ? 'CURRENT WEEK' : S.summaryWeekOffset > 0 ? '+' + S.summaryWeekOffset + ' WK AHEAD' : Math.abs(S.summaryWeekOffset) + ' WK BACK';
   const summaryIsWeek = S.summaryScale === 'week';
-  const monthAssignments = () => {
+  const summaryMA = () => {
     const mb = monthBaseDate();
     const mMon = mb.getMonth();
     const mYear = mb.getFullYear();
@@ -731,24 +741,10 @@ export function useScheduler() {
     }
     return result;
   };
-  const summaryAssignments = summaryIsWeek ? wk : monthAssignments();
-  const summaryCustomers = [...new Set(summaryAssignments.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.customer))].sort();
-  const summaryInternals = S.plants.filter((p) => internalPlants.has(p.id)).map((p) => {
-    const apps = summaryAssignments.filter((a) => {
-      const o = orderById(a.order);
-      return o && o.plant === p.id;
-    });
-    const custs = [...new Set(apps.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.customer))].sort();
-    return { id: p.id, name: p.name, appointments: apps.length, customers: custs };
-  }).filter((p) => p.appointments > 0);
-  const summaryCompanies = summaryCustomers.map((cust) => {
-    const apps = summaryAssignments.filter((a) => {
-      const o = orderById(a.order);
-      return o && o.customer === cust;
-    });
-    const plants = [...new Set(apps.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.plant))].filter((pl) => internalPlants.has(pl)).sort();
-    return { name: cust, appointments: apps.length, plants };
-  });
+  const summaryAssignments = summaryIsWeek ? summaryWk : summaryMA();
+  const summaryEmpCount = [...new Set(summaryAssignments.map((a) => a.eng))].length;
+  const summaryInternalCount = [...new Set(summaryAssignments.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.plant).filter((p) => internalPlants.has(p)))].length;
+  const summaryCustomerCount = [...new Set(summaryAssignments.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.customer))].length;
 
   // ---- admin VMs ----
   const activeEng = S.engineers.filter((e) => e.status === 'Active').length;
@@ -882,7 +878,9 @@ export function useScheduler() {
     addEngineer: openEngForm, addSite: openSiteForm, addCustomer: openCustForm,
     summaryScale: S.summaryScale, summaryIsWeek, setSummaryWeek: () => setSummaryScale('week'), setSummaryMonth: () => setSummaryScale('month'),
     summaryWeekStyle: S.summaryScale === 'week' ? tabOn : tabOff, summaryMonthStyle: S.summaryScale === 'month' ? tabOn : tabOff,
-    summaryInternals, summaryCompanies, summaryAssignTotal: summaryAssignments.length,
+    summaryWeekLabel, summaryWeekTag, summaryWeekOffset: S.summaryWeekOffset,
+    prevSummaryWeek: () => shiftSummaryWeek(-1), nextSummaryWeek: () => shiftSummaryWeek(1),
+    summaryEmpCount, summaryInternalCount, summaryCustomerCount, summaryAssignTotal: summaryAssignments.length,
   };
 }
 

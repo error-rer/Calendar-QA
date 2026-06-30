@@ -125,6 +125,7 @@ export interface State {
   overCell: string | null;
   draft: string;
   summaryScale: TimeScale;
+  summaryWeekOffset: number;
   plants: Plant[];
   customers: string[];
   engineers: Engineer[];
