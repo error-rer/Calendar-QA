@@ -30,22 +30,16 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
             label="Employee"
             value={vm.summaryEmpCount}
             accent="#3c423d"
-            bg="#f6f7f4"
-            border="#e4e7e0"
           />
           <SummaryCard
             label="Internal Audit"
             value={vm.summaryInternalCount}
             accent="#3d7840"
-            bg="#eef3ea"
-            border="#c7d8bf"
           />
           <SummaryCard
             label="Customer"
             value={vm.summaryCustomerCount}
             accent="#3a6bc4"
-            bg="#f0f4fa"
-            border="#d4def0"
           />
         </div>
       </div>
@@ -53,12 +47,10 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
   );
 }
 
-function SummaryCard({ label, value, accent, bg, border }: {
+function SummaryCard({ label, value, accent }: {
   label: string;
   value: number;
   accent: string;
-  bg: string;
-  border: string;
 }) {
   return (
     <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;padding:24px 20px')}>
