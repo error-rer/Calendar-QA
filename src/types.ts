@@ -91,24 +91,6 @@ export interface CustomerForm {
   name: string;
 }
 
-export type LeaveType = 'Vacation' | 'Sick' | 'Personal' | 'Training';
-
-export interface Leave {
-  id: string;
-  eng: string;
-  week: number;
-  day: number;
-  type: LeaveType;
-  note: string;
-}
-
-export interface LeaveForm {
-  eng: string;
-  days: number[];
-  type: LeaveType;
-  note: string;
-}
-
 export interface State {
   authed: boolean;
   page: Page;
@@ -136,8 +118,6 @@ export interface State {
   siteForm: SiteForm;
   custFormOpen: boolean;
   custForm: CustomerForm;
-  leaveFormOpen: boolean;
-  leaveForm: LeaveForm;
   weekOffset: number;
   activePlants: Record<string, boolean>;
   selected: string | null;
@@ -146,7 +126,6 @@ export interface State {
   draft: string;
   plants: Plant[];
   customers: string[];
-  leave: Leave[];
   engineers: Engineer[];
   orders: Order[];
   assignments: Assignment[];

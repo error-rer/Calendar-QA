@@ -4,8 +4,6 @@ import type {
   CreateDraft,
   CustomerForm,
   EngineerForm,
-  LeaveForm,
-  LeaveType,
   Priority,
   SiteForm,
   State,
@@ -21,14 +19,6 @@ import {
 
 /** Identity tag that supplies a contextual CSSProperties type to a style literal. */
 const sx = (o: CSSProperties): CSSProperties => o;
-
-/** Swatch / pill colour per leave type. */
-const leaveColor: Record<LeaveType, string> = {
-  Vacation: '#7a4ddb',
-  Sick: '#b32f2f',
-  Personal: '#0c8599',
-  Training: '#a96e08',
-};
 
 interface MonthChip {
   code: string;
@@ -86,7 +76,6 @@ export function useScheduler() {
     return m + ' ' + d.getDate();
   };
   const weekAssignments = () => S.assignments.filter((a) => a.week === S.weekOffset);
-  const weekLeave = () => S.leave.filter((l) => l.week === S.weekOffset);
   const monthBaseDate = () => new Date(2026, 5 + (S.monthOffset || 0), 1);
   /** Map an absolute date onto the seeded scheduling grid (week offset + weekday index). */
   const dateSlot = (d: Date) => {
@@ -290,34 +279,6 @@ export function useScheduler() {
     log('You', `added customer ${name}`, '#2756d6');
   };
 
-  // ---- leave / time-off ----
-  const openLeaveForm = () =>
-    setState({ leaveFormOpen: true, userMenuOpen: false, sidebarOpen: false, leaveForm: { eng: '', days: [], type: 'Vacation', note: '' } });
-  const closeLeaveForm = () => setState({ leaveFormOpen: false });
-  const setLeaveForm = (patch: Partial<LeaveForm>) => setState((s) => ({ leaveForm: { ...s.leaveForm, ...patch } }));
-  const toggleLeaveDay = (d: number) =>
-    setState((s) => {
-      const has = s.leaveForm.days.includes(d);
-      return { leaveForm: { ...s.leaveForm, days: has ? s.leaveForm.days.filter((x) => x !== d) : s.leaveForm.days.concat([d]) } };
-    });
-  const submitLeaveForm = () => {
-    const f = S.leaveForm;
-    if (!f.eng || !f.days.length) return;
-    const wkOff = S.weekOffset;
-    const existing = new Set(S.leave.filter((l) => l.eng === f.eng && l.week === wkOff).map((l) => l.day));
-    const adds = f.days
-      .filter((d) => !existing.has(d))
-      .map((d) => ({ id: 'l' + ids.current.id++, eng: f.eng, week: wkOff, day: d, type: f.type, note: f.note.trim() }));
-    setState((s) => ({ leave: s.leave.concat(adds), leaveFormOpen: false }));
-    const eng = engById(f.eng);
-    if (eng && adds.length) log('You', `logged ${f.type.toLowerCase()} for ${eng.name.split(' ')[0]} · ${adds.map((a) => dayLabels[a.day]).join(', ')}`, '#2756d6');
-  };
-  const removeLeaveAt = (engId: string, day: number) => {
-    setState((s) => ({ leave: s.leave.filter((l) => !(l.eng === engId && l.week === s.weekOffset && l.day === day)) }));
-    const eng = engById(engId);
-    if (eng) log('You', `cleared leave for ${eng.name.split(' ')[0]} · ${dayLabels[day]}`, '#2756d6');
-  };
-
   // ---- chip builders ----
   const buildChip = (a: Assignment) => {
     const ord = orderById(a.order)!;
@@ -468,12 +429,8 @@ export function useScheduler() {
     : weekTag;
 
   const daySel = days.map((d, i) => {
-    const dayLeaveCount = S.leave.filter((l) => l.week === S.weekOffset && l.day === i).length;
     return {
       label: d.label, date: d.date,
-      leaveDotStyle: dayLeaveCount
-        ? sx({ position: 'absolute', top: '-4px', left: '-4px', width: '8px', height: '8px', borderRadius: '50%', background: '#7a4ddb', border: '1.5px solid #fff' })
-        : sx({ display: 'none' }),
       style: sx({ position: 'relative', flex: 1, minWidth: 0, padding: '6px 3px', borderRadius: '8px', border: '1px solid ' + (selDay === i ? '#15191e' : '#e2e5de'), background: selDay === i ? '#15191e' : '#fff', cursor: 'pointer', textAlign: 'center', fontFamily: "'Archivo',sans-serif" }),
       labelStyle: sx({ fontSize: '11px', fontWeight: 700, color: selDay === i ? '#fff' : '#23282a' }),
       dateStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '8px', color: selDay === i ? '#aeb6c8' : '#9aa097', marginTop: '1px' }),
@@ -500,40 +457,13 @@ export function useScheduler() {
     };
   });
 
-  const wleave = weekLeave();
-  const leavePill = (t: LeaveType) => {
-    const c = leaveColor[t];
-    return sx({ display: 'flex', alignItems: 'center', gap: '5px', padding: '4px 7px', borderRadius: '6px', cursor: 'pointer', color: c, fontFamily: "'Archivo',sans-serif", fontSize: '10px', fontWeight: 600, border: '1px solid ' + hexA(c, 0.32), backgroundColor: hexA(c, 0.08), backgroundImage: 'repeating-linear-gradient(45deg,' + hexA(c, 0.07) + ',' + hexA(c, 0.07) + ' 4px,transparent 4px,transparent 8px)' });
-  };
-
-  // Who's on leave on the day the mobile view is focused on (the day strip selection).
-  const awayToday = wleave
-    .filter((l) => l.day === selDay)
-    .flatMap((l) => {
-      const e = engById(l.eng);
-      if (!e) return [];
-      const c = leaveColor[l.type];
-      return [{
-        engId: e.id, name: e.name, type: l.type, note: l.note, initials: initials(e.name),
-        avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
-        pillStyle: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 8px 5px 6px', borderRadius: '8px', cursor: 'pointer', color: '#3c423d', border: '1px solid ' + hexA(c, 0.3), backgroundColor: hexA(c, 0.08) }),
-        typeStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: c }),
-        onRemove: () => removeLeaveAt(e.id, selDay),
-      }];
-    });
-
   const personRows = S.engineers.map((e) => {
     const cells = [0, 1, 2, 3, 4].map((day) => {
       const cellId = e.id + '-' + day;
       const chips = wk.filter((a) => a.eng === e.id && a.day === day).map((a) => buildChip(a));
-      const dayLeave = wleave.find((l) => l.eng === e.id && l.day === day);
       const over = S.overCell === cellId;
       return {
         cellId, chips, empty: chips.length === 0,
-        onLeave: !!dayLeave,
-        leaveTag: dayLeave
-          ? { label: 'On leave · ' + dayLeave.type, note: dayLeave.note, style: leavePill(dayLeave.type), onRemove: () => removeLeaveAt(e.id, day) }
-          : null,
         style: sx({ borderBottom: '1px solid #e2e5de', borderRight: '1px solid #e2e5de', padding: '7px', minHeight: '78px', display: 'flex', flexDirection: 'column', gap: '5px', background: over ? '#e7efff' : '#fbfcfa', boxShadow: over ? 'inset 0 0 0 2px #9bb0e8' : 'none', transition: 'background .1s' }),
         hintStyle: sx({ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: over ? '#5b7fd6' : '#cdd2c9', fontSize: '15px', border: '1px dashed ' + (over ? '#9bb0e8' : '#e2e5de'), borderRadius: '6px', minHeight: '40px', cursor: 'pointer', transition: 'all .12s' }),
         onHintClick: () => openCreateAt(e.id, day),
@@ -691,17 +621,8 @@ export function useScheduler() {
   const selOrd = cd.order ? orderById(cd.order) : null;
   const cEngs = S.engineers.map((e) => {
     const onSel = cd.eng === e.id;
-    let flag = '';
-    let fs: CSSProperties = { display: 'none' };
-    if (selOrd) {
-      const onLeave = wleave.some((l) => l.eng === e.id && l.day === cd.day);
-      const busy = wk.some((a) => a.eng === e.id && a.day === cd.day && a.appointment === cd.appointment);
-      if (onLeave) { flag = 'on leave'; fs = sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: '#7a4ddb', background: '#efe9fb', border: '1px solid #dccdf5', borderRadius: '4px', padding: '2px 6px' }); }
-      else if (busy) { flag = 'busy'; fs = sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: '#a96e08', background: '#fff3df', border: '1px solid #f1dcb0', borderRadius: '4px', padding: '2px 6px' }); }
-      else { flag = '✓ fit'; fs = sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: '#1f9d57', background: '#e3f5ea', border: '1px solid #c4e6d2', borderRadius: '4px', padding: '2px 6px' }); }
-    }
     return {
-      engId: e.id, name: e.name, role: e.role, initials: initials(e.name), flag, flagStyle: fs,
+      engId: e.id, name: e.name, role: e.role, initials: initials(e.name), flag: '', flagStyle: sx({ display: 'none' }),
       avatarStyle: sx({ width: '26px', height: '26px', borderRadius: '7px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '10px', fontWeight: 600, flexShrink: 0 }),
       style: sx({ display: 'flex', alignItems: 'center', gap: '9px', padding: '7px 9px', borderRadius: '8px', cursor: 'pointer', border: '1px solid ' + (onSel ? '#9bb0e8' : '#eef1ea'), background: onSel ? '#eef2fd' : '#fff' }),
       select: () => setDraft({ eng: e.id }),
@@ -789,34 +710,6 @@ export function useScheduler() {
     canSubmit: custCanSubmit,
     submit: () => submitCustForm(),
     submitStyle: sx({ background: custCanSubmit ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '9px', padding: '10px 20px', fontSize: '13px', fontWeight: 600, cursor: custCanSubmit ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
-  };
-
-  // ---- leave / time-off modal VM ----
-  const lf = S.leaveForm;
-  const leaveCanSubmit = !!(lf.eng && lf.days.length);
-  const leaveDayChip = (on: boolean, taken: boolean) =>
-    sx({ flex: 1, minWidth: 0, padding: '7px 3px', borderRadius: '8px', border: '1px solid ' + (on ? '#15191e' : '#e2e5de'), background: on ? '#15191e' : taken ? '#f4f0fb' : '#fff', color: on ? '#fff' : taken ? '#7a4ddb' : '#23282a', cursor: 'pointer', textAlign: 'center', fontFamily: "'Archivo',sans-serif", fontSize: '11px', fontWeight: 700 });
-  const leaveForm = {
-    weekLabel, weekTag,
-    engineers: S.engineers.map((e) => {
-      const onSel = lf.eng === e.id;
-      return {
-        engId: e.id, name: e.name, role: e.role, initials: initials(e.name),
-      avatarStyle: sx({ width: '26px', height: '26px', borderRadius: '7px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '10px', fontWeight: 600, flexShrink: 0 }),
-        style: sx({ display: 'flex', alignItems: 'center', gap: '9px', padding: '7px 9px', borderRadius: '8px', cursor: 'pointer', border: '1px solid ' + (onSel ? '#9bb0e8' : '#eef1ea'), background: onSel ? '#eef2fd' : '#fff' }),
-        select: () => setLeaveForm({ eng: e.id }),
-      };
-    }),
-    days: days.map((d, i) => {
-      const taken = !!lf.eng && wleave.some((l) => l.eng === lf.eng && l.day === i);
-      return { label: d.label, date: d.date, on: lf.days.includes(i), taken, onClick: () => toggleLeaveDay(i), style: leaveDayChip(lf.days.includes(i), taken) };
-    }),
-    types: (['Vacation', 'Sick', 'Personal', 'Training'] as const).map((t) => ({ label: t, onClick: () => setLeaveForm({ type: t }), style: segMd(lf.type === t) })),
-    note: lf.note, inStyle: ofInStyle,
-    onNote: (e: React.ChangeEvent<HTMLInputElement>) => setLeaveForm({ note: e.target.value }),
-    canSubmit: leaveCanSubmit,
-    submit: () => submitLeaveForm(),
-    submitStyle: sx({ background: leaveCanSubmit ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '9px', padding: '10px 20px', fontSize: '13px', fontWeight: 600, cursor: leaveCanSubmit ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
   };
 
   // ---- admin VMs ----
@@ -918,14 +811,12 @@ export function useScheduler() {
     gridPerson: S.view === 'person' && !isMobile && !isMonth, gridPlant: S.view === 'plant' && !isMobile && !isMonth, gridCustomer: S.view === 'customer' && !isMobile && !isMonth,
     mobilePerson: isMobile && S.view === 'person' && !isMonth, mobileSite: isMobile && S.view === 'plant' && !isMonth, mobileCustomer: isMobile && S.view === 'customer' && !isMonth,
     showDayStrip: isMobile && !isMonth,
-    awayToday, awayLabel: dayNames[selDay], showAway: isMobile && !isMonth && awayToday.length > 0,
     weekLabel, weekTag, periodLabel, periodTag, gridCols, days, daySel,
     prevWeek: () => (isMonth ? shiftMonth(-1) : shiftWeek(-1)), nextWeek: () => (isMonth ? shiftMonth(1) : shiftWeek(1)),
     profile,
     engForm, engFormOpen: S.engFormOpen, openEngForm, closeEngForm,
     siteForm, siteFormOpen: S.siteFormOpen, openSiteForm, closeSiteForm,
     customerForm, custFormOpen: S.custFormOpen, openCustForm, closeCustForm,
-    leaveForm, leaveFormOpen: S.leaveFormOpen, openLeaveForm, closeLeaveForm,
     stats: { assignments: wk.length, weekCustomers, monthCustomers, weekInternals, monthInternals },
     plants: plantsVm,
     personRows, plantRows, customerRows, mobilePersonRows, mobileSiteRows, mobileCustomerRows,
@@ -950,7 +841,7 @@ export function useScheduler() {
     setTabEng: () => setAdminTab('engineers'), setTabSite: () => setAdminTab('sites'),
     tabEngStyle: S.adminTab === 'engineers' ? tabOn : tabOff, tabSiteStyle: S.adminTab === 'sites' ? tabOn : tabOff,
     adminEngineers, adminSites, engCount: S.engineers.length, siteCount: S.plants.length,
-    addEngineer: openEngForm, addSite: openSiteForm, addCustomer: openCustForm, addLeave: openLeaveForm,
+    addEngineer: openEngForm, addSite: openSiteForm, addCustomer: openCustForm,
   };
 }
 

@@ -9,7 +9,6 @@ import { CreateModal } from './components/CreateModal';
 import { EngineerModal } from './components/EngineerModal';
 import { SiteModal } from './components/SiteModal';
 import { CustomerModal } from './components/CustomerModal';
-import { LeaveModal } from './components/LeaveModal';
 
 export default function App() {
   const vm = useScheduler();
@@ -28,7 +27,6 @@ export default function App() {
           <EngineerModal vm={vm} />
           <SiteModal vm={vm} />
           <CustomerModal vm={vm} />
-          <LeaveModal vm={vm} />
         </div>
       )}
     </div>

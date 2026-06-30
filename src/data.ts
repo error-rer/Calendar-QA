@@ -50,8 +50,6 @@ export function initialState(): State {
     siteForm: { name: '', loc: '', code: '', color: siteColors[0] },
     custFormOpen: false,
     custForm: { name: '' },
-    leaveFormOpen: false,
-    leaveForm: { eng: '', days: [], type: 'Vacation', note: '' },
     weekOffset: 0,
     activePlants: { QMS: true, EHS: true, ESD: true },
     selected: null,
@@ -60,11 +58,6 @@ export function initialState(): State {
     draft: '',
     plants: initialPlants.map((p) => ({ ...p })),
     customers: [],
-    leave: [
-      { id: 'l1', eng: 'e5', week: 0, day: 0, type: 'Vacation', note: '' },
-      { id: 'l2', eng: 'e5', week: 0, day: 1, type: 'Vacation', note: '' },
-      { id: 'l3', eng: 'e2', week: 0, day: 2, type: 'Training', note: 'QMS training' },
-    ],
     engineers: [
       { id: 'e1', name: 'Dana Okafor', role: 'Reliability Lead', department: 'U1', subDepartments: ['QMS', 'EHS'], status: 'Active' },
       { id: 'e2', name: 'Marco Ruiz', role: 'Failure Analysis', department: 'U2', subDepartments: ['ESD'], status: 'Active' },

@@ -1,49 +1,7 @@
-import { Fragment, type CSSProperties } from 'react';
+import { Fragment } from 'react';
 import type { VM } from '../useScheduler';
 import { css, HButton, HDiv } from '../ui';
 import { DetailPanel } from './DetailPanel';
-
-interface LeaveTagInfo {
-  label: string;
-  note: string;
-  style: CSSProperties;
-  onRemove: () => void;
-}
-
-function MobileAway({ vm }: { vm: VM }) {
-  return (
-    <div style={css('margin:11px 11px 0;background:#fff;border:1px solid #e4e7e0;border-radius:12px;padding:11px 12px')}>
-      <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:9px")}>
-        ☾ AWAY · {vm.awayLabel.toUpperCase()} <span style={css('color:#c2c7bd')}>· {vm.awayToday.length}</span>
-      </div>
-      <div style={css('display:flex;flex-wrap:wrap;gap:7px')}>
-        {vm.awayToday.map((a) => (
-          <HDiv key={a.engId} onClick={a.onRemove} title={(a.note ? a.note + ' · ' : '') + 'Tap to clear'} style={a.pillStyle} hover={{ filter: 'brightness(.98)' }}>
-            <div style={a.avatarStyle}>{a.initials}</div>
-            <span style={css('font-size:11.5px;font-weight:600')}>{a.name}</span>
-            <span style={a.typeStyle}>{a.type}</span>
-            <span style={css('opacity:.5;font-size:11px')}>×</span>
-          </HDiv>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function LeaveTag({ tag }: { tag: LeaveTagInfo }) {
-  return (
-    <HDiv
-      onClick={tag.onRemove}
-      title={(tag.note ? tag.note + ' · ' : '') + 'Click to clear'}
-      style={tag.style}
-      hover={{ filter: 'brightness(.97)' }}
-    >
-      <span style={css('font-size:11px;line-height:1')}>☾</span>
-      <span style={css('flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{tag.label}</span>
-      <span style={css('opacity:.6;font-size:11px')}>×</span>
-    </HDiv>
-  );
-}
 
 const gridBase = css('display:inline-grid;min-width:100%');
 
@@ -60,7 +18,6 @@ export function Schedule({ vm }: { vm: VM }) {
         <Toolbar vm={vm} />
 
         <main className="scrl" style={css('flex:1;min-width:0;overflow:auto;background:#eef0ea;position:relative')}>
-          {vm.showAway && <MobileAway vm={vm} />}
           {vm.gridPerson && <PersonGrid vm={vm} />}
           {vm.gridPlant && <SiteGrid vm={vm} />}
           {vm.gridCustomer && <CustomerGrid vm={vm} />}
@@ -280,9 +237,6 @@ function Toolbar({ vm }: { vm: VM }) {
           </div>
         </div>
       )}
-      <HButton onClick={vm.addLeave} style={css("background:#fff;color:#3c423d;border:1px solid #dde0d9;border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;display:flex;align-items:center;gap:6px;flex-shrink:0")} hover={{ background: '#f1f3ee' }}>
-        <span style={css('font-size:13px;line-height:1')}>☾</span>Leave
-      </HButton>
       <HButton onClick={vm.openCreate} style={css("background:#15191e;color:#fff;border:none;border-radius:8px;padding:8px 13px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;display:flex;align-items:center;gap:6px;flex-shrink:0")} hover={{ background: '#23282e' }}>
         <span style={css('font-size:14px;line-height:1')}>＋</span>New appointment
       </HButton>
@@ -292,7 +246,6 @@ function Toolbar({ vm }: { vm: VM }) {
             <button key={i} onClick={d.onClick} style={d.style}>
               <div style={d.labelStyle}>{d.label}</div>
               <div style={d.dateStyle}>{d.date}</div>
-              <span style={d.leaveDotStyle} />
             </button>
           ))}
         </div>
@@ -342,7 +295,6 @@ function PersonGrid({ vm }: { vm: VM }) {
             </div>
           {r.cells.map((cell) => (
             <div key={cell.cellId} onDragOver={cell.onDragOver} onDragLeave={cell.onDragLeave} onDrop={cell.onDrop} style={cell.style}>
-              {cell.leaveTag && <LeaveTag tag={cell.leaveTag} />}
               {cell.chips.map((chip) => (
                 <div key={chip.aid} draggable onClick={chip.onClick} onDragStart={chip.onDragStart} onDragEnd={chip.onDragEnd} style={chip.style}>
                   <div style={css('display:flex;align-items:center;gap:6px')}>
@@ -352,7 +304,7 @@ function PersonGrid({ vm }: { vm: VM }) {
                   <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.purpose}</div>
                 </div>
               ))}
-              {cell.empty && !cell.leaveTag && (
+              {cell.empty && (
                 <HDiv onClick={cell.onHintClick} title="Assign an appointment here" style={cell.hintStyle} hover={{ background: '#eef2fd', borderColor: '#9bb0e8', color: '#5b7fd6' }}>＋</HDiv>
               )}
             </div>
@@ -448,7 +400,6 @@ function MobilePerson({ vm }: { vm: VM }) {
             </div>
           </div>
           <div style={css('display:flex;flex-direction:column;gap:6px')}>
-            {r.cell.leaveTag && <LeaveTag tag={r.cell.leaveTag} />}
             {r.cell.chips.map((chip) => (
               <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
                 <div style={css('display:flex;align-items:center;gap:6px')}>
@@ -458,7 +409,7 @@ function MobilePerson({ vm }: { vm: VM }) {
                 <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
               </div>
             ))}
-            {!r.cell.leaveTag && (
+            {r.cell.chips.length === 0 && (
                <button onClick={r.cell.onHintClick} style={css("width:100%;padding:10px;border:1px dashed #cdd2c9;background:#fbfcfa;border-radius:9px;color:#7a807a;font-size:12px;font-weight:600;font-family:'Archivo',sans-serif;cursor:pointer")}>＋ Assign appointment</button>
             )}
           </div>

@@ -24,7 +24,7 @@ export function Admin({ vm }: { vm: VM }) {
         </div>
 
         <div style={css('display:flex;background:#fff;border:1px solid #e0e3dc;border-radius:9px;padding:2px;gap:2px;width:max-content;margin-bottom:16px')}>
-          <button onClick={vm.setTabEng} style={vm.tabEngStyle}>Engineers</button>
+          <button onClick={vm.setTabEng} style={vm.tabEngStyle}>Employee</button>
           <button onClick={vm.setTabSite} style={vm.tabSiteStyle}>Internal</button>
         </div>
 
