@@ -136,6 +136,26 @@ function Sidebar({ vm }: { vm: VM }) {
           </div>
 
           <div>
+            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Department</div>
+            <select value={vm.filterAuditTopic} onChange={vm.onFilterAuditTopic} style={vm.selStyle}>
+              <option value="">All departments</option>
+              <optgroup label="Customer">
+                {vm.customerTopicOptions.map((o) => (<option key={o} value={o}>{o}</option>))}
+              </optgroup>
+              <optgroup label="Internal Audit">
+                {vm.internalTopicOptions.map((o) => (<option key={o} value={o}>{o}</option>))}
+              </optgroup>
+            </select>
+          </div>
+
+          <div>
+            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Site</div>
+            <select value={vm.filterSite} onChange={vm.onFilterSite} style={vm.selStyle}>
+              {vm.siteOptions.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
+            </select>
+          </div>
+
+          <div>
             <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Company</div>
             <select value={vm.filterCompany} onChange={vm.onFilterCompany} style={vm.selStyle}>
               <option value="">All companies</option>
@@ -148,26 +168,6 @@ function Sidebar({ vm }: { vm: VM }) {
             <select value={vm.filterAuditType} onChange={vm.onFilterAuditType} style={vm.selStyle}>
               <option value="">All purposes</option>
               {vm.auditTypes.map((o) => (<option key={o} value={o}>{o}</option>))}
-            </select>
-          </div>
-
-          <div>
-            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Topic</div>
-            <select value={vm.filterAuditTopic} onChange={vm.onFilterAuditTopic} style={vm.selStyle}>
-              <option value="">All topics</option>
-              <optgroup label="Customer topic">
-                {vm.customerTopicOptions.map((o) => (<option key={o} value={o}>{o}</option>))}
-              </optgroup>
-              <optgroup label="Internal topic">
-                {vm.internalTopicOptions.map((o) => (<option key={o} value={o}>{o}</option>))}
-              </optgroup>
-            </select>
-          </div>
-
-          <div>
-            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Site</div>
-            <select value={vm.filterSite} onChange={vm.onFilterSite} style={vm.selStyle}>
-              {vm.siteOptions.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
             </select>
           </div>
         </div>
@@ -213,9 +213,8 @@ function TimetableGrid({ vm }: { vm: VM }) {
                     <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#15191e")}>{chip.code}</span>
                     <span style={css('flex:1')} />
                     <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
-                    <span style={chip.appointmentStyle}>{chip.appointment}</span>
                   </div>
-                  <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.customer}</div>
+                  <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.purpose}</div>
                 </div>
               ))}
               {cell.empty && <div style={css('font-size:10.5px;color:#bcc1b8;text-align:center;padding:8px 0')}>—</div>}
@@ -241,9 +240,8 @@ function MobileTimetable({ vm }: { vm: VM }) {
                     <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:#15191e")}>{chip.code}</span>
                     <span style={css('flex:1')} />
                     <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
-                    <span style={chip.appointmentStyle}>{chip.appointment}</span>
                   </div>
-                  <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.customer}</div>
+                  <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
                 </div>
               ))}
               {r.cell.empty && <div style={css('font-size:11px;color:#a6aca2;text-align:center;padding:8px 0;font-style:italic')}>No appointments</div>}
@@ -363,9 +361,8 @@ function PersonGrid({ vm }: { vm: VM }) {
                     <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#15191e")}>{chip.code}</span>
                     <span style={css('flex:1')} />
                     <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
-                    <span style={chip.appointmentStyle}>{chip.appointment}</span>
                   </div>
-                  <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.customer}</div>
+                  <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.purpose}</div>
                 </div>
               ))}
               {cell.empty && !cell.leaveTag && (
@@ -402,7 +399,8 @@ function SiteGrid({ vm }: { vm: VM }) {
                   <div style={chip.avatarStyle}>{chip.initials}</div>
                   <div style={css('min-width:0;flex:1')}>
                     <div style={css('font-size:11px;font-weight:600;color:#23282a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.name}</div>
-                    <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code} · {chip.appointment}</div>
+                    <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div>
+                    <div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div>
                   </div>
                   <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
                 </div>
@@ -439,7 +437,8 @@ function CustomerGrid({ vm }: { vm: VM }) {
                   <div style={chip.avatarStyle}>{chip.initials}</div>
                   <div style={css('min-width:0;flex:1')}>
                     <div style={css('font-size:11px;font-weight:600;color:#23282a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.name}</div>
-                    <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code} · {chip.plantCode}</div>
+                    <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div>
+                    <div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div>
                   </div>
                   <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
                 </div>
@@ -479,9 +478,8 @@ function MobilePerson({ vm }: { vm: VM }) {
                   <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:#15191e")}>{chip.code}</span>
                   <span style={css('flex:1')} />
                   <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
-                  <span style={chip.appointmentStyle}>{chip.appointment}</span>
                 </div>
-                <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.customer}</div>
+                <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
               </div>
             ))}
             {!r.cell.leaveTag && (
@@ -507,7 +505,7 @@ function MobileSite({ vm }: { vm: VM }) {
             {r.cell.chips.map((chip) => (
               <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
                 <div style={chip.avatarStyle}>{chip.initials}</div>
-                <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code} · {chip.appointment}</div></div>
+                <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div><div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div></div>
                 <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
               </div>
             ))}
@@ -532,7 +530,7 @@ function MobileCustomer({ vm }: { vm: VM }) {
             {r.cell.chips.map((chip) => (
               <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
                 <div style={chip.avatarStyle}>{chip.initials}</div>
-                <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code} · {chip.plantCode} · {chip.appointment}</div></div>
+                <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div><div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div></div>
                 <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
               </div>
             ))}
@@ -561,7 +559,8 @@ function SubDeptGrid({ vm }: { vm: VM }) {
                   <div style={chip.avatarStyle}>{chip.initials}</div>
                   <div style={css('min-width:0;flex:1')}>
                     <div style={css('font-size:11px;font-weight:600;color:#23282a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.name}</div>
-                    <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code} · {chip.appointment}</div>
+                    <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div>
+                    <div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div>
                   </div>
                   <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
                 </div>
@@ -587,7 +586,7 @@ function MobileSubDept({ vm }: { vm: VM }) {
             {r.cell.chips.map((chip) => (
               <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
                 <div style={chip.avatarStyle}>{chip.initials}</div>
-                <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code} · {chip.appointment}</div></div>
+                <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div><div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div></div>
                 <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
               </div>
             ))}

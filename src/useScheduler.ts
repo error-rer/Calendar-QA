@@ -136,6 +136,7 @@ export function useScheduler() {
     if (S.filterEmp && a.eng !== S.filterEmp) return true;
     if (S.filterCompany && o.customer !== S.filterCompany) return true;
     if (S.filterAuditTopic && o.customer !== S.filterAuditTopic && o.plant !== S.filterAuditTopic) return true;
+    if (S.filterAuditType && o.purpose !== S.filterAuditType) return true;
     return false;
   };
 
@@ -387,8 +388,7 @@ export function useScheduler() {
       base.boxShadow = sel ? '0 0 0 2px rgba(210,59,59,.5)' : '0 0 0 1px rgba(210,59,59,.22)';
     }
     return {
-      aid: a.id, code: ord.code, customer: ord.customer, style: base, appointment: a.appointment,
-      appointmentStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, padding: '1px 5px', borderRadius: '3px', background: '#eef2fd', color: '#5b7fd6', border: '1px solid #d8e2fa' }),
+      aid: a.id, code: ord.customer, purpose: ord.purpose, style: base,
       warnGlyph: cf.has ? '⚠' : '',
       warnDotStyle: sx({ fontSize: '11px', color: '#d23b3b', lineHeight: 1, display: cf.has ? 'inline' : 'none' }),
       onClick: () => select(a.id),
@@ -405,7 +405,7 @@ export function useScheduler() {
     const ac = avatarColor(a.eng);
     const dim = chipDimmed(a);
     return {
-      aid: a.id, name: e.name, initials: initials(e.name), code: ord.code, plantCode: pl.code, appointment: a.appointment,
+      aid: a.id, name: e.name, initials: initials(e.name), code: ord.customer, purpose: ord.purpose, plantCode: pl.code,
       style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: '#fff', border: '1px solid ' + (cf.has ? '#e6a3a3' : '#e8ebe4'), borderLeft: '3px solid ' + (cf.has ? '#d23b3b' : accent || pl.color), borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none' }),
       avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: hexA(ac, 0.14), color: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       warnGlyph: cf.has ? '⚠' : '',
@@ -470,6 +470,7 @@ export function useScheduler() {
       if (!S.activePlants[o.plant]) return;
       if (S.filterEmp && a.eng !== S.filterEmp) return;
       if (S.filterAuditTopic && o.customer !== S.filterAuditTopic && o.plant !== S.filterAuditTopic) return;
+      if (S.filterAuditType && o.purpose !== S.filterAuditType) return;
       const g = monthOrderAgg[o.id] || (monthOrderAgg[o.id] = { appointments: 0, days: {}, engs: {}, conf: 0 });
       g.appointments++;
       g.days[dn] = 1;
@@ -508,6 +509,7 @@ export function useScheduler() {
       if (S.filterCompany && o.customer !== S.filterCompany) return false;
       if (!S.activePlants[o.plant]) return false;
       if (S.filterAuditTopic && o.customer !== S.filterAuditTopic && o.plant !== S.filterAuditTopic) return false;
+      if (S.filterAuditType && o.purpose !== S.filterAuditType) return false;
       return true;
     })
     .map((o) => {

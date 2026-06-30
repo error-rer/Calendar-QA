@@ -30,6 +30,7 @@ export interface Order {
   product: string;
   plant: string;
   priority: Priority;
+  purpose: string;
 }
 
 export interface Assignment {
