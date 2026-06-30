@@ -135,7 +135,7 @@ function Sidebar({ vm }: { vm: VM }) {
             </select>
           </div>
           <div>
-            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Name customer</div>
+            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Customer</div>
             <select value={vm.filterCust} onChange={vm.onFilterCust} style={vm.selStyle}>
               {vm.customerOptions.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
             </select>
@@ -144,12 +144,6 @@ function Sidebar({ vm }: { vm: VM }) {
             <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Internal</div>
             <select value={vm.filterPlant} onChange={vm.onFilterPlant} style={vm.selStyle}>
               {vm.plantOptions.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
-            </select>
-          </div>
-          <div>
-            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Sub-department</div>
-            <select value={vm.filterSubdept} onChange={vm.onFilterSubdept} style={vm.selStyle}>
-              {vm.subDeptOptions.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
             </select>
           </div>
         </div>

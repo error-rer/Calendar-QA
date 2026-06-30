@@ -130,7 +130,6 @@ export interface State {
   filterEmp: string;
   filterCust: string;
   filterPlant: string;
-  filterSubdept: string;
   timetableOpenEng: string | null;
   loginEmail: string;
   loginPass: string;

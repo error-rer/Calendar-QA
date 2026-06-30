@@ -20,7 +20,7 @@ export function CustomerModal({ vm }: { vm: VM }) {
             <div style={f.previewStyle}>{f.previewInitials}</div>
             <div style={css('flex:1;min-width:0')}>
               <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>Customer name</label>
-              <HInput value={f.name} onChange={f.onName} placeholder="e.g. Helios Compute" style={f.inStyle} focus={{ borderColor: '#9bb0e8' }} />
+              <HInput value={f.name} onChange={f.onName} placeholder="e.g. Company A" style={f.inStyle} focus={{ borderColor: '#9bb0e8' }} />
             </div>
           </div>
           {f.exists && (
