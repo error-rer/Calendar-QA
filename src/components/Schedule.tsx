@@ -111,7 +111,7 @@ function Sidebar({ vm }: { vm: VM }) {
           </div>
 
           <div>
-            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Company</div>
+            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Customer</div>
             <select value={vm.filterCompany} onChange={vm.onFilterCompany} style={vm.selStyle}>
               <option value="">All companies</option>
               {vm.companyNames.map((o) => (<option key={o} value={o}>{o}</option>))}
