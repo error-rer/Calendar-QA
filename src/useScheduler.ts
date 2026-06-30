@@ -618,7 +618,6 @@ export function useScheduler() {
       select: () => setDraft({ order: o.id }),
     };
   });
-  const selOrd = cd.order ? orderById(cd.order) : null;
   const cEngs = S.engineers.map((e) => {
     const onSel = cd.eng === e.id;
     return {
