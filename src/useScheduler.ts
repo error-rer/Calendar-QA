@@ -112,6 +112,8 @@ export function useScheduler() {
   const goSchedule = () => setState({ page: 'schedule', userMenuOpen: false });
   const goAdmin = () => setState({ page: 'admin', userMenuOpen: false, selected: null });
   const goProfile = () => setState({ page: 'profile', userMenuOpen: false, selected: null, sidebarOpen: false });
+  const goSummary = () => setState({ page: 'summary', userMenuOpen: false, selected: null, sidebarOpen: false });
+  const setSummaryScale = (s: TimeScale) => setState({ summaryScale: s });
   const setView = (v: State['view']) => setState({ view: v, selected: null, sidebarOpen: false });
   const setScale = (sc: State['timeScale']) => setState({ timeScale: sc, selected: null, sidebarOpen: false });
   const togglePlant = (pid: string) =>
@@ -711,6 +713,42 @@ export function useScheduler() {
     submitStyle: sx({ background: custCanSubmit ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '9px', padding: '10px 20px', fontSize: '13px', fontWeight: 600, cursor: custCanSubmit ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
   };
 
+  // ---- summary data ----
+  const summaryIsWeek = S.summaryScale === 'week';
+  const monthAssignments = () => {
+    const mb = monthBaseDate();
+    const mMon = mb.getMonth();
+    const mYear = mb.getFullYear();
+    const daysInMonth = new Date(mYear, mMon + 1, 0).getDate();
+    const result: Assignment[] = [];
+    for (let dn = 1; dn <= daysInMonth; dn++) {
+      const date = new Date(mYear, mMon, dn);
+      const slot = dateSlot(date);
+      if (slot.wd > 4) continue;
+      const dayApps = S.assignments.filter((a) => a.week === slot.weekOffset && a.day === slot.wd && !chipDimmed(a));
+      result.push(...dayApps);
+    }
+    return result;
+  };
+  const summaryAssignments = summaryIsWeek ? wk : monthAssignments();
+  const summaryCustomers = [...new Set(summaryAssignments.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.customer))].sort();
+  const summaryInternals = S.plants.filter((p) => internalPlants.has(p.id)).map((p) => {
+    const apps = summaryAssignments.filter((a) => {
+      const o = orderById(a.order);
+      return o && o.plant === p.id;
+    });
+    const custs = [...new Set(apps.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.customer))].sort();
+    return { id: p.id, name: p.name, appointments: apps.length, customers: custs };
+  }).filter((p) => p.appointments > 0);
+  const summaryCompanies = summaryCustomers.map((cust) => {
+    const apps = summaryAssignments.filter((a) => {
+      const o = orderById(a.order);
+      return o && o.customer === cust;
+    });
+    const plants = [...new Set(apps.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.plant))].filter((pl) => internalPlants.has(pl)).sort();
+    return { name: cust, appointments: apps.length, plants };
+  });
+
   // ---- admin VMs ----
   const activeEng = S.engineers.filter((e) => e.status === 'Active').length;
   const activeSites = S.plants.filter((p) => S.activePlants[p.id]).length;
@@ -795,9 +833,9 @@ export function useScheduler() {
     onPass: (e: React.ChangeEvent<HTMLInputElement>) => setState({ loginPass: e.target.value }),
     onLoginKey: (e: React.KeyboardEvent) => { if (e.key === 'Enter') signIn(); },
     signIn, signOut,
-    isSchedule: S.page === 'schedule', isAdmin: S.page === 'admin', isProfile: S.page === 'profile',
-    goSchedule, goAdmin, goProfile,
-    navSchedStyle: S.page === 'schedule' ? tabOn : tabOff, navAdminStyle: S.page === 'admin' ? tabOn : tabOff,
+    isSchedule: S.page === 'schedule', isAdmin: S.page === 'admin', isProfile: S.page === 'profile', isSummary: S.page === 'summary',
+    goSchedule, goAdmin, goProfile, goSummary,
+    navSchedStyle: S.page === 'schedule' ? tabOn : tabOff, navAdminStyle: S.page === 'admin' ? tabOn : tabOff, navSummaryStyle: S.page === 'summary' ? tabOn : tabOff,
     userMenuOpen: S.userMenuOpen, toggleUserMenu,
     isPerson: S.view === 'person', isPlant: S.view === 'plant', isCustomer: S.view === 'customer',
     setPerson: () => setView('person'), setPlant: () => setView('plant'), setCustomer: () => setView('customer'),
@@ -841,6 +879,9 @@ export function useScheduler() {
     tabEngStyle: S.adminTab === 'engineers' ? tabOn : tabOff, tabSiteStyle: S.adminTab === 'sites' ? tabOn : tabOff,
     adminEngineers, adminSites, engCount: S.engineers.length, siteCount: S.plants.length,
     addEngineer: openEngForm, addSite: openSiteForm, addCustomer: openCustForm,
+    summaryScale: S.summaryScale, summaryIsWeek, setSummaryWeek: () => setSummaryScale('week'), setSummaryMonth: () => setSummaryScale('month'),
+    summaryWeekStyle: S.summaryScale === 'week' ? tabOn : tabOff, summaryMonthStyle: S.summaryScale === 'month' ? tabOn : tabOff,
+    summaryInternals, summaryCompanies, summaryAssignTotal: summaryAssignments.length,
   };
 }
 

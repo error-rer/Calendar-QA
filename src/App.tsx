@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import { Schedule } from './components/Schedule';
 import { Admin } from './components/Admin';
 import { Profile } from './components/Profile';
+import { SummaryDashboard } from './components/SummaryDashboard';
 import { CreateModal } from './components/CreateModal';
 import { EngineerModal } from './components/EngineerModal';
 import { SiteModal } from './components/SiteModal';
@@ -23,6 +24,7 @@ export default function App() {
           {vm.isSchedule && <Schedule vm={vm} />}
           {vm.isAdmin && <Admin vm={vm} />}
           {vm.isProfile && <Profile vm={vm} />}
+          {vm.isSummary && <SummaryDashboard vm={vm} />}
           <CreateModal vm={vm} />
           <EngineerModal vm={vm} />
           <SiteModal vm={vm} />

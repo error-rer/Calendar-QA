@@ -68,7 +68,7 @@ export interface CreateDraft {
   appointment: AppointmentKind;
 }
 
-export type Page = 'schedule' | 'admin' | 'profile';
+export type Page = 'schedule' | 'admin' | 'profile' | 'summary';
 export type View = 'person' | 'plant' | 'customer' | 'timetable';
 export type TimeScale = 'week' | 'month';
 export type AdminTab = 'engineers' | 'sites';
@@ -124,6 +124,7 @@ export interface State {
   drag: DragState;
   overCell: string | null;
   draft: string;
+  summaryScale: TimeScale;
   plants: Plant[];
   customers: string[];
   engineers: Engineer[];
