@@ -1,9 +1,9 @@
 ﻿import type { Plant, State } from './types';
 
 export const initialPlants: Plant[] = [
-  { id: 'p1', name: 'U1', loc: '', code: 'U1', color: '#2f6df0', active: true },
-  { id: 'p2', name: 'U2', loc: '', code: 'U2', color: '#0f9d8c', active: true },
-  { id: 'p3', name: 'U3', loc: '', code: 'U3', color: '#c2620c', active: true },
+  { id: 'QMS', name: 'QMS', loc: '', code: 'QMS', color: '#2f6df0', active: true },
+  { id: 'EHS', name: 'EHS', loc: '', code: 'EHS', color: '#0f9d8c', active: true },
+  { id: 'ESD', name: 'ESD', loc: '', code: 'ESD', color: '#c2620c', active: true },
 ];
 
 /** Swatch options offered when creating a new fab site. */
@@ -44,7 +44,7 @@ export function initialState(): State {
     createOpen: false,
     createDraft: { order: '', eng: '', day: 0, appointment: '08:00' },
     orderFormOpen: false,
-    orderForm: { code: '', product: '', customer: '', plant: 'p1', priority: 'Med' },
+    orderForm: { code: '', product: '', customer: '', plant: 'QMS', priority: 'Med' },
     engFormOpen: false,
     engForm: { name: '', role: '', department: 'QA-U1', subDepartments: [], status: 'Active' },
     siteFormOpen: false,
@@ -54,7 +54,7 @@ export function initialState(): State {
     leaveFormOpen: false,
     leaveForm: { eng: '', days: [], type: 'Vacation', note: '' },
     weekOffset: 0,
-    activePlants: { p1: true, p2: true, p3: true, p4: true },
+    activePlants: { QMS: true, EHS: true, ESD: true },
     selected: null,
     drag: null,
     overCell: null,
@@ -79,14 +79,14 @@ export function initialState(): State {
       { id: 'e10', name: 'Omar Haddad', role: 'FA Engineer', department: 'QA-U2', subDepartments: ['ESD'], status: 'Active' },
     ],
     orders: [
-      { id: 'o1', code: 'NB-4471', customer: 'Nimbus Aero', product: 'Rad-hard FPGA', plant: 'p3', priority: 'High' },
-      { id: 'o2', code: 'VA-2207', customer: 'Vanta Auto', product: 'Automotive MCU', plant: 'p1', priority: 'High' },
-      { id: 'o3', code: 'HC-9930', customer: 'Helio Compute', product: 'HPC GPU die', plant: 'p2', priority: 'Med' },
-      { id: 'o4', code: 'OM-1185', customer: 'Orion Medical', product: 'Implant ASIC', plant: 'p3', priority: 'High' },
-      { id: 'o5', code: 'CN-7758', customer: 'Cirrus Networks', product: 'Switch SoC', plant: 'p1', priority: 'Med' },
-      { id: 'o6', code: 'HC-9931', customer: 'Helio Compute', product: 'HBM stack test', plant: 'p1', priority: 'Low' },
-      { id: 'o7', code: 'VA-2210', customer: 'Vanta Auto', product: 'Power IGBT qual', plant: 'p3', priority: 'Med' },
-      { id: 'o8', code: 'NB-4480', customer: 'Nimbus Aero', product: 'Sensor MEMS', plant: 'p3', priority: 'Med' },
+      { id: 'o1', code: 'NB-4471', customer: 'Nimbus Aero', product: 'Rad-hard FPGA', plant: 'ESD', priority: 'High' },
+      { id: 'o2', code: 'VA-2207', customer: 'Vanta Auto', product: 'Automotive MCU', plant: 'QMS', priority: 'High' },
+      { id: 'o3', code: 'HC-9930', customer: 'Helio Compute', product: 'HPC GPU die', plant: 'EHS', priority: 'Med' },
+      { id: 'o4', code: 'OM-1185', customer: 'Orion Medical', product: 'Implant ASIC', plant: 'ESD', priority: 'High' },
+      { id: 'o5', code: 'CN-7758', customer: 'Cirrus Networks', product: 'Switch SoC', plant: 'QMS', priority: 'Med' },
+      { id: 'o6', code: 'HC-9931', customer: 'Helio Compute', product: 'HBM stack test', plant: 'QMS', priority: 'Low' },
+      { id: 'o7', code: 'VA-2210', customer: 'Vanta Auto', product: 'Power IGBT qual', plant: 'ESD', priority: 'Med' },
+      { id: 'o8', code: 'NB-4480', customer: 'Nimbus Aero', product: 'Sensor MEMS', plant: 'ESD', priority: 'Med' },
     ],
     assignments: [
       { id: 'a1', eng: 'e1', order: 'o1', day: 0, appointment: '08:00', week: 0 },

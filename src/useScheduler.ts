@@ -382,7 +382,7 @@ export function useScheduler() {
       orderFormOpen: true,
       userMenuOpen: false,
       sidebarOpen: false,
-      orderForm: { code: '', product: '', customer: '', plant: 'p1', priority: 'Med' },
+        orderForm: { code: '', product: '', customer: '', plant: 'QMS', priority: 'Med' },
     });
   const closeOrderForm = () => setState({ orderFormOpen: false });
   const setOrderForm = (patch: Partial<OrderForm>) =>
@@ -1042,7 +1042,7 @@ export function useScheduler() {
   // ---- filters VM ----
   const employeeOptions = [{ value: '', label: 'All employees' }].concat(S.engineers.map((e) => ({ value: e.id, label: e.name })));
   const customerOptions = [{ value: '', label: 'All' }, { value: 'ESD Audit', label: 'ESD Audit' }, { value: 'QS Audit', label: 'QS Audit' }];
-  const plantOptions = [{ value: '', label: 'All internal' }].concat(S.plants.map((p) => ({ value: p.id, label: p.name })));
+  const plantOptions = [{ value: '', label: 'All' }, { value: 'QMS', label: 'QMS' }, { value: 'EHS', label: 'EHS' }, { value: 'ESD', label: 'ESD' }];
   const subDeptAll = [...new Set(S.engineers.flatMap((e) => e.subDepartments))];
   const subDeptOptions = [{ value: '', label: 'All sub-departments' }].concat(subDeptAll.map((sd) => ({ value: sd, label: sd })));
   const hasFilters = !!(S.filterEmp || S.filterCust || S.filterPlant || S.filterSubdept) || S.plants.some((p) => !S.activePlants[p.id]);
