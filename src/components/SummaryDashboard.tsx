@@ -7,7 +7,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
       <div style={css('max-width:720px;margin:0 auto;padding:30px 24px 80px')}>
         <div style={css('margin-bottom:24px')}>
           <div style={css('font-size:22px;font-weight:700;letter-spacing:-.3px;color:#15191e')}>Summary Dashboard</div>
-          <div style={css('font-size:13px;color:#7a807a;margin-top:3px')}>Overview of employees, internal audit, and customer activity.</div>
+          <div style={css('font-size:13px;color:#7a807a;margin-top:3px')}>Number of customers managed per employee.</div>
         </div>
 
         <div style={css('display:flex;align-items:center;gap:16px;margin-bottom:28px')}>
@@ -33,23 +33,17 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
                 <div style={css("font-family:'IBM Plex Mono',monospace;color:#3c423d;font-size:22px;font-weight:700")}>{vm.summaryEmpCount}</div>
               </div>
               <div>
-                <div style={css('color:#9aa097;font-size:10.5px;font-weight:600;letter-spacing:.3px')}>Internal</div>
-                <div style={css("font-family:'IBM Plex Mono',monospace;color:#3d7840;font-size:22px;font-weight:700")}>{vm.summaryEmpTotal.internal}</div>
-              </div>
-              <div>
                 <div style={css('color:#9aa097;font-size:10.5px;font-weight:600;letter-spacing:.3px')}>Customer</div>
                 <div style={css("font-family:'IBM Plex Mono',monospace;color:#3a6bc4;font-size:22px;font-weight:700")}>{vm.summaryCustomerCount}</div>
               </div>
             </div>
-            <div style={css('display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;font-size:11px;font-weight:600;color:#8a9088;padding:4px 0 8px;border-bottom:2px solid #e4e7e0')}>
+            <div style={css('display:grid;grid-template-columns:1fr 1fr;gap:2px;font-size:11px;font-weight:600;color:#8a9088;padding:4px 0 8px;border-bottom:2px solid #e4e7e0')}>
               <div>Name</div>
-              <div style={css('text-align:right')}>Internal</div>
-              <div style={css('text-align:right')}>Customer</div>
+              <div style={css('text-align:right')}>Customers Managed</div>
             </div>
             {vm.summaryEmpBreakdown.map((e) => (
-              <div key={e.id} style={css('display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;padding:6px 0;border-bottom:1px solid #f0f2ec;font-size:13px')}>
+              <div key={e.id} style={css('display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:6px 0;border-bottom:1px solid #f0f2ec;font-size:13px')}>
                 <div style={css('color:#2a302c;font-weight:500')}>{e.name}</div>
-                <div style={css('text-align:right;font-weight:600;color:#3d7840')}>{e.internal}</div>
                 <div style={css('text-align:right;font-weight:600;color:#3a6bc4')}>{e.companies.length}</div>
               </div>
             ))}
