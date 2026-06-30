@@ -44,7 +44,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
             <div style={css('display:grid;grid-template-columns:1fr 1fr 1fr 70px;gap:2px;font-size:11px;font-weight:600;color:#8a9088;padding:4px 0 8px;border-bottom:2px solid #e4e7e0')}>
               <div>Name</div>
               <div style={css('text-align:right')}>Internal</div>
-              <div style={css('text-align:right')}>Companies</div>
+              <div style={css('text-align:right')}>Customer</div>
               <div style={css('text-align:right')}>Total</div>
             </div>
             {vm.summaryEmpBreakdown.map((e) => (
