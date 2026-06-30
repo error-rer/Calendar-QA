@@ -743,13 +743,21 @@ export function useScheduler() {
   };
   const summaryAssignments = summaryIsWeek ? summaryWk : summaryMA();
   const summaryEmpCount = [...new Set(summaryAssignments.map((a) => a.eng))].length;
-  const summaryEmpMap = new Map<string, number>();
+  const summaryEmpMap = new Map<string, { total: number; internal: number; customer: number }>();
   for (const a of summaryAssignments) {
-    summaryEmpMap.set(a.eng, (summaryEmpMap.get(a.eng) || 0) + 1);
+    const prev = summaryEmpMap.get(a.eng) || { total: 0, internal: 0, customer: 0 };
+    const o = orderById(a.order);
+    const isInternal = o && internalPlants.has(o.plant);
+    summaryEmpMap.set(a.eng, {
+      total: prev.total + 1,
+      internal: prev.internal + (isInternal ? 1 : 0),
+      customer: prev.customer + (!isInternal && o?.customer ? 1 : 0),
+    });
   }
   const summaryEmpBreakdown = [...summaryEmpMap.entries()]
-    .map(([id, count]) => ({ id, name: S.engineers.find((e) => e.id === id)?.name || id, count }))
-    .sort((a, b) => b.count - a.count);
+    .map(([id, counts]) => ({ id, name: S.engineers.find((e) => e.id === id)?.name || id, ...counts }))
+    .sort((a, b) => b.total - a.total);
+  const summaryEmpTotal = summaryEmpBreakdown.reduce((s, e) => ({ total: s.total + e.total, internal: s.internal + e.internal, customer: s.customer + e.customer }), { total: 0, internal: 0, customer: 0 });
   const summaryInternalCount = [...new Set(summaryAssignments.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.plant).filter((p) => internalPlants.has(p)))].length;
   const summaryCustomerCount = [...new Set(summaryAssignments.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.customer))].length;
 
@@ -887,7 +895,7 @@ export function useScheduler() {
     summaryWeekStyle: S.summaryScale === 'week' ? tabOn : tabOff, summaryMonthStyle: S.summaryScale === 'month' ? tabOn : tabOff,
     summaryWeekLabel, summaryWeekTag, summaryWeekOffset: S.summaryWeekOffset,
     prevSummaryWeek: () => shiftSummaryWeek(-1), nextSummaryWeek: () => shiftSummaryWeek(1),
-    summaryEmpCount, summaryEmpBreakdown, summaryInternalCount, summaryCustomerCount, summaryAssignTotal: summaryAssignments.length,
+    summaryEmpCount, summaryEmpBreakdown, summaryEmpTotal, summaryInternalCount, summaryCustomerCount, summaryAssignTotal: summaryAssignments.length,
   };
 }
 
