@@ -33,24 +33,24 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
             </div>
             <div style={css('display:grid;grid-template-columns:1fr 60px 60px 50px;gap:2px;font-size:11px;font-weight:600;color:#8a9088;padding:4px 0 8px;border-bottom:2px solid #e4e7e0')}>
               <div>Name</div>
-              <div style="text-align:right">Internal</div>
-              <div style="text-align:right">Customer</div>
-              <div style="text-align:right">Total</div>
+              <div style={css('text-align:right')}>Internal</div>
+              <div style={css('text-align:right')}>Customer</div>
+              <div style={css('text-align:right')}>Total</div>
             </div>
             {vm.summaryEmpBreakdown.map((e) => (
               <div key={e.id} style={css('display:grid;grid-template-columns:1fr 60px 60px 50px;gap:2px;padding:6px 0;border-bottom:1px solid #f0f2ec;font-size:13px')}>
-                <div style="color:#2a302c;font-weight:500">{e.name}</div>
-                <div style="text-align:right;font-weight:600;color:#3d7840">{e.internal}</div>
-                <div style="text-align:right;font-weight:600;color:#3a6bc4">{e.customer}</div>
-                <div style="text-align:right;font-weight:600;color:#5c625c">{e.total}</div>
+                <div style={css('color:#2a302c;font-weight:500')}>{e.name}</div>
+                <div style={css('text-align:right;font-weight:600;color:#3d7840')}>{e.internal}</div>
+                <div style={css('text-align:right;font-weight:600;color:#3a6bc4')}>{e.customer}</div>
+                <div style={css('text-align:right;font-weight:600;color:#5c625c')}>{e.total}</div>
               </div>
             ))}
             {vm.summaryEmpBreakdown.length > 0 && (
               <div style={css('display:grid;grid-template-columns:1fr 60px 60px 50px;gap:2px;padding:8px 0 0;border-top:2px solid #e4e7e0;margin-top:4px;font-size:13px')}>
-                <div style="color:#2a302c;font-weight:700">Total</div>
-                <div style="text-align:right;font-weight:700;color:#3d7840">{vm.summaryEmpTotal.internal}</div>
-                <div style="text-align:right;font-weight:700;color:#3a6bc4">{vm.summaryEmpTotal.customer}</div>
-                <div style="text-align:right;font-weight:700;color:#5c625c">{vm.summaryEmpTotal.total}</div>
+                <div style={css('color:#2a302c;font-weight:700')}>Total</div>
+                <div style={css('text-align:right;font-weight:700;color:#3d7840')}>{vm.summaryEmpTotal.internal}</div>
+                <div style={css('text-align:right;font-weight:700;color:#3a6bc4')}>{vm.summaryEmpTotal.customer}</div>
+                <div style={css('text-align:right;font-weight:700;color:#5c625c')}>{vm.summaryEmpTotal.total}</div>
               </div>
             )}
             {vm.summaryEmpBreakdown.length === 0 && <div style={css('color:#9aa097;font-size:13px;padding:6px 0')}>—</div>}
