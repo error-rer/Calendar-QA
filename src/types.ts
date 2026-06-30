@@ -1,4 +1,4 @@
-export type Department = 'QA-U1' | 'QA-U2' | 'QA-U3';
+export type Department = 'U1' | 'U2' | 'U3';
 export type SubDepartment = 'QMS' | 'EHS' | 'ESD';
 
 export type Priority = 'High' | 'Med' | 'Low';

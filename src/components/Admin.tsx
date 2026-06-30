@@ -51,17 +51,9 @@ function EngineersTable({ vm }: { vm: VM }) {
             <div style={e.avatarStyle}>{e.initials}</div>
             <div style={css('min-width:0')}>
               <div style={css('font-size:12.5px;font-weight:600;color:#23282a')}>{e.name}</div>
-              <div style={css('font-size:10.5px;color:#8a9088')}>{e.role}</div>
+              <div style={css('font-size:10.5px;color:#8a9088')}>{e.department}{e.subDepartments.length > 0 ? ' — ' + e.subDepartments.join(', ') : ''}</div>
             </div>
           </div>
-          <div style={css('display:flex;flex-direction:column;gap:5px')}>
-            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#3c423d")}>{e.department}</span>
-            {e.subDepartments.length > 0 && (
-              <div style={css('display:flex;gap:4px;flex-wrap:wrap')}>
-                {e.subDepartments.map((sd, i) => (
-                  <span key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5b7fd6;background:#eef2fd;border:1px solid #d8e2fa;border-radius:4px;padding:1px 5px")}>{sd}</span>
-                ))}
-              </div>
             )}
           </div>
           <div style={css("text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#3c423d")}>{e.appointments}</div>

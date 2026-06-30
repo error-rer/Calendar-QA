@@ -289,7 +289,7 @@ export function useScheduler() {
     }));
   // ---- create-engineer modal ----
   const openEngForm = () =>
-    setState({ engFormOpen: true, userMenuOpen: false, sidebarOpen: false, engForm: { name: '', role: '', department: 'QA-U1', subDepartments: [], status: 'Active' } });
+    setState({ engFormOpen: true, userMenuOpen: false, sidebarOpen: false, engForm: { name: '', role: '', department: 'U1', subDepartments: [], status: 'Active' } });
   const closeEngForm = () => setState({ engFormOpen: false });
   const setEngForm = (patch: Partial<EngineerForm>) => setState((s) => ({ engForm: { ...s.engForm, ...patch } }));
   const toggleEngSubDept = (c: SubDepartment) =>
@@ -479,19 +479,18 @@ export function useScheduler() {
       g.engs[a.eng] = 1;
       if (cm[a.id] && cm[a.id].has) g.conf++;
     });
-    const byOrder: Record<string, number> = {};
-    appointments.forEach((a) => { byOrder[a.order] = (byOrder[a.order] || 0) + 1; });
-    const keys = Object.keys(byOrder);
-    const chips: MonthChip[] = keys.slice(0, 3).map((oid) => {
-      const o = orderById(oid)!;
-      const pl = plantById(o.plant)!;
+    const chips: MonthChip[] = appointments.slice(0, 3).map((a) => {
+      const o = orderById(a.order)!;
+      const e = engById(a.eng);
+      const p = plantById(o.plant);
       return {
-        code: o.code, countTxt: byOrder[oid] > 1 ? '×' + byOrder[oid] : '',
-        dotStyle: sx({ width: '7px', height: '7px', borderRadius: '2px', background: pl.color, flexShrink: 0 }),
+        code: o.customer, purpose: o.purpose, engName: e ? e.name.split(' ')[0] : '',
+        countTxt: '',
+        dotStyle: sx({ width: '7px', height: '7px', borderRadius: '2px', background: p ? p.color : '#999', flexShrink: 0 }),
         style: sx({ display: 'flex', alignItems: 'center', gap: '5px', padding: '2px 5px', background: '#f6f7f4', border: '1px solid #e6e9e2', borderRadius: '5px' }),
       };
     });
-    const more = keys.length - chips.length;
+    const more = appointments.length - chips.length;
     const isToday = mYear + '-' + mMon + '-' + dn === todayStr;
     const cur = slot.weekOffset === 0;
     monthCells.push({
@@ -838,7 +837,7 @@ export function useScheduler() {
     boxStyle: sx({ width: '15px', height: '15px', borderRadius: '4px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#fff', background: on ? '#2756d6' : '#fff', border: '1px solid ' + (on ? '#2756d6' : '#cdd2c9') }),
     check: on ? '✓' : '',
   });
-  const allDepartments = ['QA-U1', 'QA-U2', 'QA-U3'] as const;
+  const allDepartments = ['U1', 'U2', 'U3'] as const;
   const allSubDepartments = ['QMS', 'EHS', 'ESD'] as const;
   const engForm = {
     name: ef.name, role: ef.role, department: ef.department, subDepartments: ef.subDepartments, inStyle: ofInStyle,
@@ -948,7 +947,7 @@ export function useScheduler() {
 
   // ---- filters VM ----
   const employeeOptions = [{ value: '', label: 'All employees' }].concat(S.engineers.map((e) => ({ value: e.id, label: e.name })));
-  const siteOptions = [{ value: '', label: 'All sites' }, { value: 'U1', label: 'U1' }, { value: 'U2A', label: 'U2A' }, { value: 'U2B', label: 'U2B' }, { value: 'U3A', label: 'U3A' }, { value: 'U3T', label: 'U3T' }];
+  const siteOptions = [{ value: '', label: 'All sites' }, { value: 'U1', label: 'U1' }, { value: 'U2', label: 'U2' }, { value: 'U2A', label: 'U2A' }, { value: 'U2B', label: 'U2B' }, { value: 'U3', label: 'U3' }, { value: 'U3A', label: 'U3A' }, { value: 'U3T', label: 'U3T' }];
   const customerTopicOptions = ['ESD Audit', 'QS Audit'];
   const internalTopicOptions = ['QMS', 'EHS', 'ESD'];
   const companyNames = ['Company A', 'Company B', 'Company C', 'Company D', 'Company E'];

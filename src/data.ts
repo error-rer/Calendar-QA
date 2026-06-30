@@ -45,7 +45,7 @@ export function initialState(): State {
     createOpen: false,
     createDraft: { order: '', eng: '', day: 0, appointment: '08:00' },
     engFormOpen: false,
-    engForm: { name: '', role: '', department: 'QA-U1', subDepartments: [], status: 'Active' },
+    engForm: { name: '', role: '', department: 'U1', subDepartments: [], status: 'Active' },
     siteFormOpen: false,
     siteForm: { name: '', loc: '', code: '', color: siteColors[0] },
     custFormOpen: false,
@@ -66,11 +66,11 @@ export function initialState(): State {
       { id: 'l3', eng: 'e2', week: 0, day: 2, type: 'Training', note: 'QMS training' },
     ],
     engineers: [
-      { id: 'e1', name: 'Dana Okafor', role: 'Reliability Lead', department: 'QA-U1', subDepartments: ['QMS', 'EHS'], status: 'Active' },
-      { id: 'e2', name: 'Marco Ruiz', role: 'Failure Analysis', department: 'QA-U2', subDepartments: ['ESD'], status: 'Active' },
-      { id: 'e3', name: 'Priya Nair', role: 'ATE Engineer', department: 'QA-U1', subDepartments: ['QMS', 'ESD'], status: 'Active' },
-      { id: 'e5', name: 'Lena Fischer', role: 'Reliability Eng', department: 'QA-U1', subDepartments: ['QMS'], status: 'Active' },
-      { id: 'e10', name: 'Omar Haddad', role: 'FA Engineer', department: 'QA-U2', subDepartments: ['ESD'], status: 'Active' },
+      { id: 'e1', name: 'Dana Okafor', role: 'Reliability Lead', department: 'U1', subDepartments: ['QMS', 'EHS'], status: 'Active' },
+      { id: 'e2', name: 'Marco Ruiz', role: 'Failure Analysis', department: 'U2', subDepartments: ['ESD'], status: 'Active' },
+      { id: 'e3', name: 'Priya Nair', role: 'ATE Engineer', department: 'U1', subDepartments: ['QMS', 'ESD'], status: 'Active' },
+      { id: 'e5', name: 'Lena Fischer', role: 'Reliability Eng', department: 'U1', subDepartments: ['QMS'], status: 'Active' },
+      { id: 'e10', name: 'Omar Haddad', role: 'FA Engineer', department: 'U2', subDepartments: ['ESD'], status: 'Active' },
     ],
     orders: [
       { id: 'o1', code: 'NB-4471', customer: 'Company A', product: 'Rad-hard FPGA', plant: 'ESD', priority: 'High', purpose: 'annual' },
@@ -99,12 +99,12 @@ export function initialState(): State {
       { id: 'a14', eng: 'e2', order: 'o8', day: 2, appointment: '22:00', week: 0 },
     ],
     comments: {
-      a8: [{ who: 'Marco Ruiz', initials: 'MR', text: 'Sven isn\u2019t QA-U1 — needs Raj or Priya to co-sign the lot.', ago: '14m', color: '#0f9d8c' }],
+      a8: [{ who: 'Marco Ruiz', initials: 'MR', text: 'Sven isn\u2019t U1 — needs Raj or Priya to co-sign the lot.', ago: '14m', color: '#0f9d8c' }],
       a6: [{ who: 'Priya Nair', initials: 'PN', text: 'Taking the Vanta MCU lot Monday, will hand to Raj for Thu.', ago: '9m', color: '#c2620c' }],
     },
     activity: [
       { who: 'Priya Nair', text: 'assigned VA-2207 → Mon', ago: '9 min ago', color: '#c2620c' },
-      { who: 'Marco Ruiz', text: 'flagged Sven Holt · not QA-U1', ago: '14 min ago', color: '#0f9d8c' },
+      { who: 'Marco Ruiz', text: 'flagged Sven Holt · not U1', ago: '14 min ago', color: '#0f9d8c' },
       { who: 'Lena Fischer', text: 'added 2 days on VA-2210', ago: '22 min ago', color: '#7a4ddb' },
     ],
   };

@@ -342,16 +342,10 @@ function PersonGrid({ vm }: { vm: VM }) {
               <div style={r.avatarStyle}>{r.initials}</div>
               <div style={css('min-width:0')}>
                 <div style={css('font-size:12.5px;font-weight:600;color:#23282a;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{r.name}</div>
-                <div style={css('font-size:10px;color:#8a9088;line-height:1.2')}>{r.role}</div>
+                <div style={css('font-size:10px;color:#8a9088;line-height:1.2')}>{r.department}{r.subDepartments.length > 0 ? ' — ' + r.subDepartments.join(', ') : ''}</div>
               </div>
             </div>
-            <div style={css('display:flex;flex-wrap:wrap;gap:4px;margin-top:7px')}>
-              <span style={css("font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:600;color:#3c423d;background:#eef3ee;border:1px solid #dde6dd;border-radius:3px;padding:1px 5px")}>{r.department}</span>
-              {r.subDepartments.map((sd, i) => (
-                <span key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:8px;color:#5b7fd6;background:#eef2fd;border:1px solid #d8e2fa;border-radius:3px;padding:1px 4px")}>{sd}</span>
-              ))}
             </div>
-          </div>
           {r.cells.map((cell) => (
             <div key={cell.cellId} onDragOver={cell.onDragOver} onDragLeave={cell.onDragLeave} onDrop={cell.onDrop} style={cell.style}>
               {cell.leaveTag && <LeaveTag tag={cell.leaveTag} />}
@@ -461,13 +455,7 @@ function MobilePerson({ vm }: { vm: VM }) {
             <div style={r.avatarStyle}>{r.initials}</div>
             <div style={css('min-width:0;flex:1')}>
               <div style={css('font-size:13px;font-weight:600;color:#23282a')}>{r.name}</div>
-              <div style={css('font-size:10.5px;color:#8a9088')}>{r.role}</div>
-            </div>
-            <div style={css('display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:120px')}>
-              <span style={css("font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;color:#3c423d;background:#eef3ee;border:1px solid #dde6dd;border-radius:3px;padding:1px 4px")}>{r.department}</span>
-              {r.subDepartments.map((sd, i) => (
-                <span key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:7.5px;color:#5b7fd6;background:#eef2fd;border:1px solid #d8e2fa;border-radius:3px;padding:1px 3px")}>{sd}</span>
-              ))}
+              <div style={css('font-size:10.5px;color:#8a9088')}>{r.department}{r.subDepartments.length > 0 ? ' — ' + r.subDepartments.join(', ') : ''}</div>
             </div>
           </div>
           <div style={css('display:flex;flex-direction:column;gap:6px')}>
@@ -565,9 +553,10 @@ function MonthGrid({ vm }: { vm: VM }) {
                 {(c.chips ?? []).map((ch, ci) => (
                   <div key={ci} style={ch.style}>
                     <span style={ch.dotStyle} />
-                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#23282a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ch.code}</span>
+                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#23282a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ch.code}</span>
+                    <span style={css('font-size:8px;color:#7a807a;margin-left:2px')}>{ch.engName}</span>
                     <span style={css('flex:1')} />
-                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;color:#9aa097")}>{ch.countTxt}</span>
+                    <span style={css('font-size:8px;color:#9aa097')}>{ch.purpose}</span>
                   </div>
                 ))}
                 {(c.more ?? 0) > 0 && <span style={css('font-size:9.5px;color:#9aa097;padding-left:2px')}>{c.moreTxt}</span>}
@@ -597,6 +586,16 @@ function MonthMobile({ vm }: { vm: VM }) {
               <div style={css('display:flex;align-items:center;justify-content:space-between')}>
                 <span style={c.numStyle}>{c.dateNum}</span>
                 <span style={c.countDotStyle}>{c.countTxt}</span>
+              </div>
+              <div style={css('display:flex;flex-direction:column;gap:2px')}>
+                {(c.chips ?? []).map((ch, ci) => (
+                  <div key={ci} style={ch.style}>
+                    <span style={ch.dotStyle} />
+                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;color:#23282a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ch.code}</span>
+                    <span style={css('font-size:7px;color:#9aa097')}>{ch.purpose}</span>
+                  </div>
+                ))}
+                {(c.more ?? 0) > 0 && <span style={css('font-size:8px;color:#9aa097;padding-left:2px')}>{c.moreTxt}</span>}
               </div>
             </div>
           ),
