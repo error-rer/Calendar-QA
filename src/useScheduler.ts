@@ -283,15 +283,9 @@ export function useScheduler() {
   // ---- admin ----
   const toggleUserMenu = () => setState((s) => ({ userMenuOpen: !s.userMenuOpen }));
   const setAdminTab = (t: State['adminTab']) => setState({ adminTab: t });
-  const toggleStatus = (id: string) =>
-    setState((s) => ({
-      engineers: s.engineers.map((e) =>
-        e.id === id ? { ...e, status: e.status === 'Active' ? 'On leave' : 'Active' } : e,
-      ),
-    }));
   // ---- create-engineer modal ----
   const openEngForm = () =>
-    setState({ engFormOpen: true, userMenuOpen: false, sidebarOpen: false, engForm: { name: '', role: '', department: 'U1', subDepartments: [], status: 'Active' } });
+    setState({ engFormOpen: true, userMenuOpen: false, sidebarOpen: false, engForm: { name: '', role: '', department: 'U1', subDepartments: [] } });
   const closeEngForm = () => setState({ engFormOpen: false });
   const setEngForm = (patch: Partial<EngineerForm>) => setState((s) => ({ engForm: { ...s.engForm, ...patch } }));
   const toggleEngSubDept = (c: SubDepartment) =>
@@ -304,10 +298,10 @@ export function useScheduler() {
     if (!f.name.trim()) return;
     const id = 'e' + ids.current.id++;
     setState((s) => ({
-      engineers: s.engineers.concat([{ id, name: f.name.trim(), role: f.role.trim() || 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice(), status: f.status }]),
+      engineers: s.engineers.concat([{ id, name: f.name.trim(), role: f.role.trim() || 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice(), status: 'Active' }]),
       engFormOpen: false,
     }));
-    log('You', `added ${f.name.trim().split(' ')[0]} · ${f.status.toLowerCase()}`, '#2756d6');
+    log('You', `added ${f.name.trim().split(' ')[0]}`, '#2756d6');
   };
 
   // ---- create-site modal ----
@@ -840,14 +834,17 @@ export function useScheduler() {
     check: on ? '✓' : '',
   });
   const allDepartments = ['U1', 'U2', 'U3'] as const;
-  const allSubDepartments = ['QMS', 'EHS', 'ESD'] as const;
+  const internalAuditTopics = ['QMS', 'EHS', 'ESD'] as const;
+  const customerAuditTopics = ['ESD Audit', 'QS Audit'] as const;
   const engForm = {
     name: ef.name, role: ef.role, department: ef.department, subDepartments: ef.subDepartments, inStyle: ofInStyle,
     onName: (e: React.ChangeEvent<HTMLInputElement>) => setEngForm({ name: e.target.value }),
     onRole: (e: React.ChangeEvent<HTMLInputElement>) => setEngForm({ role: e.target.value }),
-    statuses: (['Active', 'On leave', 'Onboarding'] as const).map((st) => ({ label: st, onClick: () => setEngForm({ status: st }), style: segMd(ef.status === st) })),
     departments: allDepartments.map((d) => ({ label: d, onClick: () => setEngForm({ department: d }), style: segMd(ef.department === d) })),
-    subDepartmentOptions: allSubDepartments.map((c) => ({ code: c, name: c, onClick: () => toggleEngSubDept(c), ...certPick(ef.subDepartments.includes(c)) })),
+    subDepartmentOptions: [
+      ...internalAuditTopics.map((c) => ({ code: c, name: c, group: 'Internal Audit' as const, onClick: () => toggleEngSubDept(c), ...certPick(ef.subDepartments.includes(c as SubDepartment)) })),
+      ...customerAuditTopics.map((c) => ({ code: c, name: c, group: 'Customer' as const, onClick: () => toggleEngSubDept(c as SubDepartment), ...certPick(ef.subDepartments.includes(c as SubDepartment)) })),
+    ],
     canSubmit: !!ef.name.trim(),
     submit: () => submitEngForm(),
     submitStyle: sx({ background: ef.name.trim() ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '9px', padding: '10px 20px', fontSize: '13px', fontWeight: 600, cursor: ef.name.trim() ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
@@ -927,18 +924,16 @@ export function useScheduler() {
     return sx({ fontFamily: "'Archivo',sans-serif", fontSize: '11px', fontWeight: 600, color: m.c, background: m.b, border: '1px solid ' + m.bd, borderRadius: '20px', padding: '4px 11px', cursor: 'pointer' });
   };
   const adminEngineers = S.engineers.map((e) => {
-    const ac = avatarColor(e.id);
     return {
       id: e.id, name: e.name, role: e.role, department: e.department, subDepartments: e.subDepartments, initials: initials(e.name),
-      avatarStyle: sx({ width: '30px', height: '30px', borderRadius: '8px', background: hexA(ac, 0.14), color: ac, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '11px', fontWeight: 600, flexShrink: 0 }),
+      avatarStyle: sx({ width: '30px', height: '30px', borderRadius: '8px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '11px', fontWeight: 600, flexShrink: 0 }),
       appointments: wk.filter((a) => a.eng === e.id).length,
-      statusLabel: e.status, statusStyle: statusStyleFor(e.status), toggleStatus: () => toggleStatus(e.id),
     };
   });
   const adminSites = S.plants.map((p) => {
     const on = S.activePlants[p.id];
     return {
-      name: p.name, loc: p.loc, code: p.code, swatchStyle: sx({ width: '12px', height: '12px', borderRadius: '3px', background: p.color, flexShrink: 0 }),
+      name: p.name, loc: p.loc, code: p.code,
       appointments: wk.filter((a) => {
         const o = orderById(a.order);
         return o && o.plant === p.id;

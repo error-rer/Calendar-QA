@@ -1,5 +1,5 @@
 export type Department = 'U1' | 'U2' | 'U3';
-export type SubDepartment = 'QMS' | 'EHS' | 'ESD';
+export type SubDepartment = 'QMS' | 'EHS' | 'ESD' | 'ESD Audit' | 'QS Audit';
 
 export type Priority = 'High' | 'Med' | 'Low';
 export type AppointmentKind = string;
@@ -78,7 +78,6 @@ export interface EngineerForm {
   role: string;
   department: Department;
   subDepartments: SubDepartment[];
-  status: EngStatus;
 }
 
 export interface SiteForm {

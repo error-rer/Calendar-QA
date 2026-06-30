@@ -1,7 +1,7 @@
 import type { VM } from '../useScheduler';
 import { css, HButton } from '../ui';
 
-const engGrid = 'display:grid;grid-template-columns:minmax(180px,1.4fr) 2fr 80px 130px;gap:0';
+const engGrid = 'display:grid;grid-template-columns:minmax(180px,1.4fr) 2fr 80px;gap:0';
 const siteGrid = 'display:grid;grid-template-columns:1.4fr 1.4fr 90px 80px 120px;gap:0';
 
 export function Admin({ vm }: { vm: VM }) {
@@ -39,11 +39,11 @@ function EngineersTable({ vm }: { vm: VM }) {
   return (
     <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;overflow:hidden')}>
       <div style={css('display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #eef1ea')}>
-        <div style={css('font-size:13px;font-weight:700')}>QA <span style={css('color:#9aa097;font-weight:500')}>· {vm.engCount}</span></div>
-        <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New QA</HButton>
+        <div style={css('font-size:13px;font-weight:700')}>Employee <span style={css('color:#9aa097;font-weight:500')}>· {vm.engCount}</span></div>
+        <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New Employee</HButton>
       </div>
       <div style={css(engGrid + ";padding:9px 18px;border-bottom:1px solid #eef1ea;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>
-        <div>QA</div><div>DEPT + SUB-DEPT</div><div style={css('text-align:center')}>APPOINTMENTS</div><div style={css('text-align:right')}>STATUS</div>
+        <div>Employee</div><div>DEPT + SUB-DEPT</div><div style={css('text-align:center')}>APPOINTMENTS</div>
       </div>
       {vm.adminEngineers.map((e) => (
         <div key={e.id} style={css(engGrid + ';padding:12px 18px;border-bottom:1px solid #f2f4ee;align-items:center')}>
@@ -55,9 +55,6 @@ function EngineersTable({ vm }: { vm: VM }) {
             </div>
           </div>
           <div style={css("text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#3c423d")}>{e.appointments}</div>
-          <div style={css('display:flex;justify-content:flex-end')}>
-            <button onClick={e.toggleStatus} style={e.statusStyle}>{e.statusLabel}</button>
-          </div>
         </div>
       ))}
     </div>
@@ -76,7 +73,7 @@ function SitesTable({ vm }: { vm: VM }) {
       </div>
       {vm.adminSites.map((s, i) => (
         <div key={i} style={css(siteGrid + ';padding:13px 18px;border-bottom:1px solid #f2f4ee;align-items:center')}>
-          <div style={css('display:flex;align-items:center;gap:10px')}><span style={s.swatchStyle} /><span style={css('font-size:12.5px;font-weight:600;color:#23282a')}>{s.name}</span></div>
+          <div style={css('display:flex;align-items:center;gap:10px')}><div style={css('font-size:12.5px;font-weight:600;color:#23282a')}>{s.name}</div></div>
           <div style={css('font-size:12px;color:#5c625c')}>{s.loc}</div>
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#5c625c")}>{s.code}</div>
           <div style={css("text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#3c423d")}>{s.appointments}</div>

@@ -45,7 +45,7 @@ export function initialState(): State {
     createOpen: false,
     createDraft: { order: '', eng: '', day: 0, appointment: '08:00' },
     engFormOpen: false,
-    engForm: { name: '', role: '', department: 'U1', subDepartments: [], status: 'Active' },
+    engForm: { name: '', role: '', department: 'U1', subDepartments: [] },
     siteFormOpen: false,
     siteForm: { name: '', loc: '', code: '', color: siteColors[0] },
     custFormOpen: false,
