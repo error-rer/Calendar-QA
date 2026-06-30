@@ -64,11 +64,9 @@ export function Schedule({ vm }: { vm: VM }) {
           {vm.gridPerson && <PersonGrid vm={vm} />}
           {vm.gridPlant && <SiteGrid vm={vm} />}
           {vm.gridCustomer && <CustomerGrid vm={vm} />}
-          {vm.gridSubdept && <SubDeptGrid vm={vm} />}
           {vm.mobilePerson && <MobilePerson vm={vm} />}
           {vm.mobileSite && <MobileSite vm={vm} />}
           {vm.mobileCustomer && <MobileCustomer vm={vm} />}
-          {vm.mobileSubdept && <MobileSubDept vm={vm} />}
           {vm.monthDesktop && <MonthGrid vm={vm} />}
           {vm.monthMobile && <MonthMobile vm={vm} />}
 
@@ -266,9 +264,8 @@ function Toolbar({ vm }: { vm: VM }) {
       {vm.showViewTabs && (
         <div style={css('display:flex;background:#f1f3ee;border:1px solid #e0e3dc;border-radius:8px;padding:2px;gap:2px')}>
           <button onClick={vm.setPerson} style={vm.personTabStyle}>By QA</button>
-          <button onClick={vm.setPlant} style={vm.plantTabStyle}>By internal</button>
-          <button onClick={vm.setCustomer} style={vm.customerTabStyle}>By customer</button>
-          <button onClick={vm.setSubdept} style={vm.subdeptTabStyle}>By sub-department</button>
+          <button onClick={vm.setPlant} style={vm.plantTabStyle}>By Department</button>
+          <button onClick={vm.setCustomer} style={vm.customerTabStyle}>By Company</button>
         </div>
       )}
       <div style={css('flex:1')} />
@@ -545,61 +542,6 @@ function MobileCustomer({ vm }: { vm: VM }) {
   );
 }
 
-function SubDeptGrid({ vm }: { vm: VM }) {
-  return (
-    <div style={{ ...gridBase, gridTemplateColumns: vm.gridCols }}>
-      <CornerHeader label="SUB-DEPARTMENT" />
-      <DayHeaders vm={vm} />
-      {vm.subDeptRows.map((r, ri) => (
-        <Fragment key={ri}>
-          <div style={css('border-bottom:1px solid #e2e5de;border-right:1px solid #e2e5de;padding:12px 14px;background:#fff;position:sticky;left:0;z-index:2')}>
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:#23282a")}>{r.name}</div>
-          </div>
-          {r.cells.map((cell, ci) => (
-            <div key={ci} style={cell.style}>
-              {cell.chips.map((chip) => (
-                <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
-                  <div style={chip.avatarStyle}>{chip.initials}</div>
-                  <div style={css('min-width:0;flex:1')}>
-                    <div style={css('font-size:11px;font-weight:600;color:#23282a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.name}</div>
-                    <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div>
-                    <div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div>
-                  </div>
-                  <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
-                </div>
-              ))}
-              {cell.empty && <div style={css('font-size:10.5px;color:#bcc1b8;text-align:center;padding:8px 0')}>—</div>}
-            </div>
-          ))}
-        </Fragment>
-      ))}
-    </div>
-  );
-}
-
-function MobileSubDept({ vm }: { vm: VM }) {
-  return (
-    <div style={css('padding:11px 11px 24px;display:flex;flex-direction:column;gap:10px')}>
-      {vm.mobileSubDeptRows.map((r, ri) => (
-        <div key={ri} style={css('background:#fff;border:1px solid #e4e7e0;border-radius:12px;padding:12px 13px')}>
-          <div style={css('display:flex;align-items:center;gap:9px;margin-bottom:10px')}>
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#23282a")}>{r.name}</div>
-          </div>
-          <div style={css('display:flex;flex-direction:column;gap:6px')}>
-            {r.cell.chips.map((chip) => (
-              <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
-                <div style={chip.avatarStyle}>{chip.initials}</div>
-                <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div><div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div></div>
-                <span style={chip.warnDotStyle}>{chip.warnGlyph}</span>
-              </div>
-            ))}
-            {r.cell.empty && <div style={css('font-size:11px;color:#a6aca2;text-align:center;padding:8px 0;font-style:italic')}>No coverage scheduled</div>}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function MonthGrid({ vm }: { vm: VM }) {
   return (
