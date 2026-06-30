@@ -763,6 +763,44 @@ export function useScheduler() {
   const summaryInternalCount = [...new Set(summaryAssignments.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.plant).filter((p) => internalPlants.has(p)))].length;
   const summaryCustomerCount = [...new Set(summaryAssignments.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.customer))].length;
 
+  const summaryCustomerTable: { name: string; count: number; emps: { id: string; name: string }[] }[] = [];
+  const custMap = new Map<string, { count: number; emps: Map<string, number> }>();
+  for (const a of summaryAssignments) {
+    const o = orderById(a.order);
+    if (!o?.customer) continue;
+    const prev = custMap.get(o.customer) || { count: 0, emps: new Map<string, number>() };
+    prev.count++;
+    prev.emps.set(a.eng, (prev.emps.get(a.eng) || 0) + 1);
+    custMap.set(o.customer, prev);
+  }
+  for (const [name, data] of custMap) {
+    summaryCustomerTable.push({
+      name,
+      count: data.count,
+      emps: [...data.emps.entries()].map(([id, cnt]) => ({ id, name: S.engineers.find((e) => e.id === id)?.name || id, count: cnt })).sort((a, b) => b.count - a.count),
+    });
+  }
+  summaryCustomerTable.sort((a, b) => b.count - a.count);
+
+  const summaryInternalTable: { name: string; count: number; emps: { id: string; name: string }[] }[] = [];
+  const intMap = new Map<string, { count: number; emps: Map<string, number> }>();
+  for (const a of summaryAssignments) {
+    const o = orderById(a.order);
+    if (!o || !internalPlants.has(o.plant)) continue;
+    const prev = intMap.get(o.plant) || { count: 0, emps: new Map<string, number>() };
+    prev.count++;
+    prev.emps.set(a.eng, (prev.emps.get(a.eng) || 0) + 1);
+    intMap.set(o.plant, prev);
+  }
+  for (const [name, data] of intMap) {
+    summaryInternalTable.push({
+      name: S.plants.find((p) => p.id === name)?.name || name,
+      count: data.count,
+      emps: [...data.emps.entries()].map(([id, cnt]) => ({ id, name: S.engineers.find((e) => e.id === id)?.name || id, count: cnt })).sort((a, b) => b.count - a.count),
+    });
+  }
+  summaryInternalTable.sort((a, b) => b.count - a.count);
+
   // ---- admin VMs ----
   const activeEng = S.engineers.filter((e) => e.status === 'Active').length;
   const activeSites = S.plants.filter((p) => S.activePlants[p.id]).length;
@@ -897,7 +935,7 @@ export function useScheduler() {
     summaryWeekStyle: S.summaryScale === 'week' ? tabOn : tabOff, summaryMonthStyle: S.summaryScale === 'month' ? tabOn : tabOff,
     summaryWeekLabel, summaryWeekTag, summaryWeekOffset: S.summaryWeekOffset,
     prevSummaryWeek: () => shiftSummaryWeek(-1), nextSummaryWeek: () => shiftSummaryWeek(1),
-    summaryEmpCount, summaryEmpBreakdown, summaryEmpTotal, summaryInternalCount, summaryCustomerCount, summaryAssignTotal: summaryAssignments.length,
+    summaryEmpCount, summaryEmpBreakdown, summaryEmpTotal, summaryInternalCount, summaryCustomerCount, summaryCustomerTable, summaryInternalTable, summaryAssignTotal: summaryAssignments.length,
   };
 }
 
