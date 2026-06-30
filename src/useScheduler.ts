@@ -763,7 +763,7 @@ export function useScheduler() {
   const summaryInternalCount = [...new Set(summaryAssignments.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.plant).filter((p) => internalPlants.has(p)))].length;
   const summaryCustomerCount = [...new Set(summaryAssignments.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.customer))].length;
 
-  const summaryCustomerTable: { name: string; count: number; emps: { id: string; name: string }[] }[] = [];
+  const summaryCustomerTable: { name: string; count: number; emps: { id: string; name: string; count: number }[] }[] = [];
   const custMap = new Map<string, { count: number; emps: Map<string, number> }>();
   for (const a of summaryAssignments) {
     const o = orderById(a.order);
@@ -782,7 +782,7 @@ export function useScheduler() {
   }
   summaryCustomerTable.sort((a, b) => b.count - a.count);
 
-  const summaryInternalTable: { name: string; count: number; emps: { id: string; name: string }[] }[] = [];
+  const summaryInternalTable: { name: string; count: number; emps: { id: string; name: string; count: number }[] }[] = [];
   const intMap = new Map<string, { count: number; emps: Map<string, number> }>();
   for (const a of summaryAssignments) {
     const o = orderById(a.order);
