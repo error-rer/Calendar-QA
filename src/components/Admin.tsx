@@ -3,7 +3,6 @@ import { css, HButton } from '../ui';
 
 const engGrid = 'display:grid;grid-template-columns:minmax(180px,1.4fr) 2fr 80px 130px;gap:0';
 const siteGrid = 'display:grid;grid-template-columns:1.4fr 1.4fr 90px 80px 120px;gap:0';
-const orderGrid = 'display:grid;grid-template-columns:96px 1.3fr 1fr 90px 86px 96px;gap:0';
 
 export function Admin({ vm }: { vm: VM }) {
   return (
@@ -27,12 +26,10 @@ export function Admin({ vm }: { vm: VM }) {
         <div style={css('display:flex;background:#fff;border:1px solid #e0e3dc;border-radius:9px;padding:2px;gap:2px;width:max-content;margin-bottom:16px')}>
           <button onClick={vm.setTabEng} style={vm.tabEngStyle}>Engineers</button>
           <button onClick={vm.setTabSite} style={vm.tabSiteStyle}>Internal</button>
-          <button onClick={vm.setTabOrder} style={vm.tabOrderStyle}>Customer orders</button>
         </div>
 
         {vm.tabEngineers && <EngineersTable vm={vm} />}
         {vm.tabSites && <SitesTable vm={vm} />}
-        {vm.tabOrders && <OrdersTable vm={vm} />}
       </div>
     </main>
   );
@@ -94,30 +91,6 @@ function SitesTable({ vm }: { vm: VM }) {
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#5c625c")}>{s.code}</div>
           <div style={css("text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#3c423d")}>{s.appointments}</div>
           <div style={css('display:flex;justify-content:flex-end')}><button onClick={s.toggle} style={s.statusStyle}>{s.statusLabel}</button></div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function OrdersTable({ vm }: { vm: VM }) {
-  return (
-    <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;overflow:hidden')}>
-      <div style={css('display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #eef1ea')}>
-        <div style={css('font-size:13px;font-weight:700')}>Customer orders <span style={css('color:#9aa097;font-weight:500')}>· {vm.orderCount}</span></div>
-        <HButton onClick={vm.addOrder} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New order</HButton>
-      </div>
-      <div style={css(orderGrid + ";padding:9px 18px;border-bottom:1px solid #eef1ea;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>
-        <div>ORDER</div><div>PRODUCT</div><div>CUSTOMER</div><div>INTERNAL</div><div style={css('text-align:center')}>PRIORITY</div><div style={css('text-align:right')}>STATUS</div>
-      </div>
-      {vm.adminOrders.map((o, i) => (
-        <div key={i} style={css(orderGrid + ';padding:12px 18px;border-bottom:1px solid #f2f4ee;align-items:center')}>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:#15191e")}>{o.code}</div>
-          <div style={css('font-size:12px;color:#3c423d;font-weight:500')}>{o.product}</div>
-          <div style={css('font-size:11.5px;color:#5c625c')}>{o.customer}</div>
-          <div style={css('display:flex;align-items:center;gap:6px')}><span style={o.swatchStyle} /><span style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5c625c")}>{o.plantCode}</span></div>
-          <div style={css('display:flex;justify-content:center')}><button onClick={o.cyclePriority} style={o.priorityStyle}>{o.priority}</button></div>
-          <div style={css('display:flex;justify-content:flex-end')}><span style={o.statusStyle}>{o.statusLabel}</span></div>
         </div>
       ))}
     </div>

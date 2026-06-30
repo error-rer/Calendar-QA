@@ -149,33 +149,6 @@ function Sidebar({ vm }: { vm: VM }) {
         </div>
       </div>
 
-      <div style={css('padding:13px 15px 6px;flex-shrink:0')}>
-        <div style={css('display:flex;align-items:center;justify-content:space-between;margin-bottom:9px')}>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.6px")}>UNSTAFFED ORDERS</div>
-          <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;color:#a96e08;background:#fff3df;border:1px solid #f1dcb0;border-radius:20px;padding:1px 7px")}>{vm.poolCount}</span>
-        </div>
-      </div>
-      <div className="scrl" style={css('padding:0 15px;overflow-y:auto;flex-shrink:0;max-height:202px')}>
-        <div style={css('display:flex;flex-direction:column;gap:7px;padding-bottom:4px')}>
-          {vm.pool.map((o) => (
-            <div key={o.orderId} draggable onDragStart={o.onDragStart} onDragEnd={o.onDragEnd} style={o.tileStyle}>
-              <div style={css('display:flex;align-items:center;gap:7px;margin-bottom:5px')}>
-                <span style={o.dotStyle} />
-                <span style={css("font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#15191e")}>{o.code}</span>
-                <span style={o.priorityStyle}>{o.priority}</span>
-                <span style={css('flex:1')} />
-                <span style={css("font-size:9.5px;color:#aab0a6;font-family:'IBM Plex Mono',monospace")}>{o.plantCode}</span>
-              </div>
-              <div style={css('font-size:11.5px;color:#3c423d;font-weight:500;line-height:1.25')}>{o.product}</div>
-              <div style={css('font-size:10.5px;color:#8a9088;margin-top:1px')}>{o.customer}</div>
-            </div>
-          ))}
-          {vm.poolEmpty && (
-            <div style={css('font-size:11px;color:#9aa097;text-align:center;padding:14px 0;font-style:italic')}>All orders staffed ✓</div>
-          )}
-        </div>
-      </div>
-
       <div style={css('padding:13px 15px 6px;border-top:1px solid #e7eae3;margin-top:auto;flex-shrink:0')}>
         <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.6px;margin-bottom:8px")}>ACTIVITY</div>
       </div>
@@ -605,41 +578,6 @@ function MobileSubDept({ vm }: { vm: VM }) {
   );
 }
 
-function MonthOrderCards({ vm, mobile }: { vm: VM; mobile?: boolean }) {
-  return (
-    <>
-      {vm.monthOrders.map((o) => (
-        <div key={o.orderId} style={o.cardStyle}>
-          <div style={mobile ? css('display:flex;align-items:center;gap:8px;margin-bottom:6px') : css('display:flex;align-items:center;gap:8px;margin-bottom:7px')}>
-            <span style={o.swatchStyle} />
-            <span style={mobile
-              ? css("font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#15191e")
-              : css("font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;color:#15191e")}>{o.code}</span>
-            <span style={o.priorityStyle}>{o.priority}</span>
-            <span style={css('flex:1')} />
-            <span style={o.statusStyle}>{o.statusLabel}</span>
-          </div>
-          <div style={mobile ? css('font-size:12px;color:#3c423d;font-weight:600') : css('font-size:12.5px;color:#3c423d;font-weight:600')}>{o.product}</div>
-          {mobile ? (
-            <div style={css('font-size:10.5px;color:#8a9088;margin-top:1px')}>{o.customer} · {o.plantCode} · {o.appointmentsTxt} · {o.daysTxt}</div>
-          ) : (
-            <>
-              <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>{o.customer} · {o.plantCode}</div>
-              <div style={css('display:flex;align-items:center;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid #f2f4ee')}>
-                <div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:#23282a")}>{o.appointments}</div><div style={css('font-size:9.5px;color:#9aa097;letter-spacing:.3px')}>APPOINTMENTS</div></div>
-                <div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:#23282a")}>{o.days}</div><div style={css('font-size:9.5px;color:#9aa097;letter-spacing:.3px')}>DAYS</div></div>
-                <div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:#23282a")}>{o.engs}</div><div style={css('font-size:9.5px;color:#9aa097;letter-spacing:.3px')}>ENGS</div></div>
-                <span style={css('flex:1')} />
-                <span style={o.confStyle}>⚠ {o.conf}</span>
-              </div>
-            </>
-          )}
-        </div>
-      ))}
-    </>
-  );
-}
-
 function MonthGrid({ vm }: { vm: VM }) {
   return (
     <div style={css('padding:18px 20px 40px;max-width:1180px;margin:0 auto')}>
@@ -673,16 +611,6 @@ function MonthGrid({ vm }: { vm: VM }) {
           ),
         )}
       </div>
-
-      <div style={css('margin-top:26px')}>
-        <div style={css('display:flex;align-items:baseline;gap:9px;margin-bottom:13px')}>
-          <div style={css('font-size:15px;font-weight:700;letter-spacing:-.2px')}>Customer orders · {vm.monthName}</div>
-          <div style={css('font-size:12px;color:#8a9088')}>{vm.monthScheduledCount} of {vm.monthOrderCount} scheduled</div>
-        </div>
-        <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:11px')}>
-          <MonthOrderCards vm={vm} />
-        </div>
-      </div>
     </div>
   );
 }
@@ -708,15 +636,6 @@ function MonthMobile({ vm }: { vm: VM }) {
             </div>
           ),
         )}
-      </div>
-      <div style={css('margin-top:20px')}>
-        <div style={css('display:flex;align-items:baseline;gap:8px;margin-bottom:11px')}>
-          <div style={css('font-size:14px;font-weight:700')}>Orders · {vm.monthName}</div>
-          <div style={css('font-size:11px;color:#8a9088')}>{vm.monthScheduledCount}/{vm.monthOrderCount}</div>
-        </div>
-        <div style={css('display:flex;flex-direction:column;gap:9px')}>
-          <MonthOrderCards vm={vm} mobile />
-        </div>
       </div>
     </div>
   );

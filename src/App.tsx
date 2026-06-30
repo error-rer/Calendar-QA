@@ -6,7 +6,6 @@ import { Schedule } from './components/Schedule';
 import { Admin } from './components/Admin';
 import { Profile } from './components/Profile';
 import { CreateModal } from './components/CreateModal';
-import { OrderModal } from './components/OrderModal';
 import { EngineerModal } from './components/EngineerModal';
 import { SiteModal } from './components/SiteModal';
 import { CustomerModal } from './components/CustomerModal';
@@ -26,7 +25,6 @@ export default function App() {
           {vm.isAdmin && <Admin vm={vm} />}
           {vm.isProfile && <Profile vm={vm} />}
           <CreateModal vm={vm} />
-          <OrderModal vm={vm} />
           <EngineerModal vm={vm} />
           <SiteModal vm={vm} />
           <CustomerModal vm={vm} />

@@ -6,8 +6,6 @@ import type {
   EngineerForm,
   LeaveForm,
   LeaveType,
-  OrderForm,
-  Priority,
   SiteForm,
   State,
   SubDepartment,
@@ -365,35 +363,6 @@ export function useScheduler() {
     setState((s) => ({ leave: s.leave.filter((l) => !(l.eng === engId && l.week === s.weekOffset && l.day === day)) }));
     const eng = engById(engId);
     if (eng) log('You', `cleared leave for ${eng.name.split(' ')[0]} · ${dayLabels[day]}`, '#2756d6');
-  };
-
-  const cyclePriority = (id: string) => {
-    const nx: Record<Priority, Priority> = { High: 'Med', Med: 'Low', Low: 'High' };
-    setState((s) => ({ orders: s.orders.map((o) => (o.id === id ? { ...o, priority: nx[o.priority] } : o)) }));
-  };
-  // ---- create-order modal ----
-  const openOrderForm = () =>
-    setState({
-      orderFormOpen: true,
-      userMenuOpen: false,
-      sidebarOpen: false,
-        orderForm: { code: '', product: '', customer: '', plant: 'QMS', priority: 'Med' },
-    });
-  const closeOrderForm = () => setState({ orderFormOpen: false });
-  const setOrderForm = (patch: Partial<OrderForm>) =>
-    setState((s) => ({ orderForm: { ...s.orderForm, ...patch } }));
-  const submitOrderForm = () => {
-    const f = S.orderForm;
-    if (!f.product.trim() || !f.customer.trim()) return;
-    const id = 'o' + ids.current.id++;
-    const code = f.code.trim() || 'NX-' + (7000 + Math.floor(Math.random() * 900));
-    setState((s) => ({
-      orders: s.orders.concat([
-        { id, code, customer: f.customer.trim(), product: f.product.trim(), plant: f.plant, priority: f.priority },
-      ]),
-      orderFormOpen: false,
-    }));
-    log('You', `opened order ${code} · ${f.customer.trim()}`, '#2756d6');
   };
 
   // ---- chip builders ----
@@ -894,7 +863,6 @@ export function useScheduler() {
     name: 'Jordan Lee', role: 'QA Planner · Operations', email: 'jordan.lee@nexsil.com', phone: '+1 (480) 555-0173', team: 'Front-end Quality, Reliability', joined: 'Joined March 2023',
     stats: [
       { label: 'APPOINTMENTS PLANNED', value: String(myWeekAppointments), sub: 'this week' },
-      { label: 'OPEN ORDERS', value: String(poolOrders.length), sub: 'awaiting staffing' },
       { label: 'SITES', value: String(S.plants.length), sub: 'under coverage' },
     ],
     sites: S.plants.map((p) => ({ name: p.name, code: p.code, swatchStyle: sx({ width: '10px', height: '10px', borderRadius: '3px', background: p.color, flexShrink: 0 }) })),
@@ -989,7 +957,6 @@ export function useScheduler() {
   const adminStats = [
     { label: 'QA', value: String(S.engineers.length), sub: activeEng + ' active' },
     { label: 'INTERNAL', value: activeSites + '/' + S.plants.length, sub: 'visible on grid' },
-    { label: 'OPEN ORDERS', value: String(poolOrders.length), sub: 'awaiting staffing' },
     { label: 'WEEK APPOINTMENTS', value: String(wk.length), sub: conflicts + ' with conflicts' },
   ];
   const statusStyleFor = (label: 'Active' | 'On leave' | 'Onboarding') => {
@@ -1014,19 +981,6 @@ export function useScheduler() {
         return o && o.plant === p.id;
       }).length,
       statusLabel: on ? 'Visible' : 'Hidden', statusStyle: statusStyleFor(on ? 'Active' : 'On leave'), toggle: () => togglePlant(p.id),
-    };
-  });
-  const adminOrders = S.orders.map((o) => {
-    const pl = plantById(o.plant)!;
-    const pc = priorityColors(o.priority);
-    const isStaffed = staffed.has(o.id);
-    return {
-      code: o.code, product: o.product, customer: o.customer, plantCode: pl.code, priority: o.priority,
-      swatchStyle: sx({ width: '9px', height: '9px', borderRadius: '2px', background: pl.color, flexShrink: 0 }),
-      priorityStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '10px', fontWeight: 600, color: pc.c, background: pc.b, border: '1px solid ' + pc.bd, borderRadius: '5px', padding: '3px 10px', cursor: 'pointer' }),
-      cyclePriority: () => cyclePriority(o.id),
-      statusLabel: isStaffed ? 'Staffed' : 'Open',
-      statusStyle: sx({ fontFamily: "'Archivo',sans-serif", fontSize: '10.5px', fontWeight: 600, color: isStaffed ? '#1f8a5b' : '#a96e08', background: isStaffed ? '#e3f5ea' : '#fff3df', border: '1px solid ' + (isStaffed ? '#c4e6d2' : '#f1dcb0'), borderRadius: '20px', padding: '3px 10px' }),
     };
   });
 
@@ -1098,14 +1052,14 @@ export function useScheduler() {
     awayToday, awayLabel: dayNames[selDay], showAway: isMobile && !isMonth && awayToday.length > 0,
     weekLabel, weekTag, periodLabel, periodTag, gridCols, days, daySel,
     prevWeek: () => (isMonth ? shiftMonth(-1) : shiftWeek(-1)), nextWeek: () => (isMonth ? shiftMonth(1) : shiftWeek(1)),
-    profile, orderForm, orderFormOpen: S.orderFormOpen, openOrderForm, closeOrderForm,
+    profile,
     engForm, engFormOpen: S.engFormOpen, openEngForm, closeEngForm,
     siteForm, siteFormOpen: S.siteFormOpen, openSiteForm, closeSiteForm,
     customerForm, custFormOpen: S.custFormOpen, openCustForm, closeCustForm,
     leaveForm, leaveFormOpen: S.leaveFormOpen, openLeaveForm, closeLeaveForm,
-    stats: { assignments: wk.length, conflicts, unassigned: poolOrders.length },
+    stats: { assignments: wk.length, conflicts },
     conflictPillStyle: sx({ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', background: conflicts ? '#fdeeee' : '#eef1ea', border: '1px solid ' + (conflicts ? '#f3cdcd' : '#e2e5de'), color: conflicts ? '#b32f2f' : '#6a706a' }),
-    plants: plantsVm, pool, poolCount: pool.length, poolEmpty: pool.length === 0,
+    plants: plantsVm,
     personRows, plantRows, customerRows, subDeptRows, mobilePersonRows, mobileSiteRows, mobileCustomerRows, mobileSubDeptRows,
     showTimetable, timetableRows, timetableGridCols, timetableEngName: timetableEng?.name || '',
     closeTimetable, mobileTimetableRows,
@@ -1122,11 +1076,11 @@ export function useScheduler() {
     clearFilters,
     openCreate, closeCreate, createOpen: S.createOpen, create, stop: (e: React.MouseEvent) => e.stopPropagation(),
     adminStats,
-    tabEngineers: S.adminTab === 'engineers', tabSites: S.adminTab === 'sites', tabOrders: S.adminTab === 'orders',
-    setTabEng: () => setAdminTab('engineers'), setTabSite: () => setAdminTab('sites'), setTabOrder: () => setAdminTab('orders'),
-    tabEngStyle: S.adminTab === 'engineers' ? tabOn : tabOff, tabSiteStyle: S.adminTab === 'sites' ? tabOn : tabOff, tabOrderStyle: S.adminTab === 'orders' ? tabOn : tabOff,
-    adminEngineers, adminSites, adminOrders, engCount: S.engineers.length, orderCount: S.orders.length, siteCount: S.plants.length,
-    addEngineer: openEngForm, addOrder: openOrderForm, addSite: openSiteForm, addCustomer: openCustForm, addLeave: openLeaveForm,
+    tabEngineers: S.adminTab === 'engineers', tabSites: S.adminTab === 'sites',
+    setTabEng: () => setAdminTab('engineers'), setTabSite: () => setAdminTab('sites'),
+    tabEngStyle: S.adminTab === 'engineers' ? tabOn : tabOff, tabSiteStyle: S.adminTab === 'sites' ? tabOn : tabOff,
+    adminEngineers, adminSites, engCount: S.engineers.length, siteCount: S.plants.length,
+    addEngineer: openEngForm, addSite: openSiteForm, addCustomer: openCustForm, addLeave: openLeaveForm,
   };
 }
 
