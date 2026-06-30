@@ -38,7 +38,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
               </div>
               <div>
                 <div style={css('color:#9aa097;font-size:10.5px;font-weight:600;letter-spacing:.3px')}>Customer</div>
-                <div style={css("font-family:'IBM Plex Mono',monospace;color:#3a6bc4;font-size:22px;font-weight:700")}>{vm.summaryEmpTotal.customer}</div>
+                <div style={css("font-family:'IBM Plex Mono',monospace;color:#3a6bc4;font-size:22px;font-weight:700")}>{vm.summaryCustomerCount}</div>
               </div>
             </div>
             <div style={css('display:grid;grid-template-columns:1fr 60px 60px 50px;gap:2px;font-size:11px;font-weight:600;color:#8a9088;padding:4px 0 8px;border-bottom:2px solid #e4e7e0')}>
@@ -57,31 +57,10 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
             ))}
             {vm.summaryEmpBreakdown.length === 0 && <div style={css('color:#9aa097;font-size:13px;padding:6px 0')}>—</div>}
           </div>
-          <SummaryCard
-            label="Internal Audit"
-            value={vm.summaryInternalCount}
-            accent="#3d7840"
-          />
-          <SummaryCard
-            label="Customer"
-            value={vm.summaryCustomerCount}
-            accent="#3a6bc4"
-          />
         </div>
       </div>
     </main>
   );
 }
 
-function SummaryCard({ label, value, accent }: {
-  label: string;
-  value: number;
-  accent: string;
-}) {
-  return (
-    <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;padding:24px 20px')}>
-      <div style={css('color:#9aa097;font-size:11.5px;font-weight:600;margin-bottom:8px;letter-spacing:.3px')}>{label}</div>
-      <div style={css("font-family:'IBM Plex Mono',monospace;font-size:36px;font-weight:700;color:" + accent + ';line-height:1')}>{value}</div>
-    </div>
-  );
-}
+
