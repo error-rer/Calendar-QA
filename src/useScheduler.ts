@@ -40,6 +40,8 @@ const leaveColor: Record<LeaveType, string> = {
 
 interface MonthChip {
   code: string;
+  purpose: string;
+  engName: string;
   countTxt: string;
   dotStyle: CSSProperties;
   style: CSSProperties;

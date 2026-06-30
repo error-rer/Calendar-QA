@@ -54,8 +54,6 @@ function EngineersTable({ vm }: { vm: VM }) {
               <div style={css('font-size:10.5px;color:#8a9088')}>{e.department}{e.subDepartments.length > 0 ? ' — ' + e.subDepartments.join(', ') : ''}</div>
             </div>
           </div>
-            )}
-          </div>
           <div style={css("text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#3c423d")}>{e.appointments}</div>
           <div style={css('display:flex;justify-content:flex-end')}>
             <button onClick={e.toggleStatus} style={e.statusStyle}>{e.statusLabel}</button>
