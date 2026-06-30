@@ -27,9 +27,19 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
 
         <div style={css('display:grid;grid-template-columns:repeat(3,1fr);gap:16px')}>
           <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;padding:20px')}>
-            <div style={css('color:#9aa097;font-size:11.5px;font-weight:600;margin-bottom:12px;letter-spacing:.3px')}>
-              Employee
-              <span style={css("font-family:'IBM Plex Mono',monospace;color:#3c423d;margin-left:6px;font-size:20px;font-weight:700")}>{vm.summaryEmpCount}</span>
+            <div style={css('display:flex;gap:24px;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #e4e7e0')}>
+              <div>
+                <div style={css('color:#9aa097;font-size:10.5px;font-weight:600;letter-spacing:.3px')}>Employee</div>
+                <div style={css("font-family:'IBM Plex Mono',monospace;color:#3c423d;font-size:22px;font-weight:700")}>{vm.summaryEmpCount}</div>
+              </div>
+              <div>
+                <div style={css('color:#9aa097;font-size:10.5px;font-weight:600;letter-spacing:.3px')}>Internal</div>
+                <div style={css("font-family:'IBM Plex Mono',monospace;color:#3d7840;font-size:22px;font-weight:700")}>{vm.summaryEmpTotal.internal}</div>
+              </div>
+              <div>
+                <div style={css('color:#9aa097;font-size:10.5px;font-weight:600;letter-spacing:.3px')}>Customer</div>
+                <div style={css("font-family:'IBM Plex Mono',monospace;color:#3a6bc4;font-size:22px;font-weight:700")}>{vm.summaryEmpTotal.customer}</div>
+              </div>
             </div>
             <div style={css('display:grid;grid-template-columns:1fr 60px 60px 50px;gap:2px;font-size:11px;font-weight:600;color:#8a9088;padding:4px 0 8px;border-bottom:2px solid #e4e7e0')}>
               <div>Name</div>
@@ -45,14 +55,6 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
                 <div style={css('text-align:right;font-weight:600;color:#5c625c')}>{e.total}</div>
               </div>
             ))}
-            {vm.summaryEmpBreakdown.length > 0 && (
-              <div style={css('display:grid;grid-template-columns:1fr 60px 60px 50px;gap:2px;padding:8px 0 0;border-top:2px solid #e4e7e0;margin-top:4px;font-size:13px')}>
-                <div style={css('color:#2a302c;font-weight:700')}>Total</div>
-                <div style={css('text-align:right;font-weight:700;color:#3d7840')}>{vm.summaryEmpTotal.internal}</div>
-                <div style={css('text-align:right;font-weight:700;color:#3a6bc4')}>{vm.summaryEmpTotal.customer}</div>
-                <div style={css('text-align:right;font-weight:700;color:#5c625c')}>{vm.summaryEmpTotal.total}</div>
-              </div>
-            )}
             {vm.summaryEmpBreakdown.length === 0 && <div style={css('color:#9aa097;font-size:13px;padding:6px 0')}>—</div>}
           </div>
           <SummaryCard
