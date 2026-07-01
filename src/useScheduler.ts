@@ -494,7 +494,20 @@ export function useScheduler() {
   });
 
   const cellShell = sx({ borderBottom: '1px solid #e2e5de', borderRight: '1px solid #e2e5de', padding: '8px', minHeight: '78px', display: 'flex', flexDirection: 'column', gap: '5px', background: '#fbfcfa' });
-  const plantRows = S.plants.map((p) => {
+  const customerAuditTopics = ['ESD Audit', 'QS Audit'] as const;
+  const customerAuditRows = customerAuditTopics.map((topic) => {
+    const cells = [0, 1, 2, 3, 4].map((day) => {
+      const chips = wk
+        .filter((a) => {
+          const o = orderById(a.order);
+          return o && o.customer === topic && a.day === day;
+        })
+        .map((a) => buildPersonChip(a));
+      return { chips, empty: chips.length === 0, style: cellShell };
+    });
+    return { name: topic, loc: '', cells };
+  });
+  const plantRows = [...S.plants.map((p) => {
     const cells = [0, 1, 2, 3, 4].map((day) => {
       const chips = wk
         .filter((a) => {
@@ -505,7 +518,7 @@ export function useScheduler() {
       return { chips, empty: chips.length === 0, style: cellShell };
     });
     return { name: p.name, loc: p.loc, cells };
-  });
+  }), ...customerAuditRows];
 
   const customers = [...new Set([...S.orders.map((o) => o.customer), ...S.customers])];
   const customerRows = customers.map((cust) => {
@@ -668,7 +681,6 @@ export function useScheduler() {
   });
   const allDepartments = ['U1', 'U2', 'U3'] as const;
   const internalAuditTopics = ['QMS', 'EHS', 'ESD'] as const;
-  const customerAuditTopics = ['ESD Audit', 'QS Audit'] as const;
   const engForm = {
     name: ef.name, role: ef.role, department: ef.department, subDepartments: ef.subDepartments, inStyle: ofInStyle,
     onName: (e: React.ChangeEvent<HTMLInputElement>) => setEngForm({ name: e.target.value }),
