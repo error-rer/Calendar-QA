@@ -9,7 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "pages:deploy": "npm run build && wrangler pages deploy dist",
+    "pages:deploy": "npm run build && wrangler pages deploy dist --project-name=utac-qa-calendar",
     "migrate:local": "wrangler d1 migrations apply calendar-qa-db --local",
     "migrate:remote": "wrangler d1 migrations apply calendar-qa-db --remote"
   },
