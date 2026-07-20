@@ -7,18 +7,23 @@ import { Admin } from './components/Admin';
 import { Profile } from './components/Profile';
 import { SummaryDashboard } from './components/SummaryDashboard';
 import { CreateModal } from './components/CreateModal';
+import { EditModal } from './components/EditModal';
 import { EngineerModal } from './components/EngineerModal';
 import { SiteModal } from './components/SiteModal';
-import { CustomerModal } from './components/CustomerModal';
+import { OrderModal } from './components/OrderModal';
 
 export default function App() {
   const vm = useScheduler();
 
   return (
     <div style={css('height:100vh;width:100%;display:flex;flex-direction:column;overflow:hidden;background:#e9ebe6')}>
-      {vm.showLogin && <Login vm={vm} />}
+      {vm.loading && (
+        <div style={css('flex:1;display:flex;align-items:center;justify-content:center;color:#8a9088;font-size:14px')}>Loading…</div>
+      )}
 
-      {vm.showApp && (
+      {!vm.loading && vm.showLogin && <Login vm={vm} />}
+
+      {!vm.loading && vm.showApp && (
         <div style={css('flex:1;display:flex;flex-direction:column;min-height:0')}>
           <Header vm={vm} />
           {vm.isSchedule && <Schedule vm={vm} />}
@@ -26,9 +31,10 @@ export default function App() {
           {vm.isProfile && <Profile vm={vm} />}
           {vm.isSummary && <SummaryDashboard vm={vm} />}
           <CreateModal vm={vm} />
+          <EditModal vm={vm} />
           <EngineerModal vm={vm} />
           <SiteModal vm={vm} />
-          <CustomerModal vm={vm} />
+          <OrderModal vm={vm} />
         </div>
       )}
     </div>

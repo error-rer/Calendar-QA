@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Cloudflare
+.wrangler/
+
+# Claude Code local settings
+.claude/settings.local.json

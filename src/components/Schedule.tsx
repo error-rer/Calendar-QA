@@ -1,7 +1,39 @@
-import { Fragment } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import type { VM } from '../useScheduler';
-import { css, HButton, HDiv } from '../ui';
+import { css, HButton } from '../ui';
 import { DetailPanel } from './DetailPanel';
+
+function MultiSelect({ label, items, selected, onToggle }: { label: string; items: { value: string; label: string }[]; selected: string[]; onToggle: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+  const selCount = selected.length;
+  return (
+    <div ref={ref} style={css('position:relative')}>
+      <button onClick={() => setOpen(!open)} style={css('width:100%;padding:6px 8px;border:1px solid #dde0d9;border-radius:6px;background:#fff;cursor:pointer;font-size:11px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#3c423d;text-align:left;display:flex;align-items:center;justify-content:space-between')}>
+        <span>{label}{selCount > 0 ? <span style={css('color:#2756d6;margin-left:3px')}>({selCount})</span> : ''}</span>
+        <span style={css('font-size:8px;color:#9aa097')}>{open ? '\u25B2' : '\u25BC'}</span>
+      </button>
+      {open && (
+        <div style={css('position:absolute;top:100%;left:0;right:0;z-index:30;margin-top:3px;background:#fff;border:1px solid #dde0d9;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.08);max-height:200px;overflow-y:auto;padding:4px')}>
+          {items.map((item) => {
+            const on = selected.includes(item.value);
+            return (
+              <div key={item.value} onClick={() => onToggle(item.value)} style={css('display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:4px;cursor:pointer;font-size:11px;font-family:\'Archivo\',sans-serif;color:#3c423d;background:' + (on ? '#eef2fd' : '#fff') + ';font-weight:' + (on ? '600' : '400'))}>
+                <span style={css('width:14px;height:14px;border-radius:3px;border:1px solid ' + (on ? '#2756d6' : '#cdd2c9') + ';background:' + (on ? '#2756d6' : '#fff') + ';display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex-shrink:0')}>{on ? '\u2713' : ''}</span>
+                {item.label}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const gridBase = css('display:inline-grid;min-width:100%');
 
@@ -18,12 +50,11 @@ export function Schedule({ vm }: { vm: VM }) {
         <Toolbar vm={vm} />
 
         <main className="scrl" style={css('flex:1;min-width:0;overflow:auto;background:#eef0ea;position:relative')}>
-          {vm.gridPerson && <PersonGrid vm={vm} />}
-          {vm.gridPlant && <SiteGrid vm={vm} />}
-          {vm.gridCustomer && <CustomerGrid vm={vm} />}
+          <div style={css('position:absolute;inset:0;pointer-events:none;opacity:.35;background-image:radial-gradient(circle,#bcc2b4 1px,transparent 1px);background-size:22px 22px')} />
+          {vm.showWeekCalendar && <WeekCalendar vm={vm} />}
           {vm.mobilePerson && <MobilePerson vm={vm} />}
           {vm.mobileSite && <MobileSite vm={vm} />}
-          {vm.mobileCustomer && <MobileCustomer vm={vm} />}
+          {vm.mobileSiteDept && <MobileSiteDept vm={vm} />}
           {vm.monthDesktop && <MonthGrid vm={vm} />}
           {vm.monthMobile && <MonthMobile vm={vm} />}
 
@@ -40,6 +71,39 @@ export function Schedule({ vm }: { vm: VM }) {
       </div>
 
       <DetailPanel vm={vm} />
+
+      {vm.dayDialogOpen && (
+        <div onClick={vm.closeDayDialog} style={vm.modalOverlayStyle}>
+          <div onClick={vm.stop} style={css('position:relative;background:#fff;border-radius:14px;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.18);margin:20px')}>
+            <div style={css('display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e7eae3')}>
+              <div style={css('display:flex;align-items:center;gap:10px')}>
+                <span style={css('font-size:15px;font-weight:700;color:#23282a')}>{vm.dayDialogInfo?.label}</span>
+                <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9aa097")}>{vm.dayDialogDate}</span>
+              </div>
+              <button onClick={vm.closeDayDialog} style={css('width:30px;height:30px;border:1px solid #e2e5de;background:#fff;border-radius:7px;cursor:pointer;color:#6a706a;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0')}>✕</button>
+            </div>
+            <div className="scrl" style={css('flex:1;overflow:auto;padding:12px 16px')}>
+              {vm.dayDialogChips.length === 0 ? (
+                <div style={css('text-align:center;padding:24px 0;color:#9aa097;font-size:12px;font-style:italic')}>No appointments this day</div>
+              ) : (
+                <div style={css('display:flex;flex-direction:column;gap:6px')}>
+                  {vm.dayDialogChips.map((chip) => (
+                    <div key={chip.id} style={css('display:flex;align-items:center;gap:9px;padding:9px 11px;background:#fff;border:1px solid #e4e7e0;border-left:3px solid ' + chip.color + ';border-radius:7px')}>
+                      <div style={css('min-width:0;flex:1')}>
+                        <div style={css('font-size:12px;font-weight:600;color:#23282a')}>{chip.code}</div>
+                        <div style={css('display:flex;gap:8px;margin-top:2px')}>
+                          <span style={css('font-size:10.5px;color:#5c625c')}>{chip.purpose}</span>
+                          <span style={css('font-size:10.5px;color:#9aa097')}>{chip.engName}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {vm.showTimetable && (
         <div onClick={vm.closeTimetable} style={vm.modalOverlayStyle}>
@@ -82,49 +146,12 @@ function Sidebar({ vm }: { vm: VM }) {
             <button onClick={vm.clearFilters} style={css("font-size:10.5px;color:#5b7fd6;background:none;border:none;cursor:pointer;font-family:'Archivo',sans-serif;font-weight:600;padding:0")}>Clear all</button>
           )}
         </div>
-        <div style={css('display:flex;flex-direction:column;gap:8px')}>
-          <div>
-            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Employee</div>
-            <select value={vm.filterEmp} onChange={vm.onFilterEmp} style={vm.selStyle}>
-              {vm.employeeOptions.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
-            </select>
-          </div>
-
-          <div>
-            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Department</div>
-            <select value={vm.filterAuditTopic} onChange={vm.onFilterAuditTopic} style={vm.selStyle}>
-              <option value="">All departments</option>
-              <optgroup label="Customer">
-                {vm.customerTopicOptions.map((o) => (<option key={o} value={o}>{o}</option>))}
-              </optgroup>
-              <optgroup label="Internal Audit">
-                {vm.internalTopicOptions.map((o) => (<option key={o} value={o}>{o}</option>))}
-              </optgroup>
-            </select>
-          </div>
-
-          <div>
-            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Site</div>
-            <select value={vm.filterSite} onChange={vm.onFilterSite} style={vm.selStyle}>
-              {vm.siteOptions.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
-            </select>
-          </div>
-
-          <div>
-            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Customer</div>
-            <select value={vm.filterCompany} onChange={vm.onFilterCompany} style={vm.selStyle}>
-              <option value="">All companies</option>
-              {vm.companyNames.map((o) => (<option key={o} value={o}>{o}</option>))}
-            </select>
-          </div>
-
-          <div>
-            <div style={css('font-size:10px;color:#9aa097;margin-bottom:4px;font-weight:600')}>Purpose</div>
-            <select value={vm.filterAuditType} onChange={vm.onFilterAuditType} style={vm.selStyle}>
-              <option value="">All purposes</option>
-              {vm.auditTypes.map((o) => (<option key={o} value={o}>{o}</option>))}
-            </select>
-          </div>
+        <div style={css('display:flex;flex-direction:column;gap:6px')}>
+          <MultiSelect label="Auditor" items={vm.employeeOptions.filter((o) => o.value).map((o) => ({ value: o.value, label: o.label }))} selected={vm.filterEmp} onToggle={vm.toggleFilterEmp} />
+          <MultiSelect label="Department" items={[...vm.customerTopicOptions, ...vm.internalTopicOptions].map((o) => ({ value: o, label: o }))} selected={vm.filterAuditTopic} onToggle={vm.toggleFilterAuditTopic} />
+          <MultiSelect label="Site" items={vm.siteOptions.filter((o) => o.value).map((o) => ({ value: o.value, label: o.label }))} selected={vm.filterSite} onToggle={vm.toggleFilterSite} />
+          <MultiSelect label="Customer" items={vm.companyNames.map((o) => ({ value: o, label: o }))} selected={vm.filterCompany} onToggle={vm.toggleFilterCompany} />
+          <MultiSelect label="Purpose" items={vm.auditTypes.map((o) => ({ value: o, label: o }))} selected={vm.filterAuditType} onToggle={vm.toggleFilterAuditType} />
         </div>
       </div>
 
@@ -171,7 +198,7 @@ function TimetableGrid({ vm }: { vm: VM }) {
                   <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.purpose}</div>
                 </div>
               ))}
-              {cell.empty && <div style={css('font-size:10.5px;color:#bcc1b8;text-align:center;padding:8px 0')}>—</div>}
+              {cell.empty && <div style={css('font-size:10.5px;color:#bcc1b8;text-align:center;padding:8px 0')}>-</div>}
             </div>
           ))}
         </Fragment>
@@ -216,13 +243,6 @@ function Toolbar({ vm }: { vm: VM }) {
         <button onClick={vm.setWeekScale} style={vm.weekScaleStyle}>Week</button>
         <button onClick={vm.setMonthScale} style={vm.monthScaleStyle}>Month</button>
       </div>
-      {vm.showViewTabs && (
-        <div style={css('display:flex;background:#f1f3ee;border:1px solid #e0e3dc;border-radius:8px;padding:2px;gap:2px')}>
-          <button onClick={vm.setPerson} style={vm.personTabStyle}>By QA</button>
-          <button onClick={vm.setPlant} style={vm.plantTabStyle}>By Department</button>
-          <button onClick={vm.setCustomer} style={vm.customerTabStyle}>By Company</button>
-        </div>
-      )}
       <div style={css('flex:1')} />
       {vm.showStats && (
         <div style={css('display:flex;align-items:center;gap:7px')}>
@@ -254,14 +274,62 @@ function Toolbar({ vm }: { vm: VM }) {
   );
 }
 
+function WeekCalendar({ vm }: { vm: VM }) {
+  return (
+    <div style={css('display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:0;min-width:100%;background:#fff;border-top:1px solid #e6e9e2')}>
+      {vm.days.map((d, i) => (
+        <div key={i} style={css('gridRow:1/-1;border-right:1px solid #e6e9e2;border-bottom:1px solid #e6e9e2;vertical-align:top;background:#fbfcfa;padding:6px 8px')}>
+          <div style={css('text-align:center;margin-bottom:6px')}>
+            <div style={css('font-size:12px;font-weight:700;color:#9aa097;letter-spacing:.5px')}>{d.label}</div>
+            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#23282a;margin-top:2px")}>{d.date.split(' ').pop()}</div>
+          </div>
+          <div style={css('display:flex;flex-direction:column;gap:2px')}>
+            {vm.weekCalendarDays[i].chips.map((chip) => (
+              <div key={chip.id} onClick={chip.onClick} title={chip.customer + (chip.purpose ? ' - ' + chip.purpose : '')} style={{
+            background: '#f0f2ec', borderRadius: '6px', padding: '6px 8px',
+            borderLeft: '3px solid ' + chip.color,
+            boxShadow: '0 1px 2px rgba(0,0,0,.06)',
+            cursor: 'pointer', overflow: 'hidden',
+              }}>
+                <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{chip.customer}</div>
+                {chip.purpose && <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{chip.purpose}</div>}
+                {(chip as any).auditor2 && <div style={{ fontSize: '10px', color: '#9aa097', marginTop: '1px' }}>{(chip as any).auditor2}</div>}
+              </div>
+            ))}
+            {vm.weekCalendarDays[i].chips.length === 0 && vm.weekMergedSpans.every((s) => s.startDay > i || s.startDay + s.span <= i) && (
+              <div style={css('font-size:10px;color:#bcc1b8;font-style:italic;padding:4px 0')}>–</div>
+            )}
+          </div>
+        </div>
+      ))}
+      {vm.weekMergedSpans.map((sp) => (
+        <div key={sp.id} onClick={sp.onClick} title={sp.customer + (sp.purpose ? ' - ' + sp.purpose : '')} style={{
+          gridColumn: `${sp.startDay + 1} / span ${sp.span}`,
+          gridRow: `${sp.gridRow + 2}`,
+          zIndex: 2,
+          background: '#f0f2ec', borderRadius: '6px', padding: '6px 8px',
+          borderLeft: '3px solid ' + sp.color,
+          boxShadow: '0 1px 2px rgba(0,0,0,.06)',
+          cursor: 'pointer', overflow: 'hidden',
+          margin: '2px 0',
+        }}>
+          <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{sp.customer}</div>
+          {sp.purpose && <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{sp.purpose}</div>}
+          {(sp as any).auditor2 && <div style={{ fontSize: '10px', color: '#9aa097', marginTop: '1px' }}>{(sp as any).auditor2}</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function DayHeaders({ vm }: { vm: VM }) {
   return (
     <>
       {vm.days.map((d, i) => (
-        <div key={i} style={css('position:sticky;top:0;z-index:3;background:#f3f5ef;border-bottom:1px solid #d8dcd4;border-right:1px solid #e2e5de;padding:9px 12px 8px')}>
+        <div key={i} style={css('position:sticky;top:0;z-index:3;background:#f3f5ef;border-bottom:1px solid #d8dcd4;border-right:1px solid #e2e5de;padding:12px 12px 10px')}>
           <div>
-            <div style={css('font-size:12px;font-weight:700;color:#23282a;letter-spacing:.2px')}>{d.label}</div>
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8a9088;margin-top:1px")}>{d.date}</div>
+            <div style={css('font-size:13px;font-weight:700;color:#23282a;letter-spacing:.2px')}>{d.label}</div>
+            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8a9088;margin-top:2px")}>{d.date}</div>
           </div>
         </div>
       ))}
@@ -269,123 +337,33 @@ function DayHeaders({ vm }: { vm: VM }) {
   );
 }
 
-function CornerHeader({ label }: { label: string }) {
+function MobileSiteDept({ vm }: { vm: VM }) {
   return (
-    <div style={css('position:sticky;top:0;left:0;z-index:4;background:#f3f5ef;border-bottom:1px solid #d8dcd4;border-right:1px solid #e2e5de;padding:10px 14px;display:flex;align-items:flex-end')}>
-      <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>{label}</span>
-    </div>
-  );
-}
-
-function PersonGrid({ vm }: { vm: VM }) {
-  return (
-    <div style={{ ...gridBase, gridTemplateColumns: vm.gridCols }}>
-      <CornerHeader label="QA" />
-      <DayHeaders vm={vm} />
-      {vm.personRows.map((r) => (
-        <Fragment key={r.engId}>
-          <div onClick={r.onNameClick} style={r.nameCellStyle} title="View weekly timetable">
-            <div style={css('display:flex;align-items:center;gap:9px')}>
-              <div style={r.avatarStyle}>{r.initials}</div>
-              <div style={css('min-width:0')}>
-                <div style={css('font-size:12.5px;font-weight:600;color:#23282a;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{r.name}</div>
-                <div style={css('font-size:10px;color:#8a9088;line-height:1.2')}>{r.department}{r.subDepartments.length > 0 ? ' — ' + r.subDepartments.join(', ') : ''}</div>
-              </div>
-            </div>
-            </div>
-          {r.cells.map((cell) => (
-            <div key={cell.cellId} onDragOver={cell.onDragOver} onDragLeave={cell.onDragLeave} onDrop={cell.onDrop} style={cell.style}>
-              {cell.chips.map((chip) => (
-                <div key={chip.aid} draggable onClick={chip.onClick} onDragStart={chip.onDragStart} onDragEnd={chip.onDragEnd} style={chip.style}>
-                  <div style={css('display:flex;align-items:center;gap:6px')}>
-                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#15191e")}>{chip.code}</span>
-                    <span style={css('flex:1')} />
-                  </div>
-                  <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.purpose}</div>
-                </div>
-              ))}
-              {cell.empty && (
-                <HDiv onClick={cell.onHintClick} title="Assign an appointment here" style={cell.hintStyle} hover={{ background: '#eef2fd', borderColor: '#9bb0e8', color: '#5b7fd6' }}>＋</HDiv>
-              )}
-            </div>
-          ))}
-        </Fragment>
-      ))}
-    </div>
-  );
-}
-
-function SiteGrid({ vm }: { vm: VM }) {
-  return (
-    <div style={{ ...gridBase, gridTemplateColumns: vm.gridCols }}>
-      <CornerHeader label="INTERNAL" />
-      <DayHeaders vm={vm} />
-      {vm.plantRows.map((r, ri) => (
-        <Fragment key={ri}>
-            <div style={css('border-bottom:1px solid #e2e5de;border-right:1px solid #e2e5de;padding:12px 14px;background:#fff;position:sticky;left:0;z-index:2')}>
-            <div style={css('display:flex;align-items:center;gap:9px')}>
-              <div>
-                <div style={css('font-size:12.5px;font-weight:700;color:#23282a')}>{r.name}</div>
-                <div style={css('font-size:10px;color:#8a9088')}>{r.loc}</div>
-              </div>
+    <div style={css('padding:11px 11px 24px;display:flex;flex-direction:column;gap:10px')}>
+      {vm.mobileSiteDeptRows.map((r, ri) => (
+        <div key={ri} style={css('background:#fff;border:1px solid #e4e7e0;border-radius:12px;padding:12px 13px')}>
+          <div style={css('display:flex;align-items:center;gap:9px;margin-bottom:10px')}>
+            <div style={css('width:12px;height:12px;border-radius:3px;background:' + r.color + ';flex-shrink:0')} />
+            <div>
+              <div style={css('font-size:13px;font-weight:700;color:#23282a')}>{r.name}</div>
+              <div style={css('font-size:10.5px;color:#8a9088')}>{r.engCount + ' engineer' + (r.engCount > 1 ? 's' : '')}</div>
             </div>
           </div>
-          {r.cells.map((cell, ci) => (
-            <div key={ci} style={cell.style}>
-              {cell.chips.map((chip) => (
-                <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
-                  <div style={chip.avatarStyle}>{chip.initials}</div>
-                  <div style={css('min-width:0;flex:1')}>
-                    <div style={css('font-size:11px;font-weight:600;color:#23282a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.name}</div>
-                    <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div>
-                    <div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div>
-                  </div>
-                </div>
-              ))}
-              {cell.empty && <div style={css('font-size:10.5px;color:#bcc1b8;text-align:center;padding:8px 0')}>—</div>}
-            </div>
-          ))}
-        </Fragment>
+          <div style={css('display:flex;flex-direction:column;gap:6px')}>
+            {r.cell.chips.map((chip) => (
+              <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
+                <div style={chip.avatarStyle}>{chip.initials}</div>
+                <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div><div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div></div>
+              </div>
+            ))}
+            {r.cell.chips.length === 0 && <div style={css('font-size:11px;color:#a6aca2;text-align:center;padding:8px 0;font-style:italic')}>No appointments</div>}
+          </div>
+        </div>
       ))}
     </div>
   );
 }
 
-function CustomerGrid({ vm }: { vm: VM }) {
-  return (
-    <div style={{ ...gridBase, gridTemplateColumns: vm.gridCols }}>
-      <CornerHeader label="CUSTOMER" />
-      <DayHeaders vm={vm} />
-      {vm.customerRows.map((r, ri) => (
-        <Fragment key={ri}>
-          <div style={css('border-bottom:1px solid #e2e5de;border-right:1px solid #e2e5de;padding:12px 14px;background:#fff;position:sticky;left:0;z-index:2')}>
-            <div style={css('display:flex;align-items:center;gap:9px')}>
-              <div>
-                <div style={css('font-size:12.5px;font-weight:700;color:#23282a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{r.name}</div>
-                <div style={css('font-size:10px;color:#8a9088')}>{r.sub}</div>
-              </div>
-            </div>
-          </div>
-          {r.cells.map((cell, ci) => (
-            <div key={ci} style={cell.style}>
-              {cell.chips.map((chip) => (
-                <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
-                  <div style={chip.avatarStyle}>{chip.initials}</div>
-                  <div style={css('min-width:0;flex:1')}>
-                    <div style={css('font-size:11px;font-weight:600;color:#23282a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.name}</div>
-                    <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div>
-                    <div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div>
-                  </div>
-                </div>
-              ))}
-              {cell.empty && <div style={css('font-size:10.5px;color:#bcc1b8;text-align:center;padding:8px 0')}>—</div>}
-            </div>
-          ))}
-        </Fragment>
-      ))}
-    </div>
-  );
-}
 
 function MobilePerson({ vm }: { vm: VM }) {
   return (
@@ -396,7 +374,7 @@ function MobilePerson({ vm }: { vm: VM }) {
             <div style={r.avatarStyle}>{r.initials}</div>
             <div style={css('min-width:0;flex:1')}>
               <div style={css('font-size:13px;font-weight:600;color:#23282a')}>{r.name}</div>
-              <div style={css('font-size:10.5px;color:#8a9088')}>{r.department}{r.subDepartments.length > 0 ? ' — ' + r.subDepartments.join(', ') : ''}</div>
+              <div style={css('font-size:10.5px;color:#8a9088')}>{r.department}{r.subDepartments.length > 0 ? ' - ' + r.subDepartments.join(', ') : ''}</div>
             </div>
           </div>
           <div style={css('display:flex;flex-direction:column;gap:6px')}>
@@ -442,59 +420,31 @@ function MobileSite({ vm }: { vm: VM }) {
   );
 }
 
-function MobileCustomer({ vm }: { vm: VM }) {
-  return (
-    <div style={css('padding:11px 11px 24px;display:flex;flex-direction:column;gap:10px')}>
-      {vm.mobileCustomerRows.map((r, ri) => (
-        <div key={ri} style={css('background:#fff;border:1px solid #e4e7e0;border-radius:12px;padding:12px 13px')}>
-          <div style={css('display:flex;align-items:center;gap:9px;margin-bottom:10px')}>
-            <div><div style={css('font-size:13px;font-weight:700;color:#23282a')}>{r.name}</div><div style={css('font-size:10.5px;color:#8a9088')}>{r.sub}</div></div>
-          </div>
-          <div style={css('display:flex;flex-direction:column;gap:6px')}>
-            {r.cell.chips.map((chip) => (
-              <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
-                <div style={chip.avatarStyle}>{chip.initials}</div>
-                <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div><div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div></div>
-              </div>
-            ))}
-            {r.cell.empty && <div style={css('font-size:11px;color:#a6aca2;text-align:center;padding:8px 0;font-style:italic')}>No work scheduled</div>}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 
 function MonthGrid({ vm }: { vm: VM }) {
   return (
-    <div style={css('padding:18px 20px 40px;max-width:1180px;margin:0 auto')}>
-      <div style={css('display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:7px')}>
+    <div style={css('height:100%;display:flex;flex-direction:column')}>
+      <div style={css('display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid #e6e9e2')}>
         {vm.monthWeekdayHeads.map((h, i) => (
-          <div key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.5px;text-align:center;padding:2px 0")}>{h}</div>
+          <div key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.5px;text-align:center;padding:7px 0;border-right:1px solid #e6e9e2;" + (i === 6 ? 'border-right:none' : ''))}>{h}</div>
         ))}
       </div>
-      <div style={css('display:grid;grid-template-columns:repeat(7,1fr);gap:7px')}>
+      <div style={css('flex:1;display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr')}>
         {vm.monthCells.map((c, i) =>
           c.blank ? (
             <div key={i} style={c.style} />
           ) : (
             <div key={i} onClick={c.onClick} style={c.style}>
-              <div style={css('display:flex;align-items:center;justify-content:space-between')}>
-                <span style={c.numStyle}>{c.dateNum}</span>
-                <span style={c.countDotStyle}>{c.countTxt}</span>
-              </div>
-              <div style={css('display:flex;flex-direction:column;gap:3px')}>
+              <span style={c.numStyle}>{c.dateNum}</span>
+              <div style={css('display:flex;flex-direction:column;gap:2px;margin-top:2px')}>
                 {(c.chips ?? []).map((ch, ci) => (
-                  <div key={ci} style={ch.style}>
+                  <div key={ci} style={css('display:flex;align-items:center;gap:4px;overflow:hidden')}>
                     <span style={ch.dotStyle} />
-                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#23282a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ch.code}</span>
-                    <span style={css('font-size:8px;color:#7a807a;margin-left:2px')}>{ch.engName}</span>
-                    <span style={css('flex:1')} />
-                    <span style={css('font-size:8px;color:#9aa097')}>{ch.purpose}</span>
+                    <span style={css('font-size:10.5px;color:#23282a;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{ch.code}</span>
                   </div>
                 ))}
-                {(c.more ?? 0) > 0 && <span style={css('font-size:9.5px;color:#9aa097;padding-left:2px')}>{c.moreTxt}</span>}
+                {(c.more ?? 0) > 0 && <span style={css('font-size:10px;color:#5b7fd6;font-weight:600')}>{c.moreTxt}</span>}
               </div>
             </div>
           ),
@@ -506,31 +456,27 @@ function MonthGrid({ vm }: { vm: VM }) {
 
 function MonthMobile({ vm }: { vm: VM }) {
   return (
-    <div style={css('padding:12px 11px 30px')}>
-      <div style={css('display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px')}>
+    <div style={css('height:100%;display:flex;flex-direction:column')}>
+      <div style={css('display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid #e6e9e2')}>
         {vm.monthWeekdayHeads.map((h, i) => (
-          <div key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:600;color:#9aa097;text-align:center")}>{h}</div>
+          <div key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:600;color:#9aa097;text-align:center;padding:5px 0;border-right:1px solid #e6e9e2;" + (i === 6 ? 'border-right:none' : ''))}>{h}</div>
         ))}
       </div>
-      <div style={css('display:grid;grid-template-columns:repeat(7,1fr);gap:4px')}>
+      <div style={css('flex:1;display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr')}>
         {vm.monthCells.map((c, i) =>
           c.blank ? (
             <div key={i} style={c.style} />
           ) : (
             <div key={i} onClick={c.onClick} style={c.style}>
-              <div style={css('display:flex;align-items:center;justify-content:space-between')}>
-                <span style={c.numStyle}>{c.dateNum}</span>
-                <span style={c.countDotStyle}>{c.countTxt}</span>
-              </div>
-              <div style={css('display:flex;flex-direction:column;gap:2px')}>
+              <span style={c.numStyle}>{c.dateNum}</span>
+              <div style={css('display:flex;flex-direction:column;gap:1px;margin-top:1px')}>
                 {(c.chips ?? []).map((ch, ci) => (
-                  <div key={ci} style={ch.style}>
+                  <div key={ci} style={css('display:flex;align-items:center;gap:3px;overflow:hidden')}>
                     <span style={ch.dotStyle} />
-                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;color:#23282a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ch.code}</span>
-                    <span style={css('font-size:7px;color:#9aa097')}>{ch.purpose}</span>
+                    <span style={css('font-size:8px;color:#23282a;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{ch.code}</span>
                   </div>
                 ))}
-                {(c.more ?? 0) > 0 && <span style={css('font-size:8px;color:#9aa097;padding-left:2px')}>{c.moreTxt}</span>}
+                {(c.more ?? 0) > 0 && <span style={css('font-size:8px;color:#5b7fd6;font-weight:600')}>{c.moreTxt}</span>}
               </div>
             </div>
           ),

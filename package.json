@@ -5,21 +5,27 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:pages": "wrangler pages dev dist --d1 DB",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pages:deploy": "npm run build && wrangler pages deploy dist",
+    "migrate:local": "wrangler d1 migrations apply calendar-qa-db --local",
+    "migrate:remote": "wrangler d1 migrations apply calendar-qa-db --remote"
   },
   "dependencies": {
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260706.1",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
     "oxlint": "^1.69.0",
     "typescript": "~6.0.2",
-    "vite": "^8.1.0"
+    "vite": "^8.1.0",
+    "wrangler": "^4.107.0"
   }
 }

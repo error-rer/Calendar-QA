@@ -20,12 +20,12 @@ export function EngineerModal({ vm }: { vm: VM }) {
         <div className="scrl" style={css('flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:16px')}>
           <div style={css('display:flex;gap:14px;flex-wrap:wrap')}>
             <div style={css('flex:1;min-width:160px')}>
-              <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>Name</label>
-              <HInput value={f.name} onChange={f.onName} placeholder="e.g. Kai Mori" style={f.inStyle} focus={{ borderColor: '#9bb0e8' }} />
+              <label htmlFor="eng-name" style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>Name</label>
+              <HInput id="eng-name" value={f.name} onChange={f.onName} placeholder="e.g. Kai Mori" style={f.inStyle} focus={{ borderColor: '#9bb0e8' }} />
             </div>
             <div style={css('flex:1;min-width:160px')}>
-              <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>Role <span style={css('color:#a6aca2;font-weight:400')}>· optional</span></label>
-              <HInput value={f.role} onChange={f.onRole} placeholder="e.g. Reliability Engineer" style={f.inStyle} focus={{ borderColor: '#9bb0e8' }} />
+              <label htmlFor="eng-role" style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>Role <span style={css('color:#a6aca2;font-weight:400')}>- optional</span></label>
+              <HInput id="eng-role" value={f.role} onChange={f.onRole} placeholder="e.g. Reliability Engineer" style={f.inStyle} focus={{ borderColor: '#9bb0e8' }} />
             </div>
           </div>
 

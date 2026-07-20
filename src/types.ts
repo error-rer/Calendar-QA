@@ -1,10 +1,6 @@
 export type Department = 'U1' | 'U2' | 'U3';
 export type SubDepartment = 'QMS' | 'EHS' | 'ESD' | 'ESD Audit' | 'QS Audit';
 
-export type Priority = 'High' | 'Med' | 'Low';
-export type AppointmentKind = string;
-export type EngStatus = 'Active' | 'On leave' | 'Onboarding';
-
 export interface Plant {
   id: string;
   name: string;
@@ -20,7 +16,6 @@ export interface Engineer {
   role: string;
   department: Department;
   subDepartments: SubDepartment[];
-  status: EngStatus;
 }
 
 export interface Order {
@@ -29,7 +24,6 @@ export interface Order {
   customer: string;
   product: string;
   plant: string;
-  priority: Priority;
   purpose: string;
 }
 
@@ -38,11 +32,27 @@ export interface Assignment {
   eng: string;
   order: string;
   day: number;
-  appointment: AppointmentKind;
   week: number;
+  site1?: string;
+  customer?: string;
+  endCustomer?: string;
+  auditor1?: string;
+  site2?: string;
+  area?: string;
+  auditor2?: string;
+  department1?: string;
+  department2?: string;
+  major?: number;
+  minor?: number;
+  ofi?: number;
+  request?: number;
+  utl1?: number;
+  utl2?: number;
+  utl3?: number;
 }
 
 export interface Comment {
+  id: string;
   who: string;
   initials: string;
   text: string;
@@ -65,13 +75,42 @@ export interface CreateDraft {
   order: string;
   eng: string;
   day: number;
-  appointment: AppointmentKind;
+  dateFrom: string;
+  dateTo: string;
+  sectionType: 'customer' | 'internal';
+  purpose: string;
+  department1: string;
+  site1: string;
+  customer: string;
+  endCustomer: string;
+  auditor1: string;
+  department2: string;
+  site2: string;
+  area: string;
+  auditor2: string;
+}
+
+export interface EditDraft {
+  targetId: string;
+  sectionType: 'customer' | 'internal';
+  dateFrom: string;
+  dateTo: string;
+  site1: string;
+  customer: string;
+  endCustomer: string;
+  purpose: string;
+  auditor1: string;
+  department1: string;
+  site2: string;
+  area: string;
+  auditor2: string;
+  department2: string;
 }
 
 export type Page = 'schedule' | 'admin' | 'profile' | 'summary';
-export type View = 'person' | 'plant' | 'customer' | 'timetable';
+export type View = 'person' | 'plant' | 'site' | 'timetable';
 export type TimeScale = 'week' | 'month';
-export type AdminTab = 'engineers' | 'sites';
+export type AdminTab = 'engineers' | 'sites' | 'orders' | 'options';
 
 export interface EngineerForm {
   name: string;
@@ -87,8 +126,11 @@ export interface SiteForm {
   color: string;
 }
 
-export interface CustomerForm {
-  name: string;
+export interface OrderForm {
+  code: string;
+  product: string;
+  customer: string;
+  plant: string;
 }
 
 export interface State {
@@ -101,33 +143,37 @@ export interface State {
   sidebarOpen: boolean;
   timeScale: TimeScale;
   monthOffset: number;
-  filterEmp: string;
-  filterSite: string;
-  filterCompany: string;
-  filterAuditType: string;
-  filterAuditTopic: string;
+  filterEmp: string[];
+  filterSite: string[];
+  filterCompany: string[];
+  filterAuditType: string[];
+  filterAuditTopic: string[];
+  dayDialog: { weekOffset: number; day: number } | null;
   timetableOpenEng: string | null;
   loginEmail: string;
   loginPass: string;
   userMenuOpen: boolean;
   createOpen: boolean;
   createDraft: CreateDraft;
+  editOpen: boolean;
+  editDraft: EditDraft;
   engFormOpen: boolean;
   engForm: EngineerForm;
   siteFormOpen: boolean;
   siteForm: SiteForm;
-  custFormOpen: boolean;
-  custForm: CustomerForm;
+  orderFormOpen: boolean;
+  orderForm: OrderForm;
   weekOffset: number;
   activePlants: Record<string, boolean>;
   selected: string | null;
   drag: DragState;
   overCell: string | null;
   draft: string;
-  summaryScale: TimeScale;
-  summaryWeekOffset: number;
+  summaryYear: number;
+  purposeOptions: string[];
+  customerDepartmentOptions: string[];
+  internalDepartmentOptions: string[];
   plants: Plant[];
-  customers: string[];
   engineers: Engineer[];
   orders: Order[];
   assignments: Assignment[];

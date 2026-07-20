@@ -8,13 +8,17 @@ A collaborative weekly QA-coverage planner for a microchip manufacturer
 
 ```bash
 npm install
-npm run dev      # dev server at http://localhost:5173
+npm run dev      # dev server at http://localhost:5173 (no backend — in-memory only)
 npm run build    # type-check + production build to dist/
 npm run preview  # serve the production build
 ```
 
-The sign-in screen accepts any credentials (it's a seeded demo — the
-"Sign in" and "Continue with Okta SSO" buttons both enter the app).
+⚠️ **The sign-in screen has no real access control.** Any email/password
+(and the "Continue with Okta SSO" button) logs you in — there's no
+credential check at all. That's fine for local/demo use, but if this is
+deployed somewhere reachable by more than you, anyone with the URL can get
+in and read/write all data. Add real auth before treating this as anything
+but an internal prototype.
 
 ## What's included
 
@@ -61,8 +65,9 @@ The sign-in screen accepts any credentials (it's a seeded demo — the
   single-day card list, compact month calendar, full-screen modal/detail,
   and a stacked login.
 
-All data is seeded in memory (`src/data.ts`); changes live for the session
-and reset on reload. There is no backend.
+On `npm run dev`, data lives in memory only and resets on reload. With the
+Cloudflare Pages + D1 backend below, it's persisted and shared across
+everyone hitting the deployed URL.
 
 ## Structure
 
@@ -70,10 +75,41 @@ and reset on reload. There is no backend.
 | --- | --- |
 | `src/types.ts` | Domain types (Engineer, Order, Assignment, …) |
 | `src/data.ts` | Constants + seeded initial state |
-| `src/useScheduler.ts` | All state, actions, conflict logic, and the view model |
+| `src/useScheduler.ts` | All state, actions, and the view model; hydrates from `/api/state` on mount and fires an API call alongside every local mutation |
+| `src/api.ts` | Fetch client for the `/api/*` endpoints |
 | `src/ui.tsx` | `css()` style-string parser + hover/focus helper components |
-| `src/components/*` | Login, Header, Schedule (incl. month grids + leave tags), DetailPanel, CreateModal, OrderModal, EngineerModal, SiteModal, CustomerModal, LeaveModal, Admin, Profile |
+| `src/components/*` | Login, Header, Schedule, DetailPanel, CreateModal, EditModal, AppointmentFormFields (shared Customer/Internal Audit fields), OrderModal, EngineerModal, SiteModal, Admin, Profile |
+| `functions/api/[[path]].ts` | Cloudflare Pages Function — the backend API, backed by D1 |
+| `migrations/0001_init.sql` | D1 schema + seed data (base fab sites only) |
+| `wrangler.toml` | Cloudflare Pages + D1 binding config |
 
 Styling mirrors the design prototype's inline styles verbatim (parsed via
-`css()`) to stay pixel-accurate; the view model in `useScheduler.ts` is a
-direct port of the prototype's render logic.
+`css()`) to stay pixel-accurate.
+
+## Backend & deployment (Cloudflare Pages + D1)
+
+The app talks to a small Pages Functions API (`functions/api/[[path]].ts`)
+backed by a D1 (SQLite) database, so the schedule is shared across everyone
+using the deployed URL instead of living only in one browser tab.
+
+First-time setup (run these yourself — they touch your own Cloudflare
+account):
+
+```bash
+npx wrangler login
+npx wrangler d1 create calendar-qa-db
+# paste the returned database_id into wrangler.toml (both spots)
+npm run migrate:remote
+npm run build && npm run pages:deploy
+```
+
+To develop against a local D1 instance instead of plain Vite:
+
+```bash
+npm run migrate:local
+npm run build && npm run dev:pages
+```
+
+Alternatively, connect the GitHub repo in the Cloudflare dashboard for
+auto-deploy on every push to `main`, instead of running `pages:deploy`
+manually.

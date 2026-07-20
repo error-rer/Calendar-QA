@@ -68,11 +68,6 @@ export function Header({ vm }: { vm: VM }) {
             </div>
             <div style={css('height:1px;background:#eef1ea;margin:2px 0')} />
             <HButton onClick={vm.goProfile} style={css("width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:12.5px;color:#3c423d;font-family:'Archivo',sans-serif")} hover={{ background: '#f4f6f1' }}>Your profile</HButton>
-            <HButton onClick={vm.goSummary} style={css("width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:12.5px;color:#3c423d;font-family:'Archivo',sans-serif")} hover={{ background: '#f4f6f1' }}>Summary</HButton>
-            <HButton onClick={vm.addCustomer} style={css("width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:12.5px;color:#3c423d;font-family:'Archivo',sans-serif")} hover={{ background: '#f4f6f1' }}>New customer</HButton>
-            <HButton onClick={vm.addEngineer} style={css("width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:12.5px;color:#3c423d;font-family:'Archivo',sans-serif")} hover={{ background: '#f4f6f1' }}>New QA</HButton>
-            <HButton onClick={vm.addSite} style={css("width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:12.5px;color:#3c423d;font-family:'Archivo',sans-serif")} hover={{ background: '#f4f6f1' }}>New internal</HButton>
-            <HButton onClick={vm.goAdmin} style={css("width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:12.5px;color:#3c423d;font-family:'Archivo',sans-serif")} hover={{ background: '#f4f6f1' }}>Manage workspace</HButton>
             <HButton onClick={vm.signOut} style={css("width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:12.5px;color:#b32f2f;font-family:'Archivo',sans-serif")} hover={{ background: '#fdeeee' }}>Sign out</HButton>
           </div>
         )}

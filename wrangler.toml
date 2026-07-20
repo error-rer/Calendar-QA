@@ -1,0 +1,9 @@
+name = "calendar-qa"
+pages_build_output_dir = "dist"
+
+compatibility_date = "2025-04-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "calendar-qa-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID" # Run: npx wrangler d1 create calendar-qa-db

@@ -2,21 +2,21 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import type {
   Assignment,
   CreateDraft,
-  CustomerForm,
+  Department,
+  EditDraft,
   EngineerForm,
-  Priority,
+  OrderForm,
   SiteForm,
   State,
   SubDepartment,
-  TimeScale,
 } from './types';
 import {
-  custPalette,
   dayLabels,
   dayNames,
   initialState,
   siteColors,
 } from './data';
+import { api } from './api';
 
 /** Identity tag that supplies a contextual CSSProperties type to a style literal. */
 const sx = (o: CSSProperties): CSSProperties => o;
@@ -44,7 +44,8 @@ interface MonthCell {
 
 export function useScheduler() {
   const [state, setRaw] = useState<State>(initialState);
-  const ids = useRef({ id: 100, nh: 0, no: 0 });
+  const [loading, setLoading] = useState(true);
+  const ids = useRef({ id: 100 });
 
   const setState = useCallback(
     (patch: Partial<State> | ((s: State) => Partial<State>)) => {
@@ -60,6 +61,26 @@ export function useScheduler() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  useEffect(() => {
+    api.fetchState()
+      .then((data) => {
+        setRaw((s) => ({
+          ...s,
+          engineers: data.engineers,
+          plants: data.plants,
+          activePlants: { ...s.activePlants, ...data.activePlants },
+          orders: data.orders,
+          assignments: data.assignments,
+          comments: data.comments,
+          activity: data.activity,
+        }));
+      })
+      .catch((err) => {
+        console.warn('API load failed, using local data:', err);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
   const S = state;
 
   // ---- pure-ish helpers ----
@@ -69,14 +90,26 @@ export function useScheduler() {
   };
   const engById = (id: string) => S.engineers.find((e) => e.id === id);
   const orderById = (id: string) => S.orders.find((o) => o.id === id);
-  const plantById = (id: string) => S.plants.find((p) => p.id === id);
+  // red for U1, green shades for U2 family, blue shades for U3 family
+  const siteCodeColor: Record<string, string> = { U1: '#c0392b', U2: '#2e7d32', U2A: '#66bb6a', U2B: '#1b5e20', U3: '#1e5fa8', U3A: '#4a90d9', U3T: '#123f73' };
+  const plantById = (id: string) => S.plants.find((p) => p.id === id) || { id: '', name: id || 'Unknown', loc: '', code: (id || '?').slice(0, 3).toUpperCase(), color: siteCodeColor[id] || '#999', active: true };
   const initials = (name: string) =>
     name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+  const siteToDept = (site: string): Department => (site.startsWith('U3') ? 'U3' : site.startsWith('U2') ? 'U2' : 'U1');
+  /** Leading color-bar color for an appointment, keyed by its own site (site1 for Customer, site2 for Internal Audit). */
+  const siteColorOf = (a: Assignment) => siteCodeColor[a.site1 || a.site2 || ''] || undefined;
+  /** "CS" for Customer appointments, "IA" for Internal Audit. */
+  const apptAbbr = (a: Assignment) => (a.site2 || a.auditor2 || a.department2 ? 'IA' : 'CS');
   const fmtDate = (d: Date) => {
     const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()];
     return m + ' ' + d.getDate();
   };
-  const weekAssignments = () => S.assignments.filter((a) => a.week === S.weekOffset);
+  const fmtISO = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const weekAssignments = () => S.assignments.filter((a) => {
+    if (a.week !== S.weekOffset) return false;
+    if (!orderById(a.order) || !engById(a.eng)) return false;
+    return true;
+  });
   const monthBaseDate = () => new Date(2026, 5 + (S.monthOffset || 0), 1);
   /** Map an absolute date onto the seeded scheduling grid (week offset + weekday index). */
   const dateSlot = (d: Date) => {
@@ -84,28 +117,23 @@ export function useScheduler() {
     const diff = Math.round((d.getTime() - base.getTime()) / 86400000);
     return { weekOffset: Math.floor(diff / 7), wd: (d.getDay() + 6) % 7 };
   };
-  /** Per-week conflict lookup (has-conflict only), memoised across the month grid. */
-  const priorityColors = (p: Priority) =>
-    ({
-      High: { c: '#b32f2f', b: '#fbe3e3', bd: '#f0c4c4' },
-      Med: { c: '#a96e08', b: '#fff3df', bd: '#f1dcb0' },
-      Low: { c: '#6a706a', b: '#eef1ea', bd: '#e2e5de' },
-    })[p];
   const chipDimmed = (a: Assignment) => {
     const o = orderById(a.order);
     if (!o) return false;
     if (!S.activePlants[o.plant]) return true;
-    if (S.filterEmp && a.eng !== S.filterEmp) return true;
-    if (S.filterCompany && o.customer !== S.filterCompany) return true;
-    if (S.filterAuditTopic && o.customer !== S.filterAuditTopic && o.plant !== S.filterAuditTopic) return true;
-    if (S.filterAuditType && o.purpose !== S.filterAuditType) return true;
+    if (S.filterEmp.length > 0 && !S.filterEmp.includes(a.eng)) return true;
+    if (S.filterCompany.length > 0 && !S.filterCompany.includes(o.customer)) return true;
+    if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.some((t) => o.customer === t || o.plant === t)) return true;
+    if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return true;
     return false;
   };
 
-  const log = (who: string, text: string, color: string) =>
+  const log = (who: string, text: string, color: string) => {
+    api.logActivity({ id: 'act' + ids.current.id++, who, text, ago: 'just now', color }).catch(() => {});
     setState((s) => ({
       activity: [{ who, text, ago: 'just now', color }].concat(s.activity).slice(0, 9),
     }));
+  };
 
   // ---- auth / nav ----
   const signIn = () => setState({ authed: true });
@@ -114,44 +142,61 @@ export function useScheduler() {
   const goAdmin = () => setState({ page: 'admin', userMenuOpen: false, selected: null });
   const goProfile = () => setState({ page: 'profile', userMenuOpen: false, selected: null, sidebarOpen: false });
   const goSummary = () => setState({ page: 'summary', userMenuOpen: false, selected: null, sidebarOpen: false });
-  const setSummaryScale = (s: TimeScale) => setState({ summaryScale: s });
-  const shiftSummaryWeek = (n: number) => setState((s) => ({ summaryWeekOffset: s.summaryWeekOffset + n }));
-  const setView = (v: State['view']) => setState({ view: v, selected: null, sidebarOpen: false });
-  const setScale = (sc: State['timeScale']) => setState({ timeScale: sc, selected: null, sidebarOpen: false });
-  const togglePlant = (pid: string) =>
+  const setScale = (sc: State['timeScale']) =>
+    setState((s) => {
+      const patch: Partial<State> = { timeScale: sc, selected: null, sidebarOpen: false };
+      if (sc === 'month') {
+        // show the month containing the week currently being viewed
+        const weekMonday = new Date(2026, 5, 29 + s.weekOffset * 7);
+        patch.monthOffset = (weekMonday.getFullYear() - 2026) * 12 + (weekMonday.getMonth() - 5);
+      } else if (sc === 'week') {
+        // jump to the week containing the first day of the month currently being viewed
+        const monthFirst = new Date(2026, 5 + (s.monthOffset || 0), 1);
+        const base = new Date(2026, 5, 29);
+        const diff = Math.round((monthFirst.getTime() - base.getTime()) / 86400000);
+        patch.weekOffset = Math.floor(diff / 7);
+      }
+      return patch;
+    });
+  const togglePlant = (pid: string) => {
+    api.togglePlant(pid).catch(() => {});
     setState((s) => ({ activePlants: { ...s.activePlants, [pid]: !s.activePlants[pid] } }));
+  };
   const shiftWeek = (n: number) => setState((s) => ({ weekOffset: s.weekOffset + n, selected: null }));
   const shiftMonth = (n: number) => setState((s) => ({ monthOffset: (s.monthOffset || 0) + n, selected: null }));
-  const drillToDay = (weekOffset: number, wd: number) =>
-    setState({ timeScale: 'week', weekOffset, selectedDay: wd, selected: null });
   const setSelectedDay = (i: number) => setState({ selectedDay: i });
   const toggleSidebar = () => setState((s) => ({ sidebarOpen: !s.sidebarOpen }));
   const closeSidebar = () => setState({ sidebarOpen: false });
-  const setFilterEmp = (v: string) => setState({ filterEmp: v });
+  const toggleFilterValue = (field: 'filterEmp' | 'filterSite' | 'filterCompany' | 'filterAuditType' | 'filterAuditTopic', value: string) =>
+    setState((s) => {
+      const arr = s[field] as unknown as string[];
+      return { [field]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value] };
+    });
   const openTimetable = (engId: string) => setState({ timetableOpenEng: engId, selected: null });
   const closeTimetable = () => setState({ timetableOpenEng: null });
-  const setFilterSite = (v: string) => setState({ filterSite: v });
-  const setFilterCompany = (v: string) => setState({ filterCompany: v });
-  const setFilterAuditType = (v: string) => setState({ filterAuditType: v });
-  const setFilterAuditTopic = (v: string) => setState({ filterAuditTopic: v });
   const clearFilters = () =>
-    setState({ filterEmp: '', filterSite: '', filterCompany: '', filterAuditType: '', filterAuditTopic: '', activePlants: Object.fromEntries(S.plants.map((p) => [p.id, true])) });
+    setState({ filterEmp: [], filterSite: [], filterCompany: [], filterAuditType: [], filterAuditTopic: [], activePlants: Object.fromEntries(S.plants.map((p) => [p.id, true])) });
+  const openDayDialog = (weekOffset: number, day: number) => setState({ dayDialog: { weekOffset, day } });
+  const closeDayDialog = () => setState({ dayDialog: null });
 
   const copyWeek = () => {
     const off = S.weekOffset;
     const clones = S.assignments
       .filter((a) => a.week === 0)
       .map((a) => ({ ...a, id: 'a' + ids.current.id++, week: off }));
+    clones.forEach((c) => api.createAssignment(c).catch(() => {}));
     setState((s) => ({ assignments: s.assignments.concat(clones) }));
-    log('You', 'copied current week’s plan', '#2756d6');
+    log('You', 'copied current week\'s plan', '#2756d6');
   };
 
   // ---- schedule mutations ----
   const select = (aid: string) => setState({ selected: aid, draft: '' });
-  const createAssign = (orderId: string, engId: string, day: number, appointment: State['createDraft']['appointment']) => {
+  const createAssign = (orderId: string, engId: string, day: number) => {
     const id = 'a' + ids.current.id++;
+    const week = S.weekOffset;
+    api.createAssignment({ id, eng: engId, order: orderId, day, week }).catch(() => {});
     setState((s) => ({
-      assignments: s.assignments.concat([{ id, eng: engId, order: orderId, day, appointment: appointment || '08:00', week: s.weekOffset }]),
+      assignments: s.assignments.concat([{ id, eng: engId, order: orderId, day, week: s.weekOffset }]),
       selected: id,
     }));
     const ord = orderById(orderId);
@@ -160,6 +205,7 @@ export function useScheduler() {
   };
   const moveAssign = (aid: string, engId: string, day: number) => {
     const a = S.assignments.find((x) => x.id === aid);
+    api.updateAssignment(aid, { eng: engId, day, week: S.weekOffset }).catch(() => {});
     setState((s) => ({
       assignments: s.assignments.map((x) => (x.id === aid ? { ...x, eng: engId, day, week: s.weekOffset } : x)),
       selected: aid,
@@ -170,11 +216,13 @@ export function useScheduler() {
       if (ord && eng) log('You', `moved ${ord.code} → ${eng.name.split(' ')[0]}, ${dayLabels[day]}`, '#2756d6');
     }
   };
-  const setAppointment = (aid: string, appointment: State['createDraft']['appointment']) =>
-    setState((s) => ({ assignments: s.assignments.map((a) => (a.id === aid ? { ...a, appointment } : a)) }));
   const removeAssign = (aid: string) => {
     const a = S.assignments.find((x) => x.id === aid);
-    setState((s) => ({ assignments: s.assignments.filter((x) => x.id !== aid), selected: null }));
+    api.deleteAssignment(aid).catch(() => {});
+    setState((s) => {
+      const { [aid]: _removed, ...comments } = s.comments;
+      return { assignments: s.assignments.filter((x) => x.id !== aid), comments, selected: null };
+    });
     if (a) {
       const ord = orderById(a.order);
       if (ord) log('You', `removed ${ord.code} appointment`, '#2756d6');
@@ -183,9 +231,11 @@ export function useScheduler() {
   const duplicate = (aid: string) => {
     const a = S.assignments.find((x) => x.id === aid);
     if (!a) return;
-    const nd = Math.min(a.day + 1, 4);
+    const nd = a.day < 4 ? a.day + 1 : a.day - 1;
     const id = 'a' + ids.current.id++;
-    setState((s) => ({ assignments: s.assignments.concat([{ ...a, id, day: nd }]), selected: id }));
+    const clone = { ...a, id, day: nd };
+    api.createAssignment(clone).catch(() => {});
+    setState((s) => ({ assignments: s.assignments.concat([clone]), selected: id }));
     const ord = orderById(a.order);
     if (ord) log('You', `duplicated ${ord.code} → ${dayLabels[nd]}`, '#2756d6');
   };
@@ -193,10 +243,10 @@ export function useScheduler() {
     const aid = S.selected;
     const t = S.draft.trim();
     if (!aid || !t) return;
+    const comment = { id: 'c' + ids.current.id++, who: 'You', initials: 'YO', text: t, ago: 'just now', color: '#2756d6' };
+    api.createComment(aid, comment).catch(() => {});
     setState((s) => {
-      const list = (s.comments[aid] || []).concat([
-        { who: 'You', initials: 'YO', text: t, ago: 'just now', color: '#2756d6' },
-      ]);
+      const list = (s.comments[aid] || []).concat([comment]);
       return { comments: { ...s.comments, [aid]: list }, draft: '' };
     });
     const a = S.assignments.find((x) => x.id === aid);
@@ -205,25 +255,173 @@ export function useScheduler() {
       if (ord) log('You', `noted on ${ord.code}`, '#2756d6');
     }
   };
+  const removeComment = (aid: string, commentId: string) => {
+    api.deleteComment(commentId).catch(() => {});
+    setState((s) => ({
+      comments: { ...s.comments, [aid]: (s.comments[aid] || []).filter((c) => c.id !== commentId) },
+    }));
+  };
 
   // ---- create modal ----
-  const openCreate = () =>
-    setState((s) => ({
+  const openCreate = () => {
+    setState({
       createOpen: true,
       userMenuOpen: false,
       sidebarOpen: false,
-      createDraft: { order: '', eng: '', day: s.selectedDay || 0, appointment: '08:00' },
-    }));
-  const openCreateAt = (engId: string, day: number) =>
-    setState({ createOpen: true, userMenuOpen: false, createDraft: { order: '', eng: engId, day, appointment: '08:00' } });
+      createDraft: { order: '', eng: '', day: 0, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' },
+    });
+  };
+  const openCreateAt = (engId: string, day: number) => {
+    setState({ createOpen: true, userMenuOpen: false, createDraft: { order: '', eng: engId, day, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' } });
+  };
   const closeCreate = () => setState({ createOpen: false });
   const setDraft = (patch: Partial<CreateDraft>) =>
     setState((s) => ({ createDraft: { ...s.createDraft, ...patch } }));
   const submitCreate = () => {
     const d = S.createDraft;
-    if (!d.order || !d.eng) return;
-    createAssign(d.order, d.eng, d.day, d.appointment);
-    setState({ createOpen: false });
+    if (!d.dateFrom || !d.dateTo) return;
+    if (d.sectionType === 'customer') {
+      if (!d.site1 || !d.customer || !d.auditor1) return;
+    } else {
+      if (!d.site2 || !d.area || !d.auditor2) return;
+    }
+    const auditorName = d.auditor1 || d.auditor2 || 'bird';
+    const existingEng = S.engineers.find((e) => e.name.toLowerCase() === auditorName.toLowerCase());
+    const engId = existingEng ? existingEng.id : 'e' + ids.current.id++;
+    const newAssignments: Assignment[] = [];
+    const orderId = 'o' + ids.current.id++;
+    const start = new Date(d.dateFrom + 'T00:00:00');
+    const end = new Date(d.dateTo + 'T00:00:00');
+    for (let cur = new Date(start); cur <= end; cur.setDate(cur.getDate() + 1)) {
+      const slot = dateSlot(cur);
+      if (slot.wd < 5) {
+        newAssignments.push({
+          id: 'a' + ids.current.id++,
+          eng: engId, order: orderId, day: slot.wd, week: slot.weekOffset,
+          site1: d.sectionType === 'customer' ? d.site1 : '',
+          customer: d.sectionType === 'customer' ? d.customer : '',
+          endCustomer: d.sectionType === 'customer' ? d.endCustomer : '',
+          auditor1: d.sectionType === 'customer' ? d.auditor1 : '',
+          site2: d.sectionType === 'internal' ? d.site2 : '',
+          area: d.sectionType === 'internal' ? d.area : '',
+          auditor2: d.sectionType === 'internal' ? d.auditor2 : '',
+          department1: d.sectionType === 'customer' ? d.department1 : '',
+          department2: d.sectionType === 'internal' ? d.department2 : '',
+        });
+      }
+    }
+    if (newAssignments.length === 0) return;
+    const newOrder = {
+      id: orderId, code: 'NEW-' + String(S.orders.length + 1).padStart(3, '0'),
+      customer: d.customer, product: d.endCustomer || d.area,
+      plant: d.sectionType === 'internal' ? d.department2 : d.site1, purpose: d.purpose || (d.sectionType === 'internal' ? d.area : 'data-entry'),
+    };
+    const newEngineer = { id: engId, name: auditorName, role: 'QA', department: siteToDept(d.sectionType === 'internal' ? d.site2 : d.site1), subDepartments: [] };
+    api.createOrder(newOrder).catch(() => {});
+    if (!existingEng) api.createEngineer(newEngineer).catch(() => {});
+    newAssignments.forEach((a) => api.createAssignment(a).catch(() => {}));
+    setState((s) => ({
+      orders: s.orders.concat([newOrder]),
+      engineers: existingEng ? s.engineers : s.engineers.concat([newEngineer]),
+      assignments: s.assignments.concat(newAssignments),
+      selected: newAssignments[newAssignments.length - 1].id,
+      createOpen: false,
+    }));
+  };
+
+  // ---- edit modal ----
+  const openEdit = (aid: string) => {
+    const a = S.assignments.find((x) => x.id === aid);
+    if (!a) return;
+    const o = orderById(a.order);
+    const isInternal = !!(a.site2 || a.auditor2 || a.department2);
+    // find all sibling assignments (same order + eng) for the full date range
+    const siblings = S.assignments.filter((x) => x.eng === a.eng && x.order === a.order);
+    const minWeek = Math.min(...siblings.map((x) => x.week));
+    const maxWeek = Math.max(...siblings.map((x) => x.week));
+    const minDay = Math.min(...siblings.filter((x) => x.week === minWeek).map((x) => x.day));
+    const maxDay = Math.max(...siblings.filter((x) => x.week === maxWeek).map((x) => x.day));
+    const fromDate = new Date(2026, 5, 29 + minWeek * 7 + minDay);
+    const toDate = new Date(2026, 5, 29 + maxWeek * 7 + maxDay);
+    setState({
+      editOpen: true,
+      editDraft: {
+        targetId: aid,
+        sectionType: isInternal ? 'internal' : 'customer',
+        dateFrom: fmtISO(fromDate), dateTo: fmtISO(toDate),
+        site1: a.site1 || '',
+        customer: a.customer || (o ? o.customer : ''),
+        endCustomer: a.endCustomer || '',
+        purpose: o ? o.purpose : '',
+        auditor1: a.auditor1 || '',
+        department1: a.department1 || '',
+        site2: a.site2 || '',
+        area: a.area || '',
+        auditor2: a.auditor2 || '',
+        department2: a.department2 || '',
+      },
+    });
+  };
+  const closeEdit = () => setState({ editOpen: false });
+  const setEditDraft = (patch: Partial<EditDraft>) =>
+    setState((s) => ({ editDraft: { ...s.editDraft, ...patch } }));
+  const submitEdit = () => {
+    const d = S.editDraft;
+    if (!d.dateFrom || !d.dateTo) return;
+    const target = S.assignments.find((x) => x.id === d.targetId);
+    if (!target) return;
+    const start = new Date(d.dateFrom + 'T00:00:00');
+    const end = new Date(d.dateTo + 'T00:00:00');
+    const slots: { weekOffset: number; wd: number }[] = [];
+    for (let cur = new Date(start); cur <= end; cur.setDate(cur.getDate() + 1)) {
+      const slot = dateSlot(cur);
+      if (slot.wd < 5) slots.push(slot);
+    }
+    if (slots.length === 0) return;
+    const fields = {
+      site1: d.sectionType === 'customer' ? d.site1 : '',
+      customer: d.sectionType === 'customer' ? d.customer : '',
+      endCustomer: d.sectionType === 'customer' ? d.endCustomer : '',
+      auditor1: d.sectionType === 'customer' ? d.auditor1 : '',
+      site2: d.sectionType === 'internal' ? d.site2 : '',
+      area: d.sectionType === 'internal' ? d.area : '',
+      auditor2: d.sectionType === 'internal' ? d.auditor2 : '',
+      department1: d.sectionType === 'customer' ? d.department1 : '',
+      department2: d.sectionType === 'internal' ? d.department2 : '',
+    };
+    // replace every sibling assignment (same order + eng, i.e. the days that make up
+    // this appointment's span) with one entry per slot in the new date range, instead
+    // of leaving the old day-records in place and piling new ones on top of them.
+    const siblings = S.assignments
+      .filter((x) => x.eng === target.eng && x.order === target.order)
+      .sort((a, b) => (a.week - b.week) || (a.day - b.day));
+    const siblingIds = new Set(siblings.map((x) => x.id));
+    const others = S.assignments.filter((x) => !siblingIds.has(x.id));
+    const reuseIds = [d.targetId, ...siblings.filter((x) => x.id !== d.targetId).map((x) => x.id)];
+    const updated: Assignment[] = slots.map((slot, i) => ({
+      id: reuseIds[i] || 'a' + ids.current.id++,
+      eng: target.eng, order: target.order,
+      day: slot.wd, week: slot.weekOffset,
+      ...fields,
+    }));
+    const droppedIds = reuseIds.slice(slots.length);
+
+    updated.forEach((a, i) => {
+      if (i < siblings.length) api.updateAssignment(a.id, { day: a.day, week: a.week, ...fields }).catch(() => {});
+      else api.createAssignment(a).catch(() => {});
+    });
+    droppedIds.forEach((id) => api.deleteAssignment(id).catch(() => {}));
+
+    const droppedSet = new Set(droppedIds);
+    setState((s) => {
+      const comments = droppedSet.size
+        ? Object.fromEntries(Object.entries(s.comments).filter(([aid]) => !droppedSet.has(aid)))
+        : s.comments;
+      return { assignments: others.concat(updated), comments };
+    });
+    const ord = orderById(target.order);
+    if (ord) log('You', `edited ${ord.code}`, '#2756d6');
+    setState({ editOpen: false });
   };
 
   // ---- admin ----
@@ -243,8 +441,10 @@ export function useScheduler() {
     const f = S.engForm;
     if (!f.name.trim()) return;
     const id = 'e' + ids.current.id++;
+    const newEng = { id, name: f.name.trim(), role: f.role.trim() || 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice() };
+    api.createEngineer(newEng).catch(() => {});
     setState((s) => ({
-      engineers: s.engineers.concat([{ id, name: f.name.trim(), role: f.role.trim() || 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice(), status: 'Active' }]),
+      engineers: s.engineers.concat([newEng]),
       engFormOpen: false,
     }));
     log('You', `added ${f.name.trim().split(' ')[0]}`, '#2756d6');
@@ -260,43 +460,78 @@ export function useScheduler() {
     if (!f.name.trim()) return;
     const id = 'p' + ids.current.id++;
     const code = (f.code.trim() || f.name.trim().replace(/[^A-Za-z0-9]/g, '').slice(0, 5)).toUpperCase();
+    const newPlant = { id, name: f.name.trim(), loc: f.loc.trim() || '—', code, color: f.color, active: true };
+    api.createPlant(newPlant).catch(() => {});
     setState((s) => ({
-      plants: s.plants.concat([{ id, name: f.name.trim(), loc: f.loc.trim() || '—', code, color: f.color, active: true }]),
+      plants: s.plants.concat([newPlant]),
       activePlants: { ...s.activePlants, [id]: true },
       siteFormOpen: false,
     }));
     log('You', `added site ${f.name.trim()}`, '#2756d6');
   };
-
-  // ---- create-customer modal ----
-  const openCustForm = () =>
-    setState({ custFormOpen: true, userMenuOpen: false, sidebarOpen: false, custForm: { name: '' } });
-  const closeCustForm = () => setState({ custFormOpen: false });
-  const setCustForm = (patch: Partial<CustomerForm>) => setState((s) => ({ custForm: { ...s.custForm, ...patch } }));
-  const submitCustForm = () => {
-    const name = S.custForm.name.trim();
-    if (!name) return;
+  const removePlant = (id: string) => {
+    if (!confirm('Remove this internal site?')) return;
+    api.deletePlant(id).catch(() => {});
     setState((s) => {
-      const exists = s.customers.includes(name) || s.orders.some((o) => o.customer === name);
-      return { customers: exists ? s.customers : s.customers.concat([name]), custFormOpen: false };
+      const { [id]: _, ...rest } = s.activePlants;
+      return { plants: s.plants.filter((p) => p.id !== id), activePlants: rest };
     });
-    log('You', `added customer ${name}`, '#2756d6');
   };
+
+  // ---- order management ----
+  const openOrderForm = () =>
+    setState({ orderFormOpen: true, userMenuOpen: false, sidebarOpen: false, orderForm: { code: '', product: '', customer: '', plant: 'QMS' } });
+  const closeOrderForm = () => setState({ orderFormOpen: false });
+  const setOrderForm = (patch: Partial<OrderForm>) =>
+    setState((s) => ({ orderForm: { ...s.orderForm, ...patch } }));
+  const submitOrderForm = () => {
+    const f = S.orderForm;
+    if (!f.product.trim() || !f.customer.trim()) return;
+    const id = 'o' + ids.current.id++;
+    const code = f.code.trim() || 'NX-' + (7000 + Math.floor(Math.random() * 900));
+    const newOrder = { id, code, customer: f.customer.trim(), product: f.product.trim(), plant: f.plant, purpose: '' };
+    api.createOrder(newOrder).catch(() => {});
+    setState((s) => ({
+      orders: s.orders.concat([newOrder]),
+      orderFormOpen: false,
+    }));
+    log('You', `opened order ${code} - ${f.customer.trim()}`, '#2756d6');
+  };
+  const removeOrder = (id: string) => {
+    if (!confirm('Remove this order and its assignments?')) return;
+    api.deleteOrder(id).catch(() => {});
+    setState((s) => {
+      const droppedIds = new Set(s.assignments.filter((a) => a.order === id).map((a) => a.id));
+      const comments = Object.fromEntries(Object.entries(s.comments).filter(([aid]) => !droppedIds.has(aid)));
+      return { orders: s.orders.filter((o) => o.id !== id), assignments: s.assignments.filter((a) => a.order !== id), comments };
+    });
+  };
+
+  // ---- appointment option lists (Purpose / Department) ----
+  type OptionListField = 'purposeOptions' | 'customerDepartmentOptions' | 'internalDepartmentOptions';
+  const addOption = (field: OptionListField, value: string) => {
+    const v = value.trim();
+    if (!v) return;
+    setState((s) => (s[field].includes(v) ? {} : { [field]: [...s[field], v] }));
+  };
+  const removeOption = (field: OptionListField, value: string) =>
+    setState((s) => ({ [field]: s[field].filter((x) => x !== value) }));
 
   // ---- chip builders ----
   const buildChip = (a: Assignment) => {
-    const ord = orderById(a.order)!;
-    const pl = plantById(ord.plant)!;
+    const ord = orderById(a.order);
+    const pl = ord ? plantById(ord.plant) : null;
     const dim = chipDimmed(a);
     const sel = S.selected === a.id;
+    const color = siteColorOf(a) || (pl ? pl.color : '#999');
     const base: CSSProperties = {
       display: 'block', padding: '7px 9px', borderRadius: '6px', background: '#fff', cursor: 'grab', position: 'relative',
-      border: '1px solid #e3e6e0', borderLeft: '3px solid ' + pl.color,
-      boxShadow: sel ? '0 0 0 2px ' + hexA(pl.color, 0.55) : '0 1px 1px rgba(20,25,30,.05)',
+      border: '1px solid #e3e6e0', borderLeft: '3px solid ' + color,
+      boxShadow: sel ? '0 0 0 2px ' + hexA(color, 0.55) : '0 1px 1px rgba(20,25,30,.05)',
       opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', transition: 'box-shadow .12s',
     };
     return {
-      aid: a.id, code: ord.customer, purpose: ord.purpose, style: base,
+      aid: a.id, code: (ord ? apptAbbr(a) + ' · ' + ord.customer : '?'), purpose: ord ? ord.purpose : '', style: base,
       onClick: () => select(a.id),
       onDragStart: (e: React.DragEvent) => { e.stopPropagation(); setState({ drag: { kind: 'assign', id: a.id } }); },
       onDragEnd: () => setState({ drag: null, overCell: null }),
@@ -304,17 +539,20 @@ export function useScheduler() {
   };
 
   const buildPersonChip = (a: Assignment, accent?: string) => {
-    const e = engById(a.eng)!;
-    const ord = orderById(a.order)!;
-    const pl = plantById(ord.plant)!;
+    const e = engById(a.eng);
+    const ord = orderById(a.order);
+    const pl = ord ? plantById(ord.plant) : null;
     const dim = chipDimmed(a);
+    const color = accent || siteColorOf(a) || (pl ? pl.color : '#999');
     return {
-      aid: a.id, name: e.name, initials: initials(e.name), code: ord.customer, purpose: ord.purpose, plantCode: pl.code,
-      style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: '#fff', border: '1px solid #e8ebe4', borderLeft: '3px solid ' + (accent || pl.color), borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none' }),
+      aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: (ord ? apptAbbr(a) + ' · ' + ord.customer : '?'), purpose: ord ? ord.purpose : '', plantCode: pl ? pl.code : '?',
+      style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: '#fff', border: '1px solid #e8ebe4', borderLeft: '3px solid ' + color, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none' }),
       avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       onClick: () => select(a.id),
     };
   };
+
+  const weekDayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
   // ======================= VIEW MODEL =======================
   const isMobile = (S.vw || 1440) < 860;
@@ -324,8 +562,9 @@ export function useScheduler() {
   const tabOff = sx({ padding: '6px 13px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", background: 'transparent', color: '#5c625c', whiteSpace: 'nowrap' });
 
   const wk = weekAssignments();
+  const poolOrders = S.orders.filter((o) => !wk.some((a) => a.order === o.id));
   const baseDate = new Date(2026, 5, 29);
-  const days = dayLabels.map((lbl, i) => {
+  const days = weekDayLabels.map((lbl, i) => {
     const d = new Date(baseDate);
     d.setDate(baseDate.getDate() + S.weekOffset * 7 + i);
     return {
@@ -343,11 +582,11 @@ export function useScheduler() {
   const mYear = mb.getFullYear();
   const mMon = mb.getMonth();
   const monthName = monthNames[mMon] + ' ' + mYear;
-  const firstWd = (mb.getDay() + 6) % 7;
+  const firstWd = mb.getDay();
   const daysInMonth = new Date(mYear, mMon + 1, 0).getDate();
   const todayStr = '2026-5-29';
-  const monthWeekdayHeads = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-  const blankCellStyle = (): CSSProperties => ({ background: '#f1f3ee', border: '1px solid #e6e9e2', borderRadius: '9px', minHeight: isMobile ? '52px' : '112px' });
+  const monthWeekdayHeads = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const blankCellStyle = (): CSSProperties => ({ background: '#f8f9f6', border: '1px solid #e6e9e2', minHeight: isMobile ? '52px' : '112px' });
   const monthCells: MonthCell[] = [];
   for (let i = 0; i < firstWd; i++) monthCells.push({ blank: true, style: blankCellStyle() });
   const monthOrderAgg: Record<string, { appointments: number; days: Record<number, 1>; engs: Record<string, 1> }> = {};
@@ -359,15 +598,24 @@ export function useScheduler() {
     const slot = dateSlot(date);
     const weekend = slot.wd > 4;
     const all = weekend ? [] : S.assignments.filter((a) => a.week === slot.weekOffset && a.day === slot.wd);
-    const appointments = all.filter((a) => !chipDimmed(a));
+    const appointments = all.filter((a) => {
+      const o = orderById(a.order);
+      if (!o) return false;
+      if (S.filterCompany.length > 0 && !S.filterCompany.includes(o.customer)) return false;
+      if (S.filterSite.length > 0 && !S.filterSite.includes(o.plant)) return false;
+      if (S.filterEmp.length > 0 && !S.filterEmp.includes(a.eng)) return false;
+      if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.some((t) => o.customer === t || o.plant === t)) return false;
+      if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return false;
+      return true;
+    });
     all.forEach((a) => {
       const o = orderById(a.order);
       if (!o) return;
-      if (S.filterCompany && o.customer !== S.filterCompany) return;
-      if (!S.activePlants[o.plant]) return;
-      if (S.filterEmp && a.eng !== S.filterEmp) return;
-      if (S.filterAuditTopic && o.customer !== S.filterAuditTopic && o.plant !== S.filterAuditTopic) return;
-      if (S.filterAuditType && o.purpose !== S.filterAuditType) return;
+      if (S.filterCompany.length > 0 && !S.filterCompany.includes(o.customer)) return;
+      if (S.filterSite.length > 0 && !S.filterSite.includes(o.plant)) return;
+      if (S.filterEmp.length > 0 && !S.filterEmp.includes(a.eng)) return;
+      if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.some((t) => o.customer === t || o.plant === t)) return;
+      if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return;
       monthCustomerSet.add(o.customer);
       if (internalPlants.has(o.plant)) monthInternalSet.add(o.plant);
       const g = monthOrderAgg[o.id] || (monthOrderAgg[o.id] = { appointments: 0, days: {}, engs: {} });
@@ -378,50 +626,47 @@ export function useScheduler() {
     const chips: MonthChip[] = appointments.slice(0, 3).map((a) => {
       const o = orderById(a.order)!;
       const e = engById(a.eng);
+      const pl = plantById(o.plant);
+      const custName = a.customer || o.customer || o.product;
       return {
-        code: o.customer, purpose: o.purpose, engName: e ? e.name.split(' ')[0] : '',
+        code: apptAbbr(a) + ' · ' + custName, purpose: o.purpose, engName: e ? e.name.split(' ')[0] : '',
         countTxt: '',
-        dotStyle: sx({ width: '7px', height: '7px', borderRadius: '2px', background: '#999', flexShrink: 0 }),
-        style: sx({ display: 'flex', alignItems: 'center', gap: '5px', padding: '2px 5px', background: '#f6f7f4', border: '1px solid #e6e9e2', borderRadius: '5px' }),
+        dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: siteColorOf(a) || pl.color, flexShrink: 0 }),
+        style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: '#23282a', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
       };
     });
     const more = appointments.length - chips.length;
     const isToday = mYear + '-' + mMon + '-' + dn === todayStr;
-    const cur = slot.weekOffset === 0;
     monthCells.push({
       blank: false, dateNum: String(dn), countTxt: appointments.length ? String(appointments.length) : '',
       chips, more, moreTxt: more > 0 ? '+' + more + ' more' : '',
-      onClick: weekend ? () => {} : () => drillToDay(slot.weekOffset, slot.wd),
-      style: sx({ position: 'relative', background: weekend ? '#f3f5ef' : '#fff', border: '1px solid ' + (isToday ? '#15191e' : '#e6e9e2'), boxShadow: isToday ? '0 0 0 1px #15191e' : 'none', borderRadius: '9px', minHeight: isMobile ? '52px' : '112px', padding: isMobile ? '5px' : '8px 9px', cursor: weekend ? 'default' : 'pointer', opacity: weekend ? 0.6 : 1, display: 'flex', flexDirection: 'column', gap: isMobile ? '2px' : '6px', overflow: 'hidden' }),
-      numStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: isMobile ? '11px' : '12px', fontWeight: isToday ? 700 : 600, color: cur ? '#15191e' : '#9aa097' }),
-      countDotStyle: appointments.length
-        ? sx({ minWidth: '16px', height: '16px', borderRadius: '8px', background: '#15191e', color: '#fff', fontSize: '9px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' })
-        : sx({ display: 'none' }),
+      onClick: weekend ? () => {} : () => openDayDialog(slot.weekOffset, slot.wd),
+      style: sx({ position: 'relative', background: weekend ? '#f8f9f6' : '#fff', border: '1px solid #e6e9e2', minHeight: isMobile ? '52px' : '112px', padding: isMobile ? '5px' : '6px 8px', cursor: weekend ? 'default' : 'pointer', display: 'flex', flexDirection: 'column', gap: isMobile ? '2px' : '4px', overflow: 'hidden' }),
+      numStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: isMobile ? '11px' : '12px', fontWeight: isToday ? 700 : 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: isMobile ? '20px' : '24px', height: isMobile ? '20px' : '24px', borderRadius: '50%', background: isToday ? '#15191e' : 'transparent', color: isToday ? '#fff' : '#9aa097' }),
+      countDotStyle: sx({ display: 'none' }),
     });
   }
   while (monthCells.length % 7 !== 0) monthCells.push({ blank: true, style: blankCellStyle() });
   const monthOrders = S.orders
     .filter((o) => {
-      if (S.filterCompany && o.customer !== S.filterCompany) return false;
-      if (!S.activePlants[o.plant]) return false;
-      if (S.filterAuditTopic && o.customer !== S.filterAuditTopic && o.plant !== S.filterAuditTopic) return false;
-      if (S.filterAuditType && o.purpose !== S.filterAuditType) return false;
+      if (S.filterCompany.length > 0 && !S.filterCompany.includes(o.customer)) return false;
+      if (S.filterSite.length > 0 && !S.filterSite.includes(o.plant)) return false;
+      if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.some((t) => o.customer === t || o.plant === t)) return false;
+      if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return false;
       return true;
     })
     .map((o) => {
       const pl = plantById(o.plant)!;
-      const pc = priorityColors(o.priority);
       const g = monthOrderAgg[o.id];
       const appointments = g ? g.appointments : 0;
       const days = g ? Object.keys(g.days).length : 0;
       const engs = g ? Object.keys(g.engs).length : 0;
       return {
-        orderId: o.id, code: o.code, product: o.product, customer: o.customer, plantCode: pl.code, priority: o.priority,
+        orderId: o.id, code: o.code, product: o.product, customer: o.customer, plantCode: pl.code,
         scheduled: appointments > 0, appointments, days, engs,
         appointmentsTxt: appointments + (appointments === 1 ? ' appointment' : ' appointments'), daysTxt: days + (days === 1 ? ' day' : ' days'),
         statusLabel: appointments > 0 ? 'Scheduled' : 'Not scheduled',
         statusStyle: sx({ fontFamily: "'Archivo',sans-serif", fontSize: '10px', fontWeight: 600, color: appointments > 0 ? '#1f8a5b' : '#9a7a3a', background: appointments > 0 ? '#e3f5ea' : '#fff3df', border: '1px solid ' + (appointments > 0 ? '#c4e6d2' : '#f1dcb0'), borderRadius: '20px', padding: '2px 9px' }),
-        priorityStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '8.5px', fontWeight: 600, color: pc.c, background: pc.b, border: '1px solid ' + pc.bd, borderRadius: '3px', padding: '1px 5px' }),
         cardStyle: sx({ background: '#fff', border: '1px solid ' + (appointments > 0 ? '#e4e7e0' : '#eceee8'), borderRadius: '11px', padding: '13px 14px', opacity: appointments > 0 ? 1 : 0.66 }),
       };
     })
@@ -442,7 +687,7 @@ export function useScheduler() {
     };
   });
 
-  const weekCustomers = [...new Set(wk.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.customer))].length;
+  const weekCustomers = [...new Set(wk.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.customer).filter(Boolean))].length;
   const weekInternals = [...new Set(wk.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.plant).filter((p) => internalPlants.has(p)))].length;
   const monthCustomers = monthCustomerSet.size;
   const monthInternals = monthInternalSet.size;
@@ -477,7 +722,7 @@ export function useScheduler() {
           ev.preventDefault();
           const d = state.drag;
           if (d) {
-            if (d.kind === 'order') createAssign(d.id, e.id, day, '08:00');
+            if (d.kind === 'order') createAssign(d.id, e.id, day);
             else moveAssign(d.id, e.id, day);
           }
           setState({ drag: null, overCell: null });
@@ -520,35 +765,85 @@ export function useScheduler() {
     return { name: p.name, loc: p.loc, cells };
   }), ...customerAuditRows];
 
-  const customers = [...new Set([...S.orders.map((o) => o.customer), ...S.customers])];
-  const customerRows = customers.map((cust) => {
+  const siteColorMap: Record<string, string> = { U1: '#2f6df0', U2: '#c2620c', U3: '#0f9d8c' };
+  const siteNames = [...new Set(S.engineers.map((e) => e.department))];
+  const siteRows = siteNames.map((dn) => {
+    const engs = S.engineers.filter((e) => e.department === dn);
     const cells = [0, 1, 2, 3, 4].map((day) => {
-      const chips = wk
-        .filter((a) => {
-          const o = orderById(a.order);
-          return o && o.customer === cust && a.day === day;
-        })
-        .map((a) => buildPersonChip(a));
+      const chips = wk.filter((a) => engs.some((e) => e.id === a.eng) && a.day === day).map((a) => buildPersonChip(a, siteColorMap[dn]));
       return { chips, empty: chips.length === 0, style: cellShell };
     });
-    const lots = new Set(
-      wk
-        .filter((a) => {
-          const o = orderById(a.order);
-          return o && o.customer === cust;
-        })
-        .map((a) => a.order),
-    ).size;
     return {
-      name: cust, initials: initials(cust), sub: lots + (lots === 1 ? ' active lot' : ' active lots'),
-      avatarStyle: sx({ width: '28px', height: '28px', borderRadius: '8px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '10px', fontWeight: 700, flexShrink: 0 }),
-      cells,
+      name: dn, engCount: engs.length, engNames: engs.map((e) => e.name.split(' ')[0]),
+      color: siteColorMap[dn] || '#999', cells,
     };
   });
 
   const mobilePersonRows = personRows.map((r) => ({ engId: r.engId, name: r.name, role: r.role, department: r.department, subDepartments: r.subDepartments, initials: r.initials, avatarStyle: r.avatarStyle, onNameClick: r.onNameClick, cell: r.cells[selDay] }));
   const mobileSiteRows = plantRows.map((r) => ({ name: r.name, loc: r.loc, cell: r.cells[selDay] }));
-  const mobileCustomerRows = customerRows.map((r) => ({ name: r.name, sub: r.sub, initials: r.initials, cell: r.cells[selDay] }));
+  const mobileSiteDeptRows = siteRows.map((r) => ({ name: r.name, engCount: r.engCount, color: r.color, cell: r.cells[selDay] }));
+
+  // ---- week calendar (Google Calendar-style all-day events per day column) ----
+  const weekFiltered = wk.filter((a) => {
+    const o = orderById(a.order);
+    if (!o) return false;
+    if (S.filterCompany.length > 0 && !S.filterCompany.includes(o.customer)) return false;
+    if (S.filterSite.length > 0 && !S.filterSite.includes(o.plant)) return false;
+    if (S.filterEmp.length > 0 && !S.filterEmp.includes(a.eng)) return false;
+    if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.some((t) => o.customer === t || o.plant === t)) return false;
+    if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return false;
+    return true;
+  });
+  const weekCalendarChips = weekFiltered.map((a) => {
+    const ord = orderById(a.order);
+    const eng = engById(a.eng);
+    const pl = ord ? plantById(ord.plant) : null;
+    const sel = S.selected === a.id;
+    const color = siteColorOf(a) || (pl ? pl.color : '#999');
+    const custName = a.customer || (ord ? ord.customer : '');
+    return { ...a, _customer: apptAbbr(a) + ' · ' + custName, _purpose: ord ? ord.purpose : '', _auditor: a.auditor1 || (eng ? eng.name : ''), _qa: eng ? eng.name : '', _color: color, _sel: sel, _onClick: () => select(a.id), _ord: ord, _eng: eng };
+  });
+  // group consecutive same-order same-eng assignments into merged spans
+  const sorted = [...weekCalendarChips].sort((a, b) => {
+    if (a.order !== b.order) return a.order < b.order ? -1 : 1;
+    if (a.eng !== b.eng) return a.eng < b.eng ? -1 : 1;
+    return a.day - b.day;
+  });
+  const groups: { ids: string[]; startDay: number; endDay: number; chip: typeof weekCalendarChips[number] }[] = [];
+  let current: typeof groups[number] | null = null;
+  for (const c of sorted) {
+    if (current && c.order === current.chip.order && c.eng === current.chip.eng && c.day === current.endDay + 1) {
+      current.ids.push(c.id);
+      current.endDay = c.day;
+    } else {
+      current = { ids: [c.id], startDay: c.day, endDay: c.day, chip: c };
+      groups.push(current);
+    }
+  }
+  // assign grid rows greedily to avoid overlap
+  const colNextRow = [0, 0, 0, 0, 0];
+  const weekMergedSpans = groups.map((g) => {
+    const row = Math.max(...Array.from({ length: g.endDay - g.startDay + 1 }, (_, i) => colNextRow[g.startDay + i]));
+    for (let d = g.startDay; d <= g.endDay; d++) colNextRow[d] = row + 1;
+    const c = g.chip;
+    const sel = S.selected === c.id || g.ids.some((id) => S.selected === id);
+    return {
+      ids: g.ids, startDay: g.startDay, span: g.endDay - g.startDay + 1, gridRow: row,
+      id: c.id, site1: c.site1 || '', customer: c._customer, purpose: c._purpose,
+      auditor1: c._auditor, color: c._color, selected: sel,
+      area: c.area || '', auditor2: c.auditor2 || '',
+      onClick: () => select(c.id),
+    };
+  });
+  const weekCalendarDays = [0, 1, 2, 3, 4].map((day) => {
+    const mergedIds = new Set(weekMergedSpans.flatMap((s) => s.ids));
+    const chips = weekCalendarChips.filter((c) => c.day === day && !mergedIds.has(c.id)).map((c) => ({
+      id: c.id, site1: c.site1 || '', customer: c._customer, purpose: c._purpose,
+      auditor1: c._auditor, qa: c._qa, color: c._color, onClick: c._onClick, selected: c._sel,
+      area: c.area || '', auditor2: c.auditor2 || '',
+    }));
+    return { day, chips, count: chips.length };
+  });
 
   // ---- timetable (per-employee calendar view, opened by clicking a name) ----
   const timeSlots: { id: string; label: string; hours: string; min: string; max: string }[] = [];
@@ -558,18 +853,13 @@ export function useScheduler() {
     timeSlots.push({ id: from, label: from + ' – ' + to, hours: from + ' – ' + to, min: from, max: to });
   }
 
-  function timeInSlot(t: string, sl: { min: string; max: string }): boolean {
-    if (sl.min <= sl.max) return t >= sl.min && t < sl.max;
-    return t >= sl.min || t < sl.max;
-  }
-
   const timetableOpenEngId = S.timetableOpenEng;
   const timetableEng = timetableOpenEngId ? engById(timetableOpenEngId) : null;
   const showTimetable = !!timetableOpenEngId && !!timetableEng;
   const timetableRows = timeSlots.map((sl) => {
     const cells = [0, 1, 2, 3, 4].map((day) => {
       const chips = timetableOpenEngId ? wk
-        .filter((a) => a.eng === timetableOpenEngId && a.day === day && timeInSlot(a.appointment, sl))
+        .filter((a) => a.eng === timetableOpenEngId && a.day === day)
         .map((a) => buildChip(a)) : [];
       return { chips, empty: chips.length === 0, style: cellShell };
     });
@@ -599,23 +889,26 @@ export function useScheduler() {
     const ord = orderById(selA.order)!;
     const pl = plantById(ord.plant)!;
     const eng = engById(selA.eng)!;
-    const pc = priorityColors(ord.priority);
     const comments = (S.comments[selA.id] || []).map((m) => ({
       who: m.who, initials: m.initials, text: m.text, ago: m.ago,
       avatarStyle: sx({ width: '24px', height: '24px', borderRadius: '7px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
+      onDelete: () => removeComment(selA.id, m.id),
     }));
     return {
-      aid: selA.id, orderCode: ord.code, product: ord.product, customer: ord.customer, priority: ord.priority, plantName: pl.name + ' · ' + pl.loc,
-      priorityStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, color: pc.c, background: pc.b, border: '1px solid ' + pc.bd, borderRadius: '3px', padding: '2px 6px' }),
+      aid: selA.id, orderCode: ord.code, product: ord.product, customer: ord.customer, plantName: pl.name + ' - ' + pl.loc,
       engName: eng.name, engRole: eng.role, engInitials: initials(eng.name), dayName: dayNames[selA.day],
-      apptTime: selA.appointment,
       avatarStyle: sx({ width: '34px', height: '34px', borderRadius: '9px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '12px', fontWeight: 600, flexShrink: 0 }),
       department: eng.department, subDepartments: eng.subDepartments,
-      onApptTime: (e: React.ChangeEvent<HTMLInputElement>) => setAppointment(selA.id, e.target.value),
       comments, commentCount: comments.length, noComments: comments.length === 0, draft: S.draft,
       onDraft: (e: React.ChangeEvent<HTMLInputElement>) => setState({ draft: e.target.value }),
       onKey: (e: React.KeyboardEvent) => { if (e.key === 'Enter') addComment(); },
       addComment: () => addComment(), remove: () => removeAssign(selA.id), duplicate: () => duplicate(selA.id), close: () => setState({ selected: null }),
+      onEdit: () => { closeSidebar(); openEdit(selA.id); },
+      site1: selA.site1, customerLabel: selA.customer, endCustomer: selA.endCustomer,
+      auditor1: selA.auditor1, site2: selA.site2, area: selA.area, auditor2: selA.auditor2,
+      department1: selA.department1, department2: selA.department2,
+      major: selA.major ?? 0, minor: selA.minor ?? 0, ofi: selA.ofi ?? 0, request: selA.request ?? 0,
+      utl1: selA.utl1 ?? 0, utl2: selA.utl2 ?? 0, utl3: selA.utl3 ?? 0,
     };
   }
   const selA = wk.find((a) => a.id === S.selected);
@@ -623,34 +916,15 @@ export function useScheduler() {
 
   // ---- create modal VM ----
   const cd = S.createDraft;
-  const cOrders = S.orders.map((o) => {
-    const pl = plantById(o.plant)!;
-    const pc = priorityColors(o.priority);
-    const onSel = cd.order === o.id;
-    return {
-      orderId: o.id, code: o.code, product: o.product, customer: o.customer, priority: o.priority, plantCode: pl.code,
-      dotStyle: sx({ width: '8px', height: '8px', borderRadius: '2px', background: pl.color, flexShrink: 0 }),
-      priorityStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '8px', fontWeight: 600, color: pc.c, background: pc.b, border: '1px solid ' + pc.bd, borderRadius: '3px', padding: '0 4px' }),
-      style: sx({ padding: '8px 10px', borderRadius: '8px', cursor: 'pointer', border: '1px solid ' + (onSel ? '#9bb0e8' : '#e8ebe4'), background: onSel ? '#eef2fd' : '#fff' }),
-      select: () => setDraft({ order: o.id }),
-    };
-  });
-  const cEngs = S.engineers.map((e) => {
-    const onSel = cd.eng === e.id;
-    return {
-      engId: e.id, name: e.name, role: e.role, initials: initials(e.name), flag: '', flagStyle: sx({ display: 'none' }),
-      avatarStyle: sx({ width: '26px', height: '26px', borderRadius: '7px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '10px', fontWeight: 600, flexShrink: 0 }),
-      style: sx({ display: 'flex', alignItems: 'center', gap: '9px', padding: '7px 9px', borderRadius: '8px', cursor: 'pointer', border: '1px solid ' + (onSel ? '#9bb0e8' : '#eef1ea'), background: onSel ? '#eef2fd' : '#fff' }),
-      select: () => setDraft({ eng: e.id }),
-    };
-  });
-  const segSm = (on: boolean) => sx({ padding: '6px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '11.5px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", background: on ? '#15191e' : 'transparent', color: on ? '#fff' : '#6a706a' });
-  const dayBtns = dayLabels.map((lbl, i) => ({ label: lbl, style: segSm(cd.day === i), select: () => setDraft({ day: i }) }));
-  const canCreate = !!(cd.order && cd.eng);
+  const canCreate = cd.sectionType === 'customer'
+    ? !!(cd.site1 && cd.customer && cd.auditor1 && cd.dateFrom && cd.dateTo)
+    : !!(cd.site2 && cd.area && cd.auditor2 && cd.dateFrom && cd.dateTo);
   const create = {
-    orders: cOrders, engineers: cEngs, dayBtns,
-    apptTime: cd.appointment,
-    onApptTime: (e: React.ChangeEvent<HTMLInputElement>) => setDraft({ appointment: e.target.value }),
+    sectionType: cd.sectionType,
+    purpose: cd.purpose, department1: cd.department1, site1: cd.site1, customer: cd.customer, endCustomer: cd.endCustomer, auditor1: cd.auditor1,
+    department2: cd.department2, site2: cd.site2, area: cd.area, auditor2: cd.auditor2,
+    dateFrom: cd.dateFrom ?? '', dateTo: cd.dateTo ?? '',
+    onChange: setDraft,
     warn: false, warnText: '',
     submit: () => submitCreate(),
     submitStyle: sx({ background: canCreate ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 18px', fontSize: '12.5px', fontWeight: 600, cursor: canCreate ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
@@ -659,9 +933,10 @@ export function useScheduler() {
   // ---- profile VM ----
   const myWeekAppointments = S.assignments.filter((a) => a.week === 0).length;
   const profile = {
-    name: 'Jordan Lee', role: 'QA Planner · Operations', email: 'jordan.lee@nexsil.com', phone: '+1 (480) 555-0173', team: 'Front-end Quality, Reliability', joined: 'Joined March 2023',
+    name: 'Jordan Lee', role: 'QA Planner - Operations', email: 'jordan.lee@nexsil.com', phone: '+1 (480) 555-0173', team: 'Front-end Quality, Reliability', joined: 'Joined March 2023',
     stats: [
       { label: 'APPOINTMENTS PLANNED', value: String(myWeekAppointments), sub: 'this week' },
+      { label: 'OPEN ORDERS', value: String(poolOrders.length), sub: 'awaiting staffing' },
       { label: 'SITES', value: String(S.plants.length), sub: 'under coverage' },
     ],
     sites: S.plants.map((p) => ({ name: p.name, code: p.code, swatchStyle: sx({ width: '10px', height: '10px', borderRadius: '3px', background: p.color, flexShrink: 0 }) })),
@@ -711,82 +986,86 @@ export function useScheduler() {
     submitStyle: sx({ background: sf.name.trim() ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '9px', padding: '10px 20px', fontSize: '13px', fontWeight: 600, cursor: sf.name.trim() ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
   };
 
-  // ---- create-customer modal VM ----
-  const custName = S.custForm.name.trim();
-  const custExists = customers.includes(custName);
-  const custColor = custPalette[customers.length % custPalette.length];
-  const custCanSubmit = !!custName && !custExists;
-  const customerForm = {
-    name: S.custForm.name, inStyle: ofInStyle,
-    onName: (e: React.ChangeEvent<HTMLInputElement>) => setCustForm({ name: e.target.value }),
-    previewInitials: custName ? initials(custName) : '—',
-    previewStyle: sx({ width: '40px', height: '40px', borderRadius: '11px', background: hexA(custColor, 0.14), color: custColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '13px', fontWeight: 700, flexShrink: 0 }),
-    exists: custExists,
-    canSubmit: custCanSubmit,
-    submit: () => submitCustForm(),
-    submitStyle: sx({ background: custCanSubmit ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '9px', padding: '10px 20px', fontSize: '13px', fontWeight: 600, cursor: custCanSubmit ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
+  // ---- create-order modal VM ----
+  const of = S.orderForm;
+  const orderFormCustomers = [...new Set(S.orders.map((o) => o.customer))];
+  const orderForm = {
+    code: of.code, product: of.product, customer: of.customer, plants: S.plants, inStyle: ofInStyle,
+    onCode: (e: React.ChangeEvent<HTMLInputElement>) => setOrderForm({ code: e.target.value }),
+    onProduct: (e: React.ChangeEvent<HTMLInputElement>) => setOrderForm({ product: e.target.value }),
+    onCustomer: (e: React.ChangeEvent<HTMLInputElement>) => setOrderForm({ customer: e.target.value }),
+    customerSuggestions: orderFormCustomers.map((c) => ({
+      name: c,
+      onClick: () => setOrderForm({ customer: c }),
+      style: sx({ padding: '5px 10px', borderRadius: '6px', border: '1px solid #e2e5de', background: '#fff', cursor: 'pointer', fontSize: '11.5px', fontFamily: "'Archivo',sans-serif", color: '#3c423d' }),
+    })),
+    plantOptions: S.plants.map((p) => ({
+      id: p.id, name: p.name, code: p.code, color: p.color,
+      onClick: () => setOrderForm({ plant: p.id }),
+      style: sx({ display: 'flex', alignItems: 'center', gap: '9px', padding: '10px 12px', borderRadius: '9px', cursor: 'pointer', border: '1px solid ' + (of.plant === p.id ? '#9bb0e8' : '#e2e5de'), background: of.plant === p.id ? '#eef2fd' : '#fff' }),
+      swatchStyle: sx({ width: '12px', height: '12px', borderRadius: '3px', background: p.color, flexShrink: 0 }),
+    })),
+    canSubmit: !!of.product.trim() && !!of.customer.trim(),
+    submit: () => submitOrderForm(),
+    submitStyle: sx({ background: of.product.trim() && of.customer.trim() ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '9px', padding: '10px 20px', fontSize: '13px', fontWeight: 600, cursor: of.product.trim() && of.customer.trim() ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
   };
 
   // ---- summary data ----
-  const summaryWk = S.assignments.filter((a) => a.week === S.summaryWeekOffset);
-  const summaryWeekBase = new Date(2026, 5, 29 + S.summaryWeekOffset * 7);
-  const summaryDays = [0, 1, 2, 3, 4].map((i) => {
-    const d = new Date(summaryWeekBase);
-    d.setDate(summaryWeekBase.getDate() + i);
-    return fmtDate(d);
-  });
-  const summaryWeekLabel = summaryDays[0] + ' – ' + summaryDays[4];
-  const summaryWeekTag = S.summaryWeekOffset === 0 ? 'CURRENT WEEK' : S.summaryWeekOffset > 0 ? '+' + S.summaryWeekOffset + ' WK AHEAD' : Math.abs(S.summaryWeekOffset) + ' WK BACK';
-  const summaryIsWeek = S.summaryScale === 'week';
-  const summaryMA = () => {
-    const mb = monthBaseDate();
-    const mMon = mb.getMonth();
-    const mYear = mb.getFullYear();
-    const daysInMonth = new Date(mYear, mMon + 1, 0).getDate();
-    const result: Assignment[] = [];
-    for (let dn = 1; dn <= daysInMonth; dn++) {
-      const date = new Date(mYear, mMon, dn);
-      const slot = dateSlot(date);
-      if (slot.wd > 4) continue;
-      const dayApps = S.assignments.filter((a) => a.week === slot.weekOffset && a.day === slot.wd && !chipDimmed(a));
-      result.push(...dayApps);
-    }
-    return result;
+  const mondayNearJune29 = (year: number) => {
+    const d = new Date(year, 5, 29);
+    const day = d.getDay();
+    const monOffset = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + monOffset);
+    return d;
   };
-  const summaryAssignments = summaryIsWeek ? summaryWk : summaryMA();
-  const summaryEmpCount = [...new Set(summaryAssignments.map((a) => a.eng))].length;
-  const summaryEmpMap = new Map<string, { total: number; internal: number; customer: number; companies: Set<string> }>();
-  for (const a of summaryAssignments) {
-    const prev = summaryEmpMap.get(a.eng) || { total: 0, internal: 0, customer: 0, companies: new Set<string>() };
-    const o = orderById(a.order);
-    const isInternal = o && internalPlants.has(o.plant);
-    if (o?.customer && !isInternal) prev.companies.add(o.customer);
-    summaryEmpMap.set(a.eng, {
-      total: prev.total + 1,
-      internal: prev.internal + (isInternal ? 1 : 0),
-      customer: prev.customer + (!isInternal && o?.customer ? 1 : 0),
-      companies: prev.companies,
-    });
+  const baseDateSummary = mondayNearJune29(S.summaryYear);
+  const monthByWeekDay = (week: number, day: number) => {
+    const d = new Date(baseDateSummary);
+    d.setDate(baseDateSummary.getDate() + week * 7 + day);
+    return d;
+  };
+  const monthlySums: { major: number; minor: number; ofi: number; total: number; utl1: number; utl2: number; utl3: number; utlTotal: number }[] = Array.from({ length: 12 }, () => ({ major: 0, minor: 0, ofi: 0, total: 0, utl1: 0, utl2: 0, utl3: 0, utlTotal: 0 }));
+  for (const a of S.assignments) {
+    const d = monthByWeekDay(a.week, a.day);
+    if (d.getFullYear() !== S.summaryYear) continue;
+    monthlySums[d.getMonth()].major += a.major || 0;
+    monthlySums[d.getMonth()].minor += a.minor || 0;
+    monthlySums[d.getMonth()].ofi += a.ofi || 0;
+    monthlySums[d.getMonth()].total += (a.major || 0) + (a.minor || 0) + (a.ofi || 0) + (a.request || 0);
+    monthlySums[d.getMonth()].utl1 += a.utl1 || 0;
+    monthlySums[d.getMonth()].utl2 += a.utl2 || 0;
+    monthlySums[d.getMonth()].utl3 += a.utl3 || 0;
+    monthlySums[d.getMonth()].utlTotal += (a.utl1 || 0) + (a.utl2 || 0) + (a.utl3 || 0);
   }
-  const summaryEmpBreakdown = [...summaryEmpMap.entries()]
-    .map(([id, counts]) => ({ id, name: S.engineers.find((e) => e.id === id)?.name || id, ...counts, companies: [...counts.companies].sort() }))
-    .sort((a, b) => b.total - a.total);
-  const summaryEmpTotal = summaryEmpBreakdown.reduce((s, e) => ({ total: s.total + e.total, internal: s.internal + e.internal, customer: s.customer + e.customer }), { total: 0, internal: 0, customer: 0 });
-  const summaryInternalCount = [...new Set(summaryAssignments.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.plant).filter((p) => internalPlants.has(p)))].length;
-  const summaryCustomerCount = [...new Set(summaryAssignments.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.customer))].length;
+  const sumMonths = (indices: number[]) => indices.reduce((s, i) => ({ major: s.major + monthlySums[i].major, minor: s.minor + monthlySums[i].minor, ofi: s.ofi + monthlySums[i].ofi, total: s.total + monthlySums[i].total }), { major: 0, minor: 0, ofi: 0, total: 0 });
+  const sumUtlMonths = (indices: number[]) => indices.reduce((s, i) => ({ utl1: s.utl1 + monthlySums[i].utl1, utl2: s.utl2 + monthlySums[i].utl2, utl3: s.utl3 + monthlySums[i].utl3, total: s.total + monthlySums[i].utlTotal }), { utl1: 0, utl2: 0, utl3: 0, total: 0 });
+  const summaryPeriods: { key: string; label: string; indices: number[] }[] = [
+    { key: 'jan', label: 'Jan', indices: [0] },
+    { key: 'feb', label: 'Feb', indices: [1] },
+    { key: 'mar', label: 'Mar', indices: [2] },
+    { key: 'apr', label: 'Apr', indices: [3] },
+    { key: 'may', label: 'May', indices: [4] },
+    { key: 'jun', label: 'Jun', indices: [5] },
+    { key: 'jul', label: 'Jul', indices: [6] },
+    { key: 'aug', label: 'Aug', indices: [7] },
+    { key: 'sep', label: 'Sep', indices: [8] },
+    { key: 'oct', label: 'Oct', indices: [9] },
+    { key: 'nov', label: 'Nov', indices: [10] },
+    { key: 'dec', label: 'Dec', indices: [11] },
+  ];
+  const summaryRows = ['Major', 'Minor', 'OFI', 'Total'] as const;
+  const summaryCells = summaryPeriods.map((p) => sumMonths(p.indices));
+  const utlRows = ['UTL1', 'UTL2', 'UTL3', 'Total'] as const;
+  const utlCells = summaryPeriods.map((p) => sumUtlMonths(p.indices));
 
   // ---- admin VMs ----
-  const activeEng = S.engineers.filter((e) => e.status === 'Active').length;
   const activeSites = S.plants.filter((p) => S.activePlants[p.id]).length;
   const adminStats = [
-    { label: 'QA', value: String(S.engineers.length), sub: activeEng + ' active' },
+    { label: 'QA', value: String(S.engineers.length), sub: S.engineers.length + ' total' },
     { label: 'INTERNAL', value: activeSites + '/' + S.plants.length, sub: 'visible on grid' },
+    { label: 'OPEN ORDERS', value: String(poolOrders.length), sub: 'awaiting staffing' },
     { label: 'WEEK APPOINTMENTS', value: String(wk.length), sub: 'this week' },
   ];
-  const statusStyleFor = (label: 'Active' | 'On leave' | 'Onboarding') => {
-    const m = { Active: { c: '#1f8a5b', b: '#e3f5ea', bd: '#c4e6d2' }, 'On leave': { c: '#a96e08', b: '#fff3df', bd: '#f1dcb0' }, Onboarding: { c: '#5b7fd6', b: '#eef2fd', bd: '#d8e2fa' } }[label];
-    return sx({ fontFamily: "'Archivo',sans-serif", fontSize: '11px', fontWeight: 600, color: m.c, background: m.b, border: '1px solid ' + m.bd, borderRadius: '20px', padding: '4px 11px', cursor: 'pointer' });
-  };
   const adminEngineers = S.engineers.map((e) => {
     return {
       id: e.id, name: e.name, role: e.role, department: e.department, subDepartments: e.subDepartments, initials: initials(e.name),
@@ -802,19 +1081,61 @@ export function useScheduler() {
         const o = orderById(a.order);
         return o && o.plant === p.id;
       }).length,
-      statusLabel: on ? 'Visible' : 'Hidden', statusStyle: statusStyleFor(on ? 'Active' : 'On leave'), toggle: () => togglePlant(p.id),
+      statusLabel: on ? 'Visible' : 'Hidden',
+      statusStyle: sx({ fontFamily: "'Archivo',sans-serif", fontSize: '11px', fontWeight: 600, color: on ? '#1f8a5b' : '#a96e08', background: on ? '#e3f5ea' : '#fff3df', border: '1px solid ' + (on ? '#c4e6d2' : '#f1dcb0'), borderRadius: '20px', padding: '4px 11px', cursor: 'pointer' }),
+      toggle: () => togglePlant(p.id),
+      onDelete: () => removePlant(p.id),
+    };
+  });
+  const adminOrders = S.orders.map((o) => {
+    const pl = plantById(o.plant)!;
+    const isStaffed = wk.some((a) => a.order === o.id);
+    return {
+      code: o.code, product: o.product, customer: o.customer, plantCode: pl.code,
+      swatchStyle: sx({ width: '9px', height: '9px', borderRadius: '2px', background: pl.color, flexShrink: 0 }),
+      statusLabel: isStaffed ? 'Staffed' : 'Open',
+      statusStyle: sx({ fontFamily: "'Archivo',sans-serif", fontSize: '10.5px', fontWeight: 600, color: isStaffed ? '#1f8a5b' : '#a96e08', background: isStaffed ? '#e3f5ea' : '#fff3df', border: '1px solid ' + (isStaffed ? '#c4e6d2' : '#f1dcb0'), borderRadius: '20px', padding: '3px 10px' }),
+      onDelete: () => removeOrder(o.id),
     };
   });
 
   // ---- filters VM ----
-  const employeeOptions = [{ value: '', label: 'All employees' }].concat(S.engineers.map((e) => ({ value: e.id, label: e.name })));
+  const employeeOptions = [{ value: '', label: 'All employees' }].concat(S.engineers.filter((e) => !['unassigned', '111', 'ant', 'bird'].includes(e.name.toLowerCase())).map((e) => ({ value: e.id, label: e.name })));
   const siteOptions = [{ value: '', label: 'All sites' }, { value: 'U1', label: 'U1' }, { value: 'U2', label: 'U2' }, { value: 'U2A', label: 'U2A' }, { value: 'U2B', label: 'U2B' }, { value: 'U3', label: 'U3' }, { value: 'U3A', label: 'U3A' }, { value: 'U3T', label: 'U3T' }];
   const customerTopicOptions = ['ESD Audit', 'QS Audit'];
-  const internalTopicOptions = ['QMS', 'EHS', 'ESD'];
-  const companyNames = ['Company A', 'Company B', 'Company C', 'Company D', 'Company E'];
-  const auditTypes = ['annual', 'end cust', 'VDA'];
-  const hasFilters = !!(S.filterEmp || S.filterSite || S.filterCompany || S.filterAuditType || S.filterAuditTopic) || S.plants.some((p) => !S.activePlants[p.id]);
-  const selStyle = sx({ width: '100%', padding: '7px 9px', border: '1px solid #dde0d9', borderRadius: '7px', background: '#fff', fontSize: '11.5px', fontFamily: "'Archivo',sans-serif", color: '#3c423d', cursor: 'pointer', outline: 'none' });
+  const internalTopicOptions = ['QMS', 'EHS', 'ESD', 'IATF16949/ISO9001', 'ISO14001/ISO45001', 'RBA'];
+  const companyNames = [...new Set([
+    ...S.orders.map((o) => o.customer).filter((c): c is string => Boolean(c)),
+    ...S.assignments.map((a) => a.customer).filter((c): c is string => Boolean(c)),
+  ])].sort();
+  const auditTypes = ['site qualification', 'system audit', 'product qualification', 'pre-audit', 'annual audit', 'process control', 'gemba walk', 'QMS audit'];
+  const hasFilters = !!(S.filterEmp.length || S.filterSite.length || S.filterCompany.length || S.filterAuditType.length || S.filterAuditTopic.length) || S.plants.some((p) => !S.activePlants[p.id]);
+
+  // ---- day dialog VM ----
+  const dayDialogOpen = S.dayDialog !== null;
+  const dayDialogDate = dayDialogOpen
+    ? (() => {
+        const base = new Date(2026, 5, 29 + S.dayDialog!.weekOffset * 7);
+        base.setDate(base.getDate() + S.dayDialog!.day);
+        return fmtDate(base);
+      })()
+    : '';
+  const dayDialogAssignments = dayDialogOpen
+    ? S.assignments.filter((a) => a.week === S.dayDialog!.weekOffset && a.day === S.dayDialog!.day)
+    : [];
+  const dayDialogChips = dayDialogAssignments.map((a) => {
+    const o = orderById(a.order);
+    const e = engById(a.eng);
+    if (!o || !e) return null;
+    const pl = plantById(o.plant);
+    return {
+      id: a.id, code: apptAbbr(a) + ' · ' + (a.customer || o.customer), purpose: o.purpose, engName: e.name,
+      color: siteColorOf(a) || (pl ? pl.color : '#999'),
+    };
+  }).filter(Boolean) as { id: string; code: string; purpose: string; engName: string; color: string }[];
+  const dayDialogInfo = dayDialogOpen
+    ? { label: S.dayDialog!.day >= 0 && S.dayDialog!.day < 5 ? dayNames[S.dayDialog!.day] : '', date: dayDialogDate }
+    : null;
 
   // ---- responsive styles ----
   const sidebarStyle: CSSProperties = isMobile
@@ -853,6 +1174,7 @@ export function useScheduler() {
     : { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', background: '#f4f6f1' };
 
   return {
+    loading,
     isMobile, showLogin: !S.authed, showApp: S.authed, showPresence: !isMobile, showStats: !isMobile, showLoginExtras: !isMobile,
     loginEmail: S.loginEmail, loginPass: S.loginPass,
     onEmail: (e: React.ChangeEvent<HTMLInputElement>) => setState({ loginEmail: e.target.value }),
@@ -863,26 +1185,25 @@ export function useScheduler() {
     goSchedule, goAdmin, goProfile, goSummary,
     navSchedStyle: S.page === 'schedule' ? tabOn : tabOff, navAdminStyle: S.page === 'admin' ? tabOn : tabOff, navSummaryStyle: S.page === 'summary' ? tabOn : tabOff,
     userMenuOpen: S.userMenuOpen, toggleUserMenu,
-    isPerson: S.view === 'person', isPlant: S.view === 'plant', isCustomer: S.view === 'customer',
-    setPerson: () => setView('person'), setPlant: () => setView('plant'), setCustomer: () => setView('customer'),
-    personTabStyle: S.view === 'person' ? tabOn : tabOff, plantTabStyle: S.view === 'plant' ? tabOn : tabOff, customerTabStyle: S.view === 'customer' ? tabOn : tabOff,
-    showViewTabs: !isMonth,
+    isPerson: S.view === 'person', isPlant: S.view === 'plant', isSiteDept: S.view === 'site',
     isMonth, weekScaleStyle: isMonth ? tabOff : tabOn, monthScaleStyle: isMonth ? tabOn : tabOff,
     setWeekScale: () => setScale('week'), setMonthScale: () => setScale('month'),
     monthDesktop: isMonth && !isMobile, monthMobile: isMonth && isMobile,
     monthCells, monthWeekdayHeads, monthName, monthOrders, monthScheduledCount, monthOrderCount: monthOrders.length,
-    gridPerson: S.view === 'person' && !isMobile && !isMonth, gridPlant: S.view === 'plant' && !isMobile && !isMonth, gridCustomer: S.view === 'customer' && !isMobile && !isMonth,
-    mobilePerson: isMobile && S.view === 'person' && !isMonth, mobileSite: isMobile && S.view === 'plant' && !isMonth, mobileCustomer: isMobile && S.view === 'customer' && !isMonth,
+    gridPerson: S.view === 'person' && !isMobile && !isMonth, gridPlant: S.view === 'plant' && !isMobile && !isMonth, gridSiteDept: S.view === 'site' && !isMobile && !isMonth,
+    showWeekCalendar: !isMobile && !isMonth,
+    mobilePerson: isMobile && S.view === 'person' && !isMonth, mobileSite: isMobile && S.view === 'plant' && !isMonth, mobileSiteDept: isMobile && S.view === 'site' && !isMonth,
     showDayStrip: isMobile && !isMonth,
     weekLabel, weekTag, periodLabel, periodTag, gridCols, days, daySel,
     prevWeek: () => (isMonth ? shiftMonth(-1) : shiftWeek(-1)), nextWeek: () => (isMonth ? shiftMonth(1) : shiftWeek(1)),
     profile,
+    orderForm, orderFormOpen: S.orderFormOpen, openOrderForm, closeOrderForm,
     engForm, engFormOpen: S.engFormOpen, openEngForm, closeEngForm,
     siteForm, siteFormOpen: S.siteFormOpen, openSiteForm, closeSiteForm,
-    customerForm, custFormOpen: S.custFormOpen, openCustForm, closeCustForm,
     stats: { assignments: wk.length, weekCustomers, monthCustomers, weekInternals, monthInternals },
     plants: plantsVm,
-    personRows, plantRows, customerRows, mobilePersonRows, mobileSiteRows, mobileCustomerRows,
+    personRows, plantRows, siteRows, mobilePersonRows, mobileSiteRows, mobileSiteDeptRows,
+    weekCalendarDays, weekMergedSpans,
     showTimetable, timetableRows, timetableGridCols, timetableEngName: timetableEng?.name || '',
     closeTimetable, mobileTimetableRows,
     presence, activity, detail,
@@ -891,25 +1212,29 @@ export function useScheduler() {
     sidebarStyle, toolbarStyle, detailAsideStyle, modalOverlayStyle, modalCardStyle, modalColsStyle, modalColLeftStyle, modalColRightStyle,
     adminMainStyle, adminWrapStyle, adminStatGridStyle, loginWrapStyle, loginBrandStyle, loginFormWrapStyle,
     filterEmp: S.filterEmp, filterSite: S.filterSite, filterCompany: S.filterCompany, filterAuditType: S.filterAuditType, filterAuditTopic: S.filterAuditTopic,
-    employeeOptions, siteOptions, customerTopicOptions, internalTopicOptions, companyNames, auditTypes, hasFilters, selStyle,
-    onFilterEmp: (e: React.ChangeEvent<HTMLSelectElement>) => setFilterEmp(e.target.value),
-    onFilterSite: (e: React.ChangeEvent<HTMLSelectElement>) => setFilterSite(e.target.value),
-    onFilterCompany: (e: React.ChangeEvent<HTMLSelectElement>) => setFilterCompany(e.target.value),
-    onFilterAuditType: (e: React.ChangeEvent<HTMLSelectElement>) => setFilterAuditType(e.target.value),
-    onFilterAuditTopic: (e: React.ChangeEvent<HTMLSelectElement>) => setFilterAuditTopic(e.target.value),
+    employeeOptions, siteOptions, customerTopicOptions, internalTopicOptions, companyNames, auditTypes, hasFilters,
+    toggleFilterEmp: (v: string) => toggleFilterValue('filterEmp', v),
+    toggleFilterSite: (v: string) => toggleFilterValue('filterSite', v),
+    toggleFilterCompany: (v: string) => toggleFilterValue('filterCompany', v),
+    toggleFilterAuditType: (v: string) => toggleFilterValue('filterAuditType', v),
+    toggleFilterAuditTopic: (v: string) => toggleFilterValue('filterAuditTopic', v),
     clearFilters,
+    dayDialogOpen, dayDialogDate, dayDialogChips, dayDialogInfo, closeDayDialog,
     openCreate, closeCreate, createOpen: S.createOpen, create, stop: (e: React.MouseEvent) => e.stopPropagation(),
+    editOpen: S.editOpen, editDraft: S.editDraft, setEditDraft, closeEdit, submitEdit,
     adminStats,
-    tabEngineers: S.adminTab === 'engineers', tabSites: S.adminTab === 'sites',
-    setTabEng: () => setAdminTab('engineers'), setTabSite: () => setAdminTab('sites'),
-    tabEngStyle: S.adminTab === 'engineers' ? tabOn : tabOff, tabSiteStyle: S.adminTab === 'sites' ? tabOn : tabOff,
-    adminEngineers, adminSites, engCount: S.engineers.length, siteCount: S.plants.length,
-    addEngineer: openEngForm, addSite: openSiteForm, addCustomer: openCustForm,
-    summaryScale: S.summaryScale, summaryIsWeek, setSummaryWeek: () => setSummaryScale('week'), setSummaryMonth: () => setSummaryScale('month'),
-    summaryWeekStyle: S.summaryScale === 'week' ? tabOn : tabOff, summaryMonthStyle: S.summaryScale === 'month' ? tabOn : tabOff,
-    summaryWeekLabel, summaryWeekTag, summaryWeekOffset: S.summaryWeekOffset,
-    prevSummaryWeek: () => shiftSummaryWeek(-1), nextSummaryWeek: () => shiftSummaryWeek(1),
-    summaryEmpCount, summaryEmpBreakdown, summaryEmpTotal, summaryInternalCount, summaryCustomerCount, summaryAssignTotal: summaryAssignments.length,
+    tabEngineers: S.adminTab === 'engineers', tabSites: S.adminTab === 'sites', tabOrders: S.adminTab === 'orders', tabOptions: S.adminTab === 'options',
+    setTabEng: () => setAdminTab('engineers'), setTabSite: () => setAdminTab('sites'), setTabOrder: () => setAdminTab('orders'), setTabOptions: () => setAdminTab('options'),
+    tabEngStyle: S.adminTab === 'engineers' ? tabOn : tabOff, tabSiteStyle: S.adminTab === 'sites' ? tabOn : tabOff, tabOrderStyle: S.adminTab === 'orders' ? tabOn : tabOff,
+    tabOptionsStyle: S.adminTab === 'options' ? tabOn : tabOff,
+    adminEngineers, adminSites, adminOrders, engCount: S.engineers.length, orderCount: S.orders.length, siteCount: S.plants.length,
+    addEngineer: openEngForm, addSite: openSiteForm, addOrder: openOrderForm,
+    summaryPeriods, summaryRows, summaryCells, utlRows, utlCells, summaryYear: S.summaryYear,
+    setSummaryYear: (y: number) => setState({ summaryYear: y }),
+    purposeOptions: S.purposeOptions, customerDepartmentOptions: S.customerDepartmentOptions, internalDepartmentOptions: S.internalDepartmentOptions,
+    addPurposeOption: (v: string) => addOption('purposeOptions', v), removePurposeOption: (v: string) => removeOption('purposeOptions', v),
+    addCustomerDepartmentOption: (v: string) => addOption('customerDepartmentOptions', v), removeCustomerDepartmentOption: (v: string) => removeOption('customerDepartmentOptions', v),
+    addInternalDepartmentOption: (v: string) => addOption('internalDepartmentOptions', v), removeInternalDepartmentOption: (v: string) => removeOption('internalDepartmentOptions', v),
   };
 }
 

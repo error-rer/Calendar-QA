@@ -18,18 +18,18 @@ export function SiteModal({ vm }: { vm: VM }) {
         <div className="scrl" style={css('flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:16px')}>
           <div style={css('display:flex;gap:14px;flex-wrap:wrap')}>
             <div style={css('flex:2;min-width:180px')}>
-              <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>Site name</label>
-              <HInput value={f.name} onChange={f.onName} placeholder="e.g. U4" style={f.inStyle} focus={{ borderColor: '#9bb0e8' }} />
+              <label htmlFor="site-name" style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>Site name</label>
+              <HInput id="site-name" value={f.name} onChange={f.onName} placeholder="e.g. U4" style={f.inStyle} focus={{ borderColor: '#9bb0e8' }} />
             </div>
             <div style={css('flex:1;min-width:120px')}>
-              <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>Code <span style={css('color:#a6aca2;font-weight:400')}>· optional</span></label>
-              <HInput value={f.code} onChange={f.onCode} placeholder="auto" style={f.inStyle} focus={{ borderColor: '#9bb0e8' }} />
+              <label htmlFor="site-code" style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>Code <span style={css('color:#a6aca2;font-weight:400')}>- optional</span></label>
+              <HInput id="site-code" value={f.code} onChange={f.onCode} placeholder="auto" style={f.inStyle} focus={{ borderColor: '#9bb0e8' }} />
             </div>
           </div>
 
           <div>
-            <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>Location <span style={css('color:#a6aca2;font-weight:400')}>· optional</span></label>
-            <HInput value={f.loc} onChange={f.onLoc} placeholder="City, Region" style={f.inStyle} focus={{ borderColor: '#9bb0e8' }} />
+            <label htmlFor="site-loc" style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>Location <span style={css('color:#a6aca2;font-weight:400')}>- optional</span></label>
+            <HInput id="site-loc" value={f.loc} onChange={f.onLoc} placeholder="City, Region" style={f.inStyle} focus={{ borderColor: '#9bb0e8' }} />
           </div>
 
           <div>
