@@ -22,7 +22,7 @@ but an internal prototype.
 
 ## What's included
 
-- **Login** — split brand / sign-in layout, Okta SSO, Enter-to-submit.
+- **Login** — split brand / sign-in layout, Google sign-in, Enter-to-submit.
 - **Schedule** — a Week / Month scale toggle plus four grouping views
   (By QA / By internal / By customer / By sub-department). The weekly scale is a sticky grid
   with drag-and-drop staffing from the unstaffed-order pool,
@@ -66,7 +66,7 @@ but an internal prototype.
   and a stacked login.
 
 On `npm run dev`, data lives in memory only and resets on reload. With the
-Cloudflare Pages + D1 backend below, it's persisted and shared across
+Cloudflare Worker + D1 backend below, it's persisted and shared across
 everyone hitting the deployed URL.
 
 ## Structure
@@ -79,18 +79,21 @@ everyone hitting the deployed URL.
 | `src/api.ts` | Fetch client for the `/api/*` endpoints |
 | `src/ui.tsx` | `css()` style-string parser + hover/focus helper components |
 | `src/components/*` | Login, Header, Schedule, DetailPanel, CreateModal, EditModal, AppointmentFormFields (shared Customer/Internal Audit fields), OrderModal, EngineerModal, SiteModal, Admin, Profile |
-| `functions/api/[[path]].ts` | Cloudflare Pages Function — the backend API, backed by D1 |
+| `worker/index.ts` | Cloudflare Worker — serves the built SPA as static assets and handles `/api/*` on the same Worker, backed by D1 |
 | `migrations/0001_init.sql` | D1 schema + seed data (base fab sites only) |
-| `wrangler.toml` | Cloudflare Pages + D1 binding config |
+| `wrangler.toml` | Cloudflare Worker + static assets + D1 binding config |
 
 Styling mirrors the design prototype's inline styles verbatim (parsed via
 `css()`) to stay pixel-accurate.
 
-## Backend & deployment (Cloudflare Pages + D1)
+## Backend & deployment (Cloudflare Workers + static assets + D1)
 
-The app talks to a small Pages Functions API (`functions/api/[[path]].ts`)
-backed by a D1 (SQLite) database, so the schedule is shared across everyone
-using the deployed URL instead of living only in one browser tab.
+The Cloudflare project here (`utac-qa-calendar`) is a **Worker**, not a
+classic Pages project. `worker/index.ts` handles `/api/*` requests itself
+and serves everything else from the built `dist/` folder via the `[assets]`
+binding in `wrangler.toml` — so the same Worker serves both the SPA and its
+API, backed by a D1 (SQLite) database shared across everyone using the
+deployed URL.
 
 First-time setup (run these yourself — they touch your own Cloudflare
 account):
@@ -98,18 +101,22 @@ account):
 ```bash
 npx wrangler login
 npx wrangler d1 create calendar-qa-db
-# paste the returned database_id into wrangler.toml (both spots)
+# paste the returned database_id into wrangler.toml
 npm run migrate:remote
-npm run build && npm run pages:deploy
+npm run deploy
 ```
 
 To develop against a local D1 instance instead of plain Vite:
 
 ```bash
 npm run migrate:local
-npm run build && npm run dev:pages
+npm run dev:worker
 ```
 
-Alternatively, connect the GitHub repo in the Cloudflare dashboard for
-auto-deploy on every push to `main`, instead of running `pages:deploy`
-manually.
+Alternatively, connect the GitHub repo in the Cloudflare dashboard (Workers
+& Pages → your project → Settings → Builds & deployments) for auto-deploy
+on every push to `main`. Set the **Deploy command** there to
+`npx wrangler deploy` (no `--project-name` needed for Workers — that flag is
+Pages-only) and make sure **Build command** is `npm run build` — the D1
+binding is read from `wrangler.toml` automatically for Workers deploys,
+unlike Pages, so no separate dashboard binding step is needed.

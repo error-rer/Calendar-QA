@@ -1,7 +1,6 @@
-import type { PagesFunction } from '@cloudflare/workers-types';
-
 interface Env {
   DB: D1Database;
+  ASSETS: Fetcher;
 }
 
 function json(data: unknown, status = 200): Response {
@@ -24,10 +23,7 @@ function assignmentOut(r: any) {
   };
 }
 
-export const onRequest: PagesFunction<Env> = async (context) => {
-  const { request, env } = context;
-  const url = new URL(request.url);
-  const path = url.pathname.replace(/^\/api\//, '').replace(/\/$/, '');
+async function handleApi(request: Request, env: Env, path: string): Promise<Response> {
   const method = request.method.toUpperCase();
   const DB = env.DB;
 
@@ -218,4 +214,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   } catch (err) {
     return json({ error: String(err) }, 500);
   }
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    if (url.pathname.startsWith('/api/')) {
+      const path = url.pathname.replace(/^\/api\//, '').replace(/\/$/, '');
+      return handleApi(request, env, path);
+    }
+    return env.ASSETS.fetch(request);
+  },
 };

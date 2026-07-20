@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:pages": "wrangler pages dev dist --d1 DB",
+    "dev:worker": "npm run build && wrangler dev",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "pages:deploy": "npm run build && wrangler pages deploy dist --project-name=utac-qa-calendar",
+    "deploy": "npm run build && wrangler deploy",
     "migrate:local": "wrangler d1 migrations apply calendar-qa-db --local",
     "migrate:remote": "wrangler d1 migrations apply calendar-qa-db --remote"
   },
