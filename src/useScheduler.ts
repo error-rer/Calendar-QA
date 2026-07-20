@@ -125,6 +125,7 @@ export function useScheduler() {
     if (S.filterCompany.length > 0 && !S.filterCompany.includes(o.customer)) return true;
     if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.some((t) => o.customer === t || o.plant === t)) return true;
     if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return true;
+    if (S.filterApptType.length > 0 && !S.filterApptType.includes(apptAbbr(a))) return true;
     return false;
   };
 
@@ -167,7 +168,7 @@ export function useScheduler() {
   const setSelectedDay = (i: number) => setState({ selectedDay: i });
   const toggleSidebar = () => setState((s) => ({ sidebarOpen: !s.sidebarOpen }));
   const closeSidebar = () => setState({ sidebarOpen: false });
-  const toggleFilterValue = (field: 'filterEmp' | 'filterSite' | 'filterCompany' | 'filterAuditType' | 'filterAuditTopic', value: string) =>
+  const toggleFilterValue = (field: 'filterEmp' | 'filterSite' | 'filterCompany' | 'filterAuditType' | 'filterAuditTopic' | 'filterApptType', value: string) =>
     setState((s) => {
       const arr = s[field] as unknown as string[];
       return { [field]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value] };
@@ -175,7 +176,7 @@ export function useScheduler() {
   const openTimetable = (engId: string) => setState({ timetableOpenEng: engId, selected: null });
   const closeTimetable = () => setState({ timetableOpenEng: null });
   const clearFilters = () =>
-    setState({ filterEmp: [], filterSite: [], filterCompany: [], filterAuditType: [], filterAuditTopic: [], activePlants: Object.fromEntries(S.plants.map((p) => [p.id, true])) });
+    setState({ filterEmp: [], filterSite: [], filterCompany: [], filterAuditType: [], filterAuditTopic: [], filterApptType: [], activePlants: Object.fromEntries(S.plants.map((p) => [p.id, true])) });
   const openDayDialog = (weekOffset: number, day: number) => setState({ dayDialog: { weekOffset, day } });
   const closeDayDialog = () => setState({ dayDialog: null });
 
@@ -606,6 +607,7 @@ export function useScheduler() {
       if (S.filterEmp.length > 0 && !S.filterEmp.includes(a.eng)) return false;
       if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.some((t) => o.customer === t || o.plant === t)) return false;
       if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return false;
+      if (S.filterApptType.length > 0 && !S.filterApptType.includes(apptAbbr(a))) return false;
       return true;
     });
     all.forEach((a) => {
@@ -616,6 +618,7 @@ export function useScheduler() {
       if (S.filterEmp.length > 0 && !S.filterEmp.includes(a.eng)) return;
       if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.some((t) => o.customer === t || o.plant === t)) return;
       if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return;
+      if (S.filterApptType.length > 0 && !S.filterApptType.includes(apptAbbr(a))) return;
       monthCustomerSet.add(o.customer);
       if (internalPlants.has(o.plant)) monthInternalSet.add(o.plant);
       const g = monthOrderAgg[o.id] || (monthOrderAgg[o.id] = { appointments: 0, days: {}, engs: {} });
@@ -792,6 +795,7 @@ export function useScheduler() {
     if (S.filterEmp.length > 0 && !S.filterEmp.includes(a.eng)) return false;
     if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.some((t) => o.customer === t || o.plant === t)) return false;
     if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return false;
+    if (S.filterApptType.length > 0 && !S.filterApptType.includes(apptAbbr(a))) return false;
     return true;
   });
   const weekCalendarChips = weekFiltered.map((a) => {
@@ -1109,7 +1113,8 @@ export function useScheduler() {
     ...S.assignments.map((a) => a.customer).filter((c): c is string => Boolean(c)),
   ])].sort();
   const auditTypes = ['site qualification', 'system audit', 'product qualification', 'pre-audit', 'annual audit', 'process control', 'gemba walk', 'QMS audit'];
-  const hasFilters = !!(S.filterEmp.length || S.filterSite.length || S.filterCompany.length || S.filterAuditType.length || S.filterAuditTopic.length) || S.plants.some((p) => !S.activePlants[p.id]);
+  const apptTypeOptions = [{ value: 'CS', label: 'Customer (CS)' }, { value: 'IA', label: 'Internal Audit (IA)' }];
+  const hasFilters = !!(S.filterEmp.length || S.filterSite.length || S.filterCompany.length || S.filterAuditType.length || S.filterAuditTopic.length || S.filterApptType.length) || S.plants.some((p) => !S.activePlants[p.id]);
 
   // ---- day dialog VM ----
   const dayDialogOpen = S.dayDialog !== null;
@@ -1211,13 +1216,14 @@ export function useScheduler() {
     toggleSidebar, closeSidebar, showSidebarBackdrop: isMobile && S.sidebarOpen,
     sidebarStyle, toolbarStyle, detailAsideStyle, modalOverlayStyle, modalCardStyle, modalColsStyle, modalColLeftStyle, modalColRightStyle,
     adminMainStyle, adminWrapStyle, adminStatGridStyle, loginWrapStyle, loginBrandStyle, loginFormWrapStyle,
-    filterEmp: S.filterEmp, filterSite: S.filterSite, filterCompany: S.filterCompany, filterAuditType: S.filterAuditType, filterAuditTopic: S.filterAuditTopic,
-    employeeOptions, siteOptions, customerTopicOptions, internalTopicOptions, companyNames, auditTypes, hasFilters,
+    filterEmp: S.filterEmp, filterSite: S.filterSite, filterCompany: S.filterCompany, filterAuditType: S.filterAuditType, filterAuditTopic: S.filterAuditTopic, filterApptType: S.filterApptType,
+    employeeOptions, siteOptions, customerTopicOptions, internalTopicOptions, companyNames, auditTypes, apptTypeOptions, hasFilters,
     toggleFilterEmp: (v: string) => toggleFilterValue('filterEmp', v),
     toggleFilterSite: (v: string) => toggleFilterValue('filterSite', v),
     toggleFilterCompany: (v: string) => toggleFilterValue('filterCompany', v),
     toggleFilterAuditType: (v: string) => toggleFilterValue('filterAuditType', v),
     toggleFilterAuditTopic: (v: string) => toggleFilterValue('filterAuditTopic', v),
+    toggleFilterApptType: (v: string) => toggleFilterValue('filterApptType', v),
     clearFilters,
     dayDialogOpen, dayDialogDate, dayDialogChips, dayDialogInfo, closeDayDialog,
     openCreate, closeCreate, createOpen: S.createOpen, create, stop: (e: React.MouseEvent) => e.stopPropagation(),

@@ -147,6 +147,7 @@ function Sidebar({ vm }: { vm: VM }) {
           )}
         </div>
         <div style={css('display:flex;flex-direction:column;gap:6px')}>
+          <MultiSelect label="Type" items={vm.apptTypeOptions} selected={vm.filterApptType} onToggle={vm.toggleFilterApptType} />
           <MultiSelect label="Auditor" items={vm.employeeOptions.filter((o) => o.value).map((o) => ({ value: o.value, label: o.label }))} selected={vm.filterEmp} onToggle={vm.toggleFilterEmp} />
           <MultiSelect label="Department" items={[...vm.customerTopicOptions, ...vm.internalTopicOptions].map((o) => ({ value: o, label: o }))} selected={vm.filterAuditTopic} onToggle={vm.toggleFilterAuditTopic} />
           <MultiSelect label="Site" items={vm.siteOptions.filter((o) => o.value).map((o) => ({ value: o.value, label: o.label }))} selected={vm.filterSite} onToggle={vm.toggleFilterSite} />

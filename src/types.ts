@@ -148,6 +148,7 @@ export interface State {
   filterCompany: string[];
   filterAuditType: string[];
   filterAuditTopic: string[];
+  filterApptType: string[];
   dayDialog: { weekOffset: number; day: number } | null;
   timetableOpenEng: string | null;
   loginEmail: string;
