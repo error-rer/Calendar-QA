@@ -9,8 +9,6 @@ import { SummaryDashboard } from './components/SummaryDashboard';
 import { CreateModal } from './components/CreateModal';
 import { EditModal } from './components/EditModal';
 import { EngineerModal } from './components/EngineerModal';
-import { SiteModal } from './components/SiteModal';
-import { OrderModal } from './components/OrderModal';
 
 export default function App() {
   const vm = useScheduler();
@@ -33,8 +31,6 @@ export default function App() {
           <CreateModal vm={vm} />
           <EditModal vm={vm} />
           <EngineerModal vm={vm} />
-          <SiteModal vm={vm} />
-          <OrderModal vm={vm} />
         </div>
       )}
     </div>

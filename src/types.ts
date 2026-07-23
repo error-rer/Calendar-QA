@@ -110,27 +110,13 @@ export interface EditDraft {
 export type Page = 'schedule' | 'admin' | 'profile' | 'summary';
 export type View = 'person' | 'plant' | 'site' | 'timetable';
 export type TimeScale = 'week' | 'month';
-export type AdminTab = 'engineers' | 'sites' | 'orders' | 'options';
+export type AdminTab = 'engineers' | 'options';
 
 export interface EngineerForm {
   name: string;
   role: string;
   department: Department;
   subDepartments: SubDepartment[];
-}
-
-export interface SiteForm {
-  name: string;
-  loc: string;
-  code: string;
-  color: string;
-}
-
-export interface OrderForm {
-  code: string;
-  product: string;
-  customer: string;
-  plant: string;
 }
 
 export interface State {
@@ -160,10 +146,6 @@ export interface State {
   editDraft: EditDraft;
   engFormOpen: boolean;
   engForm: EngineerForm;
-  siteFormOpen: boolean;
-  siteForm: SiteForm;
-  orderFormOpen: boolean;
-  orderForm: OrderForm;
   weekOffset: number;
   activePlants: Record<string, boolean>;
   selected: string | null;

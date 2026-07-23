@@ -5,8 +5,6 @@ import type {
   Department,
   EditDraft,
   EngineerForm,
-  OrderForm,
-  SiteForm,
   State,
   SubDepartment,
 } from './types';
@@ -14,7 +12,6 @@ import {
   dayLabels,
   dayNames,
   initialState,
-  siteColors,
 } from './data';
 import { api } from './api';
 
@@ -492,64 +489,6 @@ export function useScheduler() {
     });
   };
 
-  // ---- create-site modal ----
-  const openSiteForm = () =>
-    setState({ siteFormOpen: true, userMenuOpen: false, sidebarOpen: false, siteForm: { name: '', loc: '', code: '', color: siteColors[0] } });
-  const closeSiteForm = () => setState({ siteFormOpen: false });
-  const setSiteForm = (patch: Partial<SiteForm>) => setState((s) => ({ siteForm: { ...s.siteForm, ...patch } }));
-  const submitSiteForm = () => {
-    const f = S.siteForm;
-    if (!f.name.trim()) return;
-    const id = 'p' + ids.current.id++;
-    const code = (f.code.trim() || f.name.trim().replace(/[^A-Za-z0-9]/g, '').slice(0, 5)).toUpperCase();
-    const newPlant = { id, name: f.name.trim(), loc: f.loc.trim() || '—', code, color: f.color, active: true };
-    api.createPlant(newPlant).catch(() => {});
-    setState((s) => ({
-      plants: s.plants.concat([newPlant]),
-      activePlants: { ...s.activePlants, [id]: true },
-      siteFormOpen: false,
-    }));
-    log('You', `added site ${f.name.trim()}`, '#2756d6');
-  };
-  const removePlant = (id: string) => {
-    if (!confirm('Remove this internal site?')) return;
-    api.deletePlant(id).catch(() => {});
-    setState((s) => {
-      const { [id]: _, ...rest } = s.activePlants;
-      return { plants: s.plants.filter((p) => p.id !== id), activePlants: rest };
-    });
-  };
-
-  // ---- order management ----
-  const openOrderForm = () =>
-    setState({ orderFormOpen: true, userMenuOpen: false, sidebarOpen: false, orderForm: { code: '', product: '', customer: '', plant: 'QMS' } });
-  const closeOrderForm = () => setState({ orderFormOpen: false });
-  const setOrderForm = (patch: Partial<OrderForm>) =>
-    setState((s) => ({ orderForm: { ...s.orderForm, ...patch } }));
-  const submitOrderForm = () => {
-    const f = S.orderForm;
-    if (!f.product.trim() || !f.customer.trim()) return;
-    const id = 'o' + ids.current.id++;
-    const code = f.code.trim() || 'NX-' + (7000 + Math.floor(Math.random() * 900));
-    const newOrder = { id, code, customer: f.customer.trim(), product: f.product.trim(), plant: f.plant, purpose: '' };
-    api.createOrder(newOrder).catch(() => {});
-    setState((s) => ({
-      orders: s.orders.concat([newOrder]),
-      customerOptions: s.customerOptions.includes(newOrder.customer) ? s.customerOptions : [...s.customerOptions, newOrder.customer],
-      orderFormOpen: false,
-    }));
-    log('You', `opened order ${code} - ${f.customer.trim()}`, '#2756d6');
-  };
-  const removeOrder = (id: string) => {
-    if (!confirm('Remove this order and its assignments?')) return;
-    api.deleteOrder(id).catch(() => {});
-    setState((s) => {
-      const droppedIds = new Set(s.assignments.filter((a) => a.order === id).map((a) => a.id));
-      const comments = Object.fromEntries(Object.entries(s.comments).filter(([aid]) => !droppedIds.has(aid)));
-      return { orders: s.orders.filter((o) => o.id !== id), assignments: s.assignments.filter((a) => a.order !== id), comments };
-    });
-  };
-
   // ---- appointment option lists (Purpose / Department) ----
   type OptionListField = 'purposeOptions' | 'customerDepartmentOptions' | 'internalDepartmentOptions' | 'siteCodeOptions' | 'customerOptions';
   const addOption = (field: OptionListField, value: string) => {
@@ -1016,46 +955,6 @@ export function useScheduler() {
     submitStyle: sx({ background: ef.name.trim() ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '9px', padding: '10px 20px', fontSize: '13px', fontWeight: 600, cursor: ef.name.trim() ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
   };
 
-  // ---- create-site modal VM ----
-  const sf = S.siteForm;
-  const siteForm = {
-    name: sf.name, loc: sf.loc, code: sf.code, inStyle: ofInStyle,
-    onName: (e: React.ChangeEvent<HTMLInputElement>) => setSiteForm({ name: e.target.value }),
-    onLoc: (e: React.ChangeEvent<HTMLInputElement>) => setSiteForm({ loc: e.target.value }),
-    onCode: (e: React.ChangeEvent<HTMLInputElement>) => setSiteForm({ code: e.target.value }),
-    colors: siteColors.map((col) => ({
-      color: col, onClick: () => setSiteForm({ color: col }),
-      style: sx({ width: '26px', height: '26px', borderRadius: '8px', background: col, cursor: 'pointer', flexShrink: 0, boxShadow: sf.color === col ? '0 0 0 2px #fff, 0 0 0 4px #15191e' : 'none' }),
-    })),
-    canSubmit: !!sf.name.trim(),
-    submit: () => submitSiteForm(),
-    submitStyle: sx({ background: sf.name.trim() ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '9px', padding: '10px 20px', fontSize: '13px', fontWeight: 600, cursor: sf.name.trim() ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
-  };
-
-  // ---- create-order modal VM ----
-  const of = S.orderForm;
-  const orderFormCustomers = [...new Set(S.orders.map((o) => o.customer))];
-  const orderForm = {
-    code: of.code, product: of.product, customer: of.customer, plants: S.plants, inStyle: ofInStyle,
-    onCode: (e: React.ChangeEvent<HTMLInputElement>) => setOrderForm({ code: e.target.value }),
-    onProduct: (e: React.ChangeEvent<HTMLInputElement>) => setOrderForm({ product: e.target.value }),
-    onCustomer: (e: React.ChangeEvent<HTMLInputElement>) => setOrderForm({ customer: e.target.value }),
-    customerSuggestions: orderFormCustomers.map((c) => ({
-      name: c,
-      onClick: () => setOrderForm({ customer: c }),
-      style: sx({ padding: '5px 10px', borderRadius: '6px', border: '1px solid #e2e5de', background: '#fff', cursor: 'pointer', fontSize: '11.5px', fontFamily: "'Archivo',sans-serif", color: '#3c423d' }),
-    })),
-    plantOptions: S.plants.map((p) => ({
-      id: p.id, name: p.name, code: p.code, color: p.color,
-      onClick: () => setOrderForm({ plant: p.id }),
-      style: sx({ display: 'flex', alignItems: 'center', gap: '9px', padding: '10px 12px', borderRadius: '9px', cursor: 'pointer', border: '1px solid ' + (of.plant === p.id ? '#9bb0e8' : '#e2e5de'), background: of.plant === p.id ? '#eef2fd' : '#fff' }),
-      swatchStyle: sx({ width: '12px', height: '12px', borderRadius: '3px', background: p.color, flexShrink: 0 }),
-    })),
-    canSubmit: !!of.product.trim() && !!of.customer.trim(),
-    submit: () => submitOrderForm(),
-    submitStyle: sx({ background: of.product.trim() && of.customer.trim() ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '9px', padding: '10px 20px', fontSize: '13px', fontWeight: 600, cursor: of.product.trim() && of.customer.trim() ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
-  };
-
   // ---- summary data ----
   const mondayNearJune29 = (year: number) => {
     const d = new Date(year, 5, 29);
@@ -1120,32 +1019,6 @@ export function useScheduler() {
       onDelete: () => removeEngineer(e.id),
     };
   });
-  const adminSites = S.plants.map((p) => {
-    const on = S.activePlants[p.id];
-    return {
-      name: p.name, loc: p.loc, code: p.code,
-      appointments: wk.filter((a) => {
-        const o = orderById(a.order);
-        return o && o.plant === p.id;
-      }).length,
-      statusLabel: on ? 'Visible' : 'Hidden',
-      statusStyle: sx({ fontFamily: "'Archivo',sans-serif", fontSize: '11px', fontWeight: 600, color: on ? '#1f8a5b' : '#a96e08', background: on ? '#e3f5ea' : '#fff3df', border: '1px solid ' + (on ? '#c4e6d2' : '#f1dcb0'), borderRadius: '20px', padding: '4px 11px', cursor: 'pointer' }),
-      toggle: () => togglePlant(p.id),
-      onDelete: () => removePlant(p.id),
-    };
-  });
-  const adminOrders = S.orders.map((o) => {
-    const pl = plantById(o.plant)!;
-    const isStaffed = wk.some((a) => a.order === o.id);
-    return {
-      code: o.code, product: o.product, customer: o.customer, plantCode: pl.code,
-      swatchStyle: sx({ width: '9px', height: '9px', borderRadius: '2px', background: pl.color, flexShrink: 0 }),
-      statusLabel: isStaffed ? 'Staffed' : 'Open',
-      statusStyle: sx({ fontFamily: "'Archivo',sans-serif", fontSize: '10.5px', fontWeight: 600, color: isStaffed ? '#1f8a5b' : '#a96e08', background: isStaffed ? '#e3f5ea' : '#fff3df', border: '1px solid ' + (isStaffed ? '#c4e6d2' : '#f1dcb0'), borderRadius: '20px', padding: '3px 10px' }),
-      onDelete: () => removeOrder(o.id),
-    };
-  });
-
   // ---- filters VM ----
   const employeeOptions = [{ value: '', label: 'All employees' }].concat(S.engineers.filter((e) => !['unassigned', '111', 'ant', 'bird'].includes(e.name.toLowerCase())).map((e) => ({ value: e.id, label: e.name })));
   const siteOptions = [{ value: '', label: 'All sites' }, ...S.siteCodeOptions.map((s) => ({ value: s, label: s }))];
@@ -1251,9 +1124,7 @@ export function useScheduler() {
     weekLabel, weekTag, periodLabel, periodTag, gridCols, days, daySel,
     prevWeek: () => (isMonth ? shiftMonth(-1) : shiftWeek(-1)), nextWeek: () => (isMonth ? shiftMonth(1) : shiftWeek(1)),
     profile,
-    orderForm, orderFormOpen: S.orderFormOpen, openOrderForm, closeOrderForm,
     engForm, engFormOpen: S.engFormOpen, openEngForm, closeEngForm,
-    siteForm, siteFormOpen: S.siteFormOpen, openSiteForm, closeSiteForm,
     stats: { assignments: wk.length, weekCustomers, monthCustomers, weekInternals, monthInternals },
     plants: plantsVm,
     personRows, plantRows, siteRows, mobilePersonRows, mobileSiteRows, mobileSiteDeptRows,
@@ -1278,12 +1149,12 @@ export function useScheduler() {
     openCreate, closeCreate, createOpen: S.createOpen, create, stop: (e: React.MouseEvent) => e.stopPropagation(),
     editOpen: S.editOpen, editDraft: S.editDraft, setEditDraft, closeEdit, submitEdit,
     adminStats,
-    tabEngineers: S.adminTab === 'engineers', tabSites: S.adminTab === 'sites', tabOrders: S.adminTab === 'orders', tabOptions: S.adminTab === 'options',
-    setTabEng: () => setAdminTab('engineers'), setTabSite: () => setAdminTab('sites'), setTabOrder: () => setAdminTab('orders'), setTabOptions: () => setAdminTab('options'),
-    tabEngStyle: S.adminTab === 'engineers' ? tabOn : tabOff, tabSiteStyle: S.adminTab === 'sites' ? tabOn : tabOff, tabOrderStyle: S.adminTab === 'orders' ? tabOn : tabOff,
+    tabEngineers: S.adminTab === 'engineers', tabOptions: S.adminTab === 'options',
+    setTabEng: () => setAdminTab('engineers'), setTabOptions: () => setAdminTab('options'),
+    tabEngStyle: S.adminTab === 'engineers' ? tabOn : tabOff,
     tabOptionsStyle: S.adminTab === 'options' ? tabOn : tabOff,
-    adminEngineers, adminSites, adminOrders, engCount: S.engineers.length, orderCount: S.orders.length, siteCount: S.plants.length,
-    addEngineer: openEngForm, addSite: openSiteForm, addOrder: openOrderForm,
+    adminEngineers, engCount: S.engineers.length,
+    addEngineer: openEngForm,
     summaryPeriods, summaryRows, summaryCells, utlRows, utlCells, summaryYear: S.summaryYear,
     setSummaryYear: (y: number) => setState({ summaryYear: y }),
     purposeOptions: S.purposeOptions, customerDepartmentOptions: S.customerDepartmentOptions, internalDepartmentOptions: S.internalDepartmentOptions,

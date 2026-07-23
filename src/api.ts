@@ -28,14 +28,10 @@ export const api = {
     req('/engineers', { method: 'POST', body: JSON.stringify(data) }),
   deleteEngineer: (id: string) => req('/engineers/' + id, { method: 'DELETE' }),
 
-  createPlant: (data: { id: string; name: string; loc: string; code: string; color: string }) =>
-    req('/plants', { method: 'POST', body: JSON.stringify(data) }),
   togglePlant: (id: string) => req('/plants/' + id + '/toggle', { method: 'POST' }),
-  deletePlant: (id: string) => req('/plants/' + id, { method: 'DELETE' }),
 
   createOrder: (data: { id: string; code: string; customer: string; product: string; plant: string; purpose: string }) =>
     req('/orders', { method: 'POST', body: JSON.stringify(data) }),
-  deleteOrder: (id: string) => req('/orders/' + id, { method: 'DELETE' }),
 
   createAssignment: (data: Partial<Assignment> & { id: string; eng: string; order: string }) =>
     req('/assignments', { method: 'POST', body: JSON.stringify(data) }),

@@ -6,9 +6,6 @@ export const initialPlants: Plant[] = [
   { id: 'ESD', name: 'ESD', loc: '', code: 'ESD', color: '#c2620c', active: true },
 ];
 
-/** Swatch options offered when creating a new fab site. */
-export const siteColors = ['#2f6df0', '#0f9d8c', '#c2620c', '#7a4ddb', '#1f9d57', '#c0407a', '#0c8599', '#b5503a'];
-
 export const avatarPalette = [
   '#2f6df0', '#0f9d8c', '#c2620c', '#7a4ddb', '#1f9d57', '#c0407a',
   '#2756d6', '#8a6d12', '#0c8599', '#9a3d9a', '#3a7d44', '#b5503a',
@@ -52,10 +49,6 @@ export function initialState(): State {
     editDraft: { targetId: '', sectionType: 'customer', dateFrom: '', dateTo: '', site1: '', customer: '', endCustomer: '', purpose: '', auditor1: '', department1: '', site2: '', area: '', auditor2: '', department2: '' },
     engFormOpen: false,
     engForm: { name: '', role: '', department: 'U1', subDepartments: [] },
-    siteFormOpen: false,
-    siteForm: { name: '', loc: '', code: '', color: siteColors[0] },
-    orderFormOpen: false,
-    orderForm: { code: '', product: '', customer: '', plant: 'QMS' },
     weekOffset: 0,
     activePlants: { QMS: true, EHS: true, ESD: true },
     selected: null,
