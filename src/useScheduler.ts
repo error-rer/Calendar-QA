@@ -64,16 +64,27 @@ export function useScheduler() {
   useEffect(() => {
     api.fetchState()
       .then((data) => {
-        setRaw((s) => ({
-          ...s,
-          engineers: data.engineers,
-          plants: data.plants,
-          activePlants: { ...s.activePlants, ...data.activePlants },
-          orders: data.orders,
-          assignments: data.assignments,
-          comments: data.comments,
-          activity: data.activity,
-        }));
+        setRaw((s) => {
+          // customerOptions isn't persisted server-side (like the other Options-tab
+          // lists) — backfill it from historical customer names on every order/
+          // assignment so previously-used customers still show up as suggestions.
+          const historicalCustomers = new Set([
+            ...data.orders.map((o) => o.customer).filter((c): c is string => Boolean(c)),
+            ...data.assignments.map((a) => a.customer).filter((c): c is string => Boolean(c)),
+          ]);
+          const customerOptions = [...new Set([...s.customerOptions, ...historicalCustomers])];
+          return {
+            ...s,
+            engineers: data.engineers,
+            plants: data.plants,
+            activePlants: { ...s.activePlants, ...data.activePlants },
+            orders: data.orders,
+            assignments: data.assignments,
+            comments: data.comments,
+            activity: data.activity,
+            customerOptions,
+          };
+        });
       })
       .catch((err) => {
         console.warn('API load failed, using local data:', err);
@@ -325,6 +336,8 @@ export function useScheduler() {
       orders: s.orders.concat([newOrder]),
       engineers: existingEng ? s.engineers : s.engineers.concat([newEngineer]),
       assignments: s.assignments.concat(newAssignments),
+      customerOptions: d.sectionType === 'customer' && d.customer && !s.customerOptions.includes(d.customer)
+        ? [...s.customerOptions, d.customer] : s.customerOptions,
       selected: newAssignments[newAssignments.length - 1].id,
       createOpen: false,
     }));
@@ -418,7 +431,9 @@ export function useScheduler() {
       const comments = droppedSet.size
         ? Object.fromEntries(Object.entries(s.comments).filter(([aid]) => !droppedSet.has(aid)))
         : s.comments;
-      return { assignments: others.concat(updated), comments };
+      const customerOptions = d.sectionType === 'customer' && d.customer && !s.customerOptions.includes(d.customer)
+        ? [...s.customerOptions, d.customer] : s.customerOptions;
+      return { assignments: others.concat(updated), comments, customerOptions };
     });
     const ord = orderById(target.order);
     if (ord) log('You', `edited ${ord.code}`, '#2756d6');
@@ -449,6 +464,15 @@ export function useScheduler() {
       engFormOpen: false,
     }));
     log('You', `added ${f.name.trim().split(' ')[0]}`, '#2756d6');
+  };
+  const removeEngineer = (id: string) => {
+    if (!confirm('Remove this auditor and their appointments?')) return;
+    api.deleteEngineer(id).catch(() => {});
+    setState((s) => {
+      const droppedIds = new Set(s.assignments.filter((a) => a.eng === id).map((a) => a.id));
+      const comments = Object.fromEntries(Object.entries(s.comments).filter(([aid]) => !droppedIds.has(aid)));
+      return { engineers: s.engineers.filter((e) => e.id !== id), assignments: s.assignments.filter((a) => a.eng !== id), comments };
+    });
   };
 
   // ---- create-site modal ----
@@ -494,6 +518,7 @@ export function useScheduler() {
     api.createOrder(newOrder).catch(() => {});
     setState((s) => ({
       orders: s.orders.concat([newOrder]),
+      customerOptions: s.customerOptions.includes(newOrder.customer) ? s.customerOptions : [...s.customerOptions, newOrder.customer],
       orderFormOpen: false,
     }));
     log('You', `opened order ${code} - ${f.customer.trim()}`, '#2756d6');
@@ -509,7 +534,7 @@ export function useScheduler() {
   };
 
   // ---- appointment option lists (Purpose / Department) ----
-  type OptionListField = 'purposeOptions' | 'customerDepartmentOptions' | 'internalDepartmentOptions';
+  type OptionListField = 'purposeOptions' | 'customerDepartmentOptions' | 'internalDepartmentOptions' | 'siteCodeOptions' | 'customerOptions';
   const addOption = (field: OptionListField, value: string) => {
     const v = value.trim();
     if (!v) return;
@@ -1075,6 +1100,7 @@ export function useScheduler() {
       id: e.id, name: e.name, role: e.role, department: e.department, subDepartments: e.subDepartments, initials: initials(e.name),
       avatarStyle: sx({ width: '30px', height: '30px', borderRadius: '8px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '11px', fontWeight: 600, flexShrink: 0 }),
       appointments: wk.filter((a) => a.eng === e.id).length,
+      onDelete: () => removeEngineer(e.id),
     };
   });
   const adminSites = S.plants.map((p) => {
@@ -1105,7 +1131,7 @@ export function useScheduler() {
 
   // ---- filters VM ----
   const employeeOptions = [{ value: '', label: 'All employees' }].concat(S.engineers.filter((e) => !['unassigned', '111', 'ant', 'bird'].includes(e.name.toLowerCase())).map((e) => ({ value: e.id, label: e.name })));
-  const siteOptions = [{ value: '', label: 'All sites' }, { value: 'U1', label: 'U1' }, { value: 'U2', label: 'U2' }, { value: 'U2A', label: 'U2A' }, { value: 'U2B', label: 'U2B' }, { value: 'U3', label: 'U3' }, { value: 'U3A', label: 'U3A' }, { value: 'U3T', label: 'U3T' }];
+  const siteOptions = [{ value: '', label: 'All sites' }, ...S.siteCodeOptions.map((s) => ({ value: s, label: s }))];
   const customerTopicOptions = ['ESD Audit', 'QS Audit'];
   const internalTopicOptions = ['QMS', 'EHS', 'ESD', 'IATF16949/ISO9001', 'ISO14001/ISO45001', 'RBA'];
   const companyNames = [...new Set([
@@ -1241,6 +1267,9 @@ export function useScheduler() {
     addPurposeOption: (v: string) => addOption('purposeOptions', v), removePurposeOption: (v: string) => removeOption('purposeOptions', v),
     addCustomerDepartmentOption: (v: string) => addOption('customerDepartmentOptions', v), removeCustomerDepartmentOption: (v: string) => removeOption('customerDepartmentOptions', v),
     addInternalDepartmentOption: (v: string) => addOption('internalDepartmentOptions', v), removeInternalDepartmentOption: (v: string) => removeOption('internalDepartmentOptions', v),
+    siteCodeOptions: S.siteCodeOptions, customerOptions: S.customerOptions,
+    addSiteCodeOption: (v: string) => addOption('siteCodeOptions', v), removeSiteCodeOption: (v: string) => removeOption('siteCodeOptions', v),
+    addCustomerOption: (v: string) => addOption('customerOptions', v), removeCustomerOption: (v: string) => removeOption('customerOptions', v),
   };
 }
 

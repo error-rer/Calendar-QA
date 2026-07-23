@@ -2,7 +2,7 @@
 import type { VM } from '../useScheduler';
 import { css, HButton } from '../ui';
 
-const engGrid = 'display:grid;grid-template-columns:minmax(180px,1.4fr) 2fr 80px;gap:0';
+const engGrid = 'display:grid;grid-template-columns:minmax(180px,1.4fr) 2fr 80px 50px;gap:0';
 const siteGrid = 'display:grid;grid-template-columns:1.4fr 1.4fr 90px 80px 120px 50px;gap:0';
 const orderGrid = 'display:grid;grid-template-columns:96px 1.3fr 1fr 96px 50px;gap:0';
 
@@ -49,7 +49,7 @@ function EngineersTable({ vm }: { vm: VM }) {
         <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New Auditor</HButton>
       </div>
       <div style={css(engGrid + ";padding:9px 18px;border-bottom:1px solid #eef1ea;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>
-        <div>Auditor</div><div>DEPT + SUB-DEPT</div><div style={css('text-align:center')}>APPOINTMENTS</div>
+        <div>Auditor</div><div>DEPT + SUB-DEPT</div><div style={css('text-align:center')}>APPOINTMENTS</div><div></div>
       </div>
       {vm.adminEngineers.map((e) => (
         <div key={e.id} style={css(engGrid + ';padding:12px 18px;border-bottom:1px solid #f2f4ee;align-items:center')}>
@@ -61,6 +61,7 @@ function EngineersTable({ vm }: { vm: VM }) {
             </div>
           </div>
           <div style={css("text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#3c423d")}>{e.appointments}</div>
+          <button onClick={e.onDelete} style={css('background:none;border:none;cursor:pointer;color:#bcc1b8;font-size:13px;padding:2px')}>✕</button>
         </div>
       ))}
     </div>
@@ -171,6 +172,22 @@ function OptionsPanel({ vm }: { vm: VM }) {
         onAdd={vm.addInternalDepartmentOption}
         onRemove={vm.removeInternalDepartmentOption}
         placeholder="e.g. EHS"
+      />
+      <TagListEditor
+        title="Site"
+        count={vm.siteCodeOptions.length}
+        values={vm.siteCodeOptions}
+        onAdd={vm.addSiteCodeOption}
+        onRemove={vm.removeSiteCodeOption}
+        placeholder="e.g. U4"
+      />
+      <TagListEditor
+        title="Customer"
+        count={vm.customerOptions.length}
+        values={vm.customerOptions}
+        onAdd={vm.addCustomerOption}
+        onRemove={vm.removeCustomerOption}
+        placeholder="e.g. Company F"
       />
     </div>
   );

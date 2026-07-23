@@ -174,6 +174,8 @@ export interface State {
   purposeOptions: string[];
   customerDepartmentOptions: string[];
   internalDepartmentOptions: string[];
+  siteCodeOptions: string[];
+  customerOptions: string[];
   plants: Plant[];
   engineers: Engineer[];
   orders: Order[];

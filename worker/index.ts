@@ -88,6 +88,13 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
         .bind(name || '', role || '', department || 'U1', JSON.stringify(subDepartments || []), engMatch[1]).run();
       return json({ ok: true });
     }
+    if (engMatch && method === 'DELETE') {
+      const id = engMatch[1];
+      await DB.prepare('DELETE FROM comments WHERE assignment_id IN (SELECT id FROM assignments WHERE eng = ?)').bind(id).run();
+      await DB.prepare('DELETE FROM assignments WHERE eng = ?').bind(id).run();
+      await DB.prepare('DELETE FROM engineers WHERE id = ?').bind(id).run();
+      return json({ ok: true });
+    }
 
     // --- plants ---
     if (method === 'GET' && path === 'plants') {

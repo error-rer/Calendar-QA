@@ -22,6 +22,7 @@ export const dayLabels = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
 export const initialPurposeOptions = ['site qualification', 'system audit', 'product qualification', 'pre-audit', 'annual audit', 'process control', 'gemba walk', 'QMS audit'];
 export const initialCustomerDepartmentOptions = ['ESD Audit', 'QS Audit', 'IATF16949/ISO9001', 'ISO14001/ISO45001', 'RBA'];
 export const initialInternalDepartmentOptions = ['QMS', 'EHS', 'ESD'];
+export const initialSiteCodeOptions = ['U1', 'U2', 'U2A', 'U2B', 'U3', 'U3A', 'U3T'];
 
 export function initialState(): State {
   return {
@@ -65,6 +66,8 @@ export function initialState(): State {
     purposeOptions: initialPurposeOptions.slice(),
     customerDepartmentOptions: initialCustomerDepartmentOptions.slice(),
     internalDepartmentOptions: initialInternalDepartmentOptions.slice(),
+    siteCodeOptions: initialSiteCodeOptions.slice(),
+    customerOptions: [],
     plants: initialPlants.map((p) => ({ ...p })),
     engineers: [],
     orders: [],

@@ -24,6 +24,8 @@ export function EditModal({ vm }: { vm: VM }) {
             purposeOptions={vm.purposeOptions}
             customerDepartmentOptions={vm.customerDepartmentOptions}
             internalDepartmentOptions={vm.internalDepartmentOptions}
+            siteOptions={vm.siteCodeOptions}
+            customerOptions={vm.customerOptions}
           />
         </div>
 

@@ -26,6 +26,7 @@ export const api = {
 
   createEngineer: (data: { id: string; name: string; role: string; department: string; subDepartments: string[] }) =>
     req('/engineers', { method: 'POST', body: JSON.stringify(data) }),
+  deleteEngineer: (id: string) => req('/engineers/' + id, { method: 'DELETE' }),
 
   createPlant: (data: { id: string; name: string; loc: string; code: string; color: string }) =>
     req('/plants', { method: 'POST', body: JSON.stringify(data) }),

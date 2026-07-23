@@ -24,6 +24,8 @@ export function CreateModal({ vm }: { vm: VM }) {
             purposeOptions={vm.purposeOptions}
             customerDepartmentOptions={vm.customerDepartmentOptions}
             internalDepartmentOptions={vm.internalDepartmentOptions}
+            siteOptions={vm.siteCodeOptions}
+            customerOptions={vm.customerOptions}
           />
 
           {create.warn && <div style={css('font-size:11px;color:#b32f2f;text-align:center')}>{create.warnText}</div>}

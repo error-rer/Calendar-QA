@@ -5,8 +5,6 @@ const lbl = css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weig
 const inp = css("border:1px solid #dde0d9;border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fff;width:100%;box-sizing:border-box");
 const sel = inp;
 
-export const SITE_OPTIONS = ['U1', 'U2', 'U2A', 'U2B', 'U3', 'U3A', 'U3T'];
-
 export interface AppointmentFormValues {
   sectionType: 'customer' | 'internal';
   site1: string;
@@ -31,6 +29,8 @@ export function AppointmentFormFields({
   purposeOptions,
   customerDepartmentOptions,
   internalDepartmentOptions,
+  siteOptions,
+  customerOptions,
 }: {
   idPrefix: string;
   values: AppointmentFormValues;
@@ -38,6 +38,8 @@ export function AppointmentFormFields({
   purposeOptions: string[];
   customerDepartmentOptions: string[];
   internalDepartmentOptions: string[];
+  siteOptions: string[];
+  customerOptions: string[];
 }) {
   const id = (name: string) => `${idPrefix}-${name}`;
   return (
@@ -65,12 +67,24 @@ export function AppointmentFormFields({
               <label htmlFor={id('site1')} style={lbl}>SITE</label>
               <select id={id('site1')} value={v.site1} onChange={(e) => onChange({ site1: e.target.value })} style={sel}>
                 <option value="">Select site...</option>
-                {SITE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                {siteOptions.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div style={fld}>
               <label htmlFor={id('customer')} style={lbl}>CUSTOMER</label>
               <input id={id('customer')} value={v.customer} onChange={(e) => onChange({ customer: e.target.value })} placeholder="Type customer name..." style={inp} />
+              {customerOptions.length > 0 && (
+                <div style={css('display:flex;gap:6px;flex-wrap:wrap;margin-top:2px')}>
+                  {customerOptions.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => onChange({ customer: c })}
+                      style={css("font-size:10.5px;color:#5c625c;background:#f4f6f1;border:1px solid #e0e3dc;border-radius:20px;padding:3px 9px;cursor:pointer;font-family:'Archivo',sans-serif")}
+                    >{c}</button>
+                  ))}
+                </div>
+              )}
             </div>
             <div style={fld}>
               <label htmlFor={id('endCustomer')} style={lbl}>END CUSTOMER</label>
@@ -114,7 +128,7 @@ export function AppointmentFormFields({
               <label htmlFor={id('site2')} style={lbl}>SITE</label>
               <select id={id('site2')} value={v.site2} onChange={(e) => onChange({ site2: e.target.value })} style={sel}>
                 <option value="">Select site...</option>
-                {SITE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                {siteOptions.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div style={fld}>
