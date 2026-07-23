@@ -790,7 +790,8 @@ export function useScheduler() {
     const pl = ord ? plantById(ord.plant) : null;
     const sel = S.selected === a.id;
     const color = siteColorOf(a) || (pl ? pl.color : '#999');
-    const custName = a.customer || (ord ? ord.customer : '');
+    const isInternal = !!(a.site2 || a.auditor2 || a.department2);
+    const custName = isInternal ? (a.area || '') : (a.customer || (ord ? ord.customer : ''));
     return { ...a, _customer: apptAbbr(a) + ' · ' + custName, _purpose: ord ? ord.purpose : '', _auditor: a.auditor1 || (eng ? eng.name : ''), _qa: eng ? eng.name : '', _color: color, _sel: sel, _onClick: () => select(a.id), _ord: ord, _eng: eng };
   });
   // group consecutive same-order same-eng assignments into merged spans

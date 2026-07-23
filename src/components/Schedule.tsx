@@ -286,15 +286,21 @@ function WeekCalendar({ vm }: { vm: VM }) {
           </div>
           <div style={css('display:flex;flex-direction:column;gap:2px')}>
             {vm.weekCalendarDays[i].chips.map((chip) => (
-              <div key={chip.id} onClick={chip.onClick} title={chip.customer + (chip.purpose ? ' - ' + chip.purpose : '')} style={{
+              <div key={chip.id} onClick={chip.onClick} title={[chip.customer, chip.auditor2 || chip.purpose, chip.auditor2 ? '' : chip.auditor1].filter(Boolean).join(' - ')} style={{
             background: '#f0f2ec', borderRadius: '6px', padding: '6px 8px',
             borderLeft: '3px solid ' + chip.color,
             boxShadow: '0 1px 2px rgba(0,0,0,.06)',
             cursor: 'pointer', overflow: 'hidden',
               }}>
                 <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{chip.customer}</div>
-                {chip.purpose && <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{chip.purpose}</div>}
-                {(chip as any).auditor2 && <div style={{ fontSize: '10px', color: '#9aa097', marginTop: '1px' }}>{(chip as any).auditor2}</div>}
+                {chip.auditor2 ? (
+                  <div style={{ fontSize: '10px', color: '#9aa097', marginTop: '1px' }}>{chip.auditor2}</div>
+                ) : (
+                  <>
+                    {chip.purpose && <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{chip.purpose}</div>}
+                    {chip.auditor1 && <div style={{ fontSize: '10px', color: '#9aa097', marginTop: '1px' }}>{chip.auditor1}</div>}
+                  </>
+                )}
               </div>
             ))}
             {vm.weekCalendarDays[i].chips.length === 0 && vm.weekMergedSpans.every((s) => s.startDay > i || s.startDay + s.span <= i) && (
@@ -304,7 +310,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
         </div>
       ))}
       {vm.weekMergedSpans.map((sp) => (
-        <div key={sp.id} onClick={sp.onClick} title={sp.customer + (sp.purpose ? ' - ' + sp.purpose : '')} style={{
+        <div key={sp.id} onClick={sp.onClick} title={[sp.customer, sp.auditor2 || sp.purpose, sp.auditor2 ? '' : sp.auditor1].filter(Boolean).join(' - ')} style={{
           gridColumn: `${sp.startDay + 1} / span ${sp.span}`,
           gridRow: `${sp.gridRow + 2}`,
           zIndex: 2,
@@ -315,8 +321,14 @@ function WeekCalendar({ vm }: { vm: VM }) {
           margin: '2px 0',
         }}>
           <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{sp.customer}</div>
-          {sp.purpose && <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{sp.purpose}</div>}
-          {(sp as any).auditor2 && <div style={{ fontSize: '10px', color: '#9aa097', marginTop: '1px' }}>{(sp as any).auditor2}</div>}
+          {sp.auditor2 ? (
+            <div style={{ fontSize: '10px', color: '#9aa097', marginTop: '1px' }}>{sp.auditor2}</div>
+          ) : (
+            <>
+              {sp.purpose && <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{sp.purpose}</div>}
+              {sp.auditor1 && <div style={{ fontSize: '10px', color: '#9aa097', marginTop: '1px' }}>{sp.auditor1}</div>}
+            </>
+          )}
         </div>
       ))}
     </div>
