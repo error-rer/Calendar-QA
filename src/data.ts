@@ -39,6 +39,7 @@ export function initialState(): State {
     filterAuditTopic: [],
     filterApptType: [],
     dayDialog: null,
+    monthSelectedDate: null,
     timetableOpenEng: null,
     loginEmail: 'jordan.lee@nexsil.com',
     loginPass: 'directorqa',

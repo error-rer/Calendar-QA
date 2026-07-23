@@ -159,11 +159,16 @@ export function useScheduler() {
         const weekMonday = new Date(2026, 5, 29 + s.weekOffset * 7);
         patch.monthOffset = (weekMonday.getFullYear() - 2026) * 12 + (weekMonday.getMonth() - 5);
       } else if (sc === 'week') {
-        // jump to the week containing the first day of the month currently being viewed
-        const monthFirst = new Date(2026, 5 + (s.monthOffset || 0), 1);
-        const base = new Date(2026, 5, 29);
-        const diff = Math.round((monthFirst.getTime() - base.getTime()) / 86400000);
-        patch.weekOffset = Math.floor(diff / 7);
+        if (s.monthSelectedDate) {
+          // a specific date was clicked in Month view — jump to its week
+          patch.weekOffset = s.monthSelectedDate.weekOffset;
+        } else {
+          // no date selected — jump to the week containing the first day of the month currently being viewed
+          const monthFirst = new Date(2026, 5 + (s.monthOffset || 0), 1);
+          const base = new Date(2026, 5, 29);
+          const diff = Math.round((monthFirst.getTime() - base.getTime()) / 86400000);
+          patch.weekOffset = Math.floor(diff / 7);
+        }
       }
       return patch;
     });
@@ -202,7 +207,7 @@ export function useScheduler() {
   const closeTimetable = () => setState({ timetableOpenEng: null });
   const clearFilters = () =>
     setState({ filterEmp: [], filterSite: [], filterCompany: [], filterAuditType: [], filterAuditTopic: [], filterApptType: [], activePlants: Object.fromEntries(S.plants.map((p) => [p.id, true])) });
-  const openDayDialog = (weekOffset: number, day: number) => setState({ dayDialog: { weekOffset, day } });
+  const openDayDialog = (weekOffset: number, day: number) => setState({ dayDialog: { weekOffset, day }, monthSelectedDate: { weekOffset, day } });
   const closeDayDialog = () => setState({ dayDialog: null });
 
   const copyWeek = () => {

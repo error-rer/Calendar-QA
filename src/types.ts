@@ -136,6 +136,8 @@ export interface State {
   filterAuditTopic: string[];
   filterApptType: string[];
   dayDialog: { weekOffset: number; day: number } | null;
+  /** Last date clicked in Month view — switching to Week view jumps to its week. */
+  monthSelectedDate: { weekOffset: number; day: number } | null;
   timetableOpenEng: string | null;
   loginEmail: string;
   loginPass: string;
