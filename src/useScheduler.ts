@@ -1132,13 +1132,15 @@ export function useScheduler() {
   // ---- filters VM ----
   const employeeOptions = [{ value: '', label: 'All employees' }].concat(S.engineers.filter((e) => !['unassigned', '111', 'ant', 'bird'].includes(e.name.toLowerCase())).map((e) => ({ value: e.id, label: e.name })));
   const siteOptions = [{ value: '', label: 'All sites' }, ...S.siteCodeOptions.map((s) => ({ value: s, label: s }))];
-  const customerTopicOptions = ['ESD Audit', 'QS Audit'];
-  const internalTopicOptions = ['QMS', 'EHS', 'ESD', 'IATF16949/ISO9001', 'ISO14001/ISO45001', 'RBA'];
+  // filter dropdowns share the same admin-managed lists as the appointment form
+  // (Manage > Options), so adding/removing an option there updates both.
+  const customerTopicOptions = S.customerDepartmentOptions;
+  const internalTopicOptions = S.internalDepartmentOptions;
   const companyNames = [...new Set([
     ...S.orders.map((o) => o.customer).filter((c): c is string => Boolean(c)),
     ...S.assignments.map((a) => a.customer).filter((c): c is string => Boolean(c)),
   ])].sort();
-  const auditTypes = ['site qualification', 'system audit', 'product qualification', 'pre-audit', 'annual audit', 'process control', 'gemba walk', 'QMS audit'];
+  const auditTypes = S.purposeOptions;
   const apptTypeOptions = [{ value: 'CS', label: 'Customer (CS)' }, { value: 'IA', label: 'Internal Audit (IA)' }];
   const hasFilters = !!(S.filterEmp.length || S.filterSite.length || S.filterCompany.length || S.filterAuditType.length || S.filterAuditTopic.length || S.filterApptType.length) || S.plants.some((p) => !S.activePlants[p.id]);
 
