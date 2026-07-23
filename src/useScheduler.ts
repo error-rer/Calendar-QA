@@ -179,10 +179,27 @@ export function useScheduler() {
   const setSelectedDay = (i: number) => setState({ selectedDay: i });
   const toggleSidebar = () => setState((s) => ({ sidebarOpen: !s.sidebarOpen }));
   const closeSidebar = () => setState({ sidebarOpen: false });
-  const toggleFilterValue = (field: 'filterEmp' | 'filterSite' | 'filterCompany' | 'filterAuditType' | 'filterAuditTopic' | 'filterApptType', value: string) =>
+  const toggleFilterValue = (field: 'filterEmp' | 'filterSite' | 'filterCompany' | 'filterAuditType' | 'filterAuditTopic', value: string) =>
     setState((s) => {
       const arr = s[field] as unknown as string[];
       return { [field]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value] };
+    });
+  // narrowing the Type filter can hide some Department/Purpose options (see
+  // customerTopicOptions/internalTopicOptions/auditTypes below) — drop any
+  // selected values that are no longer visible so a hidden filter can't keep
+  // silently narrowing results.
+  const toggleFilterApptType = (value: string) =>
+    setState((s) => {
+      const next = s.filterApptType.includes(value) ? s.filterApptType.filter((v) => v !== value) : [...s.filterApptType, value];
+      const nextIsCS = next.length === 1 && next[0] === 'CS';
+      const nextIsIA = next.length === 1 && next[0] === 'IA';
+      const visibleDepts = [...(nextIsIA ? [] : s.customerDepartmentOptions), ...(nextIsCS ? [] : s.internalDepartmentOptions)];
+      const visiblePurposes = nextIsIA ? [] : s.purposeOptions;
+      return {
+        filterApptType: next,
+        filterAuditTopic: s.filterAuditTopic.filter((v) => visibleDepts.includes(v)),
+        filterAuditType: s.filterAuditType.filter((v) => visiblePurposes.includes(v)),
+      };
     });
   const openTimetable = (engId: string) => setState({ timetableOpenEng: engId, selected: null });
   const closeTimetable = () => setState({ timetableOpenEng: null });
@@ -1133,14 +1150,18 @@ export function useScheduler() {
   const employeeOptions = [{ value: '', label: 'All employees' }].concat(S.engineers.filter((e) => !['unassigned', '111', 'ant', 'bird'].includes(e.name.toLowerCase())).map((e) => ({ value: e.id, label: e.name })));
   const siteOptions = [{ value: '', label: 'All sites' }, ...S.siteCodeOptions.map((s) => ({ value: s, label: s }))];
   // filter dropdowns share the same admin-managed lists as the appointment form
-  // (Manage > Options), so adding/removing an option there updates both.
-  const customerTopicOptions = S.customerDepartmentOptions;
-  const internalTopicOptions = S.internalDepartmentOptions;
+  // (Manage > Options), so adding/removing an option there updates both. When the
+  // Type filter narrows to just one type, the Department/Purpose dropdowns narrow
+  // to match (Purpose has no internal-audit equivalent, so it empties for IA-only).
+  const typeIsCS = S.filterApptType.length === 1 && S.filterApptType[0] === 'CS';
+  const typeIsIA = S.filterApptType.length === 1 && S.filterApptType[0] === 'IA';
+  const customerTopicOptions = typeIsIA ? [] : S.customerDepartmentOptions;
+  const internalTopicOptions = typeIsCS ? [] : S.internalDepartmentOptions;
   const companyNames = [...new Set([
     ...S.orders.map((o) => o.customer).filter((c): c is string => Boolean(c)),
     ...S.assignments.map((a) => a.customer).filter((c): c is string => Boolean(c)),
   ])].sort();
-  const auditTypes = S.purposeOptions;
+  const auditTypes = typeIsIA ? [] : S.purposeOptions;
   const apptTypeOptions = [{ value: 'CS', label: 'Customer (CS)' }, { value: 'IA', label: 'Internal Audit (IA)' }];
   const hasFilters = !!(S.filterEmp.length || S.filterSite.length || S.filterCompany.length || S.filterAuditType.length || S.filterAuditTopic.length || S.filterApptType.length) || S.plants.some((p) => !S.activePlants[p.id]);
 
@@ -1251,7 +1272,7 @@ export function useScheduler() {
     toggleFilterCompany: (v: string) => toggleFilterValue('filterCompany', v),
     toggleFilterAuditType: (v: string) => toggleFilterValue('filterAuditType', v),
     toggleFilterAuditTopic: (v: string) => toggleFilterValue('filterAuditTopic', v),
-    toggleFilterApptType: (v: string) => toggleFilterValue('filterApptType', v),
+    toggleFilterApptType,
     clearFilters,
     dayDialogOpen, dayDialogDate, dayDialogChips, dayDialogInfo, closeDayDialog,
     openCreate, closeCreate, createOpen: S.createOpen, create, stop: (e: React.MouseEvent) => e.stopPropagation(),
