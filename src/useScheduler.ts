@@ -139,7 +139,7 @@ export function useScheduler() {
     if (S.filterCompany.length > 0 && !S.filterCompany.includes(a.customer || o.customer)) return false;
     if (S.filterSite.length > 0 && !S.filterSite.includes(a.site1 || a.site2 || o.plant)) return false;
     if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.includes(a.department1 || a.department2 || '')) return false;
-    if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return false;
+    if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(a.purpose || o.purpose)) return false;
     if (S.filterApptType.length > 0 && !S.filterApptType.includes(apptAbbr(a))) return false;
     return true;
   };
@@ -349,6 +349,7 @@ export function useScheduler() {
           customer: d.sectionType === 'customer' ? d.customer : '',
           endCustomer: d.sectionType === 'customer' ? d.endCustomer : '',
           auditor1: d.sectionType === 'customer' ? d.auditor1 : '',
+          purpose: d.sectionType === 'customer' ? d.purpose : '',
           site2: d.sectionType === 'internal' ? d.site2 : '',
           area: d.sectionType === 'internal' ? d.area : '',
           auditor2: d.sectionType === 'internal' ? d.auditor2 : '',
@@ -401,7 +402,7 @@ export function useScheduler() {
         site1: a.site1 || '',
         customer: a.customer || (o ? o.customer : ''),
         endCustomer: a.endCustomer || '',
-        purpose: o ? o.purpose : '',
+        purpose: a.purpose || (o ? o.purpose : ''),
         auditor1: a.auditor1 || '',
         department1: a.department1 || '',
         site2: a.site2 || '',
@@ -432,6 +433,7 @@ export function useScheduler() {
       customer: d.sectionType === 'customer' ? d.customer : '',
       endCustomer: d.sectionType === 'customer' ? d.endCustomer : '',
       auditor1: d.sectionType === 'customer' ? d.auditor1 : '',
+      purpose: d.sectionType === 'customer' ? d.purpose : '',
       site2: d.sectionType === 'internal' ? d.site2 : '',
       area: d.sectionType === 'internal' ? d.area : '',
       auditor2: d.sectionType === 'internal' ? d.auditor2 : '',
@@ -534,7 +536,7 @@ export function useScheduler() {
       opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', transition: 'box-shadow .12s',
     };
     return {
-      aid: a.id, code: (ord ? apptAbbr(a) + ' · ' + (a.customer || ord.customer) : '?'), purpose: ord ? ord.purpose : '', style: base,
+      aid: a.id, code: (ord ? apptAbbr(a) + ' · ' + (a.customer || ord.customer) : '?'), purpose: a.purpose || (ord ? ord.purpose : ''), style: base,
       onClick: () => select(a.id),
       onDragStart: (e: React.DragEvent) => { e.stopPropagation(); setState({ drag: { kind: 'assign', id: a.id } }); },
       onDragEnd: () => setState({ drag: null, overCell: null }),
@@ -548,7 +550,7 @@ export function useScheduler() {
     const dim = chipDimmed(a);
     const color = accent || siteColorOf(a) || (pl ? pl.color : '#999');
     return {
-      aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: (ord ? apptAbbr(a) + ' · ' + (a.customer || ord.customer) : '?'), purpose: ord ? ord.purpose : '', plantCode: pl ? pl.code : '?',
+      aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: (ord ? apptAbbr(a) + ' · ' + (a.customer || ord.customer) : '?'), purpose: a.purpose || (ord ? ord.purpose : ''), plantCode: pl ? pl.code : '?',
       style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: '#fff', border: '1px solid #e8ebe4', borderLeft: '3px solid ' + color, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none' }),
       avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       onClick: () => select(a.id),
@@ -620,7 +622,7 @@ export function useScheduler() {
       const pl = plantById(o.plant);
       const custName = a.customer || o.customer || o.product;
       return {
-        code: apptAbbr(a) + ' · ' + custName, purpose: o.purpose, engName: e ? e.name.split(' ')[0] : '',
+        code: apptAbbr(a) + ' · ' + custName, purpose: a.purpose || o.purpose, engName: e ? e.name.split(' ')[0] : '',
         countTxt: '',
         dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: siteColorOf(a) || pl.color, flexShrink: 0 }),
         style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: '#23282a', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
@@ -795,7 +797,7 @@ export function useScheduler() {
     const color = siteColorOf(a) || (pl ? pl.color : '#999');
     const isInternal = !!(a.site2 || a.auditor2 || a.department2);
     const custName = isInternal ? (a.area || '') : (a.customer || (ord ? ord.customer : ''));
-    return { ...a, _customer: apptAbbr(a) + ' · ' + custName, _purpose: ord ? ord.purpose : '', _auditor: a.auditor1 || (eng ? eng.name : ''), _qa: eng ? eng.name : '', _color: color, _sel: sel, _onClick: () => select(a.id), _ord: ord, _eng: eng };
+    return { ...a, _customer: apptAbbr(a) + ' · ' + custName, _purpose: a.purpose || (ord ? ord.purpose : ''), _auditor: a.auditor1 || (eng ? eng.name : ''), _qa: eng ? eng.name : '', _color: color, _sel: sel, _onClick: () => select(a.id), _ord: ord, _eng: eng };
   });
   // group consecutive same-order same-eng assignments into merged spans
   const sorted = [...weekCalendarChips].sort((a, b) => {
@@ -1073,7 +1075,7 @@ export function useScheduler() {
     return {
       id: a.id,
       code: apptAbbr(a) + ' · ' + (isInternal ? (a.area || '') : (a.customer || o.customer)),
-      purpose: isInternal ? '' : o.purpose,
+      purpose: isInternal ? '' : (a.purpose || o.purpose),
       engName: isInternal ? (a.auditor2 || e.name) : e.name,
       color: siteColorOf(a) || (pl ? pl.color : '#999'),
     };

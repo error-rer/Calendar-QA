@@ -37,6 +37,7 @@ export interface Assignment {
   customer?: string;
   endCustomer?: string;
   auditor1?: string;
+  purpose?: string;
   site2?: string;
   area?: string;
   auditor2?: string;

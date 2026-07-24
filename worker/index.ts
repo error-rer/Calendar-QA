@@ -17,7 +17,7 @@ function engineerOut(r: any) {
 function assignmentOut(r: any) {
   return {
     id: r.id, eng: r.eng, order: r.order_id, day: r.day, week: r.week,
-    site1: r.site1, customer: r.customer, endCustomer: r.end_customer, auditor1: r.auditor1,
+    site1: r.site1, customer: r.customer, endCustomer: r.end_customer, auditor1: r.auditor1, purpose: r.purpose,
     site2: r.site2, area: r.area, auditor2: r.auditor2, department1: r.department1, department2: r.department2,
     major: r.major, minor: r.minor, ofi: r.ofi, request: r.request, utl1: r.utl1, utl2: r.utl2, utl3: r.utl3,
   };
@@ -162,11 +162,11 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
     if (method === 'POST' && path === 'assignments') {
       const d = body || {};
       await DB.prepare(
-        `INSERT INTO assignments (id, eng, order_id, day, week, site1, customer, end_customer, auditor1, site2, area, auditor2, department1, department2)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO assignments (id, eng, order_id, day, week, site1, customer, end_customer, auditor1, purpose, site2, area, auditor2, department1, department2)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
         d.id, d.eng || '', d.order || '', d.day ?? 0, d.week ?? 0,
-        d.site1 || '', d.customer || '', d.endCustomer || '', d.auditor1 || '',
+        d.site1 || '', d.customer || '', d.endCustomer || '', d.auditor1 || '', d.purpose || '',
         d.site2 || '', d.area || '', d.auditor2 || '', d.department1 || '', d.department2 || '',
       ).run();
       return json({ id: d.id }, 201);
@@ -180,11 +180,11 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       const existing = await DB.prepare('SELECT * FROM assignments WHERE id = ?').bind(assignMatch[1]).first<any>();
       if (!existing) return json({ error: 'not found' }, 404);
       await DB.prepare(
-        `UPDATE assignments SET eng = ?, order_id = ?, day = ?, week = ?, site1 = ?, customer = ?, end_customer = ?, auditor1 = ?,
+        `UPDATE assignments SET eng = ?, order_id = ?, day = ?, week = ?, site1 = ?, customer = ?, end_customer = ?, auditor1 = ?, purpose = ?,
            site2 = ?, area = ?, auditor2 = ?, department1 = ?, department2 = ? WHERE id = ?`,
       ).bind(
         d.eng ?? existing.eng, d.order ?? existing.order_id, d.day ?? existing.day, d.week ?? existing.week,
-        d.site1 ?? existing.site1, d.customer ?? existing.customer, d.endCustomer ?? existing.end_customer, d.auditor1 ?? existing.auditor1,
+        d.site1 ?? existing.site1, d.customer ?? existing.customer, d.endCustomer ?? existing.end_customer, d.auditor1 ?? existing.auditor1, d.purpose ?? existing.purpose,
         d.site2 ?? existing.site2, d.area ?? existing.area, d.auditor2 ?? existing.auditor2, d.department1 ?? existing.department1, d.department2 ?? existing.department2,
         assignMatch[1],
       ).run();
