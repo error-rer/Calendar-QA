@@ -5,6 +5,7 @@ import type {
   Department,
   EditDraft,
   EngineerForm,
+  Order,
   State,
   SubDepartment,
 } from './types';
@@ -129,16 +130,24 @@ export function useScheduler() {
   const todayWeekOffset = dateSlot(today).weekOffset;
   const todayMonthOffset = (today.getFullYear() - 2026) * 12 + (today.getMonth() - 5);
   const todayStr = today.getFullYear() + '-' + today.getMonth() + '-' + today.getDate();
+  // Single predicate shared by the week calendar, month grid, and the dimming used in the
+  // Person/Plant/Site/Timetable chip builders, so every surface honors the sidebar filters
+  // identically. Reads the assignment's own site/customer/department where it has one
+  // (matching the denormalized model), falling back to the order's for older/incomplete data.
+  const matchesFilters = (a: Assignment, o: Order) => {
+    if (S.filterEmp.length > 0 && !S.filterEmp.includes(a.eng)) return false;
+    if (S.filterCompany.length > 0 && !S.filterCompany.includes(a.customer || o.customer)) return false;
+    if (S.filterSite.length > 0 && !S.filterSite.includes(a.site1 || a.site2 || o.plant)) return false;
+    if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.includes(a.department1 || a.department2 || '')) return false;
+    if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return false;
+    if (S.filterApptType.length > 0 && !S.filterApptType.includes(apptAbbr(a))) return false;
+    return true;
+  };
   const chipDimmed = (a: Assignment) => {
     const o = orderById(a.order);
     if (!o) return false;
     if (!S.activePlants[o.plant]) return true;
-    if (S.filterEmp.length > 0 && !S.filterEmp.includes(a.eng)) return true;
-    if (S.filterCompany.length > 0 && !S.filterCompany.includes(o.customer)) return true;
-    if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.some((t) => o.customer === t || o.plant === t)) return true;
-    if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return true;
-    if (S.filterApptType.length > 0 && !S.filterApptType.includes(apptAbbr(a))) return true;
-    return false;
+    return !matchesFilters(a, o);
   };
 
   const log = (who: string, text: string, color: string) => {
@@ -593,24 +602,11 @@ export function useScheduler() {
     const all = weekend ? [] : S.assignments.filter((a) => a.week === slot.weekOffset && a.day === slot.wd);
     const appointments = all.filter((a) => {
       const o = orderById(a.order);
-      if (!o) return false;
-      if (S.filterCompany.length > 0 && !S.filterCompany.includes(o.customer)) return false;
-      if (S.filterSite.length > 0 && !S.filterSite.includes(o.plant)) return false;
-      if (S.filterEmp.length > 0 && !S.filterEmp.includes(a.eng)) return false;
-      if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.some((t) => o.customer === t || o.plant === t)) return false;
-      if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return false;
-      if (S.filterApptType.length > 0 && !S.filterApptType.includes(apptAbbr(a))) return false;
-      return true;
+      return !!o && matchesFilters(a, o);
     });
     all.forEach((a) => {
       const o = orderById(a.order);
-      if (!o) return;
-      if (S.filterCompany.length > 0 && !S.filterCompany.includes(o.customer)) return;
-      if (S.filterSite.length > 0 && !S.filterSite.includes(o.plant)) return;
-      if (S.filterEmp.length > 0 && !S.filterEmp.includes(a.eng)) return;
-      if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.some((t) => o.customer === t || o.plant === t)) return;
-      if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return;
-      if (S.filterApptType.length > 0 && !S.filterApptType.includes(apptAbbr(a))) return;
+      if (!o || !matchesFilters(a, o)) return;
       monthCustomerSet.add(o.customer);
       if (internalPlants.has(o.plant)) monthInternalSet.add(o.plant);
       const g = monthOrderAgg[o.id] || (monthOrderAgg[o.id] = { appointments: 0, days: {}, engs: {} });
@@ -646,7 +642,7 @@ export function useScheduler() {
     .filter((o) => {
       if (S.filterCompany.length > 0 && !S.filterCompany.includes(o.customer)) return false;
       if (S.filterSite.length > 0 && !S.filterSite.includes(o.plant)) return false;
-      if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.some((t) => o.customer === t || o.plant === t)) return false;
+      if (S.filterAuditTopic.length > 0 && !S.assignments.some((a) => a.order === o.id && S.filterAuditTopic.includes(a.department1 || a.department2 || ''))) return false;
       if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return false;
       return true;
     })
@@ -704,7 +700,11 @@ export function useScheduler() {
   const personRows = S.engineers.map((e) => {
     const cells = [0, 1, 2, 3, 4].map((day) => {
       const cellId = e.id + '-' + day;
-      const chips = wk.filter((a) => a.eng === e.id && a.day === day).map((a) => buildChip(a));
+      const chips = wk.filter((a) => {
+        if (a.eng !== e.id || a.day !== day) return false;
+        const o = orderById(a.order);
+        return !!o && matchesFilters(a, o);
+      }).map((a) => buildChip(a));
       const over = S.overCell === cellId;
       return {
         cellId, chips, empty: chips.length === 0,
@@ -740,7 +740,7 @@ export function useScheduler() {
       const chips = wk
         .filter((a) => {
           const o = orderById(a.order);
-          return o && o.customer === topic && a.day === day;
+          return !!o && o.customer === topic && a.day === day && matchesFilters(a, o);
         })
         .map((a) => buildPersonChip(a));
       return { chips, empty: chips.length === 0, style: cellShell };
@@ -752,7 +752,7 @@ export function useScheduler() {
       const chips = wk
         .filter((a) => {
           const o = orderById(a.order);
-          return o && o.plant === p.id && a.day === day;
+          return !!o && o.plant === p.id && a.day === day && matchesFilters(a, o);
         })
         .map((a) => buildPersonChip(a, p.color));
       return { chips, empty: chips.length === 0, style: cellShell };
@@ -765,7 +765,11 @@ export function useScheduler() {
   const siteRows = siteNames.map((dn) => {
     const engs = S.engineers.filter((e) => e.department === dn);
     const cells = [0, 1, 2, 3, 4].map((day) => {
-      const chips = wk.filter((a) => engs.some((e) => e.id === a.eng) && a.day === day).map((a) => buildPersonChip(a, siteColorMap[dn]));
+      const chips = wk.filter((a) => {
+        if (!engs.some((e) => e.id === a.eng) || a.day !== day) return false;
+        const o = orderById(a.order);
+        return !!o && matchesFilters(a, o);
+      }).map((a) => buildPersonChip(a, siteColorMap[dn]));
       return { chips, empty: chips.length === 0, style: cellShell };
     });
     return {
@@ -781,14 +785,7 @@ export function useScheduler() {
   // ---- week calendar (Google Calendar-style all-day events per day column) ----
   const weekFiltered = wk.filter((a) => {
     const o = orderById(a.order);
-    if (!o) return false;
-    if (S.filterCompany.length > 0 && !S.filterCompany.includes(o.customer)) return false;
-    if (S.filterSite.length > 0 && !S.filterSite.includes(o.plant)) return false;
-    if (S.filterEmp.length > 0 && !S.filterEmp.includes(a.eng)) return false;
-    if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.some((t) => o.customer === t || o.plant === t)) return false;
-    if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return false;
-    if (S.filterApptType.length > 0 && !S.filterApptType.includes(apptAbbr(a))) return false;
-    return true;
+    return !!o && matchesFilters(a, o);
   });
   const weekCalendarChips = weekFiltered.map((a) => {
     const ord = orderById(a.order);
@@ -856,7 +853,11 @@ export function useScheduler() {
   const timetableRows = timeSlots.map((sl) => {
     const cells = [0, 1, 2, 3, 4].map((day) => {
       const chips = timetableOpenEngId ? wk
-        .filter((a) => a.eng === timetableOpenEngId && a.day === day)
+        .filter((a) => {
+          if (a.eng !== timetableOpenEngId || a.day !== day) return false;
+          const o = orderById(a.order);
+          return !!o && matchesFilters(a, o);
+        })
         .map((a) => buildChip(a)) : [];
       return { chips, empty: chips.length === 0, style: cellShell };
     });
@@ -1057,15 +1058,23 @@ export function useScheduler() {
       })()
     : '';
   const dayDialogAssignments = dayDialogOpen
-    ? S.assignments.filter((a) => a.week === S.dayDialog!.weekOffset && a.day === S.dayDialog!.day)
+    ? S.assignments.filter((a) => {
+        if (a.week !== S.dayDialog!.weekOffset || a.day !== S.dayDialog!.day) return false;
+        const o = orderById(a.order);
+        return !!o && matchesFilters(a, o);
+      })
     : [];
   const dayDialogChips = dayDialogAssignments.map((a) => {
     const o = orderById(a.order);
     const e = engById(a.eng);
     if (!o || !e) return null;
     const pl = plantById(o.plant);
+    const isInternal = !!(a.site2 || a.auditor2 || a.department2);
     return {
-      id: a.id, code: apptAbbr(a) + ' · ' + (a.customer || o.customer), purpose: o.purpose, engName: e.name,
+      id: a.id,
+      code: apptAbbr(a) + ' · ' + (isInternal ? (a.area || '') : (a.customer || o.customer)),
+      purpose: isInternal ? '' : o.purpose,
+      engName: isInternal ? (a.auditor2 || e.name) : e.name,
       color: siteColorOf(a) || (pl ? pl.color : '#999'),
     };
   }).filter(Boolean) as { id: string; code: string; purpose: string; engName: string; color: string }[];
