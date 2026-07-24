@@ -88,7 +88,7 @@ export function Schedule({ vm }: { vm: VM }) {
               ) : (
                 <div style={css('display:flex;flex-direction:column;gap:6px')}>
                   {vm.dayDialogChips.map((chip) => (
-                    <div key={chip.id} style={css('display:flex;align-items:center;gap:9px;padding:9px 11px;background:#fff;border:1px solid #e4e7e0;border-left:3px solid ' + chip.color + ';border-radius:7px')}>
+                    <div key={chip.id} onClick={chip.onClick} style={css('display:flex;align-items:center;gap:9px;padding:9px 11px;background:#fff;border:1px solid #e4e7e0;border-left:3px solid ' + chip.color + ';border-radius:7px;cursor:pointer')}>
                       <div style={css('min-width:0;flex:1')}>
                         <div style={css('font-size:12px;font-weight:600;color:#23282a')}>{chip.code}</div>
                         <div style={css('display:flex;gap:8px;margin-top:2px')}>
