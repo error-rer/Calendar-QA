@@ -1042,10 +1042,7 @@ export function useScheduler() {
   const typeIsIA = S.filterApptType.length === 1 && S.filterApptType[0] === 'IA';
   const customerTopicOptions = typeIsIA ? [] : S.customerDepartmentOptions;
   const internalTopicOptions = typeIsCS ? [] : S.internalDepartmentOptions;
-  const companyNames = [...new Set([
-    ...S.orders.map((o) => o.customer).filter((c): c is string => Boolean(c)),
-    ...S.assignments.map((a) => a.customer).filter((c): c is string => Boolean(c)),
-  ])].sort();
+  const companyNames = S.customerOptions.slice().sort();
   const auditTypes = typeIsIA ? [] : S.purposeOptions;
   const apptTypeOptions = [{ value: 'CS', label: 'Customer (CS)' }, { value: 'IA', label: 'Internal Audit (IA)' }];
   const hasFilters = !!(S.filterEmp.length || S.filterSite.length || S.filterCompany.length || S.filterAuditType.length || S.filterAuditTopic.length || S.filterApptType.length) || S.plants.some((p) => !S.activePlants[p.id]);
