@@ -1037,6 +1037,7 @@ export function useScheduler() {
   // ---- filters VM ----
   const employeeOptions = [{ value: '', label: 'All employees' }].concat(S.engineers.filter((e) => !['unassigned', '111', 'ant', 'bird'].includes(e.name.toLowerCase())).map((e) => ({ value: e.id, label: e.name })));
   const siteOptions = [{ value: '', label: 'All sites' }, ...S.siteCodeOptions.map((s) => ({ value: s, label: s }))];
+  const siteColorList = S.siteCodeOptions.map((s) => ({ site: s, color: siteCodeColor[s] || '#999' }));
   // filter dropdowns share the same admin-managed lists as the appointment form
   // (Manage > Options), so adding/removing an option there updates both. When the
   // Type filter narrows to just one type, the Department/Purpose dropdowns narrow
@@ -1087,7 +1088,7 @@ export function useScheduler() {
   // ---- responsive styles ----
   const sidebarStyle: CSSProperties = isMobile
     ? { position: 'fixed', top: 0, left: 0, bottom: 0, width: '86%', maxWidth: '320px', zIndex: 80, background: '#fbfcfa', borderRight: '1px solid #d8dcd4', display: 'flex', flexDirection: 'column', boxShadow: '0 0 44px rgba(20,25,30,.28)', transform: S.sidebarOpen ? 'translateX(0)' : 'translateX(-104%)', transition: 'transform .22s ease', overflowY: 'auto' }
-    : { width: '280px', flexShrink: 0, background: '#fbfcfa', borderRight: '1px solid #d8dcd4', display: 'flex', flexDirection: 'column', minHeight: 0 };
+    : { width: '280px', flexShrink: 0, background: '#fbfcfa', borderRight: '1px solid #d8dcd4', display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' };
   const toolbarStyle: CSSProperties = isMobile
     ? { flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', background: '#fff', borderBottom: '1px solid #e2e5de', flexWrap: 'wrap' }
     : { height: '46px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '12px', padding: '0 16px', background: '#fff', borderBottom: '1px solid #e2e5de' };
@@ -1181,7 +1182,7 @@ export function useScheduler() {
     addPurposeOption: (v: string) => addOption('purposeOptions', v), removePurposeOption: (v: string) => removeOption('purposeOptions', v),
     addCustomerDepartmentOption: (v: string) => addOption('customerDepartmentOptions', v), removeCustomerDepartmentOption: (v: string) => removeOption('customerDepartmentOptions', v),
     addInternalDepartmentOption: (v: string) => addOption('internalDepartmentOptions', v), removeInternalDepartmentOption: (v: string) => removeOption('internalDepartmentOptions', v),
-    siteCodeOptions: S.siteCodeOptions, customerOptions: S.customerOptions,
+    siteCodeOptions: S.siteCodeOptions, customerOptions: S.customerOptions, siteColorList,
     addSiteCodeOption: (v: string) => addOption('siteCodeOptions', v), removeSiteCodeOption: (v: string) => removeOption('siteCodeOptions', v),
     addCustomerOption: (v: string) => addOption('customerOptions', v), removeCustomerOption: (v: string) => removeOption('customerOptions', v),
   };

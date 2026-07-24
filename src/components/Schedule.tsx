@@ -172,6 +172,18 @@ function Sidebar({ vm }: { vm: VM }) {
           ))}
         </div>
       </div>
+
+      <div style={css('padding:13px 15px 14px;border-top:1px solid #e7eae3;flex-shrink:0')}>
+        <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.6px;margin-bottom:8px")}>COLOR CODE SITE</div>
+        <div style={css('display:flex;flex-direction:column;gap:7px')}>
+          {vm.siteColorList.map((s) => (
+            <div key={s.site} style={css('display:flex;align-items:center;gap:8px')}>
+              <span style={css('width:10px;height:10px;border-radius:3px;flex-shrink:0;background:' + s.color)} />
+              <span style={css('font-size:11.5px;color:#3c423d')}>{s.site}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </aside>
   );
 }
