@@ -99,14 +99,12 @@ export function useScheduler() {
   };
   const engById = (id: string) => S.engineers.find((e) => e.id === id);
   const orderById = (id: string) => S.orders.find((o) => o.id === id);
-  // red for U1, green shades for U2 family, blue shades for U3 family
-  const siteCodeColor: Record<string, string> = { U1: '#c0392b', U2: '#2e7d32', U2A: '#66bb6a', U2B: '#1b5e20', U3: '#1e5fa8', U3A: '#4a90d9', U3T: '#123f73' };
-  const plantById = (id: string) => S.plants.find((p) => p.id === id) || { id: '', name: id || 'Unknown', loc: '', code: (id || '?').slice(0, 3).toUpperCase(), color: siteCodeColor[id] || '#999', active: true };
+  const plantById = (id: string) => S.plants.find((p) => p.id === id) || { id: '', name: id || 'Unknown', loc: '', code: (id || '?').slice(0, 3).toUpperCase(), color: S.siteColors[id] || '#999', active: true };
   const initials = (name: string) =>
     name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
   const siteToDept = (site: string): Department => (site.startsWith('U3') ? 'U3' : site.startsWith('U2') ? 'U2' : 'U1');
   /** Leading color-bar color for an appointment, keyed by its own site (site1 for Customer, site2 for Internal Audit). */
-  const siteColorOf = (a: Assignment) => siteCodeColor[a.site1 || a.site2 || ''] || undefined;
+  const siteColorOf = (a: Assignment) => S.siteColors[a.site1 || a.site2 || ''] || undefined;
   /** "CS" for Customer appointments, "IA" for Internal Audit. */
   const apptAbbr = (a: Assignment) => (a.site2 || a.auditor2 || a.department2 ? 'IA' : 'CS');
   const fmtDate = (d: Date) => {
@@ -521,6 +519,16 @@ export function useScheduler() {
   };
   const removeOption = (field: OptionListField, value: string) =>
     setState((s) => ({ [field]: s[field].filter((x) => x !== value) }));
+  const setSiteColor = (site: string, color: string) =>
+    setState((s) => ({ siteColors: { ...s.siteColors, [site]: color } }));
+  const removeSiteCodeOption = (v: string) => {
+    removeOption('siteCodeOptions', v);
+    setState((s) => {
+      const siteColors = { ...s.siteColors };
+      delete siteColors[v];
+      return { siteColors };
+    });
+  };
 
   // ---- chip builders ----
   const buildChip = (a: Assignment) => {
@@ -762,7 +770,6 @@ export function useScheduler() {
     return { name: p.name, loc: p.loc, cells };
   }), ...customerAuditRows];
 
-  const siteColorMap: Record<string, string> = { U1: '#2f6df0', U2: '#c2620c', U3: '#0f9d8c' };
   const siteNames = [...new Set(S.engineers.map((e) => e.department))];
   const siteRows = siteNames.map((dn) => {
     const engs = S.engineers.filter((e) => e.department === dn);
@@ -771,12 +778,12 @@ export function useScheduler() {
         if (!engs.some((e) => e.id === a.eng) || a.day !== day) return false;
         const o = orderById(a.order);
         return !!o && matchesFilters(a, o);
-      }).map((a) => buildPersonChip(a, siteColorMap[dn]));
+      }).map((a) => buildPersonChip(a, S.siteColors[dn]));
       return { chips, empty: chips.length === 0, style: cellShell };
     });
     return {
       name: dn, engCount: engs.length, engNames: engs.map((e) => e.name.split(' ')[0]),
-      color: siteColorMap[dn] || '#999', cells,
+      color: S.siteColors[dn] || '#999', cells,
     };
   });
 
@@ -1037,7 +1044,7 @@ export function useScheduler() {
   // ---- filters VM ----
   const employeeOptions = [{ value: '', label: 'All employees' }].concat(S.engineers.filter((e) => !['unassigned', '111', 'ant', 'bird'].includes(e.name.toLowerCase())).map((e) => ({ value: e.id, label: e.name })));
   const siteOptions = [{ value: '', label: 'All sites' }, ...S.siteCodeOptions.map((s) => ({ value: s, label: s }))];
-  const siteColorList = S.siteCodeOptions.map((s) => ({ site: s, color: siteCodeColor[s] || '#999' }));
+  const siteColorList = S.siteCodeOptions.map((s) => ({ site: s, color: S.siteColors[s] || '#999' }));
   // filter dropdowns share the same admin-managed lists as the appointment form
   // (Manage > Options), so adding/removing an option there updates both. When the
   // Type filter narrows to just one type, the Department/Purpose dropdowns narrow
@@ -1182,8 +1189,8 @@ export function useScheduler() {
     addPurposeOption: (v: string) => addOption('purposeOptions', v), removePurposeOption: (v: string) => removeOption('purposeOptions', v),
     addCustomerDepartmentOption: (v: string) => addOption('customerDepartmentOptions', v), removeCustomerDepartmentOption: (v: string) => removeOption('customerDepartmentOptions', v),
     addInternalDepartmentOption: (v: string) => addOption('internalDepartmentOptions', v), removeInternalDepartmentOption: (v: string) => removeOption('internalDepartmentOptions', v),
-    siteCodeOptions: S.siteCodeOptions, customerOptions: S.customerOptions, siteColorList,
-    addSiteCodeOption: (v: string) => addOption('siteCodeOptions', v), removeSiteCodeOption: (v: string) => removeOption('siteCodeOptions', v),
+    siteCodeOptions: S.siteCodeOptions, customerOptions: S.customerOptions, siteColorList, siteColors: S.siteColors, setSiteColor,
+    addSiteCodeOption: (v: string) => addOption('siteCodeOptions', v), removeSiteCodeOption,
     addCustomerOption: (v: string) => addOption('customerOptions', v), removeCustomerOption: (v: string) => removeOption('customerOptions', v),
   };
 }

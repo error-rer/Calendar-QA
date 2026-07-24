@@ -20,6 +20,8 @@ export const initialPurposeOptions = ['site qualification', 'system audit', 'pro
 export const initialCustomerDepartmentOptions = ['ESD Audit', 'QS Audit', 'IATF16949/ISO9001', 'ISO14001/ISO45001', 'RBA'];
 export const initialInternalDepartmentOptions = ['QMS', 'EHS', 'ESD'];
 export const initialSiteCodeOptions = ['U1', 'U2', 'U2A', 'U2B', 'U3', 'U3A', 'U3T'];
+// red for U1, green shades for U2 family, blue shades for U3 family
+export const initialSiteColors: Record<string, string> = { U1: '#c0392b', U2: '#2e7d32', U2A: '#66bb6a', U2B: '#1b5e20', U3: '#1e5fa8', U3A: '#4a90d9', U3T: '#123f73' };
 
 export function initialState(): State {
   return {
@@ -61,6 +63,7 @@ export function initialState(): State {
     customerDepartmentOptions: initialCustomerDepartmentOptions.slice(),
     internalDepartmentOptions: initialInternalDepartmentOptions.slice(),
     siteCodeOptions: initialSiteCodeOptions.slice(),
+    siteColors: { ...initialSiteColors },
     customerOptions: [],
     plants: initialPlants.map((p) => ({ ...p })),
     engineers: [],

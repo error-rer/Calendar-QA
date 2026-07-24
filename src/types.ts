@@ -160,6 +160,7 @@ export interface State {
   customerDepartmentOptions: string[];
   internalDepartmentOptions: string[];
   siteCodeOptions: string[];
+  siteColors: Record<string, string>;
   customerOptions: string[];
   plants: Plant[];
   engineers: Engineer[];

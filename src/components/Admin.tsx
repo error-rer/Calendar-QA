@@ -62,7 +62,7 @@ function EngineersTable({ vm }: { vm: VM }) {
   );
 }
 
-function TagListEditor({ title, count, values, onAdd, onRemove, placeholder }: { title: string; count: number; values: string[]; onAdd: (v: string) => void; onRemove: (v: string) => void; placeholder: string }) {
+function TagListEditor({ title, count, values, onAdd, onRemove, placeholder, colorFor, onColorChange }: { title: string; count: number; values: string[]; onAdd: (v: string) => void; onRemove: (v: string) => void; placeholder: string; colorFor?: (v: string) => string; onColorChange?: (v: string, color: string) => void }) {
   const [draft, setDraft] = useState('');
   const submit = () => { onAdd(draft); setDraft(''); };
   return (
@@ -72,7 +72,16 @@ function TagListEditor({ title, count, values, onAdd, onRemove, placeholder }: {
       </div>
       <div style={css('padding:14px 18px;display:flex;flex-wrap:wrap;gap:8px')}>
         {values.map((v) => (
-          <div key={v} style={css('display:flex;align-items:center;gap:6px;background:#f4f6f1;border:1px solid #e0e3dc;border-radius:20px;padding:5px 6px 5px 12px;font-size:12px;color:#3c423d')}>
+          <div key={v} style={css('display:flex;align-items:center;gap:6px;background:#f4f6f1;border:1px solid #e0e3dc;border-radius:20px;padding:5px 6px 5px ' + (colorFor ? '8px' : '12px') + ';font-size:12px;color:#3c423d')}>
+            {colorFor && onColorChange && (
+              <input
+                type="color"
+                value={colorFor(v)}
+                onChange={(e) => onColorChange(v, e.target.value)}
+                title={'Edit color for ' + v}
+                style={css('width:16px;height:16px;padding:0;border:none;border-radius:50%;cursor:pointer;background:none;flex-shrink:0')}
+              />
+            )}
             {v}
             <button onClick={() => onRemove(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1')}>✕</button>
           </div>
@@ -127,6 +136,8 @@ function OptionsPanel({ vm }: { vm: VM }) {
         onAdd={vm.addSiteCodeOption}
         onRemove={vm.removeSiteCodeOption}
         placeholder="e.g. U4"
+        colorFor={(v) => vm.siteColors[v] || '#999999'}
+        onColorChange={vm.setSiteColor}
       />
       <TagListEditor
         title="Customer"
