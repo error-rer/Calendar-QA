@@ -525,7 +525,7 @@ export function useScheduler() {
       opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', transition: 'box-shadow .12s',
     };
     return {
-      aid: a.id, code: (ord ? apptAbbr(a) + ' · ' + ord.customer : '?'), purpose: ord ? ord.purpose : '', style: base,
+      aid: a.id, code: (ord ? apptAbbr(a) + ' · ' + (a.customer || ord.customer) : '?'), purpose: ord ? ord.purpose : '', style: base,
       onClick: () => select(a.id),
       onDragStart: (e: React.DragEvent) => { e.stopPropagation(); setState({ drag: { kind: 'assign', id: a.id } }); },
       onDragEnd: () => setState({ drag: null, overCell: null }),
@@ -539,7 +539,7 @@ export function useScheduler() {
     const dim = chipDimmed(a);
     const color = accent || siteColorOf(a) || (pl ? pl.color : '#999');
     return {
-      aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: (ord ? apptAbbr(a) + ' · ' + ord.customer : '?'), purpose: ord ? ord.purpose : '', plantCode: pl ? pl.code : '?',
+      aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: (ord ? apptAbbr(a) + ' · ' + (a.customer || ord.customer) : '?'), purpose: ord ? ord.purpose : '', plantCode: pl ? pl.code : '?',
       style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: '#fff', border: '1px solid #e8ebe4', borderLeft: '3px solid ' + color, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none' }),
       avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       onClick: () => select(a.id),
@@ -892,7 +892,7 @@ export function useScheduler() {
       onDelete: () => removeComment(selA.id, m.id),
     }));
     return {
-      aid: selA.id, orderCode: ord.code, product: ord.product, customer: ord.customer, plantName: pl.name + ' - ' + pl.loc,
+      aid: selA.id, orderCode: ord.code, product: selA.endCustomer || selA.area || ord.product, customer: selA.customer || ord.customer, plantName: pl.name + ' - ' + pl.loc,
       engName: eng.name, engRole: eng.role, engInitials: initials(eng.name), dayName: dayNames[selA.day],
       avatarStyle: sx({ width: '34px', height: '34px', borderRadius: '9px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '12px', fontWeight: 600, flexShrink: 0 }),
       department: eng.department, subDepartments: eng.subDepartments,
@@ -901,7 +901,7 @@ export function useScheduler() {
       onKey: (e: React.KeyboardEvent) => { if (e.key === 'Enter') addComment(); },
       addComment: () => addComment(), remove: () => removeAssign(selA.id), duplicate: () => duplicate(selA.id), close: () => setState({ selected: null }),
       onEdit: () => { closeSidebar(); openEdit(selA.id); },
-      site1: selA.site1, customerLabel: selA.customer, endCustomer: selA.endCustomer,
+      site1: selA.site1, endCustomer: selA.endCustomer,
       auditor1: selA.auditor1, site2: selA.site2, area: selA.area, auditor2: selA.auditor2,
       department1: selA.department1, department2: selA.department2,
       major: selA.major ?? 0, minor: selA.minor ?? 0, ofi: selA.ofi ?? 0, request: selA.request ?? 0,
