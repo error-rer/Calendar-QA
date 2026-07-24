@@ -249,15 +249,18 @@ export function useScheduler() {
   };
   const removeAssign = (aid: string) => {
     const a = S.assignments.find((x) => x.id === aid);
-    api.deleteAssignment(aid).catch(() => {});
+    if (!a) return;
+    // a multi-day appointment is several sibling assignments (same order + eng,
+    // one per day) — remove the whole span, not just the one day that was clicked.
+    const siblingIds = S.assignments.filter((x) => x.eng === a.eng && x.order === a.order).map((x) => x.id);
+    siblingIds.forEach((id) => api.deleteAssignment(id).catch(() => {}));
     setState((s) => {
-      const { [aid]: _removed, ...comments } = s.comments;
-      return { assignments: s.assignments.filter((x) => x.id !== aid), comments, selected: null };
+      const siblingSet = new Set(siblingIds);
+      const comments = Object.fromEntries(Object.entries(s.comments).filter(([cid]) => !siblingSet.has(cid)));
+      return { assignments: s.assignments.filter((x) => !siblingSet.has(x.id)), comments, selected: null };
     });
-    if (a) {
-      const ord = orderById(a.order);
-      if (ord) log('You', `removed ${ord.code} appointment`, '#2756d6');
-    }
+    const ord = orderById(a.order);
+    if (ord) log('You', `removed ${ord.code} appointment`, '#2756d6');
   };
   const duplicate = (aid: string) => {
     const a = S.assignments.find((x) => x.id === aid);
