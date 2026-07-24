@@ -628,9 +628,10 @@ export function useScheduler() {
       const o = orderById(a.order)!;
       const e = engById(a.eng);
       const pl = plantById(o.plant);
-      const custName = a.customer || o.customer || o.product;
+      const isInternal = !!(a.site2 || a.auditor2 || a.department2);
+      const custName = isInternal ? (a.area || '') : (a.customer || o.customer || o.product);
       return {
-        code: apptAbbr(a) + ' · ' + custName, purpose: a.purpose || o.purpose, engName: e ? e.name.split(' ')[0] : '',
+        code: apptAbbr(a) + ' · ' + custName, purpose: isInternal ? '' : (a.purpose || o.purpose), engName: isInternal ? (a.auditor2 || e?.name.split(' ')[0] || '') : (e ? e.name.split(' ')[0] : ''),
         countTxt: '',
         dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: siteColorOf(a) || pl.color, flexShrink: 0 }),
         style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: '#23282a', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
