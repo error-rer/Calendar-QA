@@ -125,6 +125,10 @@ export function useScheduler() {
     const diff = Math.round((d.getTime() - base.getTime()) / 86400000);
     return { weekOffset: Math.floor(diff / 7), wd: (d.getDay() + 6) % 7 };
   };
+  const today = new Date();
+  const todayWeekOffset = dateSlot(today).weekOffset;
+  const todayMonthOffset = (today.getFullYear() - 2026) * 12 + (today.getMonth() - 5);
+  const todayStr = today.getFullYear() + '-' + today.getMonth() + '-' + today.getDate();
   const chipDimmed = (a: Assignment) => {
     const o = orderById(a.order);
     if (!o) return false;
@@ -145,7 +149,7 @@ export function useScheduler() {
   };
 
   // ---- auth / nav ----
-  const signIn = () => setState({ authed: true });
+  const signIn = () => setState({ authed: true, weekOffset: todayWeekOffset, monthOffset: todayMonthOffset });
   const signOut = () => setState({ authed: false, userMenuOpen: false, selected: null });
   const goSchedule = () => setState({ page: 'schedule', userMenuOpen: false });
   const goAdmin = () => setState({ page: 'admin', userMenuOpen: false, selected: null });
@@ -213,7 +217,7 @@ export function useScheduler() {
   const copyWeek = () => {
     const off = S.weekOffset;
     const clones = S.assignments
-      .filter((a) => a.week === 0)
+      .filter((a) => a.week === todayWeekOffset)
       .map((a) => ({ ...a, id: 'a' + ids.current.id++, week: off }));
     clones.forEach((c) => api.createAssignment(c).catch(() => {}));
     setState((s) => ({ assignments: s.assignments.concat(clones) }));
@@ -562,7 +566,7 @@ export function useScheduler() {
     };
   });
   const weekLabel = days[0].date + ' – ' + days[4].date;
-  const weekTag = S.weekOffset === 0 ? 'CURRENT WEEK' : S.weekOffset > 0 ? '+' + S.weekOffset + ' WK AHEAD' : Math.abs(S.weekOffset) + ' WK BACK';
+  const weekTag = S.weekOffset === todayWeekOffset ? 'CURRENT WEEK' : S.weekOffset > todayWeekOffset ? '+' + (S.weekOffset - todayWeekOffset) + ' WK AHEAD' : Math.abs(S.weekOffset - todayWeekOffset) + ' WK BACK';
   const gridCols = '220px repeat(5, minmax(168px, 1fr))';
 
   // ======================= MONTH SCALE =======================
@@ -574,7 +578,6 @@ export function useScheduler() {
   const monthName = monthNames[mMon] + ' ' + mYear;
   const firstWd = mb.getDay();
   const daysInMonth = new Date(mYear, mMon + 1, 0).getDate();
-  const todayStr = '2026-5-29';
   const monthWeekdayHeads = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
   const blankCellStyle = (): CSSProperties => ({ background: '#f8f9f6', border: '1px solid #e6e9e2', minHeight: isMobile ? '52px' : '112px' });
   const monthCells: MonthCell[] = [];
@@ -666,7 +669,7 @@ export function useScheduler() {
   const monthScheduledCount = monthOrders.filter((o) => o.scheduled).length;
   const periodLabel = isMonth ? monthName : weekLabel;
   const periodTag = isMonth
-    ? (S.monthOffset || 0) === 0 ? 'THIS MONTH' : (S.monthOffset > 0 ? '+' : '') + S.monthOffset + ' MO'
+    ? (S.monthOffset || 0) === todayMonthOffset ? 'THIS MONTH' : (S.monthOffset - todayMonthOffset > 0 ? '+' : '') + (S.monthOffset - todayMonthOffset) + ' MO'
     : weekTag;
 
   const daySel = days.map((d, i) => {
@@ -925,7 +928,7 @@ export function useScheduler() {
   };
 
   // ---- profile VM ----
-  const myWeekAppointments = S.assignments.filter((a) => a.week === 0).length;
+  const myWeekAppointments = S.assignments.filter((a) => a.week === todayWeekOffset).length;
   const profile = {
     name: 'Jordan Lee', role: 'QA Planner - Operations', email: 'jordan.lee@nexsil.com', phone: '+1 (480) 555-0173', team: 'Front-end Quality, Reliability', joined: 'Joined March 2023',
     stats: [
@@ -1141,7 +1144,7 @@ export function useScheduler() {
     showTimetable, timetableRows, timetableGridCols, timetableEngName: timetableEng?.name || '',
     closeTimetable, mobileTimetableRows,
     presence, activity, detail,
-    emptyWeek: S.weekOffset !== 0 && wk.length === 0 && !isMonth, copyWeek,
+    emptyWeek: S.weekOffset !== todayWeekOffset && wk.length === 0 && !isMonth, copyWeek,
     toggleSidebar, closeSidebar, showSidebarBackdrop: isMobile && S.sidebarOpen,
     sidebarStyle, toolbarStyle, detailAsideStyle, modalOverlayStyle, modalCardStyle, modalColsStyle, modalColLeftStyle, modalColRightStyle,
     adminMainStyle, adminWrapStyle, adminStatGridStyle, loginWrapStyle, loginBrandStyle, loginFormWrapStyle,
