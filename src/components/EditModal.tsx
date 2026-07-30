@@ -26,6 +26,9 @@ export function EditModal({ vm }: { vm: VM }) {
             internalDepartmentOptions={vm.internalDepartmentOptions}
             siteOptions={vm.siteCodeOptions}
             customerOptions={vm.customerOptions}
+            assignments={vm.assignments}
+            engineers={vm.engineers}
+            editingTargetId={ed.targetId}
           />
         </div>
 

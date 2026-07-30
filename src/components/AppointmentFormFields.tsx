@@ -1,4 +1,6 @@
+import type { Assignment, Engineer } from '../types';
 import { css } from '../ui';
+import { AvailabilityDatePicker } from './AvailabilityDatePicker';
 
 const fld = css("display:flex;flex-direction:column;gap:4px");
 const lbl = css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px");
@@ -31,6 +33,9 @@ export function AppointmentFormFields({
   internalDepartmentOptions,
   siteOptions,
   customerOptions,
+  assignments = [],
+  engineers = [],
+  editingTargetId,
 }: {
   idPrefix: string;
   values: AppointmentFormValues;
@@ -40,6 +45,9 @@ export function AppointmentFormFields({
   internalDepartmentOptions: string[];
   siteOptions: string[];
   customerOptions: string[];
+  assignments?: Assignment[];
+  engineers?: Engineer[];
+  editingTargetId?: string;
 }) {
   const id = (name: string) => `${idPrefix}-${name}`;
   return (
@@ -116,6 +124,19 @@ export function AppointmentFormFields({
               <label htmlFor={id('dateTo')} style={lbl}>TO</label>
               <input id={id('dateTo')} type="date" value={v.dateTo} onChange={(e) => onChange({ dateTo: e.target.value })} style={inp} />
             </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <AvailabilityDatePicker
+                sectionType="customer"
+                site={v.site1}
+                auditor={v.auditor1}
+                dateFrom={v.dateFrom}
+                dateTo={v.dateTo}
+                onChange={onChange}
+                assignments={assignments}
+                engineers={engineers}
+                editingTargetId={editingTargetId}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -153,6 +174,19 @@ export function AppointmentFormFields({
             <div style={fld}>
               <label htmlFor={id('dateTo2')} style={lbl}>TO</label>
               <input id={id('dateTo2')} type="date" value={v.dateTo} onChange={(e) => onChange({ dateTo: e.target.value })} style={inp} />
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <AvailabilityDatePicker
+                sectionType="internal"
+                site={v.site2}
+                auditor={v.auditor2}
+                dateFrom={v.dateFrom}
+                dateTo={v.dateTo}
+                onChange={onChange}
+                assignments={assignments}
+                engineers={engineers}
+                editingTargetId={editingTargetId}
+              />
             </div>
           </div>
         </div>

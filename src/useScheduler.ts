@@ -1198,6 +1198,7 @@ export function useScheduler() {
     prevWeek: () => (isMonth ? shiftMonth(-1) : shiftWeek(-1)), nextWeek: () => (isMonth ? shiftMonth(1) : shiftWeek(1)),
     profile,
     engForm, engFormOpen: S.engFormOpen, openEngForm, closeEngForm,
+    assignments: S.assignments, engineers: S.engineers,
     stats: { assignments: wk.length, weekCustomers, monthCustomers, weekInternals, monthInternals },
     plants: plantsVm,
     personRows, plantRows, siteRows, mobilePersonRows, mobileSiteRows, mobileSiteDeptRows,
