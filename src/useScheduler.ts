@@ -903,8 +903,9 @@ export function useScheduler() {
       avatarStyle: sx({ width: '24px', height: '24px', borderRadius: '7px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       onDelete: () => removeComment(selA.id, m.id),
     }));
+    const isInternal = !!(selA.site2 || selA.auditor2 || selA.department2);
     return {
-      aid: selA.id, orderCode: ord.code, product: selA.endCustomer || selA.area || ord.product, customer: selA.customer || ord.customer, plantName: pl.name + ' - ' + pl.loc,
+      aid: selA.id, isInternal, orderCode: ord?.code || '', product: selA.endCustomer || selA.area || (ord ? ord.product : ''), customer: selA.customer || (ord ? ord.customer : ''), plantName: pl.name + ' - ' + pl.loc,
       engName: eng.name, engRole: eng.role, engInitials: initials(eng.name), dayName: dayNames[selA.day],
       avatarStyle: sx({ width: '34px', height: '34px', borderRadius: '9px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '12px', fontWeight: 600, flexShrink: 0 }),
       department: eng.department, subDepartments: eng.subDepartments,
@@ -916,6 +917,7 @@ export function useScheduler() {
       site1: selA.site1, endCustomer: selA.endCustomer,
       auditor1: selA.auditor1, site2: selA.site2, area: selA.area, auditor2: selA.auditor2,
       department1: selA.department1, department2: selA.department2,
+      purpose: selA.purpose || (ord ? ord.purpose : ''),
       major: selA.major ?? 0, minor: selA.minor ?? 0, ofi: selA.ofi ?? 0, request: selA.request ?? 0,
       utl1: selA.utl1 ?? 0, utl2: selA.utl2 ?? 0, utl3: selA.utl3 ?? 0,
     };

@@ -4,20 +4,86 @@ import { css, HButton, HInput } from '../ui';
 export function DetailPanel({ vm }: { vm: VM }) {
   const detail = vm.detail;
   if (!detail) return null;
+
+  const isInternal = detail.isInternal;
+  const site = isInternal ? (detail.site2 || detail.site1) : (detail.site1 || detail.site2);
+
   return (
     <aside className="scrl" style={vm.detailAsideStyle}>
       <div style={css('padding:14px 16px;border-bottom:1px solid #e7eae3;display:flex;align-items:flex-start;gap:10px')}>
         <div style={css('flex:1;min-width:0')}>
-          <div style={css('display:flex;align-items:center;gap:8px')}>
-            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:#15191e")}>{detail.orderCode}</span>
+          <div style={css('display:flex;align-items:center;gap:8px;margin-bottom:6px')}>
+            <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;${
+              isInternal
+                ? 'color:#0f9d8c;background:#eef8f3;border:1px solid #ccebe2;'
+                : 'color:#2756d6;background:#eef2fd;border:1px solid #d8e2fa;'
+            }`)}>
+              {isInternal ? 'Internal Audit' : 'Customer Audit'}
+            </span>
           </div>
-          <div style={css('font-size:12.5px;color:#3c423d;font-weight:500;margin-top:3px')}>{detail.product}</div>
-          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>{detail.customer}  -  {detail.plantName}</div>
-          {detail.site1 && <div style={css('font-size:11px;color:#5b7fd6;margin-top:2px')}>Site: {detail.site1}{detail.site2 ? ` / ${detail.site2}` : ''}</div>}
-          {detail.endCustomer && <div style={css('font-size:11px;color:#5b7fd6')}>End customer: {detail.endCustomer}</div>}
-          {detail.area && <div style={css('font-size:11px;color:#5b7fd6')}>Area: {detail.area}</div>}
-          {detail.auditor1 && <div style={css('font-size:11px;color:#5b7fd6')}>Auditor: {detail.auditor1}{detail.auditor2 ? ` / ${detail.auditor2}` : ''}</div>}
-          <div style={css('display:flex;gap:8px;margin-top:4px')}>
+
+          <div style={css('display:flex;flex-direction:column;gap:3px')}>
+            {site ? (
+              <div style={css('font-size:12.5px;color:#23282a;font-weight:600')}>
+                Site: <span style={css('color:#15191e')}>{site}</span>
+              </div>
+            ) : null}
+
+            {!isInternal ? (
+              <>
+                {detail.customer ? (
+                  <div style={css('font-size:12px;color:#3c423d;font-weight:500')}>
+                    Customer: <span style={css('color:#15191e;font-weight:600')}>{detail.customer}</span>
+                  </div>
+                ) : null}
+                {detail.endCustomer ? (
+                  <div style={css('font-size:11.5px;color:#5c625c')}>
+                    End customer: <span style={css('color:#3c423d')}>{detail.endCustomer}</span>
+                  </div>
+                ) : null}
+                {detail.purpose ? (
+                  <div style={css('font-size:11.5px;color:#5c625c')}>
+                    Purpose: <span style={css('color:#3c423d')}>{detail.purpose}</span>
+                  </div>
+                ) : null}
+                {detail.auditor1 ? (
+                  <div style={css('font-size:11.5px;color:#5c625c')}>
+                    Auditor: <span style={css('color:#3c423d')}>{detail.auditor1}</span>
+                  </div>
+                ) : null}
+                {detail.department1 ? (
+                  <div style={css('font-size:11.5px;color:#5c625c')}>
+                    Department: <span style={css('color:#3c423d')}>{detail.department1}</span>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <>
+                {detail.area ? (
+                  <div style={css('font-size:12px;color:#3c423d;font-weight:500')}>
+                    Area: <span style={css('color:#15191e;font-weight:600')}>{detail.area}</span>
+                  </div>
+                ) : null}
+                {detail.auditor2 ? (
+                  <div style={css('font-size:11.5px;color:#5c625c')}>
+                    Auditor: <span style={css('color:#3c423d')}>{detail.auditor2}</span>
+                  </div>
+                ) : null}
+                {detail.department2 ? (
+                  <div style={css('font-size:11.5px;color:#5c625c')}>
+                    Department: <span style={css('color:#3c423d')}>{detail.department2}</span>
+                  </div>
+                ) : null}
+                {detail.purpose ? (
+                  <div style={css('font-size:11.5px;color:#5c625c')}>
+                    Purpose: <span style={css('color:#3c423d')}>{detail.purpose}</span>
+                  </div>
+                ) : null}
+              </>
+            )}
+          </div>
+
+          <div style={css('display:flex;gap:8px;margin-top:6px;flex-wrap:wrap')}>
             {!!detail.major && <span style={css('font-size:10px;color:#b32f2f;font-weight:600')}>Major: {detail.major}</span>}
             {!!detail.minor && <span style={css('font-size:10px;color:#c2620c;font-weight:600')}>Minor: {detail.minor}</span>}
             {!!detail.ofi && <span style={css('font-size:10px;color:#5b7fd6;font-weight:600')}>OFI: {detail.ofi}</span>}
