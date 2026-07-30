@@ -123,6 +123,13 @@ export function useScheduler() {
   const siteColorOf = (a: Assignment) => S.siteColors[a.site1 || a.site2 || ''] || undefined;
   /** "CS" for Customer appointments, "IA" for Internal Audit. */
   const apptAbbr = (a: Assignment) => (a.site2 || a.auditor2 || a.department2 ? 'IA' : 'CS');
+  /** Returns Customer name for Customer Audit or Area/topic for Internal Audit. */
+  const apptTitle = (a: Assignment) => {
+    const isInternal = !!(a.site2 || a.auditor2 || a.department2);
+    if (isInternal) return a.area || 'Internal Audit';
+    const o = orderById(a.order);
+    return a.customer || (o ? o.customer : '') || 'Customer Audit';
+  };
   const fmtDate = (d: Date) => {
     const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()];
     return m + ' ' + d.getDate();
@@ -259,7 +266,9 @@ export function useScheduler() {
     }));
     const ord = orderById(orderId);
     const eng = engById(engId);
-    if (ord && eng) log('You', `staffed ${ord.code} → ${eng.name.split(' ')[0]}, ${dayLabels[day]}`, '#2756d6');
+    const a = S.assignments.find((x) => x.order === orderId && x.eng === engId && x.day === day);
+    const name = a ? apptTitle(a) : (ord ? ord.customer || ord.product : 'appointment');
+    if (eng) log('You', `staffed ${name} → ${eng.name.split(' ')[0]}, ${dayLabels[day]}`, '#2756d6');
   };
   const moveAssign = (aid: string, engId: string, day: number) => {
     const a = S.assignments.find((x) => x.id === aid);
@@ -269,9 +278,8 @@ export function useScheduler() {
       selected: aid,
     }));
     if (a) {
-      const ord = orderById(a.order);
       const eng = engById(engId);
-      if (ord && eng) log('You', `moved ${ord.code} → ${eng.name.split(' ')[0]}, ${dayLabels[day]}`, '#2756d6');
+      if (eng) log('You', `moved ${apptTitle(a)} → ${eng.name.split(' ')[0]}, ${dayLabels[day]}`, '#2756d6');
     }
   };
   const removeAssign = (aid: string) => {
@@ -289,8 +297,7 @@ export function useScheduler() {
       } catch {}
       return { assignments: s.assignments.filter((x) => !siblingSet.has(x.id)), comments, selected: null };
     });
-    const ord = orderById(a.order);
-    if (ord) log('You', `removed ${ord.code} appointment`, '#2756d6');
+    log('You', `removed ${apptTitle(a)} appointment`, '#2756d6');
   };
   const duplicate = (aid: string) => {
     const a = S.assignments.find((x) => x.id === aid);
@@ -300,8 +307,7 @@ export function useScheduler() {
     const clone = { ...a, id, day: nd };
     api.createAssignment(clone).catch(() => {});
     setState((s) => ({ assignments: s.assignments.concat([clone]), selected: id }));
-    const ord = orderById(a.order);
-    if (ord) log('You', `duplicated ${ord.code} → ${dayLabels[nd]}`, '#2756d6');
+    log('You', `duplicated ${apptTitle(a)} → ${dayLabels[nd]}`, '#2756d6');
   };
   const addComment = () => {
     const aid = S.selected;
@@ -319,8 +325,7 @@ export function useScheduler() {
     });
     const a = S.assignments.find((x) => x.id === aid);
     if (a) {
-      const ord = orderById(a.order);
-      if (ord) log('You', `noted on ${ord.code}`, '#2756d6');
+      log('You', `noted on ${apptTitle(a)}`, '#2756d6');
     }
   };
   const removeComment = (aid: string, commentId: string) => {
@@ -405,6 +410,8 @@ export function useScheduler() {
       selected: newAssignments[newAssignments.length - 1].id,
       createOpen: false,
     }));
+    const createdTitle = d.sectionType === 'internal' ? (d.area || 'Internal Audit') : (d.customer || 'Customer Audit');
+    log('You', `created ${createdTitle}`, '#2756d6');
   };
 
   // ---- edit modal ----
@@ -500,8 +507,8 @@ export function useScheduler() {
         ? [...s.customerOptions, d.customer] : s.customerOptions;
       return { assignments: others.concat(updated), comments, customerOptions };
     });
-    const ord = orderById(target.order);
-    if (ord) log('You', `edited ${ord.code}`, '#2756d6');
+    const editTitle = d.sectionType === 'internal' ? (d.area || 'Internal Audit') : (d.customer || 'Customer Audit');
+    log('You', `edited ${editTitle}`, '#2756d6');
     setState({ editOpen: false });
   };
 
@@ -918,7 +925,7 @@ export function useScheduler() {
     avatarStyle: sx({ width: '27px', height: '27px', borderRadius: '50%', background: t.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9.5px', fontWeight: 600, border: '2px solid #fff', marginLeft: i ? '-8px' : 0, position: 'relative', zIndex: 10 - i }),
   }));
   const activity = S.activity.map((a) => ({
-    who: a.who, text: a.text, ago: a.ago,
+    who: a.who, text: a.text.replace(/NEW-\d+/g, 'appointment'), ago: a.ago,
     dotStyle: sx({ width: '7px', height: '7px', borderRadius: '50%', background: a.color, marginTop: '4px', flexShrink: 0 }),
   }));
 
