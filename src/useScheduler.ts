@@ -71,6 +71,22 @@ export function useScheduler() {
             ...data.assignments.map((a) => a.customer).filter((c): c is string => Boolean(c)),
           ]);
           const customerOptions = [...new Set([...s.customerOptions, ...historicalCustomers])];
+
+          // Merge server comments with local comments for persistence
+          const serverComments = data.comments || {};
+          const mergedComments: Record<string, any[]> = { ...serverComments };
+          for (const [aid, clist] of Object.entries(s.comments || {})) {
+            const existing = mergedComments[aid] || [];
+            const existingIds = new Set(existing.map((c: any) => c.id));
+            const newLocal = (clist as any[]).filter((c: any) => !existingIds.has(c.id));
+            if (newLocal.length > 0) {
+              mergedComments[aid] = [...existing, ...newLocal];
+            }
+          }
+          try {
+            localStorage.setItem('calendar_qa_comments', JSON.stringify(mergedComments));
+          } catch {}
+
           return {
             ...s,
             engineers: data.engineers,
@@ -78,7 +94,7 @@ export function useScheduler() {
             activePlants: { ...s.activePlants, ...data.activePlants },
             orders: data.orders,
             assignments: data.assignments,
-            comments: data.comments,
+            comments: mergedComments,
             activity: data.activity,
             customerOptions,
           };
@@ -268,6 +284,9 @@ export function useScheduler() {
     setState((s) => {
       const siblingSet = new Set(siblingIds);
       const comments = Object.fromEntries(Object.entries(s.comments).filter(([cid]) => !siblingSet.has(cid)));
+      try {
+        localStorage.setItem('calendar_qa_comments', JSON.stringify(comments));
+      } catch {}
       return { assignments: s.assignments.filter((x) => !siblingSet.has(x.id)), comments, selected: null };
     });
     const ord = orderById(a.order);
@@ -292,7 +311,11 @@ export function useScheduler() {
     api.createComment(aid, comment).catch(() => {});
     setState((s) => {
       const list = (s.comments[aid] || []).concat([comment]);
-      return { comments: { ...s.comments, [aid]: list }, draft: '' };
+      const nextComments = { ...s.comments, [aid]: list };
+      try {
+        localStorage.setItem('calendar_qa_comments', JSON.stringify(nextComments));
+      } catch {}
+      return { comments: nextComments, draft: '' };
     });
     const a = S.assignments.find((x) => x.id === aid);
     if (a) {
@@ -302,9 +325,16 @@ export function useScheduler() {
   };
   const removeComment = (aid: string, commentId: string) => {
     api.deleteComment(commentId).catch(() => {});
-    setState((s) => ({
-      comments: { ...s.comments, [aid]: (s.comments[aid] || []).filter((c) => c.id !== commentId) },
-    }));
+    setState((s) => {
+      const nextComments = {
+        ...s.comments,
+        [aid]: (s.comments[aid] || []).filter((c) => c.id !== commentId),
+      };
+      try {
+        localStorage.setItem('calendar_qa_comments', JSON.stringify(nextComments));
+      } catch {}
+      return { comments: nextComments };
+    });
   };
 
   // ---- create modal ----

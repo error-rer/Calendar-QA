@@ -98,23 +98,6 @@ export function DetailPanel({ vm }: { vm: VM }) {
 
       <div className="scrl" style={css('flex:1;overflow-y:auto;padding:15px 16px;display:flex;flex-direction:column;gap:16px')}>
         <div>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:9px")}>ASSIGNED QA</div>
-          <div style={css('display:flex;align-items:center;gap:10px')}>
-            <div style={detail.avatarStyle}>{detail.engInitials}</div>
-            <div>
-              <div style={css('font-size:13px;font-weight:600;color:#23282a')}>{detail.engName}</div>
-              <div style={css('font-size:11px;color:#8a9088')}>{detail.engRole}  -  {detail.dayName}</div>
-            </div>
-          </div>
-          <div style={css('display:flex;flex-wrap:wrap;gap:6px;margin-top:9px')}>
-            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#3c423d;background:#eef3ee;border:1px solid #dde6dd;border-radius:5px;padding:2px 7px")}>{detail.department}</span>
-            {detail.subDepartments.map((sd, i) => (
-              <span key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#5b7fd6;background:#eef2fd;border:1px solid #d8e2fa;border-radius:4px;padding:2px 7px")}>{sd}</span>
-            ))}
-          </div>
-        </div>
-
-        <div>
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:9px")}>NOTES  -  {detail.commentCount}</div>
           <div style={css('display:flex;flex-direction:column;gap:11px;margin-bottom:11px')}>
             {detail.comments.map((m, i) => (

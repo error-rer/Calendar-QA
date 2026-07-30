@@ -69,7 +69,14 @@ export function initialState(): State {
     engineers: [],
     orders: [],
     assignments: [],
-    comments: {},
+    comments: (() => {
+      try {
+        const saved = typeof window !== 'undefined' ? localStorage.getItem('calendar_qa_comments') : null;
+        return saved ? JSON.parse(saved) : {};
+      } catch {
+        return {};
+      }
+    })(),
     activity: [],
   };
 }
