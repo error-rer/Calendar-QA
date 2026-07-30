@@ -42,7 +42,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
   try {
     // --- GET /api/state (full data dump for initial load) ---
     if (method === 'GET' && path === 'state') {
-      const [engineers, plants, activePlantsRows, orders, assignments, comments, activity] = await Promise.all([
+      const [engineers, plants, activePlantsRows, orders, assignments, comments, activity, optionsRows] = await Promise.all([
         DB.prepare('SELECT * FROM engineers').all(),
         DB.prepare('SELECT * FROM plants').all(),
         DB.prepare('SELECT * FROM active_plants').all(),
@@ -50,10 +50,30 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
         DB.prepare('SELECT * FROM assignments').all(),
         DB.prepare('SELECT * FROM comments').all(),
         DB.prepare('SELECT * FROM activity ORDER BY rowid DESC LIMIT 9').all(),
+        DB.prepare('SELECT * FROM options').all(),
       ]);
 
       const activePlants: Record<string, boolean> = {};
       for (const row of activePlantsRows.results as any[]) activePlants[row.plant_id] = !!row.active;
+
+      const purposeOptions: string[] = [];
+      const customerDepartmentOptions: string[] = [];
+      const internalDepartmentOptions: string[] = [];
+      const siteCodeOptions: string[] = [];
+      const siteColors: Record<string, string> = {};
+      const customerOptions: string[] = [];
+
+      for (const row of (optionsRows.results as any[] || [])) {
+        if (row.category === 'purpose') purposeOptions.push(row.value);
+        else if (row.category === 'customer_department') customerDepartmentOptions.push(row.value);
+        else if (row.category === 'internal_department') internalDepartmentOptions.push(row.value);
+        else if (row.category === 'site_code') {
+          siteCodeOptions.push(row.value);
+          if (row.meta) siteColors[row.value] = row.meta;
+        } else if (row.category === 'customer_name') {
+          customerOptions.push(row.value);
+        }
+      }
 
       return json({
         engineers: (engineers.results as any[]).map(engineerOut),
@@ -66,6 +86,12 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
           return acc;
         }, {} as Record<string, any[]>),
         activity: activity.results,
+        purposeOptions,
+        customerDepartmentOptions,
+        internalDepartmentOptions,
+        siteCodeOptions,
+        siteColors,
+        customerOptions,
       });
     }
 
@@ -215,6 +241,24 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       await DB.prepare('INSERT INTO activity (id, who, text, ago, color) VALUES (?, ?, ?, ?, ?)')
         .bind(id, who || '', text || '', ago || '', color || '#0f9d8c').run();
       return json({ id }, 201);
+    }
+
+    // --- options ---
+    if (method === 'POST' && path === 'options') {
+      const { category, value, meta } = body || {};
+      if (category && value) {
+        await DB.prepare('INSERT OR REPLACE INTO options (category, value, meta) VALUES (?, ?, ?)')
+          .bind(category, value, meta || '').run();
+      }
+      return json({ ok: true });
+    }
+    if (method === 'DELETE' && path === 'options') {
+      const { category, value } = body || {};
+      if (category && value) {
+        await DB.prepare('DELETE FROM options WHERE category = ? AND value = ?')
+          .bind(category, value).run();
+      }
+      return json({ ok: true });
     }
 
     return json({ error: 'not found', path, method }, 404);

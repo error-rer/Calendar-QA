@@ -10,6 +10,12 @@ export interface ApiState {
   assignments: Assignment[];
   comments: Record<string, Comment[]>;
   activity: Activity[];
+  purposeOptions?: string[];
+  customerDepartmentOptions?: string[];
+  internalDepartmentOptions?: string[];
+  siteCodeOptions?: string[];
+  siteColors?: Record<string, string>;
+  customerOptions?: string[];
 }
 
 async function req<T>(url: string, opts?: RequestInit): Promise<T> {
@@ -45,4 +51,9 @@ export const api = {
 
   logActivity: (data: { id: string; who: string; text: string; ago: string; color: string }) =>
     req('/activity', { method: 'POST', body: JSON.stringify(data) }),
+
+  saveOption: (category: string, value: string, meta?: string) =>
+    req('/options', { method: 'POST', body: JSON.stringify({ category, value, meta }) }),
+  deleteOption: (category: string, value: string) =>
+    req('/options', { method: 'DELETE', body: JSON.stringify({ category, value }) }),
 };

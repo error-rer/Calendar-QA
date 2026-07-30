@@ -87,6 +87,12 @@ export function useScheduler() {
             localStorage.setItem('calendar_qa_comments', JSON.stringify(mergedComments));
           } catch {}
 
+          const purposeOptions = data.purposeOptions && data.purposeOptions.length ? data.purposeOptions : s.purposeOptions;
+          const customerDepartmentOptions = data.customerDepartmentOptions && data.customerDepartmentOptions.length ? data.customerDepartmentOptions : s.customerDepartmentOptions;
+          const internalDepartmentOptions = data.internalDepartmentOptions && data.internalDepartmentOptions.length ? data.internalDepartmentOptions : s.internalDepartmentOptions;
+          const siteCodeOptions = data.siteCodeOptions && data.siteCodeOptions.length ? data.siteCodeOptions : s.siteCodeOptions;
+          const siteColors = data.siteColors && Object.keys(data.siteColors).length ? data.siteColors : s.siteColors;
+
           return {
             ...s,
             engineers: data.engineers,
@@ -96,7 +102,12 @@ export function useScheduler() {
             assignments: data.assignments,
             comments: mergedComments,
             activity: data.activity,
-            customerOptions,
+            purposeOptions,
+            customerDepartmentOptions,
+            internalDepartmentOptions,
+            siteCodeOptions,
+            siteColors,
+            customerOptions: data.customerOptions && data.customerOptions.length ? data.customerOptions : customerOptions,
           };
         });
       })
@@ -401,6 +412,9 @@ export function useScheduler() {
     const newEngineer = { id: engId, name: auditorName, role: 'QA', department: siteToDept(d.sectionType === 'internal' ? d.site2 : d.site1), subDepartments: [] };
     api.createOrder(newOrder).catch(() => {});
     if (!existingEng) api.createEngineer(newEngineer).catch(() => {});
+    if (d.sectionType === 'customer' && d.customer) {
+      api.saveOption('customer_name', d.customer).catch(() => {});
+    }
     newAssignments.forEach((a) => api.createAssignment(a).catch(() => {}));
     setState((s) => ({
       orders: s.orders.concat([newOrder]),
@@ -500,6 +514,9 @@ export function useScheduler() {
     });
     droppedIds.forEach((id) => api.deleteAssignment(id).catch(() => {}));
 
+    if (d.sectionType === 'customer' && d.customer) {
+      api.saveOption('customer_name', d.customer).catch(() => {});
+    }
     const droppedSet = new Set(droppedIds);
     setState((s) => {
       const comments = droppedSet.size
@@ -550,17 +567,35 @@ export function useScheduler() {
     });
   };
 
-  // ---- appointment option lists (Purpose / Department) ----
+  // ---- appointment option lists (Purpose / Department / Site) ----
   type OptionListField = 'purposeOptions' | 'customerDepartmentOptions' | 'internalDepartmentOptions' | 'siteCodeOptions' | 'customerOptions';
-  const addOption = (field: OptionListField, value: string) => {
+  const fieldToCategory: Record<OptionListField, string> = {
+    purposeOptions: 'purpose',
+    customerDepartmentOptions: 'customer_department',
+    internalDepartmentOptions: 'internal_department',
+    siteCodeOptions: 'site_code',
+    customerOptions: 'customer_name',
+  };
+
+  const addOption = (field: OptionListField, value: string, meta = '') => {
     const v = value.trim();
     if (!v) return;
+    const category = fieldToCategory[field];
+    if (category) api.saveOption(category, v, meta).catch(() => {});
     setState((s) => (s[field].includes(v) ? {} : { [field]: [...s[field], v] }));
   };
-  const removeOption = (field: OptionListField, value: string) =>
+
+  const removeOption = (field: OptionListField, value: string) => {
+    const category = fieldToCategory[field];
+    if (category) api.deleteOption(category, value).catch(() => {});
     setState((s) => ({ [field]: s[field].filter((x) => x !== value) }));
-  const setSiteColor = (site: string, color: string) =>
+  };
+
+  const setSiteColor = (site: string, color: string) => {
+    api.saveOption('site_code', site, color).catch(() => {});
     setState((s) => ({ siteColors: { ...s.siteColors, [site]: color } }));
+  };
+
   const removeSiteCodeOption = (v: string) => {
     removeOption('siteCodeOptions', v);
     setState((s) => {
