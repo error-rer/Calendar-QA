@@ -123,12 +123,13 @@ export function useScheduler() {
   const siteColorOf = (a: Assignment) => S.siteColors[a.site1 || a.site2 || ''] || undefined;
   /** "CS" for Customer appointments, "IA" for Internal Audit. */
   const apptAbbr = (a: Assignment) => (a.site2 || a.auditor2 || a.department2 ? 'IA' : 'CS');
-  /** Returns Customer name for Customer Audit or Area/topic for Internal Audit. */
+  /** Returns Customer name with CS prefix for Customer Audit or Area/topic with IA prefix for Internal Audit. */
   const apptTitle = (a: Assignment) => {
     const isInternal = !!(a.site2 || a.auditor2 || a.department2);
-    if (isInternal) return a.area || 'Internal Audit';
+    const prefix = isInternal ? 'IA' : 'CS';
+    if (isInternal) return prefix + ' · ' + (a.area || 'Internal Audit');
     const o = orderById(a.order);
-    return a.customer || (o ? o.customer : '') || 'Customer Audit';
+    return prefix + ' · ' + (a.customer || (o ? o.customer : '') || 'Customer Audit');
   };
   const fmtDate = (d: Date) => {
     const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()];
@@ -410,8 +411,9 @@ export function useScheduler() {
       selected: newAssignments[newAssignments.length - 1].id,
       createOpen: false,
     }));
-    const createdTitle = d.sectionType === 'internal' ? (d.area || 'Internal Audit') : (d.customer || 'Customer Audit');
-    log('You', `created ${createdTitle}`, '#2756d6');
+    const prefix = d.sectionType === 'internal' ? 'IA' : 'CS';
+    const name = d.sectionType === 'internal' ? (d.area || 'Internal Audit') : (d.customer || 'Customer Audit');
+    log('You', `created ${prefix} · ${name}`, '#2756d6');
   };
 
   // ---- edit modal ----
@@ -507,8 +509,9 @@ export function useScheduler() {
         ? [...s.customerOptions, d.customer] : s.customerOptions;
       return { assignments: others.concat(updated), comments, customerOptions };
     });
-    const editTitle = d.sectionType === 'internal' ? (d.area || 'Internal Audit') : (d.customer || 'Customer Audit');
-    log('You', `edited ${editTitle}`, '#2756d6');
+    const prefix = d.sectionType === 'internal' ? 'IA' : 'CS';
+    const name = d.sectionType === 'internal' ? (d.area || 'Internal Audit') : (d.customer || 'Customer Audit');
+    log('You', `edited ${prefix} · ${name}`, '#2756d6');
     setState({ editOpen: false });
   };
 
