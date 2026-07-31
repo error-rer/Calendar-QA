@@ -40,6 +40,8 @@ export function initialState(): State {
     filterAuditType: [],
     filterAuditTopic: [],
     filterApptType: [],
+    adminFilterSite: [],
+    adminFilterDept: [],
     dayDialog: null,
     monthSelectedDate: null,
     timetableOpenEng: null,

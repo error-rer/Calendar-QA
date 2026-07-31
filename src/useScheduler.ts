@@ -229,7 +229,7 @@ export function useScheduler() {
   const setSelectedDay = (i: number) => setState({ selectedDay: i });
   const toggleSidebar = () => setState((s) => ({ sidebarOpen: !s.sidebarOpen }));
   const closeSidebar = () => setState({ sidebarOpen: false });
-  const toggleFilterValue = (field: 'filterEmp' | 'filterSite' | 'filterCompany' | 'filterAuditType' | 'filterAuditTopic', value: string) =>
+  const toggleFilterValue = (field: 'filterEmp' | 'filterSite' | 'filterCompany' | 'filterAuditType' | 'filterAuditTopic' | 'adminFilterSite' | 'adminFilterDept', value: string) =>
     setState((s) => {
       const arr = s[field] as unknown as string[];
       return { [field]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value] };
@@ -1149,14 +1149,23 @@ export function useScheduler() {
     { label: 'OPEN ORDERS', value: String(poolOrders.length), sub: 'awaiting staffing' },
     { label: 'WEEK APPOINTMENTS', value: String(wk.length), sub: 'this week' },
   ];
-  const adminEngineers = S.engineers.map((e) => {
-    return {
-      id: e.id, name: e.name, role: e.role, department: e.department, subDepartments: e.subDepartments, initials: initials(e.name),
-      avatarStyle: sx({ width: '30px', height: '30px', borderRadius: '8px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '11px', fontWeight: 600, flexShrink: 0 }),
-      appointments: wk.filter((a) => a.eng === e.id).length,
-      onDelete: () => removeEngineer(e.id),
-    };
-  });
+  const adminDeptOptions = [...new Set([...S.internalDepartmentOptions, ...S.customerDepartmentOptions])];
+  const toggleAdminFilterSite = (v: string) => toggleFilterValue('adminFilterSite', v);
+  const toggleAdminFilterDept = (v: string) => toggleFilterValue('adminFilterDept', v);
+  const adminEngineers = S.engineers
+    .filter((e) => {
+      if (S.adminFilterSite.length > 0 && !S.adminFilterSite.includes(e.department)) return false;
+      if (S.adminFilterDept.length > 0 && !e.subDepartments.some((d) => S.adminFilterDept.includes(d))) return false;
+      return true;
+    })
+    .map((e) => {
+      return {
+        id: e.id, name: e.name, role: e.role, department: e.department, subDepartments: e.subDepartments, initials: initials(e.name),
+        avatarStyle: sx({ width: '30px', height: '30px', borderRadius: '8px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '11px', fontWeight: 600, flexShrink: 0 }),
+        appointments: wk.filter((a) => a.eng === e.id).length,
+        onDelete: () => removeEngineer(e.id),
+      };
+    });
   // ---- filters VM ----
   const employeeOptions = [{ value: '', label: 'All employees' }].concat(S.engineers.filter((e) => !['unassigned', '111', 'ant', 'bird'].includes(e.name.toLowerCase())).map((e) => ({ value: e.id, label: e.name })));
   const siteOptions = [{ value: '', label: 'All sites' }, ...S.siteCodeOptions.map((s) => ({ value: s, label: s }))];
@@ -1302,6 +1311,8 @@ export function useScheduler() {
     tabEngStyle: S.adminTab === 'engineers' ? tabOn : tabOff,
     tabOptionsStyle: S.adminTab === 'options' ? tabOn : tabOff,
     adminEngineers, engCount: S.engineers.length,
+    adminFilterSite: S.adminFilterSite, adminFilterDept: S.adminFilterDept, adminDeptOptions,
+    toggleAdminFilterSite, toggleAdminFilterDept,
     addEngineer: openEngForm,
     summaryPeriods, summaryRows, summaryCells, utlRows, utlCells, summaryYear: S.summaryYear,
     setSummaryYear: (y: number) => setState({ summaryYear: y }),

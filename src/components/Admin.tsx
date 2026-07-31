@@ -35,15 +35,94 @@ export function Admin({ vm }: { vm: VM }) {
   );
 }
 
+function AdminFilterDropdown({ label, count, selected, items, onToggle }: { label: string; count: number; selected: string[]; items: { value: string; label: string }[]; onToggle: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const active = selected.length > 0;
+  return (
+    <div style={css('position:relative')}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={css(
+          'display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:7px;border:1px solid ' +
+            (active ? '#2756d6' : '#dde0d9') +
+            ';background:' +
+            (active ? '#eef2fd' : '#fff') +
+            ';font-size:11.5px;font-weight:' +
+            (active ? '600' : '500') +
+            ';color:' +
+            (active ? '#2756d6' : '#4a504a') +
+            ";cursor:pointer;font-family:'Archivo',sans-serif;transition:all .12s ease"
+        )}
+      >
+        {label}
+        {count > 0 && (
+          <span style={css('background:#2756d6;color:#fff;border-radius:10px;padding:0 5px;font-size:9.5px;font-weight:600')}>
+            {count}
+          </span>
+        )}
+        <span style={css('font-size:9px;color:' + (active ? '#2756d6' : '#8a9088'))}>▾</span>
+      </button>
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} style={css('position:fixed;inset:0;z-index:29')} />
+          <div style={css('position:absolute;top:100%;right:0;z-index:30;margin-top:4px;background:#fff;border:1px solid #dde0d9;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.1);min-width:140px;max-height:220px;overflow-y:auto;padding:5px')}>
+            {items.map((item) => {
+              const on = selected.includes(item.value);
+              return (
+                <div
+                  key={item.value}
+                  onClick={() => onToggle(item.value)}
+                  style={css(
+                    "display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:5px;cursor:pointer;font-size:11.5px;font-family:'Archivo',sans-serif;color:#3c423d;background:" +
+                      (on ? '#eef2fd' : '#fff') +
+                      ';font-weight:' +
+                      (on ? '600' : '400')
+                  )}
+                >
+                  <span
+                    style={css(
+                      'width:14px;height:14px;border-radius:3px;border:1px solid ' +
+                        (on ? '#2756d6' : '#cdd2c9') +
+                        ';background:' +
+                        (on ? '#2756d6' : '#fff') +
+                        ';display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex-shrink:0'
+                    )}
+                  >
+                    {on ? '✓' : ''}
+                  </span>
+                  {item.label}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function EngineersTable({ vm }: { vm: VM }) {
   return (
     <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;overflow:hidden')}>
-      <div style={css('display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #eef1ea')}>
-        <div style={css('font-size:13px;font-weight:700')}>Auditor <span style={css('color:#9aa097;font-weight:500')}>┬╖ {vm.engCount}</span></div>
-        <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New Auditor</HButton>
-      </div>
-      <div style={css(engGrid + ";padding:9px 18px;border-bottom:1px solid #eef1ea;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>
-        <div>Auditor</div><div>SITE - DEPARTMENT</div><div style={css('text-align:center')}>APPOINTMENTS</div><div></div>
+      <div style={css('display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #eef1ea;flex-wrap:wrap;gap:10px')}>
+        <div style={css('font-size:13px;font-weight:700')}>Auditor <span style={css('color:#9aa097;font-weight:500')}>· {vm.adminEngineers.length}</span></div>
+        <div style={css('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
+          <AdminFilterDropdown
+            label="Filter Site"
+            count={vm.adminFilterSite.length}
+            selected={vm.adminFilterSite}
+            items={vm.siteCodeOptions.map((s) => ({ value: s, label: s }))}
+            onToggle={vm.toggleAdminFilterSite}
+          />
+          <AdminFilterDropdown
+            label="Filter Department"
+            count={vm.adminFilterDept.length}
+            selected={vm.adminFilterDept}
+            items={vm.adminDeptOptions.map((d) => ({ value: d, label: d }))}
+            onToggle={vm.toggleAdminFilterDept}
+          />
+          <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New Auditor</HButton>
+        </div>
       </div>
       {vm.adminEngineers.map((e) => (
         <div key={e.id} style={css(engGrid + ';padding:12px 18px;border-bottom:1px solid #f2f4ee;align-items:center')}>
@@ -60,6 +139,11 @@ function EngineersTable({ vm }: { vm: VM }) {
           <button onClick={e.onDelete} style={css('background:none;border:none;cursor:pointer;color:#bcc1b8;font-size:13px;padding:2px')}>✕</button>
         </div>
       ))}
+      {vm.adminEngineers.length === 0 && (
+        <div style={css('padding:24px;text-align:center;font-size:12.5px;color:#8a9088;font-style:italic')}>
+          No auditors match the selected site/department filters.
+        </div>
+      )}
     </div>
   );
 }
