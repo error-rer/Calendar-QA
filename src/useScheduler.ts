@@ -618,8 +618,11 @@ export function useScheduler() {
       boxShadow: sel ? '0 0 0 2px ' + hexA(color, 0.55) : '0 1px 1px rgba(20,25,30,.05)',
       opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', transition: 'box-shadow .12s',
     };
+    const e = engById(a.eng);
+    const auditorName = a.auditor1 || a.auditor2 || (e ? e.name : '');
+    const chipPurpose = a.purpose ? a.purpose : auditorName;
     return {
-      aid: a.id, code: (ord ? apptAbbr(a) + ' · ' + (a.customer || ord.customer) : '?'), purpose: a.purpose || (ord ? ord.purpose : ''), style: base,
+      aid: a.id, code: (ord ? apptAbbr(a) + ' · ' + (a.customer || ord.customer) : '?'), purpose: chipPurpose, style: base,
       onClick: () => select(a.id),
       onDragStart: (e: React.DragEvent) => { e.stopPropagation(); setState({ drag: { kind: 'assign', id: a.id } }); },
       onDragEnd: () => setState({ drag: null, overCell: null }),
@@ -632,8 +635,10 @@ export function useScheduler() {
     const pl = ord ? plantById(ord.plant) : null;
     const dim = chipDimmed(a);
     const color = accent || siteColorOf(a) || (pl ? pl.color : '#999');
+    const auditorName = a.auditor1 || a.auditor2 || (e ? e.name : '');
+    const chipPurpose = a.purpose ? a.purpose : auditorName;
     return {
-      aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: (ord ? apptAbbr(a) + ' · ' + (a.customer || ord.customer) : '?'), purpose: a.purpose || (ord ? ord.purpose : ''), plantCode: pl ? pl.code : '?',
+      aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: (ord ? apptAbbr(a) + ' · ' + (a.customer || ord.customer) : '?'), purpose: chipPurpose, plantCode: pl ? pl.code : '?',
       style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: '#fff', border: '1px solid #e8ebe4', borderLeft: '3px solid ' + color, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none' }),
       avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       onClick: () => select(a.id),

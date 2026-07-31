@@ -305,13 +305,12 @@ function WeekCalendar({ vm }: { vm: VM }) {
             cursor: 'pointer', overflow: 'hidden',
               }}>
                 <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{chip.customer}</div>
-                {chip.auditor2 ? (
-                  <div style={{ fontSize: '10px', color: '#9aa097', marginTop: '1px' }}>{chip.auditor2}</div>
+                {chip.purpose ? (
+                  <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{chip.purpose}</div>
                 ) : (
-                  <>
-                    {chip.purpose && <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{chip.purpose}</div>}
-                    {chip.auditor1 && <div style={{ fontSize: '10px', color: '#9aa097', marginTop: '1px' }}>{chip.auditor1}</div>}
-                  </>
+                  (chip.auditor1 || chip.auditor2) ? (
+                    <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{chip.auditor1 || chip.auditor2}</div>
+                  ) : null
                 )}
               </div>
             ))}
@@ -333,13 +332,12 @@ function WeekCalendar({ vm }: { vm: VM }) {
           margin: '2px 0',
         }}>
           <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{sp.customer}</div>
-          {sp.auditor2 ? (
-            <div style={{ fontSize: '10px', color: '#9aa097', marginTop: '1px' }}>{sp.auditor2}</div>
+          {sp.purpose ? (
+            <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{sp.purpose}</div>
           ) : (
-            <>
-              {sp.purpose && <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{sp.purpose}</div>}
-              {sp.auditor1 && <div style={{ fontSize: '10px', color: '#9aa097', marginTop: '1px' }}>{sp.auditor1}</div>}
-            </>
+            (sp.auditor1 || sp.auditor2) ? (
+              <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{sp.auditor1 || sp.auditor2}</div>
+            ) : null
           )}
         </div>
       ))}
