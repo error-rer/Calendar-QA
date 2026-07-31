@@ -1054,16 +1054,14 @@ export function useScheduler() {
     boxStyle: sx({ width: '15px', height: '15px', borderRadius: '4px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#fff', background: on ? '#2756d6' : '#fff', border: '1px solid ' + (on ? '#2756d6' : '#cdd2c9') }),
     check: on ? '✓' : '',
   });
-  const allDepartments = ['U1', 'U2', 'U3'] as const;
-  const internalAuditTopics = ['QMS', 'EHS', 'ESD'] as const;
   const engForm = {
     name: ef.name, role: ef.role, department: ef.department, subDepartments: ef.subDepartments, inStyle: ofInStyle,
     onName: (e: React.ChangeEvent<HTMLInputElement>) => setEngForm({ name: e.target.value }),
     onRole: (e: React.ChangeEvent<HTMLInputElement>) => setEngForm({ role: e.target.value }),
-    departments: allDepartments.map((d) => ({ label: d, onClick: () => setEngForm({ department: d }), style: segMd(ef.department === d) })),
+    departments: S.siteCodeOptions.map((d) => ({ label: d, onClick: () => setEngForm({ department: d as Department }), style: segMd(ef.department === d) })),
     subDepartmentOptions: [
-      ...internalAuditTopics.map((c) => ({ code: c, name: c, group: 'Internal Audit' as const, onClick: () => toggleEngSubDept(c), ...certPick(ef.subDepartments.includes(c as SubDepartment)) })),
-      ...customerAuditTopics.map((c) => ({ code: c, name: c, group: 'Customer' as const, onClick: () => toggleEngSubDept(c as SubDepartment), ...certPick(ef.subDepartments.includes(c as SubDepartment)) })),
+      ...S.internalDepartmentOptions.map((c) => ({ code: c, name: c, group: 'Internal Audit' as const, onClick: () => toggleEngSubDept(c as SubDepartment), ...certPick(ef.subDepartments.includes(c as SubDepartment)) })),
+      ...S.customerDepartmentOptions.map((c) => ({ code: c, name: c, group: 'Customer' as const, onClick: () => toggleEngSubDept(c as SubDepartment), ...certPick(ef.subDepartments.includes(c as SubDepartment)) })),
     ],
     canSubmit: !!ef.name.trim(),
     submit: () => submitEngForm(),
