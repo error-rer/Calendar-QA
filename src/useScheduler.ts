@@ -20,11 +20,35 @@ import { api } from './api';
 const sx = (o: CSSProperties): CSSProperties => o;
 const firstName = (name: string) => name.trim().split(' ')[0] || '';
 
+export const siteColorsOfAssignment = (a: Assignment, siteColors: Record<string, string>): string[] => {
+  const siteStr = a.site1 || a.site2 || '';
+  const sites = siteStr.split('/').map((s) => s.trim()).filter(Boolean);
+  if (sites.length === 0) return ['#999999'];
+  return sites.map((s) => siteColors[s] || '#999999');
+};
+
+export const getAccentStyle = (colors: string[], borderPx = 3): CSSProperties => {
+  if (!colors || colors.length === 0) return { borderLeft: `${borderPx}px solid #999999` };
+  if (colors.length === 1) return { borderLeft: `${borderPx}px solid ${colors[0]}` };
+  const stops = colors
+    .map((c, i) => {
+      const startPct = Math.round((i / colors.length) * 100);
+      const endPct = Math.round(((i + 1) / colors.length) * 100);
+      return `${c} ${startPct}%, ${c} ${endPct}%`;
+    })
+    .join(', ');
+  return {
+    borderLeft: `${borderPx}px solid transparent`,
+    borderImage: `linear-gradient(180deg, ${stops}) 1`,
+  };
+};
+
 interface MonthChip {
   code: string;
   purpose: string;
   engName: string;
   color?: string;
+  colors?: string[];
   countTxt: string;
   dotStyle: CSSProperties;
   style: CSSProperties;
@@ -172,7 +196,11 @@ export function useScheduler() {
   const matchesFilters = (a: Assignment, o: Order) => {
     if (S.filterEmp.length > 0 && !S.filterEmp.includes(a.eng)) return false;
     if (S.filterCompany.length > 0 && !S.filterCompany.includes(a.customer || o.customer)) return false;
-    if (S.filterSite.length > 0 && !S.filterSite.includes(a.site1 || a.site2 || o.plant)) return false;
+    if (S.filterSite.length > 0) {
+      const apptSiteStr = a.site1 || a.site2 || o.plant || '';
+      const apptSites = apptSiteStr.split('/').map((s) => s.trim()).filter(Boolean);
+      if (!apptSites.some((site) => S.filterSite.includes(site))) return false;
+    }
     if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.includes(a.department1 || a.department2 || '')) return false;
     if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(a.purpose || o.purpose)) return false;
     if (S.filterApptType.length > 0 && !S.filterApptType.includes(apptAbbr(a))) return false;
@@ -641,14 +669,14 @@ export function useScheduler() {
   // ---- chip builders ----
   const buildChip = (a: Assignment) => {
     const ord = orderById(a.order);
-    const pl = ord ? plantById(ord.plant) : null;
     const dim = chipDimmed(a);
     const sel = S.selected === a.id;
-    const color = siteColorOf(a) || (pl ? pl.color : '#999');
+    const colors = siteColorsOfAssignment(a, S.siteColors);
+    const accentStyle = getAccentStyle(colors, 3);
     const base: CSSProperties = {
       display: 'block', padding: '7px 9px', borderRadius: '6px', background: '#fff', cursor: 'grab', position: 'relative',
-      border: '1px solid #e3e6e0', borderLeft: '3px solid ' + color,
-      boxShadow: sel ? '0 0 0 2px ' + hexA(color, 0.55) : '0 1px 1px rgba(20,25,30,.05)',
+      border: '1px solid #e3e6e0', ...accentStyle,
+      boxShadow: sel ? '0 0 0 2px ' + hexA(colors[0] || '#999', 0.55) : '0 1px 1px rgba(20,25,30,.05)',
       opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', transition: 'box-shadow .12s',
     };
     const e = engById(a.eng);
@@ -668,13 +696,14 @@ export function useScheduler() {
     const ord = orderById(a.order);
     const pl = ord ? plantById(ord.plant) : null;
     const dim = chipDimmed(a);
-    const color = accent || siteColorOf(a) || (pl ? pl.color : '#999');
+    const colors = accent ? [accent] : siteColorsOfAssignment(a, S.siteColors);
+    const accentStyle = getAccentStyle(colors, 3);
     const isInternal = !!(a.site2 || a.auditor2 || a.department2);
     const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : ''));
     const chipPurpose = isInternal ? auditorName : (a.purpose ? (auditorName ? a.purpose + ' - ' + auditorName : a.purpose) : auditorName);
     return {
       aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: (ord ? apptAbbr(a) + ' · ' + (a.customer || ord.customer) : '?'), purpose: chipPurpose, plantCode: pl ? pl.code : '?',
-      style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: '#fff', border: '1px solid #e8ebe4', borderLeft: '3px solid ' + color, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none' }),
+      style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: '#fff', border: '1px solid #e8ebe4', ...accentStyle, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none' }),
       avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       onClick: () => select(a.id),
     };
@@ -747,9 +776,10 @@ export function useScheduler() {
       const custName = isInternal ? (a.area || '') : (a.customer || o.customer || o.product);
       const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : ''));
       const chipPurpose = isInternal ? auditorName : (a.purpose ? (auditorName ? a.purpose + ' - ' + auditorName : a.purpose) : auditorName);
-      const color = siteColorOf(a) || (pl ? pl.color : '#999');
+      const colors = siteColorsOfAssignment(a, S.siteColors);
+      const color = colors[0] || (pl ? pl.color : '#999');
       return {
-        code: apptAbbr(a) + ' · ' + custName, purpose: chipPurpose, engName: auditorName, color,
+        code: apptAbbr(a) + ' · ' + custName, purpose: chipPurpose, engName: auditorName, color, colors,
         countTxt: '',
         dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: color, flexShrink: 0 }),
         style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: '#23282a', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
@@ -1216,15 +1246,18 @@ export function useScheduler() {
     const isInternal = !!(a.site2 || a.auditor2 || a.department2);
     const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || e.name);
     const chipPurpose = isInternal ? auditorName : (a.purpose ? (auditorName ? a.purpose + ' - ' + auditorName : a.purpose) : auditorName);
+    const colors = siteColorsOfAssignment(a, S.siteColors);
+    const color = colors[0] || (pl ? pl.color : '#999');
     return {
       id: a.id,
       code: apptAbbr(a) + ' · ' + (isInternal ? (a.area || '') : (a.customer || o.customer)),
       purpose: chipPurpose,
       engName: auditorName,
-      color: siteColorOf(a) || (pl ? pl.color : '#999'),
+      color,
+      colors,
       onClick: () => { closeDayDialog(); openEdit(a.id); },
     };
-  }).filter(Boolean) as { id: string; code: string; purpose: string; engName: string; color: string; onClick: () => void }[];
+  }).filter(Boolean) as { id: string; code: string; purpose: string; engName: string; color: string; colors: string[]; onClick: () => void }[];
   const dayDialogInfo = dayDialogOpen
     ? { label: S.dayDialog!.day >= 0 && S.dayDialog!.day < 5 ? dayNames[S.dayDialog!.day] : '', date: dayDialogDate }
     : null;

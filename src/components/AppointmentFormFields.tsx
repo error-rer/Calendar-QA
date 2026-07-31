@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Assignment, Engineer } from '../types';
 import { css } from '../ui';
 import { AvailabilityDatePicker } from './AvailabilityDatePicker';
@@ -21,6 +22,149 @@ export interface AppointmentFormValues {
   department2: string;
   dateFrom: string;
   dateTo: string;
+}
+
+function MultiSiteInput({
+  id,
+  value,
+  onChange,
+  siteOptions,
+}: {
+  id: string;
+  value: string;
+  onChange: (val: string) => void;
+  siteOptions: string[];
+}) {
+  const [adding, setAdding] = useState(false);
+  const selectedSites = value ? value.split('/').map((s) => s.trim()).filter(Boolean) : [];
+
+  const handleSelectFirst = (site: string) => {
+    onChange(site);
+  };
+
+  const handleAddSite = (site: string) => {
+    if (!site) return;
+    if (!selectedSites.includes(site)) {
+      const next = [...selectedSites, site].join('/');
+      onChange(next);
+    }
+    setAdding(false);
+  };
+
+  const handleRemoveSite = (siteToRemove: string) => {
+    const next = selectedSites.filter((s) => s !== siteToRemove).join('/');
+    onChange(next);
+  };
+
+  const unselectedOptions = siteOptions.filter((s) => !selectedSites.includes(s));
+
+  if (selectedSites.length === 0) {
+    return (
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+        <select
+          id={id}
+          value=""
+          onChange={(e) => handleSelectFirst(e.target.value)}
+          style={{ ...inp, flex: 1 }}
+        >
+          <option value="">Select site...</option>
+          {siteOptions.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
+          title="Add multiple sites"
+          style={css("padding:7px 11px;border:1px solid #dde0d9;border-radius:8px;background:#f4f6f1;color:#15191e;font-weight:700;font-size:14px;cursor:pointer;font-family:'Archivo',sans-serif")}
+        >
+          +
+        </button>
+      </div>
+    );
+  }
+
+  if (selectedSites.length === 1 && !adding) {
+    return (
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+        <select
+          id={id}
+          value={selectedSites[0]}
+          onChange={(e) => onChange(e.target.value)}
+          style={{ ...inp, flex: 1 }}
+        >
+          <option value="">Select site...</option>
+          {siteOptions.map((s) => (
+            <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
+          title="Add another site"
+          style={css("padding:7px 11px;border:1px solid #dde0d9;border-radius:8px;background:#f4f6f1;color:#15191e;font-weight:700;font-size:14px;cursor:pointer;font-family:'Archivo',sans-serif")}
+        >
+          +
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+        {selectedSites.map((s) => (
+          <div
+            key={s}
+            style={css("display:flex;align-items:center;gap:6px;background:#eef2fd;border:1px solid #9bb0e8;color:#2756d6;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:600;font-family:'Archivo',sans-serif")}
+          >
+            {s}
+            <button
+              type="button"
+              onClick={() => handleRemoveSite(s)}
+              style={css("background:none;border:none;cursor:pointer;color:#2756d6;font-size:11px;padding:0 2px;line-height:1")}
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+
+        {!adding && unselectedOptions.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            title="Add another site"
+            style={css("padding:3px 9px;border:1px solid #dde0d9;border-radius:20px;background:#fff;color:#5c625c;font-weight:600;font-size:11.5px;cursor:pointer;font-family:'Archivo',sans-serif")}
+          >
+            + Add site
+          </button>
+        )}
+      </div>
+
+      {adding && unselectedOptions.length > 0 && (
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <select
+            autoFocus
+            value=""
+            onChange={(e) => handleAddSite(e.target.value)}
+            style={{ ...inp, flex: 1 }}
+          >
+            <option value="">Select additional site...</option>
+            {unselectedOptions.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => setAdding(false)}
+            style={css("padding:7px 10px;border:1px solid #dde0d9;border-radius:8px;background:#fff;color:#8a9088;font-size:12px;cursor:pointer;font-family:'Archivo',sans-serif")}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /** Shared Customer/Internal Audit field set used by both CreateModal and EditModal. */
@@ -90,8 +234,9 @@ export function AppointmentFormFields({
                 value={v.department1}
                 onChange={(e) => {
                   const newDept = e.target.value;
-                  const resetSite = newDept === 'EHS' && v.site1 && !['U1', 'U2', 'U3'].includes(v.site1);
-                  onChange({ department1: newDept, ...(resetSite ? { site1: '' } : {}) });
+                  const currentSites = v.site1.split('/').map((s) => s.trim()).filter(Boolean);
+                  const validSites = currentSites.filter((s) => !newDept || newDept !== 'EHS' || ['U1', 'U2', 'U3'].includes(s));
+                  onChange({ department1: newDept, site1: validSites.join('/') });
                 }}
                 style={sel}
               >
@@ -103,10 +248,12 @@ export function AppointmentFormFields({
             {/* 2. SITE */}
             <div style={fld}>
               <label htmlFor={id('site1')} style={lbl}>SITE</label>
-              <select id={id('site1')} value={v.site1} onChange={(e) => onChange({ site1: e.target.value })} style={sel}>
-                <option value="">Select site...</option>
-                {customerSiteOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+              <MultiSiteInput
+                id={id('site1')}
+                value={v.site1}
+                onChange={(site1) => onChange({ site1 })}
+                siteOptions={customerSiteOptions}
+              />
             </div>
 
             {/* 3. CUSTOMER */}
@@ -189,8 +336,9 @@ export function AppointmentFormFields({
                 value={v.department2}
                 onChange={(e) => {
                   const newDept = e.target.value;
-                  const resetSite = newDept === 'EHS' && v.site2 && !['U1', 'U2', 'U3'].includes(v.site2);
-                  onChange({ department2: newDept, ...(resetSite ? { site2: '' } : {}) });
+                  const currentSites = v.site2.split('/').map((s) => s.trim()).filter(Boolean);
+                  const validSites = currentSites.filter((s) => !newDept || newDept !== 'EHS' || ['U1', 'U2', 'U3'].includes(s));
+                  onChange({ department2: newDept, site2: validSites.join('/') });
                 }}
                 style={sel}
               >
@@ -202,10 +350,12 @@ export function AppointmentFormFields({
             {/* 2. SITE */}
             <div style={fld}>
               <label htmlFor={id('site2')} style={lbl}>SITE</label>
-              <select id={id('site2')} value={v.site2} onChange={(e) => onChange({ site2: e.target.value })} style={sel}>
-                <option value="">Select site...</option>
-                {internalSiteOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+              <MultiSiteInput
+                id={id('site2')}
+                value={v.site2}
+                onChange={(site2) => onChange({ site2 })}
+                siteOptions={internalSiteOptions}
+              />
             </div>
 
             {/* 3. AREA */}

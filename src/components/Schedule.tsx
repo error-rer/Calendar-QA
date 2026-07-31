@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import type { VM } from '../useScheduler';
+import { getAccentStyle } from '../useScheduler';
 import { css, HButton } from '../ui';
 import { DetailPanel } from './DetailPanel';
 
@@ -87,16 +88,20 @@ export function Schedule({ vm }: { vm: VM }) {
                 <div style={css('text-align:center;padding:24px 0;color:#9aa097;font-size:12px;font-style:italic')}>No appointments this day</div>
               ) : (
                 <div style={css('display:flex;flex-direction:column;gap:6px')}>
-                  {vm.dayDialogChips.map((chip) => (
-                    <div key={chip.id} onClick={chip.onClick} style={css('display:flex;align-items:center;gap:9px;padding:9px 11px;background:#fff;border:1px solid #e4e7e0;border-left:3px solid ' + chip.color + ';border-radius:7px;cursor:pointer')}>
-                      <div style={css('min-width:0;flex:1')}>
-                        <div style={css('font-size:12px;font-weight:600;color:#23282a')}>{chip.code}</div>
-                        {chip.purpose ? (
-                          <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
-                        ) : null}
+                  {vm.dayDialogChips.map((chip) => {
+                    const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
+                    const accentStyle = getAccentStyle(chColors, 3);
+                    return (
+                      <div key={chip.id} onClick={chip.onClick} style={{ display: 'flex', alignItems: 'center', gap: '9px', padding: '9px 11px', background: '#fff', border: '1px solid #e4e7e0', ...accentStyle, borderRadius: '7px', cursor: 'pointer' }}>
+                        <div style={css('min-width:0;flex:1')}>
+                          <div style={css('font-size:12px;font-weight:600;color:#23282a')}>{chip.code}</div>
+                          {chip.purpose ? (
+                            <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
+                          ) : null}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -452,19 +457,23 @@ function MonthGrid({ vm }: { vm: VM }) {
             <div key={i} onClick={c.onClick} style={c.style}>
               <span style={c.numStyle}>{c.dateNum}</span>
               <div style={css('display:flex;flex-direction:column;gap:3px;margin-top:2px')}>
-                {(c.chips ?? []).map((ch, ci) => (
-                  <div key={ci} style={{
-                    background: '#f0f2ec', borderRadius: '5px', padding: '4px 6px',
-                    borderLeft: '3px solid ' + (ch.color || '#9aa097'),
-                    boxShadow: '0 1px 2px rgba(0,0,0,.05)',
-                    overflow: 'hidden',
-                  }}>
-                    <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#23282a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.code}</div>
-                    {ch.purpose ? (
-                      <div style={{ fontSize: '9.5px', color: '#5c625c', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
-                    ) : null}
-                  </div>
-                ))}
+                {(c.chips ?? []).map((ch, ci) => {
+                  const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
+                  const accentStyle = getAccentStyle(chColors, 3);
+                  return (
+                    <div key={ci} style={{
+                      background: '#f0f2ec', borderRadius: '5px', padding: '4px 6px',
+                      ...accentStyle,
+                      boxShadow: '0 1px 2px rgba(0,0,0,.05)',
+                      overflow: 'hidden',
+                    }}>
+                      <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#23282a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.code}</div>
+                      {ch.purpose ? (
+                        <div style={{ fontSize: '9.5px', color: '#5c625c', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
+                      ) : null}
+                    </div>
+                  );
+                })}
                 {(c.more ?? 0) > 0 && <span style={css('font-size:10px;color:#5b7fd6;font-weight:600')}>{c.moreTxt}</span>}
               </div>
             </div>
@@ -491,18 +500,22 @@ function MonthMobile({ vm }: { vm: VM }) {
             <div key={i} onClick={c.onClick} style={c.style}>
               <span style={c.numStyle}>{c.dateNum}</span>
               <div style={css('display:flex;flex-direction:column;gap:2px;margin-top:1px')}>
-                {(c.chips ?? []).map((ch, ci) => (
-                  <div key={ci} style={{
-                    background: '#f0f2ec', borderRadius: '3px', padding: '2px 4px',
-                    borderLeft: '2px solid ' + (ch.color || '#9aa097'),
-                    overflow: 'hidden',
-                  }}>
-                    <div style={{ fontSize: '8px', fontWeight: 600, color: '#23282a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.code}</div>
-                    {ch.purpose ? (
-                      <div style={{ fontSize: '7.5px', color: '#5c625c', marginTop: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
-                    ) : null}
-                  </div>
-                ))}
+                {(c.chips ?? []).map((ch, ci) => {
+                  const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
+                  const accentStyle = getAccentStyle(chColors, 2);
+                  return (
+                    <div key={ci} style={{
+                      background: '#f0f2ec', borderRadius: '3px', padding: '2px 4px',
+                      ...accentStyle,
+                      overflow: 'hidden',
+                    }}>
+                      <div style={{ fontSize: '8px', fontWeight: 600, color: '#23282a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.code}</div>
+                      {ch.purpose ? (
+                        <div style={{ fontSize: '7.5px', color: '#5c625c', marginTop: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
+                      ) : null}
+                    </div>
+                  );
+                })}
                 {(c.more ?? 0) > 0 && <span style={css('font-size:8px;color:#5b7fd6;font-weight:600')}>{c.moreTxt}</span>}
               </div>
             </div>
