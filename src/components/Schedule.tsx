@@ -307,11 +307,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
                 <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{chip.customer}</div>
                 {chip.purpose ? (
                   <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{chip.purpose}</div>
-                ) : (
-                  (chip.auditor1 || chip.auditor2) ? (
-                    <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{chip.auditor1 || chip.auditor2}</div>
-                  ) : null
-                )}
+                ) : null}
               </div>
             ))}
             {vm.weekCalendarDays[i].chips.length === 0 && vm.weekMergedSpans.every((s) => s.startDay > i || s.startDay + s.span <= i) && (
@@ -334,11 +330,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
           <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{sp.customer}</div>
           {sp.purpose ? (
             <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{sp.purpose}</div>
-          ) : (
-            (sp.auditor1 || sp.auditor2) ? (
-              <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{sp.auditor1 || sp.auditor2}</div>
-            ) : null
-          )}
+          ) : null}
         </div>
       ))}
     </div>
