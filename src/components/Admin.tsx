@@ -188,6 +188,91 @@ function TagListEditor({ title, count, values, onAdd, onRemove, placeholder, col
   );
 }
 
+function DepartmentEditor({ vm }: { vm: VM }) {
+  const [internalDraft, setInternalDraft] = useState('');
+  const [customerDraft, setCustomerDraft] = useState('');
+
+  const submitInternal = () => {
+    if (!internalDraft.trim()) return;
+    vm.addInternalDepartmentOption(internalDraft.trim());
+    setInternalDraft('');
+  };
+
+  const submitCustomer = () => {
+    if (!customerDraft.trim()) return;
+    vm.addCustomerDepartmentOption(customerDraft.trim());
+    setCustomerDraft('');
+  };
+
+  const totalCount = vm.internalDepartmentOptions.length + vm.customerDepartmentOptions.length;
+
+  return (
+    <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;overflow:hidden')}>
+      <div style={css('display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #eef1ea')}>
+        <div style={css('font-size:13px;font-weight:700')}>
+          Department <span style={css('color:#9aa097;font-weight:500')}>· {totalCount}</span>
+        </div>
+      </div>
+
+      <div style={css('padding:16px 18px;display:flex;flex-direction:column;gap:18px')}>
+        {/* INTERNAL AUDIT */}
+        <div>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#9aa097;letter-spacing:.5px;margin-bottom:8px")}>
+            INTERNAL AUDIT <span style={css('color:#9aa097;font-weight:500')}>· {vm.internalDepartmentOptions.length}</span>
+          </div>
+          <div style={css('display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px')}>
+            {vm.internalDepartmentOptions.map((v) => (
+              <div key={v} style={css('display:flex;align-items:center;gap:6px;background:#f4f6f1;border:1px solid #e0e3dc;border-radius:20px;padding:5px 12px;font-size:12px;color:#3c423d')}>
+                {v}
+                <button onClick={() => vm.removeInternalDepartmentOption(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1')}>✕</button>
+              </div>
+            ))}
+            {vm.internalDepartmentOptions.length === 0 && <span style={css('font-size:12px;color:#a6aca2;font-style:italic')}>No internal audit departments yet.</span>}
+          </div>
+          <div style={css('display:flex;gap:8px')}>
+            <input
+              value={internalDraft}
+              onChange={(e) => setInternalDraft(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') submitInternal(); }}
+              placeholder="e.g. EHS"
+              style={css("flex:1;border:1px solid #dde0d9;border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fff")}
+            />
+            <HButton onClick={submitInternal} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ Add</HButton>
+          </div>
+        </div>
+
+        <div style={css('border-top:1px solid #eef1ea')} />
+
+        {/* CUSTOMER */}
+        <div>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#9aa097;letter-spacing:.5px;margin-bottom:8px")}>
+            CUSTOMER <span style={css('color:#9aa097;font-weight:500')}>· {vm.customerDepartmentOptions.length}</span>
+          </div>
+          <div style={css('display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px')}>
+            {vm.customerDepartmentOptions.map((v) => (
+              <div key={v} style={css('display:flex;align-items:center;gap:6px;background:#f4f6f1;border:1px solid #e0e3dc;border-radius:20px;padding:5px 12px;font-size:12px;color:#3c423d')}>
+                {v}
+                <button onClick={() => vm.removeCustomerDepartmentOption(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1')}>✕</button>
+              </div>
+            ))}
+            {vm.customerDepartmentOptions.length === 0 && <span style={css('font-size:12px;color:#a6aca2;font-style:italic')}>No customer departments yet.</span>}
+          </div>
+          <div style={css('display:flex;gap:8px')}>
+            <input
+              value={customerDraft}
+              onChange={(e) => setCustomerDraft(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') submitCustomer(); }}
+              placeholder="e.g. ISO13485"
+              style={css("flex:1;border:1px solid #dde0d9;border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fff")}
+            />
+            <HButton onClick={submitCustomer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ Add</HButton>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function OptionsPanel({ vm }: { vm: VM }) {
   return (
     <div style={css('display:flex;flex-direction:column;gap:16px')}>
@@ -199,22 +284,7 @@ function OptionsPanel({ vm }: { vm: VM }) {
         onRemove={vm.removePurposeOption}
         placeholder="e.g. supplier audit"
       />
-      <TagListEditor
-        title="Department (customer)"
-        count={vm.customerDepartmentOptions.length}
-        values={vm.customerDepartmentOptions}
-        onAdd={vm.addCustomerDepartmentOption}
-        onRemove={vm.removeCustomerDepartmentOption}
-        placeholder="e.g. ISO13485"
-      />
-      <TagListEditor
-        title="Department (internal audit)"
-        count={vm.internalDepartmentOptions.length}
-        values={vm.internalDepartmentOptions}
-        onAdd={vm.addInternalDepartmentOption}
-        onRemove={vm.removeInternalDepartmentOption}
-        placeholder="e.g. EHS"
-      />
+      <DepartmentEditor vm={vm} />
       <TagListEditor
         title="Site"
         count={vm.siteCodeOptions.length}
