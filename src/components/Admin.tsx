@@ -108,14 +108,14 @@ function EngineersTable({ vm }: { vm: VM }) {
         <div style={css('font-size:13px;font-weight:700')}>Auditor <span style={css('color:#9aa097;font-weight:500')}>· {vm.adminEngineers.length}</span></div>
         <div style={css('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
           <AdminFilterDropdown
-            label="Filter Site"
+            label="Site"
             count={vm.adminFilterSite.length}
             selected={vm.adminFilterSite}
             items={vm.siteCodeOptions.map((s) => ({ value: s, label: s }))}
             onToggle={vm.toggleAdminFilterSite}
           />
           <AdminFilterDropdown
-            label="Filter Department"
+            label="Department"
             count={vm.adminFilterDept.length}
             selected={vm.adminFilterDept}
             items={vm.adminDeptOptions.map((d) => ({ value: d, label: d }))}
