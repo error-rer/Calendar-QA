@@ -407,7 +407,7 @@ export function useScheduler() {
     const newOrder = {
       id: orderId, code: 'NEW-' + String(S.orders.length + 1).padStart(3, '0'),
       customer: d.customer, product: d.endCustomer || d.area,
-      plant: d.sectionType === 'internal' ? d.department2 : d.site1, purpose: d.purpose || (d.sectionType === 'internal' ? d.area : 'data-entry'),
+      plant: d.sectionType === 'internal' ? d.department2 : d.site1, purpose: d.purpose || '',
     };
     const newEngineer = { id: engId, name: auditorName, role: 'QA', department: siteToDept(d.sectionType === 'internal' ? d.site2 : d.site1), subDepartments: [] };
     api.createOrder(newOrder).catch(() => {});
