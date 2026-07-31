@@ -64,8 +64,8 @@ function AdminFilterDropdown({ label, count, selected, items, onToggle }: { labe
       </button>
       {open && (
         <>
-          <div onClick={() => setOpen(false)} style={css('position:fixed;inset:0;z-index:29')} />
-          <div style={css('position:absolute;top:100%;right:0;z-index:30;margin-top:4px;background:#fff;border:1px solid #dde0d9;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.1);min-width:140px;max-height:220px;overflow-y:auto;padding:5px')}>
+          <div onClick={() => setOpen(false)} style={css('position:fixed;inset:0;z-index:99')} />
+          <div style={css('position:absolute;top:100%;right:0;z-index:100;margin-top:4px;background:#fff;border:1px solid #dde0d9;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);min-width:140px;max-height:220px;overflow-y:auto;padding:5px')}>
             {items.map((item) => {
               const on = selected.includes(item.value);
               return (
@@ -103,8 +103,8 @@ function AdminFilterDropdown({ label, count, selected, items, onToggle }: { labe
 
 function EngineersTable({ vm }: { vm: VM }) {
   return (
-    <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;overflow:hidden')}>
-      <div style={css('display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #eef1ea;flex-wrap:wrap;gap:10px')}>
+    <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;position:relative;z-index:10')}>
+      <div style={css('display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #eef1ea;flex-wrap:wrap;gap:10px;position:relative;z-index:20')}>
         <div style={css('font-size:13px;font-weight:700')}>Auditor <span style={css('color:#9aa097;font-weight:500')}>· {vm.adminEngineers.length}</span></div>
         <div style={css('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
           <AdminFilterDropdown
