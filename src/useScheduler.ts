@@ -27,6 +27,19 @@ export const siteColorsOfAssignment = (a: Assignment, siteColors: Record<string,
   return sites.map((s) => siteColors[s] || '#999999');
 };
 
+export const getAccentBackground = (colors: string[]): string => {
+  if (!colors || colors.length === 0) return '#999999';
+  if (colors.length === 1) return colors[0];
+  const stops = colors
+    .map((c, i) => {
+      const startPct = Math.round((i / colors.length) * 100);
+      const endPct = Math.round(((i + 1) / colors.length) * 100);
+      return `${c} ${startPct}%, ${c} ${endPct}%`;
+    })
+    .join(', ');
+  return `linear-gradient(180deg, ${stops})`;
+};
+
 export const getAccentStyle = (colors: string[], borderPx = 3): CSSProperties => {
   if (!colors || colors.length === 0) return { borderLeft: `${borderPx}px solid #999999` };
   if (colors.length === 1) return { borderLeft: `${borderPx}px solid ${colors[0]}` };
@@ -156,8 +169,6 @@ export function useScheduler() {
   const initials = (name: string) =>
     name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
   const siteToDept = (site: string): Department => (site.startsWith('U3') ? 'U3' : site.startsWith('U2') ? 'U2' : 'U1');
-  /** Leading color-bar color for an appointment, keyed by its own site (site1 for Customer, site2 for Internal Audit). */
-  const siteColorOf = (a: Assignment) => S.siteColors[a.site1 || a.site2 || ''] || undefined;
   /** "CS" for Customer appointments, "IA" for Internal Audit. */
   const apptAbbr = (a: Assignment) => (a.site2 || a.auditor2 || a.department2 ? 'IA' : 'CS');
   /** Returns Customer name with CS prefix for Customer Audit or Area/topic with IA prefix for Internal Audit. */
@@ -951,12 +962,13 @@ export function useScheduler() {
     const eng = engById(a.eng);
     const pl = ord ? plantById(ord.plant) : null;
     const sel = S.selected === a.id;
-    const color = siteColorOf(a) || (pl ? pl.color : '#999');
+    const colors = siteColorsOfAssignment(a, S.siteColors);
+    const color = colors[0] || (pl ? pl.color : '#999');
     const isInternal = !!(a.site2 || a.auditor2 || a.department2);
     const custName = isInternal ? (a.area || '') : (a.customer || (ord ? ord.customer : ''));
     const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || (eng ? eng.name : ''));
     const chipPurpose = isInternal ? auditorName : (a.purpose ? (auditorName ? a.purpose + ' - ' + auditorName : a.purpose) : auditorName);
-    return { ...a, _customer: apptAbbr(a) + ' · ' + custName, _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _sel: sel, _onClick: () => select(a.id), _ord: ord, _eng: eng };
+    return { ...a, _customer: apptAbbr(a) + ' · ' + custName, _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _colors: colors, _sel: sel, _onClick: () => select(a.id), _ord: ord, _eng: eng };
   });
   // group consecutive same-order same-eng assignments into merged spans
   const sorted = [...weekCalendarChips].sort((a, b) => {
@@ -985,7 +997,7 @@ export function useScheduler() {
     return {
       ids: g.ids, startDay: g.startDay, span: g.endDay - g.startDay + 1, gridRow: row,
       id: c.id, site1: c.site1 || '', customer: c._customer, purpose: c._purpose,
-      auditor1: c._auditor, color: c._color, selected: sel,
+      auditor1: c._auditor, color: c._color, colors: c._colors, selected: sel,
       area: c.area || '', auditor2: c.auditor2 || '',
       onClick: () => select(c.id),
     };
@@ -994,7 +1006,7 @@ export function useScheduler() {
     const mergedIds = new Set(weekMergedSpans.flatMap((s) => s.ids));
     const chips = weekCalendarChips.filter((c) => c.day === day && !mergedIds.has(c.id)).map((c) => ({
       id: c.id, site1: c.site1 || '', customer: c._customer, purpose: c._purpose,
-      auditor1: c._auditor, qa: c._qa, color: c._color, onClick: c._onClick, selected: c._sel,
+      auditor1: c._auditor, qa: c._qa, color: c._color, colors: c._colors, onClick: c._onClick, selected: c._sel,
       area: c.area || '', auditor2: c.auditor2 || '',
     }));
     return { day, chips, count: chips.length };

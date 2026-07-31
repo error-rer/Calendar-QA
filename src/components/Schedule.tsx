@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import type { VM } from '../useScheduler';
-import { getAccentStyle } from '../useScheduler';
+import { getAccentBackground } from '../useScheduler';
 import { css, HButton } from '../ui';
 import { DetailPanel } from './DetailPanel';
 
@@ -90,10 +90,10 @@ export function Schedule({ vm }: { vm: VM }) {
                 <div style={css('display:flex;flex-direction:column;gap:6px')}>
                   {vm.dayDialogChips.map((chip) => {
                     const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
-                    const accentStyle = getAccentStyle(chColors, 3);
                     return (
-                      <div key={chip.id} onClick={chip.onClick} style={{ display: 'flex', alignItems: 'center', gap: '9px', padding: '9px 11px', background: '#fff', border: '1px solid #e4e7e0', ...accentStyle, borderRadius: '7px', cursor: 'pointer' }}>
-                        <div style={css('min-width:0;flex:1')}>
+                      <div key={chip.id} onClick={chip.onClick} style={{ display: 'flex', alignItems: 'stretch', background: '#fff', border: '1px solid #e4e7e0', borderRadius: '7px', cursor: 'pointer', overflow: 'hidden' }}>
+                        <div style={{ width: '3px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
+                        <div style={css('min-width:0;flex:1;padding:9px 11px')}>
                           <div style={css('font-size:12px;font-weight:600;color:#23282a')}>{chip.code}</div>
                           {chip.purpose ? (
                             <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
@@ -301,42 +301,54 @@ function WeekCalendar({ vm }: { vm: VM }) {
             <div style={css("font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#23282a;margin-top:2px")}>{d.date.split(' ').pop()}</div>
           </div>
           <div style={css('display:flex;flex-direction:column;gap:2px')}>
-            {vm.weekCalendarDays[i].chips.map((chip) => (
-              <div key={chip.id} onClick={chip.onClick} title={[chip.customer, chip.auditor2 || chip.purpose, chip.auditor2 ? '' : chip.auditor1].filter(Boolean).join(' - ')} style={{
-            background: '#f0f2ec', borderRadius: '6px', padding: '6px 8px',
-            borderLeft: '3px solid ' + chip.color,
-            boxShadow: '0 1px 2px rgba(0,0,0,.06)',
-            cursor: 'pointer', overflow: 'hidden',
-              }}>
-                <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{chip.customer}</div>
-                {chip.purpose ? (
-                  <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{chip.purpose}</div>
-                ) : null}
-              </div>
-            ))}
+            {vm.weekCalendarDays[i].chips.map((chip) => {
+              const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
+              return (
+                <div key={chip.id} onClick={chip.onClick} title={[chip.customer, chip.auditor2 || chip.purpose, chip.auditor2 ? '' : chip.auditor1].filter(Boolean).join(' - ')} style={{
+                  display: 'flex', alignItems: 'stretch',
+                  background: '#f0f2ec', borderRadius: '6px',
+                  boxShadow: '0 1px 2px rgba(0,0,0,.06)',
+                  cursor: 'pointer', overflow: 'hidden',
+                }}>
+                  <div style={{ width: '3px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
+                  <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{chip.customer}</div>
+                    {chip.purpose ? (
+                      <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{chip.purpose}</div>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
             {vm.weekCalendarDays[i].chips.length === 0 && vm.weekMergedSpans.every((s) => s.startDay > i || s.startDay + s.span <= i) && (
               <div style={css('font-size:10px;color:#bcc1b8;font-style:italic;padding:4px 0')}>–</div>
             )}
           </div>
         </div>
       ))}
-      {vm.weekMergedSpans.map((sp) => (
-        <div key={sp.id} onClick={sp.onClick} title={[sp.customer, sp.auditor2 || sp.purpose, sp.auditor2 ? '' : sp.auditor1].filter(Boolean).join(' - ')} style={{
-          gridColumn: `${sp.startDay + 1} / span ${sp.span}`,
-          gridRow: `${sp.gridRow + 2}`,
-          zIndex: 2,
-          background: '#f0f2ec', borderRadius: '6px', padding: '6px 8px',
-          borderLeft: '3px solid ' + sp.color,
-          boxShadow: '0 1px 2px rgba(0,0,0,.06)',
-          cursor: 'pointer', overflow: 'hidden',
-          margin: '2px 0',
-        }}>
-          <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{sp.customer}</div>
-          {sp.purpose ? (
-            <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{sp.purpose}</div>
-          ) : null}
-        </div>
-      ))}
+      {vm.weekMergedSpans.map((sp) => {
+        const spColors = sp.colors && sp.colors.length > 0 ? sp.colors : [sp.color];
+        return (
+          <div key={sp.id} onClick={sp.onClick} title={[sp.customer, sp.auditor2 || sp.purpose, sp.auditor2 ? '' : sp.auditor1].filter(Boolean).join(' - ')} style={{
+            gridColumn: `${sp.startDay + 1} / span ${sp.span}`,
+            gridRow: `${sp.gridRow + 2}`,
+            zIndex: 2,
+            display: 'flex', alignItems: 'stretch',
+            background: '#f0f2ec', borderRadius: '6px',
+            boxShadow: '0 1px 2px rgba(0,0,0,.06)',
+            cursor: 'pointer', overflow: 'hidden',
+            margin: '2px 0',
+          }}>
+            <div style={{ width: '3px', background: getAccentBackground(spColors), flexShrink: 0, alignSelf: 'stretch' }} />
+            <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
+              <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{sp.customer}</div>
+              {sp.purpose ? (
+                <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{sp.purpose}</div>
+              ) : null}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -459,18 +471,20 @@ function MonthGrid({ vm }: { vm: VM }) {
               <div style={css('display:flex;flex-direction:column;gap:3px;margin-top:2px')}>
                 {(c.chips ?? []).map((ch, ci) => {
                   const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
-                  const accentStyle = getAccentStyle(chColors, 3);
                   return (
                     <div key={ci} style={{
-                      background: '#f0f2ec', borderRadius: '5px', padding: '4px 6px',
-                      ...accentStyle,
+                      display: 'flex', alignItems: 'stretch',
+                      background: '#f0f2ec', borderRadius: '5px',
                       boxShadow: '0 1px 2px rgba(0,0,0,.05)',
                       overflow: 'hidden',
                     }}>
-                      <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#23282a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.code}</div>
-                      {ch.purpose ? (
-                        <div style={{ fontSize: '9.5px', color: '#5c625c', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
-                      ) : null}
+                      <div style={{ width: '3px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
+                      <div style={{ padding: '3px 5px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
+                        <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#23282a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.code}</div>
+                        {ch.purpose ? (
+                          <div style={{ fontSize: '9.5px', color: '#5c625c', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
+                        ) : null}
+                      </div>
                     </div>
                   );
                 })}
@@ -502,17 +516,19 @@ function MonthMobile({ vm }: { vm: VM }) {
               <div style={css('display:flex;flex-direction:column;gap:2px;margin-top:1px')}>
                 {(c.chips ?? []).map((ch, ci) => {
                   const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
-                  const accentStyle = getAccentStyle(chColors, 2);
                   return (
                     <div key={ci} style={{
-                      background: '#f0f2ec', borderRadius: '3px', padding: '2px 4px',
-                      ...accentStyle,
+                      display: 'flex', alignItems: 'stretch',
+                      background: '#f0f2ec', borderRadius: '3px',
                       overflow: 'hidden',
                     }}>
-                      <div style={{ fontSize: '8px', fontWeight: 600, color: '#23282a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.code}</div>
-                      {ch.purpose ? (
-                        <div style={{ fontSize: '7.5px', color: '#5c625c', marginTop: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
-                      ) : null}
+                      <div style={{ width: '2px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
+                      <div style={{ padding: '2px 4px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
+                        <div style={{ fontSize: '8px', fontWeight: 600, color: '#23282a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.code}</div>
+                        {ch.purpose ? (
+                          <div style={{ fontSize: '7.5px', color: '#5c625c', marginTop: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
+                        ) : null}
+                      </div>
                     </div>
                   );
                 })}
