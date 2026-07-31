@@ -18,6 +18,7 @@ import { api } from './api';
 
 /** Identity tag that supplies a contextual CSSProperties type to a style literal. */
 const sx = (o: CSSProperties): CSSProperties => o;
+const firstName = (name: string) => name.trim().split(' ')[0] || '';
 
 interface MonthChip {
   code: string;
@@ -621,7 +622,7 @@ export function useScheduler() {
     };
     const e = engById(a.eng);
     const isInternal = !!(a.site2 || a.auditor2 || a.department2);
-    const auditorName = (isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : '');
+    const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : ''));
     const chipPurpose = isInternal ? auditorName : (a.purpose ? (auditorName ? a.purpose + ' - ' + auditorName : a.purpose) : auditorName);
     return {
       aid: a.id, code: (ord ? apptAbbr(a) + ' · ' + (a.customer || ord.customer) : '?'), purpose: chipPurpose, style: base,
@@ -638,7 +639,7 @@ export function useScheduler() {
     const dim = chipDimmed(a);
     const color = accent || siteColorOf(a) || (pl ? pl.color : '#999');
     const isInternal = !!(a.site2 || a.auditor2 || a.department2);
-    const auditorName = (isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : '');
+    const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : ''));
     const chipPurpose = isInternal ? auditorName : (a.purpose ? (auditorName ? a.purpose + ' - ' + auditorName : a.purpose) : auditorName);
     return {
       aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: (ord ? apptAbbr(a) + ' · ' + (a.customer || ord.customer) : '?'), purpose: chipPurpose, plantCode: pl ? pl.code : '?',
@@ -713,7 +714,7 @@ export function useScheduler() {
       const pl = plantById(o.plant);
       const isInternal = !!(a.site2 || a.auditor2 || a.department2);
       const custName = isInternal ? (a.area || '') : (a.customer || o.customer || o.product);
-      const auditorName = (isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : '');
+      const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : ''));
       const chipPurpose = isInternal ? auditorName : (a.purpose ? (auditorName ? a.purpose + ' - ' + auditorName : a.purpose) : auditorName);
       const color = siteColorOf(a) || (pl ? pl.color : '#999');
       return {
@@ -892,7 +893,7 @@ export function useScheduler() {
     const color = siteColorOf(a) || (pl ? pl.color : '#999');
     const isInternal = !!(a.site2 || a.auditor2 || a.department2);
     const custName = isInternal ? (a.area || '') : (a.customer || (ord ? ord.customer : ''));
-    const auditorName = (isInternal ? a.auditor2 : a.auditor1) || (eng ? eng.name : '');
+    const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || (eng ? eng.name : ''));
     const chipPurpose = isInternal ? auditorName : (a.purpose ? (auditorName ? a.purpose + ' - ' + auditorName : a.purpose) : auditorName);
     return { ...a, _customer: apptAbbr(a) + ' · ' + custName, _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _sel: sel, _onClick: () => select(a.id), _ord: ord, _eng: eng };
   });
@@ -1172,7 +1173,7 @@ export function useScheduler() {
     if (!o || !e) return null;
     const pl = plantById(o.plant);
     const isInternal = !!(a.site2 || a.auditor2 || a.department2);
-    const auditorName = (isInternal ? a.auditor2 : a.auditor1) || e.name;
+    const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || e.name);
     const chipPurpose = isInternal ? auditorName : (a.purpose ? (auditorName ? a.purpose + ' - ' + auditorName : a.purpose) : auditorName);
     return {
       id: a.id,

@@ -91,10 +91,9 @@ export function Schedule({ vm }: { vm: VM }) {
                     <div key={chip.id} onClick={chip.onClick} style={css('display:flex;align-items:center;gap:9px;padding:9px 11px;background:#fff;border:1px solid #e4e7e0;border-left:3px solid ' + chip.color + ';border-radius:7px;cursor:pointer')}>
                       <div style={css('min-width:0;flex:1')}>
                         <div style={css('font-size:12px;font-weight:600;color:#23282a')}>{chip.code}</div>
-                        <div style={css('display:flex;gap:8px;margin-top:2px')}>
-                          <span style={css('font-size:10.5px;color:#5c625c')}>{chip.purpose}</span>
-                          <span style={css('font-size:10.5px;color:#9aa097')}>{chip.engName}</span>
-                        </div>
+                        {chip.purpose ? (
+                          <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
+                        ) : null}
                       </div>
                     </div>
                   ))}
