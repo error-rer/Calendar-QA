@@ -1001,7 +1001,7 @@ export function useScheduler() {
       site1: selA.site1, endCustomer: selA.endCustomer,
       auditor1: selA.auditor1, site2: selA.site2, area: selA.area, auditor2: selA.auditor2,
       department1: selA.department1, department2: selA.department2,
-      purpose: selA.purpose || (ord ? ord.purpose : ''),
+      purpose: selA.purpose || '',
       major: selA.major ?? 0, minor: selA.minor ?? 0, ofi: selA.ofi ?? 0, request: selA.request ?? 0,
       utl1: selA.utl1 ?? 0, utl2: selA.utl2 ?? 0, utl3: selA.utl3 ?? 0,
     };
