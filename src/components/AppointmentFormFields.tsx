@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Assignment, Engineer } from '../types';
 import { css } from '../ui';
 import { AvailabilityDatePicker } from './AvailabilityDatePicker';
@@ -24,7 +24,7 @@ export interface AppointmentFormValues {
   dateTo: string;
 }
 
-function MultiSiteInput({
+function MultiSiteSelect({
   id,
   value,
   onChange,
@@ -36,7 +36,18 @@ function MultiSiteInput({
   siteOptions: string[];
 }) {
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const selectedSites = value ? value.split('/').map((s) => s.trim()).filter(Boolean) : [];
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const toggleSite = (site: string) => {
     let next: string[];
@@ -48,26 +59,39 @@ function MultiSiteInput({
     onChange(next.join('/'));
   };
 
+  const displayText = selectedSites.length > 0 ? selectedSites.join('/') : 'Select site...';
+
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
-      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-        <input
-          id={id}
-          readOnly
-          value={value}
-          placeholder="Select site..."
-          onClick={() => setOpen(!open)}
-          style={{ ...inp, cursor: 'pointer', flex: 1 }}
-        />
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          title="Add/Edit sites"
-          style={css("padding:7px 11px;border:1px solid #dde0d9;border-radius:8px;background:#f4f6f1;color:#15191e;font-weight:700;font-size:14px;cursor:pointer;font-family:'Archivo',sans-serif")}
-        >
-          +
-        </button>
-      </div>
+    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
+      <button
+        id={id}
+        type="button"
+        onClick={() => setOpen(!open)}
+        style={{
+          border: '1px solid #dde0d9',
+          borderRadius: '8px',
+          padding: '8px 10px',
+          fontSize: '12.5px',
+          fontFamily: "'Archivo',sans-serif",
+          color: selectedSites.length > 0 ? '#23282a' : '#8a9088',
+          outline: 'none',
+          background: '#fff',
+          width: '100%',
+          boxSizing: 'border-box',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          textAlign: 'left',
+        }}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+          {displayText}
+        </span>
+        <span style={{ fontSize: '9px', color: '#8a9088', marginLeft: '6px', flexShrink: 0 }}>
+          {open ? '▲' : '▼'}
+        </span>
+      </button>
 
       {open && (
         <div
@@ -80,12 +104,11 @@ function MultiSiteInput({
             background: '#fff',
             border: '1px solid #dde0d9',
             borderRadius: '8px',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
             zIndex: 100,
-            padding: '6px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px',
+            maxHeight: '200px',
+            overflowY: 'auto',
+            padding: '4px',
           }}
         >
           {siteOptions.map((s) => {
@@ -94,26 +117,42 @@ function MultiSiteInput({
               <div
                 key={s}
                 onClick={() => toggleSite(s)}
-                style={css(
-                  `padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12.5px;font-weight:600;display:flex;align-items:center;justify-content:space-between;${
-                    isSel ? 'background:#eef2fd;color:#2756d6;' : 'background:#fff;color:#23282a;'
-                  }`
-                )}
+                style={{
+                  padding: '7px 10px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '12.5px',
+                  fontFamily: "'Archivo',sans-serif",
+                  fontWeight: isSel ? 600 : 400,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: isSel ? '#eef2fd' : '#fff',
+                  color: isSel ? '#2756d6' : '#23282a',
+                  transition: 'background .1s ease',
+                }}
               >
                 <span>{s}</span>
-                {isSel && <span style={{ fontWeight: 'bold' }}>✓</span>}
+                <span
+                  style={{
+                    width: '14px',
+                    height: '14px',
+                    borderRadius: '3px',
+                    border: '1px solid ' + (isSel ? '#2756d6' : '#cdd2c9'),
+                    background: isSel ? '#2756d6' : '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '9px',
+                    color: '#fff',
+                    flexShrink: 0,
+                  }}
+                >
+                  {isSel ? '✓' : ''}
+                </span>
               </div>
             );
           })}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px', borderTop: '1px solid #eef1ea', paddingTop: '4px' }}>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              style={css("font-size:11px;color:#5c625c;background:#f4f6f1;border:1px solid #e0e3dc;border-radius:5px;padding:3px 8px;cursor:pointer;font-family:'Archivo',sans-serif")}
-            >
-              Done
-            </button>
-          </div>
         </div>
       )}
     </div>
@@ -201,7 +240,7 @@ export function AppointmentFormFields({
             {/* 2. SITE */}
             <div style={fld}>
               <label htmlFor={id('site1')} style={lbl}>SITE</label>
-              <MultiSiteInput
+              <MultiSiteSelect
                 id={id('site1')}
                 value={v.site1}
                 onChange={(site1) => onChange({ site1 })}
@@ -303,7 +342,7 @@ export function AppointmentFormFields({
             {/* 2. SITE */}
             <div style={fld}>
               <label htmlFor={id('site2')} style={lbl}>SITE</label>
-              <MultiSiteInput
+              <MultiSiteSelect
                 id={id('site2')}
                 value={v.site2}
                 onChange={(site2) => onChange({ site2 })}
