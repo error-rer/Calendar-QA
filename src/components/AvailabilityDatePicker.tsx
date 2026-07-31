@@ -205,12 +205,7 @@ export function AvailabilityDatePicker({
   // Check validity of a candidate start date
   const checkStartAvailability = useCallback(
     (candidate: Date) => {
-      const today = getTodayMidnight();
       const candidateMidnight = new Date(candidate.getFullYear(), candidate.getMonth(), candidate.getDate());
-
-      if (candidateMidnight < today) {
-        return { available: false, spill: false, reason: 'Past date' };
-      }
 
       if (businessDaysOnly && isWeekend(candidateMidnight)) {
         return { available: false, spill: false, reason: 'Weekend' };
@@ -489,8 +484,6 @@ export function AvailabilityDatePicker({
           }
 
           const iso = fmtISO(day);
-          const today = getTodayMidnight();
-          const isPast = day < today;
           const wkend = isWeekend(day);
           const isBooked = bookedDatesSet.has(iso);
           const blocking = bookedDetailsMap.get(iso);
@@ -513,10 +506,7 @@ export function AvailabilityDatePicker({
           let cellStyle = 'background:#fafbf9;color:#23282a;border:1px solid #eef1ea;cursor:pointer;';
           let tooltip = check.available ? `Click to select ${activeDuration}-day slot from ${fmtDisplay(day)}` : (check.reason || '');
 
-          if (isPast) {
-            cellStyle = 'background:#f4f5f2;color:#b8bdb3;border:1px solid #e9ece5;cursor:not-allowed;opacity:0.65;';
-            tooltip = 'Past date';
-          } else if (businessDaysOnly && wkend) {
+          if (businessDaysOnly && wkend) {
             cellStyle = 'background:#f4f6f1;color:#a6aca2;border:1px solid #e8ebe4;cursor:not-allowed;';
             tooltip = 'Weekend (business days only)';
           } else if (isBooked) {
@@ -588,7 +578,7 @@ export function AvailabilityDatePicker({
         </div>
         <div style={css('display:flex;align-items:center;gap:5px')}>
           <span style={css('width:10px;height:10px;border-radius:3px;background:#f4f6f1;border:1px solid #e8ebe4')} />
-          <span style={css('font-size:10.5px;color:#5c625c')}>Weekend / Past</span>
+          <span style={css('font-size:10.5px;color:#5c625c')}>Weekend</span>
         </div>
       </div>
     </div>
