@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import type { VM } from '../useScheduler';
 import { css, HButton } from '../ui';
 
@@ -43,7 +43,7 @@ function EngineersTable({ vm }: { vm: VM }) {
         <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New Auditor</HButton>
       </div>
       <div style={css(engGrid + ";padding:9px 18px;border-bottom:1px solid #eef1ea;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>
-        <div>Auditor</div><div>DEPT + SUB-DEPT</div><div style={css('text-align:center')}>APPOINTMENTS</div><div></div>
+        <div>Auditor</div><div>SITE - DEPARTMENT</div><div style={css('text-align:center')}>APPOINTMENTS</div><div></div>
       </div>
       {vm.adminEngineers.map((e) => (
         <div key={e.id} style={css(engGrid + ';padding:12px 18px;border-bottom:1px solid #f2f4ee;align-items:center')}>
@@ -51,7 +51,7 @@ function EngineersTable({ vm }: { vm: VM }) {
             <div style={e.avatarStyle}>{e.initials}</div>
             <div style={css('min-width:0')}>
               <div style={css('font-size:12.5px;font-weight:600;color:#23282a')}>{e.name}</div>
-              <div style={css('font-size:10.5px;color:#8a9088')}>{e.department}{e.subDepartments.length > 0 ? ' ΓÇö ' + e.subDepartments.join(', ') : ''}</div>
+              <div style={css('font-size:10.5px;color:#8a9088')}>{e.department}{e.subDepartments.length > 0 ? ' - ' + e.subDepartments.join(', ') : ''}</div>
             </div>
           </div>
           <div style={css("text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#3c423d")}>{e.appointments}</div>
