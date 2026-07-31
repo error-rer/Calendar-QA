@@ -277,15 +277,6 @@ function OptionsPanel({ vm }: { vm: VM }) {
   return (
     <div style={css('display:flex;flex-direction:column;gap:16px')}>
       <TagListEditor
-        title="Purpose (customer)"
-        count={vm.purposeOptions.length}
-        values={vm.purposeOptions}
-        onAdd={vm.addPurposeOption}
-        onRemove={vm.removePurposeOption}
-        placeholder="e.g. supplier audit"
-      />
-      <DepartmentEditor vm={vm} />
-      <TagListEditor
         title="Site"
         count={vm.siteCodeOptions.length}
         values={vm.siteCodeOptions}
@@ -295,6 +286,7 @@ function OptionsPanel({ vm }: { vm: VM }) {
         colorFor={(v) => vm.siteColors[v] || '#999999'}
         onColorChange={vm.setSiteColor}
       />
+      <DepartmentEditor vm={vm} />
       <TagListEditor
         title="Customer"
         count={vm.customerOptions.length}
@@ -302,6 +294,14 @@ function OptionsPanel({ vm }: { vm: VM }) {
         onAdd={vm.addCustomerOption}
         onRemove={vm.removeCustomerOption}
         placeholder="e.g. Company F"
+      />
+      <TagListEditor
+        title="Purpose"
+        count={vm.purposeOptions.length}
+        values={vm.purposeOptions}
+        onAdd={vm.addPurposeOption}
+        onRemove={vm.removePurposeOption}
+        placeholder="e.g. supplier audit"
       />
     </div>
   );
