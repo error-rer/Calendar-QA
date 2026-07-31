@@ -452,11 +452,18 @@ function MonthGrid({ vm }: { vm: VM }) {
           ) : (
             <div key={i} onClick={c.onClick} style={c.style}>
               <span style={c.numStyle}>{c.dateNum}</span>
-              <div style={css('display:flex;flex-direction:column;gap:2px;margin-top:2px')}>
+              <div style={css('display:flex;flex-direction:column;gap:3px;margin-top:2px')}>
                 {(c.chips ?? []).map((ch, ci) => (
-                  <div key={ci} style={css('display:flex;align-items:center;gap:4px;overflow:hidden')}>
-                    <span style={ch.dotStyle} />
-                    <span style={css('font-size:10.5px;color:#23282a;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{ch.code}</span>
+                  <div key={ci} style={{
+                    background: '#f0f2ec', borderRadius: '5px', padding: '4px 6px',
+                    borderLeft: '3px solid ' + (ch.color || '#9aa097'),
+                    boxShadow: '0 1px 2px rgba(0,0,0,.05)',
+                    overflow: 'hidden',
+                  }}>
+                    <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#23282a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.code}</div>
+                    {ch.purpose ? (
+                      <div style={{ fontSize: '9.5px', color: '#5c625c', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
+                    ) : null}
                   </div>
                 ))}
                 {(c.more ?? 0) > 0 && <span style={css('font-size:10px;color:#5b7fd6;font-weight:600')}>{c.moreTxt}</span>}
@@ -484,11 +491,17 @@ function MonthMobile({ vm }: { vm: VM }) {
           ) : (
             <div key={i} onClick={c.onClick} style={c.style}>
               <span style={c.numStyle}>{c.dateNum}</span>
-              <div style={css('display:flex;flex-direction:column;gap:1px;margin-top:1px')}>
+              <div style={css('display:flex;flex-direction:column;gap:2px;margin-top:1px')}>
                 {(c.chips ?? []).map((ch, ci) => (
-                  <div key={ci} style={css('display:flex;align-items:center;gap:3px;overflow:hidden')}>
-                    <span style={ch.dotStyle} />
-                    <span style={css('font-size:8px;color:#23282a;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{ch.code}</span>
+                  <div key={ci} style={{
+                    background: '#f0f2ec', borderRadius: '3px', padding: '2px 4px',
+                    borderLeft: '2px solid ' + (ch.color || '#9aa097'),
+                    overflow: 'hidden',
+                  }}>
+                    <div style={{ fontSize: '8px', fontWeight: 600, color: '#23282a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.code}</div>
+                    {ch.purpose ? (
+                      <div style={{ fontSize: '7.5px', color: '#5c625c', marginTop: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
+                    ) : null}
                   </div>
                 ))}
                 {(c.more ?? 0) > 0 && <span style={css('font-size:8px;color:#5b7fd6;font-weight:600')}>{c.moreTxt}</span>}

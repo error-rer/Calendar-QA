@@ -23,6 +23,7 @@ interface MonthChip {
   code: string;
   purpose: string;
   engName: string;
+  color?: string;
   countTxt: string;
   dotStyle: CSSProperties;
   style: CSSProperties;
@@ -712,10 +713,13 @@ export function useScheduler() {
       const pl = plantById(o.plant);
       const isInternal = !!(a.site2 || a.auditor2 || a.department2);
       const custName = isInternal ? (a.area || '') : (a.customer || o.customer || o.product);
+      const auditorName = (isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : '');
+      const chipPurpose = isInternal ? auditorName : (a.purpose ? (auditorName ? a.purpose + ' - ' + auditorName : a.purpose) : auditorName);
+      const color = siteColorOf(a) || (pl ? pl.color : '#999');
       return {
-        code: apptAbbr(a) + ' · ' + custName, purpose: isInternal ? '' : (a.purpose || o.purpose), engName: isInternal ? (a.auditor2 || e?.name.split(' ')[0] || '') : (e ? e.name.split(' ')[0] : ''),
+        code: apptAbbr(a) + ' · ' + custName, purpose: chipPurpose, engName: auditorName, color,
         countTxt: '',
-        dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: siteColorOf(a) || pl.color, flexShrink: 0 }),
+        dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: color, flexShrink: 0 }),
         style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: '#23282a', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
       };
     });
@@ -1168,11 +1172,13 @@ export function useScheduler() {
     if (!o || !e) return null;
     const pl = plantById(o.plant);
     const isInternal = !!(a.site2 || a.auditor2 || a.department2);
+    const auditorName = (isInternal ? a.auditor2 : a.auditor1) || e.name;
+    const chipPurpose = isInternal ? auditorName : (a.purpose ? (auditorName ? a.purpose + ' - ' + auditorName : a.purpose) : auditorName);
     return {
       id: a.id,
       code: apptAbbr(a) + ' · ' + (isInternal ? (a.area || '') : (a.customer || o.customer)),
-      purpose: isInternal ? '' : (a.purpose || o.purpose),
-      engName: isInternal ? (a.auditor2 || e.name) : e.name,
+      purpose: chipPurpose,
+      engName: auditorName,
       color: siteColorOf(a) || (pl ? pl.color : '#999'),
       onClick: () => { closeDayDialog(); openEdit(a.id); },
     };
