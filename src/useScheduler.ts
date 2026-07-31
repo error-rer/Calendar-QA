@@ -621,7 +621,7 @@ export function useScheduler() {
     const e = engById(a.eng);
     const isInternal = !!(a.site2 || a.auditor2 || a.department2);
     const auditorName = (isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : '');
-    const chipPurpose = isInternal ? auditorName : (a.purpose ? (auditorName ? a.purpose + ' - ' + auditorName : a.purpose) : auditorName);
+    const chipPurpose = isInternal ? auditorName : (a.purpose ? a.purpose : auditorName);
     return {
       aid: a.id, code: (ord ? apptAbbr(a) + ' · ' + (a.customer || ord.customer) : '?'), purpose: chipPurpose, style: base,
       onClick: () => select(a.id),
@@ -638,7 +638,7 @@ export function useScheduler() {
     const color = accent || siteColorOf(a) || (pl ? pl.color : '#999');
     const isInternal = !!(a.site2 || a.auditor2 || a.department2);
     const auditorName = (isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : '');
-    const chipPurpose = isInternal ? auditorName : (a.purpose ? (auditorName ? a.purpose + ' - ' + auditorName : a.purpose) : auditorName);
+    const chipPurpose = isInternal ? auditorName : (a.purpose ? a.purpose : auditorName);
     return {
       aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: (ord ? apptAbbr(a) + ' · ' + (a.customer || ord.customer) : '?'), purpose: chipPurpose, plantCode: pl ? pl.code : '?',
       style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: '#fff', border: '1px solid #e8ebe4', borderLeft: '3px solid ' + color, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none' }),
@@ -889,7 +889,7 @@ export function useScheduler() {
     const isInternal = !!(a.site2 || a.auditor2 || a.department2);
     const custName = isInternal ? (a.area || '') : (a.customer || (ord ? ord.customer : ''));
     const auditorName = (isInternal ? a.auditor2 : a.auditor1) || (eng ? eng.name : '');
-    const chipPurpose = isInternal ? auditorName : (a.purpose ? (auditorName ? a.purpose + ' - ' + auditorName : a.purpose) : auditorName);
+    const chipPurpose = isInternal ? auditorName : (a.purpose ? a.purpose : auditorName);
     return { ...a, _customer: apptAbbr(a) + ' · ' + custName, _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _sel: sel, _onClick: () => select(a.id), _ord: ord, _eng: eng };
   });
   // group consecutive same-order same-eng assignments into merged spans

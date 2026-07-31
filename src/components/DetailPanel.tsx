@@ -41,9 +41,11 @@ export function DetailPanel({ vm }: { vm: VM }) {
                     End customer: <span style={css('color:#3c423d')}>{detail.endCustomer}</span>
                   </div>
                 ) : null}
-                <div style={css('font-size:11.5px;color:#5c625c')}>
-                  Purpose: <span style={css('color:#3c423d')}>{detail.purpose || '-'}</span>
-                </div>
+                {detail.purpose ? (
+                  <div style={css('font-size:11.5px;color:#5c625c')}>
+                    Purpose: <span style={css('color:#3c423d')}>{detail.purpose}</span>
+                  </div>
+                ) : null}
                 {detail.auditor1 ? (
                   <div style={css('font-size:11.5px;color:#5c625c')}>
                     Auditor: <span style={css('color:#3c423d')}>{detail.auditor1}</span>
