@@ -72,9 +72,6 @@ export function DetailPanel({ vm }: { vm: VM }) {
                     Department: <span style={css('color:#3c423d')}>{detail.department2}</span>
                   </div>
                 ) : null}
-                <div style={css('font-size:11.5px;color:#5c625c')}>
-                  Purpose: <span style={css('color:#3c423d')}>{detail.purpose || '-'}</span>
-                </div>
               </>
             )}
           </div>
