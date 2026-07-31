@@ -259,6 +259,17 @@ export function AvailabilityDatePicker({
     return computeSlotRange(selectedStart, activeDuration, businessDaysOnly);
   }, [selectedStart, duration, isCustom, customInput, businessDaysOnly]);
 
+  // Auto-sync selectedRange to parent form
+  useEffect(() => {
+    if (selectedRange) {
+      const fromISO = fmtISO(selectedRange.start);
+      const toISO = fmtISO(selectedRange.end);
+      if (fromISO !== dateFrom || toISO !== _dateTo) {
+        onChange({ dateFrom: fromISO, dateTo: toISO });
+      }
+    }
+  }, [selectedRange, dateFrom, _dateTo, onChange]);
+
   // Computed hover preview range
   const hoverRange = useMemo(() => {
     if (!hoveredDate) return null;
@@ -555,13 +566,9 @@ export function AvailabilityDatePicker({
         </div>
 
         {selectedRange && (
-          <button
-            type="button"
-            onClick={() => onChange({ dateFrom: fmtISO(selectedRange.start), dateTo: fmtISO(selectedRange.end) })}
-            style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 13px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
-          >
-            Apply range
-          </button>
+          <div style={css("font-size:11px;font-weight:600;color:#15803d;background:#eefbf4;border:1px solid #bbf7d0;border-radius:6px;padding:4px 9px;display:flex;align-items:center;gap:4px")}>
+            ✓ Saved automatically
+          </div>
         )}
       </div>
 
