@@ -47,10 +47,12 @@ function EngineersTable({ vm }: { vm: VM }) {
       </div>
       {vm.adminEngineers.map((e) => (
         <div key={e.id} style={css(engGrid + ';padding:12px 18px;border-bottom:1px solid #f2f4ee;align-items:center')}>
-          <div style={css('display:flex;align-items:center;gap:10px;min-width:0')}>
+          <div onClick={() => vm.openEditEngineer(e.id)} style={css('display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer')}>
             <div style={e.avatarStyle}>{e.initials}</div>
             <div style={css('min-width:0')}>
-              <div style={css('font-size:12.5px;font-weight:600;color:#23282a')}>{e.name}</div>
+              <div style={css('font-size:12.5px;font-weight:600;color:#23282a;text-decoration:none')}>
+                {e.name}
+              </div>
               <div style={css('font-size:10.5px;color:#8a9088')}>{e.department}{e.subDepartments.length > 0 ? ' - ' + e.subDepartments.join(', ') : ''}</div>
             </div>
           </div>

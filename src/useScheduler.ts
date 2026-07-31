@@ -539,8 +539,19 @@ export function useScheduler() {
   const setAdminTab = (t: State['adminTab']) => setState({ adminTab: t });
   // ---- create-engineer modal ----
   const openEngForm = () =>
-    setState({ engFormOpen: true, userMenuOpen: false, sidebarOpen: false, engForm: { name: '', role: '', department: 'U1', subDepartments: [] } });
-  const closeEngForm = () => setState({ engFormOpen: false });
+    setState({ engFormOpen: true, engEditingId: null, userMenuOpen: false, sidebarOpen: false, engForm: { name: '', role: '', department: (S.siteCodeOptions[0] || 'U1') as Department, subDepartments: [] } });
+  const openEditEngForm = (id: string) => {
+    const e = S.engineers.find((eng) => eng.id === id);
+    if (!e) return;
+    setState({
+      engFormOpen: true,
+      engEditingId: id,
+      userMenuOpen: false,
+      sidebarOpen: false,
+      engForm: { name: e.name, role: e.role || '', department: (e.department || 'U1') as Department, subDepartments: [...e.subDepartments] },
+    });
+  };
+  const closeEngForm = () => setState({ engFormOpen: false, engEditingId: null });
   const setEngForm = (patch: Partial<EngineerForm>) => setState((s) => ({ engForm: { ...s.engForm, ...patch } }));
   const toggleEngSubDept = (c: SubDepartment) =>
     setState((s) => {
@@ -550,14 +561,28 @@ export function useScheduler() {
   const submitEngForm = () => {
     const f = S.engForm;
     if (!f.name.trim()) return;
-    const id = 'e' + ids.current.id++;
-    const newEng = { id, name: f.name.trim(), role: f.role.trim() || 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice() };
-    api.createEngineer(newEng).catch(() => {});
-    setState((s) => ({
-      engineers: s.engineers.concat([newEng]),
-      engFormOpen: false,
-    }));
-    log('You', `added ${f.name.trim().split(' ')[0]}`, '#2756d6');
+    if (S.engEditingId) {
+      const id = S.engEditingId;
+      const existing = S.engineers.find((e) => e.id === id);
+      const updatedEng = { id, name: f.name.trim(), role: existing?.role || 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice() };
+      api.updateEngineer(id, updatedEng).catch(() => {});
+      setState((s) => ({
+        engineers: s.engineers.map((e) => (e.id === id ? { ...e, ...updatedEng } : e)),
+        engFormOpen: false,
+        engEditingId: null,
+      }));
+      log('You', `updated auditor ${f.name.trim().split(' ')[0]}`, '#2756d6');
+    } else {
+      const id = 'e' + ids.current.id++;
+      const newEng = { id, name: f.name.trim(), role: 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice() };
+      api.createEngineer(newEng).catch(() => {});
+      setState((s) => ({
+        engineers: s.engineers.concat([newEng]),
+        engFormOpen: false,
+        engEditingId: null,
+      }));
+      log('You', `added ${f.name.trim().split(' ')[0]}`, '#2756d6');
+    }
   };
   const removeEngineer = (id: string) => {
     if (!confirm('Remove this auditor and their appointments?')) return;
@@ -1246,7 +1271,7 @@ export function useScheduler() {
     weekLabel, weekTag, periodLabel, periodTag, gridCols, days, daySel,
     prevWeek: () => (isMonth ? shiftMonth(-1) : shiftWeek(-1)), nextWeek: () => (isMonth ? shiftMonth(1) : shiftWeek(1)),
     profile,
-    engForm, engFormOpen: S.engFormOpen, openEngForm, closeEngForm,
+    engForm, engFormOpen: S.engFormOpen, engEditingId: S.engEditingId, openEngForm, openEditEngineer: openEditEngForm, closeEngForm,
     assignments: S.assignments, engineers: S.engineers,
     stats: { assignments: wk.length, weekCustomers, monthCustomers, weekInternals, monthInternals },
     plants: plantsVm,

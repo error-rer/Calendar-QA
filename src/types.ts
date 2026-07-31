@@ -148,6 +148,7 @@ export interface State {
   editOpen: boolean;
   editDraft: EditDraft;
   engFormOpen: boolean;
+  engEditingId: string | null;
   engForm: EngineerForm;
   weekOffset: number;
   activePlants: Record<string, boolean>;

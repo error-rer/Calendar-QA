@@ -51,6 +51,7 @@ export function initialState(): State {
     editOpen: false,
     editDraft: { targetId: '', sectionType: 'customer', dateFrom: '', dateTo: '', site1: '', customer: '', endCustomer: '', purpose: '', auditor1: '', department1: '', site2: '', area: '', auditor2: '', department2: '' },
     engFormOpen: false,
+    engEditingId: null,
     engForm: { name: '', role: '', department: 'U1', subDepartments: [] },
     weekOffset: 0,
     activePlants: { QMS: true, EHS: true, ESD: true },
