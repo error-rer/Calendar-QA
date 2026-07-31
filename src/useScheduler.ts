@@ -232,7 +232,13 @@ export function useScheduler() {
   const toggleFilterValue = (field: 'filterEmp' | 'filterSite' | 'filterCompany' | 'filterAuditType' | 'filterAuditTopic' | 'adminFilterSite' | 'adminFilterDept', value: string) =>
     setState((s) => {
       const arr = s[field] as unknown as string[];
-      return { [field]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value] };
+      const nextArr = arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
+      if (field === 'filterAuditTopic') {
+        const hasEHS = nextArr.includes('EHS');
+        const validSites = hasEHS ? ['U1', 'U2', 'U3'] : s.siteCodeOptions;
+        return { filterAuditTopic: nextArr, filterSite: s.filterSite.filter((site) => validSites.includes(site)) };
+      }
+      return { [field]: nextArr };
     });
   // narrowing the Type filter can hide some Department/Purpose options (see
   // customerTopicOptions/internalTopicOptions/auditTypes below) — drop any
@@ -1168,7 +1174,10 @@ export function useScheduler() {
     });
   // ---- filters VM ----
   const employeeOptions = [{ value: '', label: 'All employees' }].concat(S.engineers.filter((e) => !['unassigned', '111', 'ant', 'bird'].includes(e.name.toLowerCase())).map((e) => ({ value: e.id, label: e.name })));
-  const siteOptions = [{ value: '', label: 'All sites' }, ...S.siteCodeOptions.map((s) => ({ value: s, label: s }))];
+  const availableSiteCodes = S.filterAuditTopic.includes('EHS')
+    ? S.siteCodeOptions.filter((s) => ['U1', 'U2', 'U3'].includes(s))
+    : S.siteCodeOptions;
+  const siteOptions = [{ value: '', label: 'All sites' }, ...availableSiteCodes.map((s) => ({ value: s, label: s }))];
   const siteColorList = S.siteCodeOptions.map((s) => ({ site: s, color: S.siteColors[s] || '#999' }));
   // filter dropdowns share the same admin-managed lists as the appointment form
   // (Manage > Options), so adding/removing an option there updates both. When the
