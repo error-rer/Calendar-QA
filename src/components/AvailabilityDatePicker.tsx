@@ -231,7 +231,7 @@ export function AvailabilityDatePicker({
 
       if (hasBookedInRange) {
         return {
-          available: false,
+          available: true,
           spill: !isStartBooked,
           reason: isStartBooked ? 'Booked date' : 'Range overlaps existing appointment',
           range: computed,
@@ -302,8 +302,8 @@ export function AvailabilityDatePicker({
 
   // Select a start date
   const handleSelectDate = (d: Date) => {
+    if (businessDaysOnly && isWeekend(d)) return;
     const check = checkStartAvailability(d);
-    if (!check.available) return;
 
     setSelectedStart(d);
     if (check.range) {
@@ -509,18 +509,18 @@ export function AvailabilityDatePicker({
           if (businessDaysOnly && wkend) {
             cellStyle = 'background:#f4f6f1;color:#a6aca2;border:1px solid #e8ebe4;cursor:not-allowed;';
             tooltip = 'Weekend (business days only)';
-          } else if (isBooked) {
-            cellStyle = 'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;cursor:not-allowed;font-weight:600;';
-            tooltip = blocking ? `Booked: ${blocking.site} — ${blocking.auditor} (${blocking.title})` : 'Booked date';
           } else if (inSelected) {
             const borderRadius = isStart && isEnd ? '7px' : isStart ? '7px 0 0 7px' : isEnd ? '0 7px 7px 0' : '0';
-            cellStyle = `background:#15191e;color:#fff;border:1px solid #15191e;font-weight:700;border-radius:${borderRadius};`;
+            cellStyle = `background:#15191e;color:#fff;border:1px solid #15191e;font-weight:700;border-radius:${borderRadius};cursor:pointer;`;
           } else if (inHover) {
-            cellStyle = 'background:#3b82f6;color:#fff;border:1px solid #2563eb;font-weight:600;border-radius:6px;';
+            cellStyle = 'background:#3b82f6;color:#fff;border:1px solid #2563eb;font-weight:600;border-radius:6px;cursor:pointer;';
+          } else if (isBooked) {
+            cellStyle = 'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;font-weight:600;border-radius:6px;';
+            tooltip = blocking ? `Booked: ${blocking.site} — ${blocking.auditor} (${blocking.title}) — Click to select duplicate slot` : 'Booked date — Click to select duplicate slot';
           } else if (check.available) {
-            cellStyle = 'background:#eefbf4;color:#15803d;border:1px solid #bbf7d0;font-weight:600;border-radius:6px;';
+            cellStyle = 'background:#eefbf4;color:#15803d;border:1px solid #bbf7d0;font-weight:600;border-radius:6px;cursor:pointer;';
           } else if (check.spill) {
-            cellStyle = 'background:#fffbeb;color:#b45309;border:1px solid #fde68a;font-weight:500;border-radius:6px;';
+            cellStyle = 'background:#fffbeb;color:#b45309;border:1px solid #fde68a;font-weight:500;border-radius:6px;cursor:pointer;';
             tooltip = 'Range spills into booked date';
           }
 
