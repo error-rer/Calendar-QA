@@ -99,63 +99,50 @@ export function useScheduler() {
   }, []);
 
   useEffect(() => {
+    const hasLocalSnapshot = typeof window !== 'undefined' && !!localStorage.getItem('calendar_qa_snapshot');
+
     api.fetchState()
       .then((data) => {
         setRaw((s) => {
           const historicalCustomers = new Set([
-            ...data.orders.map((o) => o.customer).filter((c): c is string => Boolean(c)),
-            ...data.assignments.map((a) => a.customer).filter((c): c is string => Boolean(c)),
+            ...(data.orders || []).map((o) => o.customer).filter((c): c is string => Boolean(c)),
+            ...(data.assignments || []).map((a) => a.customer).filter((c): c is string => Boolean(c)),
           ]);
-          const customerOptions = [...new Set([...s.customerOptions, ...historicalCustomers])];
+          const customerOptions = [...new Set([...(s.customerOptions || []), ...historicalCustomers])];
 
-          // Merge server assignments with local assignments to prevent loss
-          const serverAssignmentIds = new Set((data.assignments || []).map((a) => a.id));
-          const localAssignments = (s.assignments || []).filter((a) => !serverAssignmentIds.has(a.id));
-          const mergedAssignments = [...(data.assignments || []), ...localAssignments];
+          let mergedAssignments = s.assignments;
+          let mergedOrders = s.orders;
+          let mergedEngineers = s.engineers;
+          let mergedComments = s.comments;
 
-          // Merge server orders with local orders
-          const serverOrderIds = new Set((data.orders || []).map((o) => o.id));
-          const localOrders = (s.orders || []).filter((o) => !serverOrderIds.has(o.id));
-          const mergedOrders = [...(data.orders || []), ...localOrders];
-
-          // Merge server engineers with local engineers
-          const serverEngIds = new Set((data.engineers || []).map((e) => e.id));
-          const localEngineers = (s.engineers || []).filter((e) => !serverEngIds.has(e.id));
-          const mergedEngineers = [...(data.engineers || []), ...localEngineers];
-
-          // Merge server comments with local comments for persistence
-          const serverComments = data.comments || {};
-          const mergedComments: Record<string, any[]> = { ...serverComments };
-          for (const [aid, clist] of Object.entries(s.comments || {})) {
-            const existing = mergedComments[aid] || [];
-            const existingIds = new Set(existing.map((c: any) => c.id));
-            const newLocal = (clist as any[]).filter((c: any) => !existingIds.has(c.id));
-            if (newLocal.length > 0) {
-              mergedComments[aid] = [...existing, ...newLocal];
-            }
+          if (!hasLocalSnapshot) {
+            mergedAssignments = data.assignments && data.assignments.length ? data.assignments : s.assignments;
+            mergedOrders = data.orders && data.orders.length ? data.orders : s.orders;
+            mergedEngineers = data.engineers && data.engineers.length ? data.engineers : s.engineers;
+            mergedComments = data.comments && Object.keys(data.comments).length ? data.comments : s.comments;
           }
 
-          const purposeOptions = data.purposeOptions && data.purposeOptions.length ? data.purposeOptions : s.purposeOptions;
-          const customerDepartmentOptions = data.customerDepartmentOptions && data.customerDepartmentOptions.length ? data.customerDepartmentOptions : s.customerDepartmentOptions;
-          const internalDepartmentOptions = data.internalDepartmentOptions && data.internalDepartmentOptions.length ? data.internalDepartmentOptions : s.internalDepartmentOptions;
-          const siteCodeOptions = data.siteCodeOptions && data.siteCodeOptions.length ? data.siteCodeOptions : s.siteCodeOptions;
-          const siteColors = data.siteColors && Object.keys(data.siteColors).length ? data.siteColors : s.siteColors;
+          const purposeOptions = s.purposeOptions && s.purposeOptions.length ? s.purposeOptions : (data.purposeOptions || []);
+          const customerDepartmentOptions = s.customerDepartmentOptions && s.customerDepartmentOptions.length ? s.customerDepartmentOptions : (data.customerDepartmentOptions || []);
+          const internalDepartmentOptions = s.internalDepartmentOptions && s.internalDepartmentOptions.length ? s.internalDepartmentOptions : (data.internalDepartmentOptions || []);
+          const siteCodeOptions = s.siteCodeOptions && s.siteCodeOptions.length ? s.siteCodeOptions : (data.siteCodeOptions || []);
+          const siteColors = s.siteColors && Object.keys(s.siteColors).length ? s.siteColors : (data.siteColors || {});
 
           const mergedState = {
             ...s,
             engineers: mergedEngineers,
             plants: data.plants && data.plants.length ? data.plants : s.plants,
-            activePlants: { ...s.activePlants, ...data.activePlants },
+            activePlants: { ...s.activePlants, ...(data.activePlants || {}) },
             orders: mergedOrders,
             assignments: mergedAssignments,
             comments: mergedComments,
-            activity: data.activity && data.activity.length ? data.activity : s.activity,
+            activity: s.activity && s.activity.length ? s.activity : (data.activity || []),
             purposeOptions,
             customerDepartmentOptions,
             internalDepartmentOptions,
             siteCodeOptions,
             siteColors,
-            customerOptions: data.customerOptions && data.customerOptions.length ? data.customerOptions : customerOptions,
+            customerOptions,
           };
 
           try {
