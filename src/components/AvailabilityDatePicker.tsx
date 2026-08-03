@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { Assignment, Engineer } from '../types';
 import { css, HButton } from '../ui';
 
@@ -57,47 +57,6 @@ function getTodayMidnight(): Date {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
-/** Compute slot range starting from startDate for given duration in days. */
-function computeSlotRange(
-  startDate: Date,
-  duration: number,
-  businessDaysOnly: boolean
-): { dates: Date[]; start: Date; end: Date; validStart: boolean } {
-  if (businessDaysOnly && isWeekend(startDate)) {
-    return { dates: [startDate], start: startDate, end: startDate, validStart: false };
-  }
-
-  const dates: Date[] = [];
-  let curr = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-
-  if (!businessDaysOnly) {
-    for (let i = 0; i < duration; i++) {
-      dates.push(new Date(curr));
-      curr.setDate(curr.getDate() + 1);
-    }
-  } else {
-    let count = 0;
-    let safety = 0;
-    while (count < duration && safety < 100) {
-      safety++;
-      if (!isWeekend(curr)) {
-        dates.push(new Date(curr));
-        count++;
-      }
-      if (count < duration) {
-        curr.setDate(curr.getDate() + 1);
-      }
-    }
-  }
-
-  return {
-    dates,
-    start: dates[0] || startDate,
-    end: dates[dates.length - 1] || startDate,
-    validStart: true,
-  };
-}
-
 export function AvailabilityDatePicker({
   site,
   auditor,
@@ -108,13 +67,8 @@ export function AvailabilityDatePicker({
   engineers = [],
   editingTargetId,
 }: AvailabilityDatePickerProps) {
-  // Duration & Business Days state
-  const [duration, setDuration] = useState<number | null>(null);
-  const [customInput, setCustomInput] = useState<string>('4');
-  const [isCustom, setIsCustom] = useState<boolean>(false);
+  // Business Days state
   const [businessDaysOnly, setBusinessDaysOnly] = useState<boolean>(true);
-
-  const activeDuration = isCustom ? (parseInt(customInput, 10) || 1) : (duration ?? 1);
 
   // Month navigation view
   const initialDate = useMemo(() => parseISO(dateFrom) || getTodayMidnight(), [dateFrom]);
@@ -123,18 +77,18 @@ export function AvailabilityDatePicker({
 
   // Interactive selection state
   const [selectedStart, setSelectedStart] = useState<Date | null>(() => parseISO(dateFrom));
-  const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
+  const [selectedEnd, setSelectedEnd] = useState<Date | null>(() => parseISO(_dateTo) || parseISO(dateFrom));
 
   // Status notice (e.g. when jumping to next available)
   const [notice, setNotice] = useState<string | null>(null);
 
-  // Sync selectedStart if dateFrom changes externally
+  // Sync selectedStart / selectedEnd if dateFrom or dateTo changes externally
   useEffect(() => {
-    const parsed = parseISO(dateFrom);
-    if (parsed) {
-      setSelectedStart(parsed);
-    }
-  }, [dateFrom]);
+    const pStart = parseISO(dateFrom);
+    const pEnd = parseISO(_dateTo) || pStart;
+    setSelectedStart(pStart);
+    setSelectedEnd(pEnd);
+  }, [dateFrom, _dateTo]);
 
   // Compute busy dates for the currently selected Site + Auditor
   const { bookedDatesSet, bookedDetailsMap } = useMemo(() => {
@@ -202,57 +156,29 @@ export function AvailabilityDatePicker({
     return { bookedDatesSet: set, bookedDetailsMap: details };
   }, [site, auditor, assignments, engineers, editingTargetId]);
 
-  // Check validity of a candidate start date
-  const checkStartAvailability = useCallback(
-    (candidate: Date) => {
-      const candidateMidnight = new Date(candidate.getFullYear(), candidate.getMonth(), candidate.getDate());
-
-      if (businessDaysOnly && isWeekend(candidateMidnight)) {
-        return { available: false, spill: false, reason: 'Weekend' };
-      }
-
-      const activeDuration = isCustom ? (parseInt(customInput, 10) || 1) : (duration ?? 1);
-      const computed = computeSlotRange(candidateMidnight, activeDuration, businessDaysOnly);
-
-      if (!computed.validStart) {
-        return { available: false, spill: false, reason: 'Invalid start date' };
-      }
-
-      const candidateISO = fmtISO(candidateMidnight);
-      const isStartBooked = bookedDatesSet.has(candidateISO);
-
-      let hasBookedInRange = false;
-      for (const d of computed.dates) {
-        if (bookedDatesSet.has(fmtISO(d))) {
-          hasBookedInRange = true;
-          break;
-        }
-      }
-
-      if (hasBookedInRange) {
-        return {
-          available: true,
-          spill: !isStartBooked,
-          reason: isStartBooked ? 'Booked date' : 'Range overlaps existing appointment',
-          range: computed,
-        };
-      }
-
-      return {
-        available: true,
-        spill: false,
-        range: computed,
-      };
-    },
-    [businessDaysOnly, duration, isCustom, customInput, bookedDatesSet]
-  );
-
   // Computed selected range
   const selectedRange = useMemo(() => {
     if (!selectedStart) return null;
-    const activeDuration = isCustom ? (parseInt(customInput, 10) || 1) : (duration ?? 1);
-    return computeSlotRange(selectedStart, activeDuration, businessDaysOnly);
-  }, [selectedStart, duration, isCustom, customInput, businessDaysOnly]);
+    const start = selectedStart;
+    const end = selectedEnd || selectedStart;
+    const dates: Date[] = [];
+    const curr = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const final = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+    while (curr <= final) {
+      if (!businessDaysOnly || !isWeekend(curr)) {
+        dates.push(new Date(curr.getTime()));
+      }
+      curr.setDate(curr.getDate() + 1);
+    }
+
+    if (dates.length === 0) return null;
+    return {
+      start: dates[0],
+      end: dates[dates.length - 1],
+      dates,
+    };
+  }, [selectedStart, selectedEnd, businessDaysOnly]);
 
   // Auto-sync selectedRange to parent form
   useEffect(() => {
@@ -265,50 +191,54 @@ export function AvailabilityDatePicker({
     }
   }, [selectedRange, dateFrom, _dateTo, onChange]);
 
-  // Computed hover preview range
-  const hoverRange = useMemo(() => {
-    if (!hoveredDate) return null;
-    const activeDuration = isCustom ? (parseInt(customInput, 10) || 1) : (duration ?? 1);
-    const check = checkStartAvailability(hoveredDate);
-    if (!check.available && !check.spill) return null;
-    return computeSlotRange(hoveredDate, activeDuration, businessDaysOnly);
-  }, [hoveredDate, duration, isCustom, customInput, businessDaysOnly, checkStartAvailability]);
+  // Handle Date Click with Selection & Deselection Toggle
+  const handleSelectDate = (d: Date) => {
+    if (businessDaysOnly && isWeekend(d)) return;
+
+    // Deselect Toggle: If clicking an already selected start or end date
+    if (selectedStart && isSameDay(selectedStart, d)) {
+      if (!selectedEnd || isSameDay(selectedEnd, d)) {
+        // Deselect single date
+        setSelectedStart(null);
+        setSelectedEnd(null);
+        onChange({ dateFrom: '', dateTo: '' });
+        return;
+      }
+    }
+    if (selectedEnd && isSameDay(selectedEnd, d) && selectedStart && !isSameDay(selectedStart, d)) {
+      // Reset range to single start date
+      setSelectedEnd(selectedStart);
+      onChange({ dateFrom: fmtISO(selectedStart), dateTo: fmtISO(selectedStart) });
+      return;
+    }
+
+    // 1st Click (Select Date) or Range Selection Click:
+    if (!selectedStart || (selectedStart && selectedEnd && !isSameDay(selectedStart, selectedEnd))) {
+      setSelectedStart(d);
+      setSelectedEnd(d);
+      onChange({ dateFrom: fmtISO(d), dateTo: fmtISO(d) });
+    } else {
+      if (d < selectedStart) {
+        setSelectedStart(d);
+        setSelectedEnd(d);
+        onChange({ dateFrom: fmtISO(d), dateTo: fmtISO(d) });
+      } else {
+        setSelectedEnd(d);
+        onChange({ dateFrom: fmtISO(selectedStart), dateTo: fmtISO(d) });
+      }
+    }
+  };
 
   // Jump to next available slot from today
   const handleJumpNextAvailable = () => {
     const today = getTodayMidnight();
-    let found: { start: Date; end: Date } | null = null;
-    for (let i = 0; i < 365; i++) {
-      const cand = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
-      const check = checkStartAvailability(cand);
-      if (check.available && check.range) {
-        found = { start: check.range.start, end: check.range.end };
-        break;
-      }
-    }
-
-    if (found) {
-      setViewYear(found.start.getFullYear());
-      setViewMonth(found.start.getMonth());
-      setSelectedStart(found.start);
-      onChange({ dateFrom: fmtISO(found.start), dateTo: fmtISO(found.end) });
-      setNotice(`Jumped to next available slot: ${fmtDisplay(found.start)}`);
-      setTimeout(() => setNotice(null), 3500);
-    } else {
-      setNotice('No available slots found within the next 12 months.');
-      setTimeout(() => setNotice(null), 3500);
-    }
-  };
-
-  // Select a start date
-  const handleSelectDate = (d: Date) => {
-    if (businessDaysOnly && isWeekend(d)) return;
-    const check = checkStartAvailability(d);
-
-    setSelectedStart(d);
-    if (check.range) {
-      onChange({ dateFrom: fmtISO(check.range.start), dateTo: fmtISO(check.range.end) });
-    }
+    setViewYear(today.getFullYear());
+    setViewMonth(today.getMonth());
+    setSelectedStart(today);
+    setSelectedEnd(today);
+    onChange({ dateFrom: fmtISO(today), dateTo: fmtISO(today) });
+    setNotice(`Selected today: ${fmtDisplay(today)}`);
+    setTimeout(() => setNotice(null), 3500);
   };
 
   // Month navigation
@@ -335,7 +265,6 @@ export function AvailabilityDatePicker({
     const firstDay = new Date(viewYear, viewMonth, 1);
     const lastDay = new Date(viewYear, viewMonth + 1, 0);
 
-    // Mon = 0, Sun = 6
     const startOffset = (firstDay.getDay() + 6) % 7;
     const totalDays = lastDay.getDate();
 
@@ -349,53 +278,12 @@ export function AvailabilityDatePicker({
     return days;
   }, [viewYear, viewMonth]);
 
-
-
   return (
     <div style={css('border:1px solid #e2e5de;border-radius:12px;background:#fff;padding:14px;display:flex;flex-direction:column;gap:12px;margin-top:6px')}>
-      {/* Top Controls: Duration & Business Days Toggle */}
-      <div style={css('display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #eef1ea;padding-bottom:10px')}>
-        <div style={css('display:flex;align-items:center;gap:6px')}>
-          <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#8a9088;letter-spacing:.4px")}>DURATION:</span>
-          {[1, 2, 3, 5].map((d) => (
-            <button
-              key={d}
-              type="button"
-              onClick={() => { setDuration(d); setIsCustom(false); }}
-              style={css(
-                `padding:4px 9px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;${
-                  !isCustom && duration === d
-                    ? 'background:#15191e;color:#fff;border:1px solid #15191e;'
-                    : 'background:#f4f6f1;color:#5c625c;border:1px solid #e0e3dc;'
-                }`
-              )}
-            >
-              {d} {d === 1 ? 'day' : 'days'}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setIsCustom(true)}
-            style={css(
-              `padding:4px 9px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;${
-                isCustom
-                  ? 'background:#15191e;color:#fff;border:1px solid #15191e;'
-                  : 'background:#f4f6f1;color:#5c625c;border:1px solid #e0e3dc;'
-              }`
-            )}
-          >
-            Custom
-          </button>
-          {isCustom && (
-            <input
-              type="number"
-              min="1"
-              max="30"
-              value={customInput}
-              onChange={(e) => setCustomInput(e.target.value)}
-              style={css("width:48px;padding:3px 6px;border:1px solid #15191e;border-radius:5px;font-size:11.5px;font-family:'Archivo',sans-serif;outline:none")}
-            />
-          )}
+      {/* Top Controls: Business Days Toggle */}
+      <div style={css('display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #eef1ea;padding-bottom:10px')}>
+        <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;color:#23282a;letter-spacing:.4px")}>
+          DATE SELECTION
         </div>
 
         <label style={css('display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11.5px;font-weight:500;color:#3c423d')}>
@@ -484,16 +372,10 @@ export function AvailabilityDatePicker({
           const isStart = selectedStart ? isSameDay(selectedStart, day) : false;
           const isEnd = selectedRange ? isSameDay(selectedRange.end, day) : false;
 
-          // Check hover preview range
-          const inHover = hoverRange
-            ? hoverRange.dates.some((d) => isSameDay(d, day))
-            : false;
-
-          // Check start availability
-          const check = checkStartAvailability(day);
-
           let cellStyle = 'background:#fafbf9;color:#23282a;border:1px solid #eef1ea;cursor:pointer;';
-          let tooltip = check.available ? `Click to select ${activeDuration}-day slot from ${fmtDisplay(day)}` : (check.reason || '');
+          let tooltip = inSelected
+            ? `Selected: ${fmtDisplay(day)} (Click again to deselect)`
+            : `Click to select date: ${fmtDisplay(day)}`;
 
           if (businessDaysOnly && wkend) {
             cellStyle = 'background:#f4f6f1;color:#a6aca2;border:1px solid #e8ebe4;cursor:not-allowed;';
@@ -501,16 +383,11 @@ export function AvailabilityDatePicker({
           } else if (inSelected) {
             const borderRadius = isStart && isEnd ? '7px' : isStart ? '7px 0 0 7px' : isEnd ? '0 7px 7px 0' : '0';
             cellStyle = `background:#15191e;color:#fff;border:1px solid #15191e;font-weight:700;border-radius:${borderRadius};cursor:pointer;`;
-          } else if (inHover) {
-            cellStyle = 'background:#3b82f6;color:#fff;border:1px solid #2563eb;font-weight:600;border-radius:6px;cursor:pointer;';
           } else if (isBooked) {
             cellStyle = 'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;font-weight:600;border-radius:6px;';
-            tooltip = blocking ? `Booked: ${blocking.site} — ${blocking.auditor} (${blocking.title}) — Click to select duplicate slot` : 'Booked date — Click to select duplicate slot';
-          } else if (check.available) {
+            tooltip = blocking ? `Booked: ${blocking.site} — ${blocking.auditor} (${blocking.title})` : 'Booked date';
+          } else {
             cellStyle = 'background:#eefbf4;color:#15803d;border:1px solid #bbf7d0;font-weight:600;border-radius:6px;cursor:pointer;';
-          } else if (check.spill) {
-            cellStyle = 'background:#fffbeb;color:#b45309;border:1px solid #fde68a;font-weight:500;border-radius:6px;cursor:pointer;';
-            tooltip = 'Range spills into booked date';
           }
 
           return (
@@ -518,16 +395,11 @@ export function AvailabilityDatePicker({
               key={iso}
               title={tooltip}
               onClick={() => handleSelectDate(day)}
-              onMouseEnter={() => setHoveredDate(day)}
-              onMouseLeave={() => setHoveredDate(null)}
               style={css(
                 `height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;font-size:12px;font-family:'Archivo',sans-serif;user-select:none;transition:all .12s ease;${cellStyle}`
               )}
             >
               <span>{day.getDate()}</span>
-              {check.spill && !inSelected && !isBooked && (
-                <span style={css('position:absolute;bottom:2px;width:4px;height:4px;border-radius:50%;background:#d97706')} />
-              )}
             </div>
           );
         })}
@@ -539,8 +411,8 @@ export function AvailabilityDatePicker({
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#8a9088;letter-spacing:.4px")}>SELECTED RANGE</div>
           <div style={css('font-size:12px;font-weight:700;color:#23282a;margin-top:2px')}>
             {selectedRange
-              ? `${fmtDisplay(selectedRange.start)} – ${fmtDisplay(selectedRange.end)} (${activeDuration} ${businessDaysOnly ? 'business ' : ''}${activeDuration === 1 ? 'day' : 'days'})`
-              : 'No date range selected'}
+              ? `${fmtDisplay(selectedRange.start)}${isSameDay(selectedRange.start, selectedRange.end) ? '' : ' – ' + fmtDisplay(selectedRange.end)} (${selectedRange.dates.length} ${businessDaysOnly ? 'business ' : ''}${selectedRange.dates.length === 1 ? 'day' : 'days'})`
+              : 'No date selected'}
           </div>
         </div>
       </div>
