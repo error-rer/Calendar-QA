@@ -30,7 +30,11 @@ export function CreateModal({ vm }: { vm: VM }) {
             engineers={vm.engineers}
           />
 
-          {create.warn && <div style={css('font-size:11px;color:#b32f2f;text-align:center')}>{create.warnText}</div>}
+          {create.warn && (
+            <div style={css("font-size:12px;color:#dc2626;background:#fef2f2;border:1px solid #fca5a5;padding:9px 14px;border-radius:8px;text-align:center;font-weight:600;font-family:'Archivo',sans-serif")}>
+              ⚠️ {create.warnText}
+            </div>
+          )}
         </div>
 
         <div style={css('padding:14px 18px;display:flex;justify-content:flex-end;gap:9px;border-top:1px solid #eef1ea')}>

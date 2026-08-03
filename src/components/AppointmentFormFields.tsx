@@ -220,7 +220,7 @@ export function AppointmentFormFields({
           <div style={css('display:grid;grid-template-columns:1fr 1fr;gap:14px')}>
             {/* 1. DEPARTMENT */}
             <div style={fld}>
-              <label htmlFor={id('department1')} style={lbl}>DEPARTMENT</label>
+              <label htmlFor={id('department1')} style={lbl}>DEPARTMENT <span style={{ color: '#dc2626' }}>*</span></label>
               <select
                 id={id('department1')}
                 value={v.department1}
@@ -239,7 +239,7 @@ export function AppointmentFormFields({
 
             {/* 2. SITE */}
             <div style={fld}>
-              <label htmlFor={id('site1')} style={lbl}>SITE</label>
+              <label htmlFor={id('site1')} style={lbl}>SITE <span style={{ color: '#dc2626' }}>*</span></label>
               <MultiSiteSelect
                 id={id('site1')}
                 value={v.site1}
@@ -250,7 +250,7 @@ export function AppointmentFormFields({
 
             {/* 3. CUSTOMER */}
             <div style={fld}>
-              <label htmlFor={id('customer')} style={lbl}>CUSTOMER</label>
+              <label htmlFor={id('customer')} style={lbl}>CUSTOMER <span style={{ color: '#dc2626' }}>*</span></label>
               <input id={id('customer')} value={v.customer} onChange={(e) => onChange({ customer: e.target.value })} placeholder="Type customer name..." style={inp} />
               {customerOptions.length > 0 && (
                 <div style={css('display:flex;gap:6px;flex-wrap:wrap;margin-top:2px')}>
@@ -274,7 +274,7 @@ export function AppointmentFormFields({
 
             {/* 5. PURPOSE */}
             <div style={fld}>
-              <label htmlFor={id('purpose')} style={lbl}>PURPOSE</label>
+              <label htmlFor={id('purpose')} style={lbl}>PURPOSE <span style={{ color: '#dc2626' }}>*</span></label>
               <select id={id('purpose')} value={v.purpose} onChange={(e) => onChange({ purpose: e.target.value })} style={sel}>
                 <option value="">Select purpose...</option>
                 {purposeOptions.map((p) => <option key={p} value={p}>{p}</option>)}
@@ -283,19 +283,19 @@ export function AppointmentFormFields({
 
             {/* 6. AUDITOR */}
             <div style={fld}>
-              <label htmlFor={id('auditor1')} style={lbl}>AUDITOR</label>
+              <label htmlFor={id('auditor1')} style={lbl}>AUDITOR <span style={{ color: '#dc2626' }}>*</span></label>
               <input id={id('auditor1')} value={v.auditor1} onChange={(e) => onChange({ auditor1: e.target.value })} placeholder="Type auditor name..." style={inp} />
             </div>
 
             {/* 7. FROM */}
             <div style={fld}>
-              <label htmlFor={id('dateFrom')} style={lbl}>FROM</label>
+              <label htmlFor={id('dateFrom')} style={lbl}>FROM <span style={{ color: '#dc2626' }}>*</span></label>
               <input id={id('dateFrom')} type="date" value={v.dateFrom} onChange={(e) => onChange({ dateFrom: e.target.value })} style={inp} />
             </div>
 
             {/* 8. TO */}
             <div style={fld}>
-              <label htmlFor={id('dateTo')} style={lbl}>TO</label>
+              <label htmlFor={id('dateTo')} style={lbl}>TO <span style={{ color: '#dc2626' }}>*</span></label>
               <input id={id('dateTo')} type="date" value={v.dateTo} onChange={(e) => onChange({ dateTo: e.target.value })} style={inp} />
             </div>
 
@@ -322,7 +322,7 @@ export function AppointmentFormFields({
           <div style={css('display:grid;grid-template-columns:1fr 1fr;gap:14px')}>
             {/* 1. DEPARTMENT */}
             <div style={fld}>
-              <label htmlFor={id('department2')} style={lbl}>DEPARTMENT</label>
+              <label htmlFor={id('department2')} style={lbl}>DEPARTMENT <span style={{ color: '#dc2626' }}>*</span></label>
               <select
                 id={id('department2')}
                 value={v.department2}
@@ -341,7 +341,7 @@ export function AppointmentFormFields({
 
             {/* 2. SITE */}
             <div style={fld}>
-              <label htmlFor={id('site2')} style={lbl}>SITE</label>
+              <label htmlFor={id('site2')} style={lbl}>SITE <span style={{ color: '#dc2626' }}>*</span></label>
               <MultiSiteSelect
                 id={id('site2')}
                 value={v.site2}
@@ -352,25 +352,25 @@ export function AppointmentFormFields({
 
             {/* 3. AREA */}
             <div style={fld}>
-              <label htmlFor={id('area')} style={lbl}>AREA</label>
+              <label htmlFor={id('area')} style={lbl}>AREA <span style={{ color: '#dc2626' }}>*</span></label>
               <input id={id('area')} value={v.area} onChange={(e) => onChange({ area: e.target.value })} placeholder="Type area..." style={inp} />
             </div>
 
             {/* 4. AUDITOR */}
             <div style={fld}>
-              <label htmlFor={id('auditor2')} style={lbl}>AUDITOR</label>
+              <label htmlFor={id('auditor2')} style={lbl}>AUDITOR <span style={{ color: '#dc2626' }}>*</span></label>
               <input id={id('auditor2')} value={v.auditor2} onChange={(e) => onChange({ auditor2: e.target.value })} placeholder="Type auditor name..." style={inp} />
             </div>
 
             {/* 5. FROM */}
             <div style={fld}>
-              <label htmlFor={id('dateFrom2')} style={lbl}>FROM</label>
+              <label htmlFor={id('dateFrom2')} style={lbl}>FROM <span style={{ color: '#dc2626' }}>*</span></label>
               <input id={id('dateFrom2')} type="date" value={v.dateFrom} onChange={(e) => onChange({ dateFrom: e.target.value })} style={inp} />
             </div>
 
             {/* 6. TO */}
             <div style={fld}>
-              <label htmlFor={id('dateTo2')} style={lbl}>TO</label>
+              <label htmlFor={id('dateTo2')} style={lbl}>TO <span style={{ color: '#dc2626' }}>*</span></label>
               <input id={id('dateTo2')} type="date" value={v.dateTo} onChange={(e) => onChange({ dateTo: e.target.value })} style={inp} />
             </div>
 

@@ -89,6 +89,8 @@ export interface CreateDraft {
   site2: string;
   area: string;
   auditor2: string;
+  warn?: boolean;
+  warnText?: string;
 }
 
 export interface EditDraft {
@@ -106,6 +108,8 @@ export interface EditDraft {
   area: string;
   auditor2: string;
   department2: string;
+  warn?: boolean;
+  warnText?: string;
 }
 
 export type Page = 'schedule' | 'admin' | 'profile' | 'summary';

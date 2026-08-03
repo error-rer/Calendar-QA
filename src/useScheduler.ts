@@ -428,14 +428,19 @@ export function useScheduler() {
   };
   const closeCreate = () => setState({ createOpen: false });
   const setDraft = (patch: Partial<CreateDraft>) =>
-    setState((s) => ({ createDraft: { ...s.createDraft, ...patch } }));
+    setState((s) => ({ createDraft: { ...s.createDraft, warn: false, warnText: '', ...patch } }));
   const submitCreate = () => {
     const d = S.createDraft;
-    if (!d.dateFrom || !d.dateTo) return;
     if (d.sectionType === 'customer') {
-      if (!d.site1 || !d.customer || !d.auditor1) return;
+      if (!d.department1.trim() || !d.site1.trim() || !d.customer.trim() || !d.purpose.trim() || !d.auditor1.trim() || !d.dateFrom || !d.dateTo) {
+        setState((s) => ({ createDraft: { ...s.createDraft, warn: true, warnText: 'Please complete all required fields (Department, Site, Customer, Purpose, Auditor, From, and To).' } }));
+        return;
+      }
     } else {
-      if (!d.site2 || !d.area || !d.auditor2) return;
+      if (!d.department2.trim() || !d.site2.trim() || !d.area.trim() || !d.auditor2.trim() || !d.dateFrom || !d.dateTo) {
+        setState((s) => ({ createDraft: { ...s.createDraft, warn: true, warnText: 'Please complete all required fields (Department, Site, Area, Auditor, From, and To).' } }));
+        return;
+      }
     }
     const auditorName = d.auditor1 || d.auditor2 || 'bird';
     const existingEng = S.engineers.find((e) => e.name.toLowerCase() === auditorName.toLowerCase());
@@ -525,10 +530,20 @@ export function useScheduler() {
   };
   const closeEdit = () => setState({ editOpen: false });
   const setEditDraft = (patch: Partial<EditDraft>) =>
-    setState((s) => ({ editDraft: { ...s.editDraft, ...patch } }));
+    setState((s) => ({ editDraft: { ...s.editDraft, warn: false, warnText: '', ...patch } }));
   const submitEdit = () => {
     const d = S.editDraft;
-    if (!d.dateFrom || !d.dateTo) return;
+    if (d.sectionType === 'customer') {
+      if (!d.department1.trim() || !d.site1.trim() || !d.customer.trim() || !d.purpose.trim() || !d.auditor1.trim() || !d.dateFrom || !d.dateTo) {
+        setState((s) => ({ editDraft: { ...s.editDraft, warn: true, warnText: 'Please complete all required fields (Department, Site, Customer, Purpose, Auditor, From, and To).' } }));
+        return;
+      }
+    } else {
+      if (!d.department2.trim() || !d.site2.trim() || !d.area.trim() || !d.auditor2.trim() || !d.dateFrom || !d.dateTo) {
+        setState((s) => ({ editDraft: { ...s.editDraft, warn: true, warnText: 'Please complete all required fields (Department, Site, Area, Auditor, From, and To).' } }));
+        return;
+      }
+    }
     const target = S.assignments.find((x) => x.id === d.targetId);
     if (!target) return;
     const start = new Date(d.dateFrom + 'T00:00:00');
@@ -1103,15 +1118,15 @@ export function useScheduler() {
   // ---- create modal VM ----
   const cd = S.createDraft;
   const canCreate = cd.sectionType === 'customer'
-    ? !!(cd.site1 && cd.customer && cd.auditor1 && cd.dateFrom && cd.dateTo)
-    : !!(cd.site2 && cd.area && cd.auditor2 && cd.dateFrom && cd.dateTo);
+    ? !!(cd.department1.trim() && cd.site1.trim() && cd.customer.trim() && cd.purpose.trim() && cd.auditor1.trim() && cd.dateFrom && cd.dateTo)
+    : !!(cd.department2.trim() && cd.site2.trim() && cd.area.trim() && cd.auditor2.trim() && cd.dateFrom && cd.dateTo);
   const create = {
     sectionType: cd.sectionType,
     purpose: cd.purpose, department1: cd.department1, site1: cd.site1, customer: cd.customer, endCustomer: cd.endCustomer, auditor1: cd.auditor1,
     department2: cd.department2, site2: cd.site2, area: cd.area, auditor2: cd.auditor2,
     dateFrom: cd.dateFrom ?? '', dateTo: cd.dateTo ?? '',
     onChange: setDraft,
-    warn: false, warnText: '',
+    warn: !!cd.warn, warnText: cd.warnText || '',
     submit: () => submitCreate(),
     submitStyle: sx({ background: canCreate ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 18px', fontSize: '12.5px', fontWeight: 600, cursor: canCreate ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
   };
