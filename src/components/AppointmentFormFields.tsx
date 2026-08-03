@@ -384,6 +384,7 @@ function AutocompleteInput({
   onRemoveOption?: (val: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [removedItems, setRemovedItems] = useState<Set<string>>(new Set());
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -401,9 +402,10 @@ function AutocompleteInput({
 
   const matches = useMemo(() => {
     const unique = Array.from(new Set(suggestions.map((s) => s.trim()).filter(Boolean)));
-    if (!trimmedVal) return unique;
-    return unique.filter((s) => s.toLowerCase().includes(trimmedVal));
-  }, [suggestions, trimmedVal]);
+    const filtered = unique.filter((s) => !removedItems.has(s));
+    if (!trimmedVal) return filtered;
+    return filtered.filter((s) => s.toLowerCase().includes(trimmedVal));
+  }, [suggestions, trimmedVal, removedItems]);
 
   const exactMatchExists = suggestions.some(
     (s) => s.trim().toLowerCase() === trimmedVal
@@ -486,6 +488,7 @@ function AutocompleteInput({
                   onMouseDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    setRemovedItems((prev) => new Set(prev).add(item));
                     onRemoveOption(item);
                   }}
                   style={{
@@ -594,9 +597,12 @@ export function AppointmentFormFields({
     : siteOptions;
 
   const customerSuggestions = useMemo(() => {
-    const fromAssign = assignments.map((a) => a.customer).filter((s): s is string => Boolean(s));
+    const activeAssignments = editingTargetId
+      ? assignments.filter((a) => a.id !== editingTargetId)
+      : assignments;
+    const fromAssign = activeAssignments.map((a) => a.customer).filter((s): s is string => Boolean(s));
     return Array.from(new Set([...customerOptions, ...fromAssign])).sort();
-  }, [assignments, customerOptions]);
+  }, [assignments, customerOptions, editingTargetId]);
 
   const endCustomerSuggestions = useMemo(() => {
     const fromAssign = assignments.map((a) => a.endCustomer).filter((s): s is string => Boolean(s));
