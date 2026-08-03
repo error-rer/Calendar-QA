@@ -1288,6 +1288,7 @@ export function useScheduler() {
       color,
       colors,
       onView: () => select(a.id),
+      onEdit: () => { closeDayDialog(); openEdit(a.id); },
       onDelete: () => removeAssign(a.id),
       onClick: () => select(a.id),
     };
@@ -1299,6 +1300,7 @@ export function useScheduler() {
     color: string;
     colors: string[];
     onView: () => void;
+    onEdit: () => void;
     onDelete: () => void;
     onClick: () => void;
   }[];

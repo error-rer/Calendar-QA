@@ -121,6 +121,14 @@ export function Schedule({ vm }: { vm: VM }) {
                             </button>
                             <button
                               type="button"
+                              onClick={(e) => { e.stopPropagation(); chip.onEdit(); }}
+                              title="Edit appointment details"
+                              style={css('width:30px;height:30px;border:1px solid #dde0d9;background:#f4f6f1;border-radius:7px;cursor:pointer;color:#3c423d;font-size:13px;display:flex;align-items:center;justify-content:center')}
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              type="button"
                               onClick={(e) => { e.stopPropagation(); chip.onDelete(); }}
                               title="Delete appointment"
                               style={css('width:30px;height:30px;border:1px solid #fecaca;background:#fef2f2;border-radius:7px;cursor:pointer;color:#dc2626;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center')}
