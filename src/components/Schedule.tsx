@@ -4,6 +4,23 @@ import { getAccentBackground } from '../useScheduler';
 import { css, HButton } from '../ui';
 import { DetailPanel } from './DetailPanel';
 
+function renderApptCode(code: string) {
+  if (typeof code === 'string' && (code.startsWith('CS') || code.startsWith('IA'))) {
+    const spaceDotIdx = code.indexOf(' · ');
+    if (spaceDotIdx !== -1) {
+      const prefix = code.slice(0, spaceDotIdx);
+      const rest = code.slice(spaceDotIdx);
+      return (
+        <>
+          <span style={{ color: '#999999', fontWeight: 600 }}>{prefix}</span>
+          <span>{rest}</span>
+        </>
+      );
+    }
+  }
+  return code;
+}
+
 function MultiSelect({ label, items, selected, onToggle }: { label: string; items: { value: string; label: string }[]; selected: string[]; onToggle: (v: string) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -105,7 +122,7 @@ export function Schedule({ vm }: { vm: VM }) {
                         <div style={{ width: '4px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
                         <div style={css('min-width:0;flex:1;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px')}>
                           <div onClick={chip.onView} style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} title="Click to view details in right sidebar">
-                            <div style={css('font-size:12.5px;font-weight:600;color:#23282a')}>{chip.code}</div>
+                            <div style={css('font-size:12.5px;font-weight:600;color:#23282a')}>{renderApptCode(chip.code)}</div>
                             {chip.purpose ? (
                               <div style={css('font-size:11px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
                             ) : null}
@@ -247,7 +264,7 @@ function TimetableGrid({ vm }: { vm: VM }) {
               {cell.chips.map((chip) => (
                 <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
                   <div style={css('display:flex;align-items:center;gap:6px')}>
-                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#15191e")}>{chip.code}</span>
+                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#15191e")}>{renderApptCode(chip.code)}</span>
                     <span style={css('flex:1')} />
                   </div>
                   <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.purpose}</div>
@@ -273,7 +290,7 @@ function MobileTimetable({ vm }: { vm: VM }) {
               {r.cell.chips.map((chip) => (
                 <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
                   <div style={css('display:flex;align-items:center;gap:6px')}>
-                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:#15191e")}>{chip.code}</span>
+                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:#15191e")}>{renderApptCode(chip.code)}</span>
                     <span style={css('flex:1')} />
                   </div>
                   <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
@@ -350,7 +367,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
                 }}>
                   <div style={{ width: '3px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
                   <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{chip.customer}</div>
+                    <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{renderApptCode(chip.customer)}</div>
                     {chip.purpose ? (
                       <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{chip.purpose}</div>
                     ) : null}
@@ -379,7 +396,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
           }}>
             <div style={{ width: '3px', background: getAccentBackground(spColors), flexShrink: 0, alignSelf: 'stretch' }} />
             <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{sp.customer}</div>
+              <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{renderApptCode(sp.customer)}</div>
               {sp.purpose ? (
                 <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{sp.purpose}</div>
               ) : null}
@@ -518,7 +535,7 @@ function MonthGrid({ vm }: { vm: VM }) {
                     }}>
                       <div style={{ width: '3px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
                       <div style={{ padding: '3px 5px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
-                        <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#23282a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.code}</div>
+                        <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#23282a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code)}</div>
                         {ch.purpose ? (
                           <div style={{ fontSize: '9.5px', color: '#5c625c', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
                         ) : null}
@@ -562,7 +579,7 @@ function MonthMobile({ vm }: { vm: VM }) {
                     }}>
                       <div style={{ width: '2px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
                       <div style={{ padding: '2px 4px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
-                        <div style={{ fontSize: '8px', fontWeight: 600, color: '#23282a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.code}</div>
+                        <div style={{ fontSize: '8px', fontWeight: 600, color: '#23282a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code)}</div>
                         {ch.purpose ? (
                           <div style={{ fontSize: '7.5px', color: '#5c625c', marginTop: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
                         ) : null}
