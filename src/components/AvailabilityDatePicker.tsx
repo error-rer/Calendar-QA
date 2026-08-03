@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import type { Assignment, Engineer } from '../types';
 import { css, HButton } from '../ui';
 
@@ -75,24 +75,34 @@ export function AvailabilityDatePicker({
   const [viewYear, setViewYear] = useState<number>(initialDate.getFullYear());
   const [viewMonth, setViewMonth] = useState<number>(initialDate.getMonth());
 
-  // Interactive selection state
-  const [selectedStart, setSelectedStart] = useState<Date | null>(() => parseISO(dateFrom));
-  const [selectedEnd, setSelectedEnd] = useState<Date | null>(() => parseISO(_dateTo) || parseISO(dateFrom));
+  // Interactive selection state using stable ISO string representations
+  const [selectedFromISO, setSelectedFromISO] = useState<string>(dateFrom || '');
+  const [selectedToISO, setSelectedToISO] = useState<string>(_dateTo || dateFrom || '');
+  const isInternalChangeRef = useRef(false);
 
   // Status notice (e.g. when jumping to next available)
   const [notice, setNotice] = useState<string | null>(null);
 
-  // Sync selectedStart / selectedEnd & jump calendar view if dateFrom or dateTo changes externally
+  // Sync state & jump calendar view if dateFrom or dateTo changes EXTERNALLY
   useEffect(() => {
-    const pStart = parseISO(dateFrom);
-    const pEnd = parseISO(_dateTo) || pStart;
-    setSelectedStart(pStart);
-    setSelectedEnd(pEnd);
-    if (pStart) {
-      setViewYear(pStart.getFullYear());
-      setViewMonth(pStart.getMonth());
+    if (isInternalChangeRef.current) {
+      isInternalChangeRef.current = false;
+      return;
     }
-  }, [dateFrom, _dateTo]);
+
+    if (dateFrom !== selectedFromISO || _dateTo !== selectedToISO) {
+      setSelectedFromISO(dateFrom || '');
+      setSelectedToISO(_dateTo || dateFrom || '');
+
+      const pStart = parseISO(dateFrom);
+      if (pStart) {
+        const y = pStart.getFullYear();
+        const m = pStart.getMonth();
+        setViewYear((prevY) => (prevY !== y ? y : prevY));
+        setViewMonth((prevM) => (prevM !== m ? m : prevM));
+      }
+    }
+  }, [dateFrom, _dateTo, selectedFromISO, selectedToISO]);
 
   // Compute busy dates for the currently selected Site + Auditor
   const { bookedDatesSet, bookedDetailsMap } = useMemo(() => {
@@ -162,11 +172,13 @@ export function AvailabilityDatePicker({
 
   // Computed selected range
   const selectedRange = useMemo(() => {
-    if (!selectedStart) return null;
-    const s = selectedStart;
-    const e = selectedEnd || selectedStart;
-    const start = s <= e ? s : e;
-    const end = s <= e ? e : s;
+    if (!selectedFromISO) return null;
+    const s = parseISO(selectedFromISO);
+    const e = parseISO(selectedToISO) || s;
+    if (!s) return null;
+
+    const start = s <= (e || s) ? s : (e || s);
+    const end = s <= (e || s) ? (e || s) : s;
 
     const dates: Date[] = [];
     const curr = new Date(start.getFullYear(), start.getMonth(), start.getDate());
@@ -185,53 +197,44 @@ export function AvailabilityDatePicker({
       end: dates[dates.length - 1],
       dates,
     };
-  }, [selectedStart, selectedEnd]);
-
-  // Auto-sync selectedRange to parent form
-  useEffect(() => {
-    if (selectedRange) {
-      const fromISO = fmtISO(selectedRange.start);
-      const toISO = fmtISO(selectedRange.end);
-      if (fromISO !== dateFrom || toISO !== _dateTo) {
-        onChange({ dateFrom: fromISO, dateTo: toISO });
-      }
-    }
-  }, [selectedRange, dateFrom, _dateTo, onChange]);
+  }, [selectedFromISO, selectedToISO]);
 
   // Handle Date Click with Selection & Deselection Toggle
   const handleSelectDate = (d: Date) => {
-    if (businessDaysOnly && isWeekend(d)) return;
+    if (isWeekend(d)) return;
+    const clickedISO = fmtISO(d);
 
-    // Deselect Toggle: If clicking an already selected start or end date
-    if (selectedStart && isSameDay(selectedStart, d)) {
-      if (!selectedEnd || isSameDay(selectedEnd, d)) {
-        // Deselect single date
-        setSelectedStart(null);
-        setSelectedEnd(null);
+    isInternalChangeRef.current = true;
+
+    // Deselect Toggle: If clicking an already selected start date
+    if (selectedFromISO && selectedFromISO === clickedISO) {
+      if (!selectedToISO || selectedToISO === clickedISO) {
+        setSelectedFromISO('');
+        setSelectedToISO('');
         onChange({ dateFrom: '', dateTo: '' });
         return;
       }
     }
-    if (selectedEnd && isSameDay(selectedEnd, d) && selectedStart && !isSameDay(selectedStart, d)) {
-      // Reset range to single start date
-      setSelectedEnd(selectedStart);
-      onChange({ dateFrom: fmtISO(selectedStart), dateTo: fmtISO(selectedStart) });
+    // Deselect Toggle: If clicking an already selected end date
+    if (selectedToISO && selectedToISO === clickedISO && selectedFromISO !== clickedISO) {
+      setSelectedToISO(selectedFromISO);
+      onChange({ dateFrom: selectedFromISO, dateTo: selectedFromISO });
       return;
     }
 
-    // 1st Click (Select Date) or Range Selection Click:
-    if (!selectedStart || (selectedStart && selectedEnd && !isSameDay(selectedStart, selectedEnd))) {
-      setSelectedStart(d);
-      setSelectedEnd(d);
-      onChange({ dateFrom: fmtISO(d), dateTo: fmtISO(d) });
+    // 1st Click / Range Selection:
+    if (!selectedFromISO || (selectedFromISO && selectedToISO && selectedFromISO !== selectedToISO)) {
+      setSelectedFromISO(clickedISO);
+      setSelectedToISO(clickedISO);
+      onChange({ dateFrom: clickedISO, dateTo: clickedISO });
     } else {
-      if (d < selectedStart) {
-        setSelectedStart(d);
-        setSelectedEnd(d);
-        onChange({ dateFrom: fmtISO(d), dateTo: fmtISO(d) });
+      if (clickedISO < selectedFromISO) {
+        setSelectedFromISO(clickedISO);
+        setSelectedToISO(clickedISO);
+        onChange({ dateFrom: clickedISO, dateTo: clickedISO });
       } else {
-        setSelectedEnd(d);
-        onChange({ dateFrom: fmtISO(selectedStart), dateTo: fmtISO(d) });
+        setSelectedToISO(clickedISO);
+        onChange({ dateFrom: selectedFromISO, dateTo: clickedISO });
       }
     }
   };
@@ -239,11 +242,13 @@ export function AvailabilityDatePicker({
   // Jump to next available slot from today
   const handleJumpNextAvailable = () => {
     const today = getTodayMidnight();
+    const todayISO = fmtISO(today);
+    isInternalChangeRef.current = true;
     setViewYear(today.getFullYear());
     setViewMonth(today.getMonth());
-    setSelectedStart(today);
-    setSelectedEnd(today);
-    onChange({ dateFrom: fmtISO(today), dateTo: fmtISO(today) });
+    setSelectedFromISO(todayISO);
+    setSelectedToISO(todayISO);
+    onChange({ dateFrom: todayISO, dateTo: todayISO });
     setNotice(`Selected today: ${fmtDisplay(today)}`);
     setTimeout(() => setNotice(null), 3500);
   };
@@ -366,8 +371,8 @@ export function AvailabilityDatePicker({
           const inSelected = selectedRange
             ? selectedRange.dates.some((d) => isSameDay(d, day))
             : false;
-          const isStart = selectedStart ? isSameDay(selectedStart, day) : false;
-          const isEnd = selectedRange ? isSameDay(selectedRange.end, day) : false;
+          const isStart = selectedFromISO ? iso === selectedFromISO : false;
+          const isEnd = selectedToISO ? iso === selectedToISO : false;
 
           let cellStyle = 'background:#fafbf9;color:#23282a;border:1px solid #eef1ea;cursor:pointer;';
           let tooltip = inSelected
