@@ -170,10 +170,10 @@ export function useScheduler() {
     name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
   const siteToDept = (site: string): Department => (site.startsWith('U3') ? 'U3' : site.startsWith('U2') ? 'U2' : 'U1');
   /** "CS" for Customer appointments, "IA" for Internal Audit. */
-  const apptAbbr = (a: Assignment) => (a.site2 || a.auditor2 || a.department2 ? 'IA' : 'CS');
+  const apptAbbr = (a: Assignment) => (a.site2 || a.auditor2 || a.department2 || a.area ? 'IA' : 'CS');
   /** Returns Customer name with CS prefix for Customer Audit or Area/topic with IA prefix for Internal Audit. */
   const apptTitle = (a: Assignment) => {
-    const isInternal = !!(a.site2 || a.auditor2 || a.department2);
+    const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
     const prefix = isInternal ? 'IA' : 'CS';
     if (isInternal) return prefix + ' · ' + (a.area || 'Internal Audit');
     const o = orderById(a.order);
@@ -493,7 +493,7 @@ export function useScheduler() {
     const a = S.assignments.find((x) => x.id === aid);
     if (!a) return;
     const o = orderById(a.order);
-    const isInternal = !!(a.site2 || a.auditor2 || a.department2);
+    const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
     // find all sibling assignments (same order + eng) for the full date range
     const siblings = S.assignments.filter((x) => x.eng === a.eng && x.order === a.order);
     const minWeek = Math.min(...siblings.map((x) => x.week));
@@ -1077,7 +1077,7 @@ export function useScheduler() {
       avatarStyle: sx({ width: '24px', height: '24px', borderRadius: '7px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       onDelete: () => removeComment(selA.id, m.id),
     }));
-    const isInternal = !!(selA.site2 || selA.auditor2 || selA.department2);
+    const isInternal = !!(selA.site2 || selA.auditor2 || selA.department2 || selA.area);
     return {
       aid: selA.id, isInternal, orderCode: ord?.code || '', product: selA.endCustomer || selA.area || (ord ? ord.product : ''), customer: selA.customer || (ord ? ord.customer : ''), plantName: pl.name + ' - ' + pl.loc,
       engName: eng.name, engRole: eng.role, engInitials: initials(eng.name), dayName: dayNames[selA.day],
@@ -1096,7 +1096,7 @@ export function useScheduler() {
       utl1: selA.utl1 ?? 0, utl2: selA.utl2 ?? 0, utl3: selA.utl3 ?? 0,
     };
   }
-  const selA = wk.find((a) => a.id === S.selected);
+  const selA = S.assignments.find((a) => a.id === S.selected);
   if (selA) detail = buildDetail(selA);
 
   // ---- create modal VM ----
@@ -1271,14 +1271,15 @@ export function useScheduler() {
     const e = engById(a.eng);
     if (!o || !e) return null;
     const pl = plantById(o.plant);
-    const isInternal = !!(a.site2 || a.auditor2 || a.department2);
+    const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
     const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || e.name);
-    const chipPurpose = isInternal ? auditorName : (a.purpose ? (auditorName ? a.purpose + ' - ' + auditorName : a.purpose) : auditorName);
+    const titleName = isInternal ? (a.area || 'Internal Audit') : (a.customer || o.customer || 'Customer Audit');
+    const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
     const colors = siteColorsOfAssignment(a, S.siteColors);
     const color = colors[0] || (pl ? pl.color : '#999');
     return {
       id: a.id,
-      code: apptAbbr(a) + ' · ' + (isInternal ? (a.area || '') : (a.customer || o.customer)),
+      code: apptAbbr(a) + ' · ' + titleName,
       purpose: chipPurpose,
       engName: auditorName,
       color,
