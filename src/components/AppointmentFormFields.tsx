@@ -8,6 +8,88 @@ const lbl = css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weig
 const inp = css("border:1px solid #dde0d9;border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fff;width:100%;box-sizing:border-box");
 const sel = inp;
 
+function isoToDisplay(iso: string): string {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function displayToIso(val: string): string | null {
+  const trimmed = val.trim();
+  if (!trimmed) return '';
+  // Match DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+  const dmYMatch = /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/.exec(trimmed);
+  if (dmYMatch) {
+    const [, dStr, mStr, yStr] = dmYMatch;
+    const day = Number(dStr);
+    const month = Number(mStr);
+    const year = Number(yStr);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31 && year >= 1900 && year <= 2100) {
+      return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+  }
+  // Match YYYY-MM-DD
+  const ymdMatch = /^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/.exec(trimmed);
+  if (ymdMatch) {
+    const [, yStr, mStr, dStr] = ymdMatch;
+    const year = Number(yStr);
+    const month = Number(mStr);
+    const day = Number(dStr);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31 && year >= 1900 && year <= 2100) {
+      return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+  }
+  return null;
+}
+
+interface DateInputFieldProps {
+  id: string;
+  value: string;
+  onChange: (isoVal: string) => void;
+  style?: React.CSSProperties;
+}
+
+function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
+  const [text, setText] = useState(() => isoToDisplay(value));
+
+  useEffect(() => {
+    setText(isoToDisplay(value));
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVal = e.target.value;
+    setText(newVal);
+    const parsed = displayToIso(newVal);
+    if (parsed !== null) {
+      onChange(parsed);
+    }
+  };
+
+  const handleBlur = () => {
+    const parsed = displayToIso(text);
+    if (parsed !== null) {
+      setText(isoToDisplay(parsed));
+      onChange(parsed);
+    } else if (!text.trim()) {
+      onChange('');
+    } else {
+      setText(isoToDisplay(value));
+    }
+  };
+
+  return (
+    <input
+      id={id}
+      type="text"
+      placeholder="DD/MM/YYYY"
+      value={text}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      style={style}
+    />
+  );
+}
+
 export interface AppointmentFormValues {
   sectionType: 'customer' | 'internal';
   site1: string;
@@ -413,13 +495,13 @@ export function AppointmentFormFields({
             {/* 7. FROM */}
             <div style={fld}>
               <label htmlFor={id('dateFrom')} style={lbl}>FROM</label>
-              <input id={id('dateFrom')} type="date" value={v.dateFrom} onChange={(e) => onChange({ dateFrom: e.target.value })} style={inp} />
+              <DateInputField id={id('dateFrom')} value={v.dateFrom} onChange={(dateFrom) => onChange({ dateFrom })} style={inp} />
             </div>
 
             {/* 8. TO */}
             <div style={fld}>
               <label htmlFor={id('dateTo')} style={lbl}>TO</label>
-              <input id={id('dateTo')} type="date" value={v.dateTo} onChange={(e) => onChange({ dateTo: e.target.value })} style={inp} />
+              <DateInputField id={id('dateTo')} value={v.dateTo} onChange={(dateTo) => onChange({ dateTo })} style={inp} />
             </div>
 
             <div style={{ gridColumn: '1 / -1' }}>
@@ -500,13 +582,13 @@ export function AppointmentFormFields({
             {/* 5. FROM */}
             <div style={fld}>
               <label htmlFor={id('dateFrom2')} style={lbl}>FROM</label>
-              <input id={id('dateFrom2')} type="date" value={v.dateFrom} onChange={(e) => onChange({ dateFrom: e.target.value })} style={inp} />
+              <DateInputField id={id('dateFrom2')} value={v.dateFrom} onChange={(dateFrom) => onChange({ dateFrom })} style={inp} />
             </div>
 
             {/* 6. TO */}
             <div style={fld}>
               <label htmlFor={id('dateTo2')} style={lbl}>TO</label>
-              <input id={id('dateTo2')} type="date" value={v.dateTo} onChange={(e) => onChange({ dateTo: e.target.value })} style={inp} />
+              <DateInputField id={id('dateTo2')} value={v.dateTo} onChange={(dateTo) => onChange({ dateTo })} style={inp} />
             </div>
 
             <div style={{ gridColumn: '1 / -1' }}>

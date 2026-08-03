@@ -67,8 +67,8 @@ export function AvailabilityDatePicker({
   engineers = [],
   editingTargetId,
 }: AvailabilityDatePickerProps) {
-  // Business Days state
-  const [businessDaysOnly, setBusinessDaysOnly] = useState<boolean>(true);
+  // Business Days state (enforced Mon-Fri weekdays only)
+  const businessDaysOnly = true;
 
   // Month navigation view
   const initialDate = useMemo(() => parseISO(dateFrom) || getTodayMidnight(), [dateFrom]);
@@ -82,12 +82,16 @@ export function AvailabilityDatePicker({
   // Status notice (e.g. when jumping to next available)
   const [notice, setNotice] = useState<string | null>(null);
 
-  // Sync selectedStart / selectedEnd if dateFrom or dateTo changes externally
+  // Sync selectedStart / selectedEnd & jump calendar view if dateFrom or dateTo changes externally
   useEffect(() => {
     const pStart = parseISO(dateFrom);
     const pEnd = parseISO(_dateTo) || pStart;
     setSelectedStart(pStart);
     setSelectedEnd(pEnd);
+    if (pStart) {
+      setViewYear(pStart.getFullYear());
+      setViewMonth(pStart.getMonth());
+    }
   }, [dateFrom, _dateTo]);
 
   // Compute busy dates for the currently selected Site + Auditor
@@ -280,21 +284,11 @@ export function AvailabilityDatePicker({
 
   return (
     <div style={css('border:1px solid #e2e5de;border-radius:12px;background:#fff;padding:14px;display:flex;flex-direction:column;gap:12px;margin-top:6px')}>
-      {/* Top Controls: Business Days Toggle */}
+      {/* Top Controls Header */}
       <div style={css('display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #eef1ea;padding-bottom:10px')}>
         <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;color:#23282a;letter-spacing:.4px")}>
-          DATE SELECTION
+          DATE SELECTION (WEEKDAYS ONLY)
         </div>
-
-        <label style={css('display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11.5px;font-weight:500;color:#3c423d')}>
-          <input
-            type="checkbox"
-            checked={businessDaysOnly}
-            onChange={(e) => setBusinessDaysOnly(e.target.checked)}
-            style={css('accent-color:#15191e;cursor:pointer')}
-          />
-          Business days only
-        </label>
       </div>
 
       {/* Month Header & Jump Button */}
