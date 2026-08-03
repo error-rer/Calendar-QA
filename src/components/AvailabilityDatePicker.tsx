@@ -200,23 +200,35 @@ export function AvailabilityDatePicker({
     const currentFrom = dateFrom || '';
     const currentTo = _dateTo || currentFrom || '';
 
-    // Deselect Toggle: If clicking an already selected start date
-    if (currentFrom && currentFrom === clickedISO) {
-      if (!currentTo || currentTo === clickedISO) {
-        lastHandledDateFromRef.current = '';
-        onChange({ dateFrom: '', dateTo: '' });
-        return;
-      }
-    }
-    // Deselect Toggle: If clicking an already selected end date
-    if (currentTo && currentTo === clickedISO && currentFrom !== clickedISO) {
-      lastHandledDateFromRef.current = currentFrom;
-      onChange({ dateFrom: currentFrom, dateTo: currentFrom });
+    // If single date is selected and user clicks that same single date -> Deselect to empty
+    if (currentFrom && currentFrom === currentTo && currentFrom === clickedISO) {
+      lastHandledDateFromRef.current = '';
+      onChange({ dateFrom: '', dateTo: '' });
       return;
     }
 
-    // 1st Click / Range Selection:
-    if (!currentFrom || (currentFrom && currentTo && currentFrom !== currentTo)) {
+    // If a multi-day range is currently selected:
+    if (currentFrom && currentTo && currentFrom !== currentTo) {
+      // If clicking already selected end date -> select that date as single date
+      if (clickedISO === currentTo) {
+        lastHandledDateFromRef.current = clickedISO;
+        onChange({ dateFrom: clickedISO, dateTo: clickedISO });
+        return;
+      }
+      // If clicking already selected start date -> select that date as single date
+      if (clickedISO === currentFrom) {
+        lastHandledDateFromRef.current = clickedISO;
+        onChange({ dateFrom: clickedISO, dateTo: clickedISO });
+        return;
+      }
+      // Clicking any other date -> start new selection on clickedISO
+      lastHandledDateFromRef.current = clickedISO;
+      onChange({ dateFrom: clickedISO, dateTo: clickedISO });
+      return;
+    }
+
+    // If single date is currently selected (or no date selected):
+    if (!currentFrom) {
       lastHandledDateFromRef.current = clickedISO;
       onChange({ dateFrom: clickedISO, dateTo: clickedISO });
     } else {
