@@ -373,6 +373,7 @@ function AutocompleteInput({
   placeholder,
   suggestions,
   onAddNew,
+  onRemoveOption,
 }: {
   id: string;
   value: string;
@@ -380,6 +381,7 @@ function AutocompleteInput({
   placeholder?: string;
   suggestions: string[];
   onAddNew?: (val: string) => void;
+  onRemoveOption?: (val: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -465,12 +467,52 @@ function AutocompleteInput({
                 fontSize: '12.5px',
                 fontFamily: "'Archivo',sans-serif",
                 color: '#23282a',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '8px',
                 transition: 'background .1s ease',
               }}
               onMouseEnter={(e) => (e.currentTarget.style.background = '#f0f2ec')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
-              {item}
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                {item}
+              </span>
+              {onRemoveOption && (
+                <button
+                  type="button"
+                  title={`Delete "${item}" from saved options`}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onRemoveOption(item);
+                  }}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    color: '#8a9088',
+                    cursor: 'pointer',
+                    padding: '2px 5px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    lineHeight: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#fee2e2';
+                    e.currentTarget.style.color = '#dc2626';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = '#8a9088';
+                  }}
+                >
+                  ✕
+                </button>
+              )}
             </div>
           ))}
 
@@ -514,6 +556,8 @@ export function AppointmentFormFields({
   onChange,
   purposeOptions,
   addPurposeOption,
+  removePurposeOption,
+  removeCustomerOption,
   customerDepartmentOptions,
   internalDepartmentOptions,
   siteOptions,
@@ -527,6 +571,8 @@ export function AppointmentFormFields({
   onChange: (patch: Partial<AppointmentFormValues>) => void;
   purposeOptions: string[];
   addPurposeOption?: (val: string) => void;
+  removePurposeOption?: (val: string) => void;
+  removeCustomerOption?: (val: string) => void;
   customerDepartmentOptions: string[];
   internalDepartmentOptions: string[];
   siteOptions: string[];
@@ -629,6 +675,7 @@ export function AppointmentFormFields({
                 onChange={(customer) => onChange({ customer })}
                 placeholder="Type customer name..."
                 suggestions={customerSuggestions}
+                onRemoveOption={removeCustomerOption}
               />
             </div>
 
@@ -654,6 +701,7 @@ export function AppointmentFormFields({
                 placeholder="Type or select purpose..."
                 suggestions={purposeOptions}
                 onAddNew={addPurposeOption}
+                onRemoveOption={removePurposeOption}
               />
             </div>
 
