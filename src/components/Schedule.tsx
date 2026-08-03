@@ -89,80 +89,7 @@ export function Schedule({ vm }: { vm: VM }) {
       </div>
 
       <DetailPanel vm={vm} />
-
-      {vm.dayDialogOpen && (
-        <div onClick={vm.closeDayDialog} style={vm.modalOverlayStyle}>
-          <div onClick={vm.stop} style={css('position:relative;background:#fff;border-radius:14px;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.18);margin:20px')}>
-            <div style={css('display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e7eae3')}>
-              <div style={css('display:flex;align-items:center;gap:10px')}>
-                <span style={css('font-size:15px;font-weight:700;color:#23282a')}>{vm.dayDialogInfo?.label}</span>
-                <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#9aa097")}>{vm.dayDialogDate}</span>
-              </div>
-              <div style={css('display:flex;align-items:center;gap:8px')}>
-                <HButton
-                  onClick={() => vm.openCreateWithDate(vm.dayDialogDateISO)}
-                  title="Create New Appointment for this date"
-                  style={css("padding:6px 12px;border:1px solid #15191e;background:#15191e;color:#fff;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px;font-family:'Archivo',sans-serif")}
-                  hover={{ background: '#23282e' }}
-                >
-                  <span style={{ fontSize: '14px', fontWeight: 700, lineHeight: 1 }}>+</span> New Appointment
-                </HButton>
-                <HButton onClick={vm.closeDayDialog} style={css('width:30px;height:30px;border:1px solid #e2e5de;background:#fff;border-radius:7px;cursor:pointer;color:#6a706a;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0')} hover={{ background: '#f1f3ee' }}>✕</HButton>
-              </div>
-            </div>
-            <div className="scrl" style={css('flex:1;overflow:auto;padding:12px 16px')}>
-              {vm.dayDialogChips.length === 0 ? (
-                <div style={css('text-align:center;padding:24px 0;color:#9aa097;font-size:12px;font-style:italic')}>No appointments this day</div>
-              ) : (
-                <div style={css('display:flex;flex-direction:column;gap:6px')}>
-                  {vm.dayDialogChips.map((chip) => {
-                    const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
-                    return (
-                      <div key={chip.id} style={{ display: 'flex', alignItems: 'stretch', background: '#fff', border: '1px solid #e4e7e0', borderRadius: '8px', overflow: 'hidden' }}>
-                        <div style={{ width: '4px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
-                        <div style={css('min-width:0;flex:1;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px')}>
-                          <div onClick={chip.onView} style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} title="Click to view details in right sidebar">
-                            <div style={css('font-size:12.5px;font-weight:600;color:#23282a')}>{renderApptCode(chip.code)}</div>
-                            {chip.purpose ? (
-                              <div style={css('font-size:11px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
-                            ) : null}
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); chip.onView(); }}
-                              title="View details in Right Sidebar"
-                              style={css('width:30px;height:30px;border:1px solid #dde0d9;background:#f4f6f1;border-radius:7px;cursor:pointer;color:#3c423d;font-size:13px;display:flex;align-items:center;justify-content:center')}
-                            >
-                              👁
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); chip.onEdit(); }}
-                              title="Edit appointment details"
-                              style={css('width:30px;height:30px;border:1px solid #dde0d9;background:#f4f6f1;border-radius:7px;cursor:pointer;color:#3c423d;font-size:13px;display:flex;align-items:center;justify-content:center')}
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); chip.onDelete(); }}
-                              title="Delete appointment"
-                              style={css('width:30px;height:30px;border:1px solid #fecaca;background:#fef2f2;border-radius:7px;cursor:pointer;color:#dc2626;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center')}
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <DayDialogModal vm={vm} />
 
       {vm.showTimetable && (
         <div onClick={vm.closeTimetable} style={vm.modalOverlayStyle}>
@@ -180,6 +107,160 @@ export function Schedule({ vm }: { vm: VM }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function EyeOffIcon({ size = 15, color = '#5c625c' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
+function EyeOnIcon({ size = 15, color = '#2756d6' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function DayDialogModal({ vm }: { vm: VM }) {
+  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  if (!vm.dayDialogOpen) return null;
+
+  return (
+    <div onClick={vm.closeDayDialog} style={vm.modalOverlayStyle}>
+      <div onClick={vm.stop} style={css('position:relative;background:#fff;border-radius:14px;width:100%;max-width:500px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.18);margin:20px')}>
+        <div style={css('display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e7eae3')}>
+          <div style={css('display:flex;align-items:center;gap:10px')}>
+            <span style={css('font-size:15px;font-weight:700;color:#23282a')}>{vm.dayDialogInfo?.label}</span>
+            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#9aa097")}>{vm.dayDialogDate}</span>
+          </div>
+          <div style={css('display:flex;align-items:center;gap:8px')}>
+            <HButton
+              onClick={() => vm.openCreateWithDate(vm.dayDialogDateISO)}
+              title="Create New Appointment for this date"
+              style={css("padding:6px 12px;border:1px solid #15191e;background:#15191e;color:#fff;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px;font-family:'Archivo',sans-serif")}
+              hover={{ background: '#23282e' }}
+            >
+              <span style={{ fontSize: '14px', fontWeight: 700, lineHeight: 1 }}>+</span> New Appointment
+            </HButton>
+            <HButton onClick={vm.closeDayDialog} style={css('width:30px;height:30px;border:1px solid #e2e5de;background:#fff;border-radius:7px;cursor:pointer;color:#6a706a;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0')} hover={{ background: '#f1f3ee' }}>✕</HButton>
+          </div>
+        </div>
+        <div className="scrl" style={css('flex:1;overflow:auto;padding:12px 16px')}>
+          {vm.dayDialogChips.length === 0 ? (
+            <div style={css('text-align:center;padding:24px 0;color:#9aa097;font-size:12px;font-style:italic')}>No appointments this day</div>
+          ) : (
+            <div style={css('display:flex;flex-direction:column;gap:8px')}>
+              {vm.dayDialogChips.map((chip) => {
+                const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
+                const isExpanded = !!expandedIds[chip.id];
+                return (
+                  <div key={chip.id} style={{ display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #e4e7e0', borderRadius: '8px', overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', alignItems: 'stretch' }}>
+                      <div style={{ width: '4px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
+                      <div style={css('min-width:0;flex:1;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px')}>
+                        <div onClick={() => toggleExpand(chip.id)} style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} title="Click to expand embedded details">
+                          <div style={css('font-size:12.5px;font-weight:600;color:#23282a')}>{renderApptCode(chip.code)}</div>
+                          {chip.purpose ? (
+                            <div style={css('font-size:11px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
+                          ) : null}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); toggleExpand(chip.id); }}
+                            title={isExpanded ? 'Hide embedded details' : 'Show embedded details'}
+                            style={css('width:30px;height:30px;border:1px solid ' + (isExpanded ? '#9bb0e8' : '#dde0d9') + ';background:' + (isExpanded ? '#eef2fd' : '#f4f6f1') + ';border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')}
+                          >
+                            {isExpanded ? <EyeOnIcon size={15} color="#2756d6" /> : <EyeOffIcon size={15} color="#5c625c" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); chip.onEdit(); }}
+                            title="Edit appointment details"
+                            style={css('width:30px;height:30px;border:1px solid #dde0d9;background:#f4f6f1;border-radius:7px;cursor:pointer;color:#3c423d;font-size:13px;display:flex;align-items:center;justify-content:center')}
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); chip.onDelete(); }}
+                            title="Delete appointment"
+                            style={css('width:30px;height:30px;border:1px solid #fecaca;background:#fef2f2;border-radius:7px;cursor:pointer;color:#dc2626;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center')}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {isExpanded && (
+                      <div style={css('border-top:1px solid #e7eae3;background:#fafbf8;padding:12px 14px;display:flex;flex-direction:column;gap:8px')}>
+                        <div style={css('display:flex;align-items:center;gap:8px')}>
+                          <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;${
+                            chip.isInternal
+                              ? 'color:#0f9d8c;background:#eef8f3;border:1px solid #ccebe2;'
+                              : 'color:#2756d6;background:#eef2fd;border:1px solid #d8e2fa;'
+                          }`)}>
+                            {chip.isInternal ? 'Internal Audit' : 'Customer Audit'}
+                          </span>
+                          {chip.site && (
+                            <span style={css('font-size:11.5px;color:#23282a;font-weight:600')}>
+                              Site: <span style={css('color:#15191e')}>{chip.site}</span>
+                            </span>
+                          )}
+                        </div>
+
+                        <div style={css('display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:#5c625c')}>
+                          {!chip.isInternal ? (
+                            <>
+                              {chip.customer && <div>Customer: <span style={css('color:#15191e;font-weight:600')}>{chip.customer}</span></div>}
+                              {chip.endCustomer && <div>End customer: <span style={css('color:#3c423d')}>{chip.endCustomer}</span></div>}
+                              {chip.apptPurpose && <div>Purpose: <span style={css('color:#3c423d')}>{chip.apptPurpose}</span></div>}
+                              {chip.auditor && <div>Auditor: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
+                              {chip.department && <div>Department: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
+                            </>
+                          ) : (
+                            <>
+                              {chip.area && <div>Area: <span style={css('color:#15191e;font-weight:600')}>{chip.area}</span></div>}
+                              {chip.auditor && <div>Auditor: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
+                              {chip.department && <div>Department: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
+                            </>
+                          )}
+                        </div>
+
+                        {(chip.major || chip.minor || chip.ofi || chip.request || chip.utl1 || chip.utl2 || chip.utl3) ? (
+                          <div style={css('display:flex;gap:8px;flex-wrap:wrap;margin-top:2px')}>
+                            {!!chip.major && <span style={css('font-size:10px;color:#b32f2f;font-weight:600')}>Major: {chip.major}</span>}
+                            {!!chip.minor && <span style={css('font-size:10px;color:#c2620c;font-weight:600')}>Minor: {chip.minor}</span>}
+                            {!!chip.ofi && <span style={css('font-size:10px;color:#5b7fd6;font-weight:600')}>OFI: {chip.ofi}</span>}
+                            {!!chip.request && <span style={css('font-size:10px;color:#1f8a5b;font-weight:600')}>Request: {chip.request}</span>}
+                            {!!chip.utl1 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL1: {chip.utl1}</span>}
+                            {!!chip.utl2 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL2: {chip.utl2}</span>}
+                            {!!chip.utl3 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL3: {chip.utl3}</span>}
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

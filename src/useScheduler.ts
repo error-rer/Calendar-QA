@@ -1365,6 +1365,21 @@ export function useScheduler() {
       engName: auditorName,
       color,
       colors,
+      isInternal,
+      site,
+      customer: a.customer || (o ? o.customer : ''),
+      endCustomer: a.endCustomer || '',
+      area: a.area || '',
+      auditor: (isInternal ? a.auditor2 : a.auditor1) || e.name,
+      department: (isInternal ? a.department2 : a.department1) || '',
+      apptPurpose: a.purpose || '',
+      major: a.major,
+      minor: a.minor,
+      ofi: a.ofi,
+      request: a.request,
+      utl1: a.utl1,
+      utl2: a.utl2,
+      utl3: a.utl3,
       onView: () => select(a.id),
       onEdit: () => { closeDayDialog(); openEdit(a.id); },
       onDelete: () => removeAssign(a.id),
@@ -1377,6 +1392,21 @@ export function useScheduler() {
     engName: string;
     color: string;
     colors: string[];
+    isInternal: boolean;
+    site: string;
+    customer: string;
+    endCustomer: string;
+    area: string;
+    auditor: string;
+    department: string;
+    apptPurpose: string;
+    major?: number;
+    minor?: number;
+    ofi?: number;
+    request?: number;
+    utl1?: number;
+    utl2?: number;
+    utl3?: number;
     onView: () => void;
     onEdit: () => void;
     onDelete: () => void;
