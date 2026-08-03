@@ -309,6 +309,11 @@ export function AppointmentFormFields({
     return Array.from(new Set([...fromEng, ...fromAssign1, ...fromAssign2])).sort();
   }, [engineers, assignments]);
 
+  const areaSuggestions = useMemo(() => {
+    const fromAssign = assignments.map((a) => a.area).filter((s): s is string => Boolean(s));
+    return Array.from(new Set(fromAssign)).sort();
+  }, [assignments]);
+
   return (
     <>
       <div style={css('display:flex;gap:8px;margin-bottom:4px')}>
@@ -471,7 +476,13 @@ export function AppointmentFormFields({
             {/* 3. AREA */}
             <div style={fld}>
               <label htmlFor={id('area')} style={lbl}>AREA</label>
-              <input id={id('area')} value={v.area} onChange={(e) => onChange({ area: e.target.value })} placeholder="Type area..." style={inp} />
+              <AutocompleteInput
+                id={id('area')}
+                value={v.area}
+                onChange={(area) => onChange({ area })}
+                placeholder="Type area..."
+                suggestions={areaSuggestions}
+              />
             </div>
 
             {/* 4. AUDITOR */}
