@@ -24,12 +24,18 @@ export const initialSiteCodeOptions = ['U1', 'U2', 'U2A', 'U2B', 'U3', 'U3A', 'U
 export const initialSiteColors: Record<string, string> = { U1: '#c0392b', U2: '#2e7d32', U2A: '#66bb6a', U2B: '#1b5e20', U3: '#1e5fa8', U3A: '#4a90d9', U3T: '#123f73' };
 
 export function initialState(): State {
+  let snapshot: any = {};
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem('calendar_qa_snapshot') : null;
+    if (raw) snapshot = JSON.parse(raw);
+  } catch {}
+
   return {
     authed: false,
     page: 'schedule',
     view: 'person',
     adminTab: 'engineers',
-    vw: 1440,
+    vw: typeof window !== 'undefined' ? window.innerWidth : 1440,
     selectedDay: 0,
     sidebarOpen: false,
     timeScale: 'week',
@@ -56,23 +62,23 @@ export function initialState(): State {
     engEditingId: null,
     engForm: { name: '', role: '', department: 'U1', subDepartments: [] },
     weekOffset: 0,
-    activePlants: { QMS: true, EHS: true, ESD: true },
+    activePlants: snapshot.activePlants || { QMS: true, EHS: true, ESD: true },
     selected: null,
     drag: null,
     overCell: null,
     draft: '',
     summaryYear: 2026,
-    purposeOptions: initialPurposeOptions.slice(),
-    customerDepartmentOptions: initialCustomerDepartmentOptions.slice(),
-    internalDepartmentOptions: initialInternalDepartmentOptions.slice(),
-    siteCodeOptions: initialSiteCodeOptions.slice(),
-    siteColors: { ...initialSiteColors },
-    customerOptions: [],
-    plants: initialPlants.map((p) => ({ ...p })),
-    engineers: [],
-    orders: [],
-    assignments: [],
-    comments: (() => {
+    purposeOptions: snapshot.purposeOptions || initialPurposeOptions.slice(),
+    customerDepartmentOptions: snapshot.customerDepartmentOptions || initialCustomerDepartmentOptions.slice(),
+    internalDepartmentOptions: snapshot.internalDepartmentOptions || initialInternalDepartmentOptions.slice(),
+    siteCodeOptions: snapshot.siteCodeOptions || initialSiteCodeOptions.slice(),
+    siteColors: snapshot.siteColors || { ...initialSiteColors },
+    customerOptions: snapshot.customerOptions || [],
+    plants: snapshot.plants || initialPlants.map((p) => ({ ...p })),
+    engineers: snapshot.engineers || [],
+    orders: snapshot.orders || [],
+    assignments: snapshot.assignments || [],
+    comments: snapshot.comments || (() => {
       try {
         const saved = typeof window !== 'undefined' ? localStorage.getItem('calendar_qa_comments') : null;
         return saved ? JSON.parse(saved) : {};
@@ -80,7 +86,7 @@ export function initialState(): State {
         return {};
       }
     })(),
-    activity: [],
+    activity: snapshot.activity || [],
   };
 }
 

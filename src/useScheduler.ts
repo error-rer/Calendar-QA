@@ -102,14 +102,26 @@ export function useScheduler() {
     api.fetchState()
       .then((data) => {
         setRaw((s) => {
-          // customerOptions isn't persisted server-side (like the other Options-tab
-          // lists) — backfill it from historical customer names on every order/
-          // assignment so previously-used customers still show up as suggestions.
           const historicalCustomers = new Set([
             ...data.orders.map((o) => o.customer).filter((c): c is string => Boolean(c)),
             ...data.assignments.map((a) => a.customer).filter((c): c is string => Boolean(c)),
           ]);
           const customerOptions = [...new Set([...s.customerOptions, ...historicalCustomers])];
+
+          // Merge server assignments with local assignments to prevent loss
+          const serverAssignmentIds = new Set((data.assignments || []).map((a) => a.id));
+          const localAssignments = (s.assignments || []).filter((a) => !serverAssignmentIds.has(a.id));
+          const mergedAssignments = [...(data.assignments || []), ...localAssignments];
+
+          // Merge server orders with local orders
+          const serverOrderIds = new Set((data.orders || []).map((o) => o.id));
+          const localOrders = (s.orders || []).filter((o) => !serverOrderIds.has(o.id));
+          const mergedOrders = [...(data.orders || []), ...localOrders];
+
+          // Merge server engineers with local engineers
+          const serverEngIds = new Set((data.engineers || []).map((e) => e.id));
+          const localEngineers = (s.engineers || []).filter((e) => !serverEngIds.has(e.id));
+          const mergedEngineers = [...(data.engineers || []), ...localEngineers];
 
           // Merge server comments with local comments for persistence
           const serverComments = data.comments || {};
@@ -122,9 +134,6 @@ export function useScheduler() {
               mergedComments[aid] = [...existing, ...newLocal];
             }
           }
-          try {
-            localStorage.setItem('calendar_qa_comments', JSON.stringify(mergedComments));
-          } catch {}
 
           const purposeOptions = data.purposeOptions && data.purposeOptions.length ? data.purposeOptions : s.purposeOptions;
           const customerDepartmentOptions = data.customerDepartmentOptions && data.customerDepartmentOptions.length ? data.customerDepartmentOptions : s.customerDepartmentOptions;
@@ -132,15 +141,15 @@ export function useScheduler() {
           const siteCodeOptions = data.siteCodeOptions && data.siteCodeOptions.length ? data.siteCodeOptions : s.siteCodeOptions;
           const siteColors = data.siteColors && Object.keys(data.siteColors).length ? data.siteColors : s.siteColors;
 
-          return {
+          const mergedState = {
             ...s,
-            engineers: data.engineers,
-            plants: data.plants,
+            engineers: mergedEngineers,
+            plants: data.plants && data.plants.length ? data.plants : s.plants,
             activePlants: { ...s.activePlants, ...data.activePlants },
-            orders: data.orders,
-            assignments: data.assignments,
+            orders: mergedOrders,
+            assignments: mergedAssignments,
             comments: mergedComments,
-            activity: data.activity,
+            activity: data.activity && data.activity.length ? data.activity : s.activity,
             purposeOptions,
             customerDepartmentOptions,
             internalDepartmentOptions,
@@ -148,6 +157,26 @@ export function useScheduler() {
             siteColors,
             customerOptions: data.customerOptions && data.customerOptions.length ? data.customerOptions : customerOptions,
           };
+
+          try {
+            localStorage.setItem('calendar_qa_snapshot', JSON.stringify({
+              engineers: mergedState.engineers,
+              orders: mergedState.orders,
+              assignments: mergedState.assignments,
+              comments: mergedState.comments,
+              activity: mergedState.activity,
+              purposeOptions: mergedState.purposeOptions,
+              customerDepartmentOptions: mergedState.customerDepartmentOptions,
+              internalDepartmentOptions: mergedState.internalDepartmentOptions,
+              siteCodeOptions: mergedState.siteCodeOptions,
+              siteColors: mergedState.siteColors,
+              customerOptions: mergedState.customerOptions,
+              activePlants: mergedState.activePlants,
+              plants: mergedState.plants,
+            }));
+          } catch {}
+
+          return mergedState;
         });
       })
       .catch((err) => {
@@ -155,6 +184,46 @@ export function useScheduler() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  // Save local state snapshot to localStorage whenever persistent state changes
+  useEffect(() => {
+    if (loading) return;
+    try {
+      const snapshot = {
+        engineers: state.engineers,
+        orders: state.orders,
+        assignments: state.assignments,
+        comments: state.comments,
+        activity: state.activity,
+        purposeOptions: state.purposeOptions,
+        customerDepartmentOptions: state.customerDepartmentOptions,
+        internalDepartmentOptions: state.internalDepartmentOptions,
+        siteCodeOptions: state.siteCodeOptions,
+        siteColors: state.siteColors,
+        customerOptions: state.customerOptions,
+        activePlants: state.activePlants,
+        plants: state.plants,
+      };
+      localStorage.setItem('calendar_qa_snapshot', JSON.stringify(snapshot));
+    } catch (e) {
+      console.warn('Failed to save state snapshot:', e);
+    }
+  }, [
+    loading,
+    state.engineers,
+    state.orders,
+    state.assignments,
+    state.comments,
+    state.activity,
+    state.purposeOptions,
+    state.customerDepartmentOptions,
+    state.internalDepartmentOptions,
+    state.siteCodeOptions,
+    state.siteColors,
+    state.customerOptions,
+    state.activePlants,
+    state.plants,
+  ]);
 
   const S = state;
 
