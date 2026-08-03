@@ -93,7 +93,7 @@ export function Schedule({ vm }: { vm: VM }) {
       <DayDialogModal vm={vm} />
 
       {vm.showTimetable && (
-        <div onClick={vm.closeTimetable} style={vm.modalOverlayStyle}>
+        <div style={vm.modalOverlayStyle}>
           <div onClick={vm.stop} style={css('position:relative;background:#fff;border-radius:14px;width:100%;max-width:1200px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.18);margin:20px')}>
             <div style={css('display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e7eae3')}>
               <div style={css('display:flex;align-items:center;gap:10px')}>
@@ -140,7 +140,7 @@ function DayDialogModal({ vm }: { vm: VM }) {
   if (!vm.dayDialogOpen) return null;
 
   return (
-    <div onClick={vm.closeDayDialog} style={vm.modalOverlayStyle}>
+    <div style={vm.modalOverlayStyle}>
       <div onClick={vm.stop} style={css('position:relative;background:#fff;border-radius:14px;width:100%;max-width:500px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.18);margin:20px')}>
         <div style={css('display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e7eae3')}>
           <div style={css('display:flex;align-items:center;gap:10px')}>

@@ -6,7 +6,7 @@ export function EditModal({ vm }: { vm: VM }) {
   if (!vm.editOpen) return null;
   const ed = vm.editDraft;
   return (
-    <div onClick={vm.closeEdit} style={vm.modalOverlayStyle}>
+    <div style={vm.modalOverlayStyle}>
       <div onClick={vm.stop} style={vm.modalCardStyle}>
         <div style={css('padding:16px 20px;border-bottom:1px solid #eef1ea;display:flex;align-items:center;justify-content:space-between')}>
           <div>

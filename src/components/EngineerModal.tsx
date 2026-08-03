@@ -7,7 +7,7 @@ export function EngineerModal({ vm }: { vm: VM }) {
   const internalOpts = f.subDepartmentOptions.filter((o) => o.group === 'Internal Audit');
   const customerOpts = f.subDepartmentOptions.filter((o) => o.group === 'Customer');
   return (
-    <div onClick={vm.closeEngForm} style={vm.modalOverlayStyle}>
+    <div style={vm.modalOverlayStyle}>
       <div onClick={vm.stop} style={vm.modalCardStyle}>
         <div style={css('padding:16px 20px;border-bottom:1px solid #eef1ea;display:flex;align-items:center;justify-content:space-between')}>
           <div>
