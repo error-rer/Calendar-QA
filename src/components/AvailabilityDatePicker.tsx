@@ -109,12 +109,12 @@ export function AvailabilityDatePicker({
   editingTargetId,
 }: AvailabilityDatePickerProps) {
   // Duration & Business Days state
-  const [duration, setDuration] = useState<number>(2);
+  const [duration, setDuration] = useState<number | null>(null);
   const [customInput, setCustomInput] = useState<string>('4');
   const [isCustom, setIsCustom] = useState<boolean>(false);
   const [businessDaysOnly, setBusinessDaysOnly] = useState<boolean>(true);
 
-  const activeDuration = isCustom ? (parseInt(customInput, 10) || 1) : duration;
+  const activeDuration = isCustom ? (parseInt(customInput, 10) || 1) : (duration ?? 1);
 
   // Month navigation view
   const initialDate = useMemo(() => parseISO(dateFrom) || getTodayMidnight(), [dateFrom]);
@@ -211,7 +211,7 @@ export function AvailabilityDatePicker({
         return { available: false, spill: false, reason: 'Weekend' };
       }
 
-      const activeDuration = isCustom ? (parseInt(customInput, 10) || 1) : duration;
+      const activeDuration = isCustom ? (parseInt(customInput, 10) || 1) : (duration ?? 1);
       const computed = computeSlotRange(candidateMidnight, activeDuration, businessDaysOnly);
 
       if (!computed.validStart) {
@@ -250,7 +250,7 @@ export function AvailabilityDatePicker({
   // Computed selected range
   const selectedRange = useMemo(() => {
     if (!selectedStart) return null;
-    const activeDuration = isCustom ? (parseInt(customInput, 10) || 1) : duration;
+    const activeDuration = isCustom ? (parseInt(customInput, 10) || 1) : (duration ?? 1);
     return computeSlotRange(selectedStart, activeDuration, businessDaysOnly);
   }, [selectedStart, duration, isCustom, customInput, businessDaysOnly]);
 
@@ -268,7 +268,7 @@ export function AvailabilityDatePicker({
   // Computed hover preview range
   const hoverRange = useMemo(() => {
     if (!hoveredDate) return null;
-    const activeDuration = isCustom ? (parseInt(customInput, 10) || 1) : duration;
+    const activeDuration = isCustom ? (parseInt(customInput, 10) || 1) : (duration ?? 1);
     const check = checkStartAvailability(hoveredDate);
     if (!check.available && !check.spill) return null;
     return computeSlotRange(hoveredDate, activeDuration, businessDaysOnly);
