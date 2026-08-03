@@ -8,40 +8,6 @@ const lbl = css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weig
 const inp = css("border:1px solid #dde0d9;border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fff;width:100%;box-sizing:border-box");
 const sel = inp;
 
-function isoToDisplay(iso: string): string {
-  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || '';
-  const [y, m, d] = iso.split('-');
-  return `${d}/${m}/${y}`;
-}
-
-function displayToIso(val: string): string | null {
-  const trimmed = val.trim();
-  if (!trimmed) return '';
-  // Match DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
-  const dmYMatch = /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/.exec(trimmed);
-  if (dmYMatch) {
-    const [, dStr, mStr, yStr] = dmYMatch;
-    const day = Number(dStr);
-    const month = Number(mStr);
-    const year = Number(yStr);
-    if (month >= 1 && month <= 12 && day >= 1 && day <= 31 && year >= 1900 && year <= 2100) {
-      return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    }
-  }
-  // Match YYYY-MM-DD
-  const ymdMatch = /^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/.exec(trimmed);
-  if (ymdMatch) {
-    const [, yStr, mStr, dStr] = ymdMatch;
-    const year = Number(yStr);
-    const month = Number(mStr);
-    const day = Number(dStr);
-    if (month >= 1 && month <= 12 && day >= 1 && day <= 31 && year >= 1900 && year <= 2100) {
-      return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    }
-  }
-  return null;
-}
-
 interface DateInputFieldProps {
   id: string;
   value: string;
@@ -50,43 +16,154 @@ interface DateInputFieldProps {
 }
 
 function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
-  const [text, setText] = useState(() => isoToDisplay(value));
+  const dayRef = useRef<HTMLInputElement>(null);
+  const monthRef = useRef<HTMLInputElement>(null);
+  const yearRef = useRef<HTMLInputElement>(null);
+
+  const parseIso = (iso: string) => {
+    if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+      const [y, m, d] = iso.split('-');
+      return { day: d, month: m, year: y };
+    }
+    return { day: '', month: '', year: '' };
+  };
+
+  const [day, setDay] = useState(() => parseIso(value).day);
+  const [month, setMonth] = useState(() => parseIso(value).month);
+  const [year, setYear] = useState(() => parseIso(value).year);
 
   useEffect(() => {
-    setText(isoToDisplay(value));
+    const parsed = parseIso(value);
+    setDay(parsed.day);
+    setMonth(parsed.month);
+    setYear(parsed.year);
   }, [value]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVal = e.target.value;
-    setText(newVal);
-    const parsed = displayToIso(newVal);
-    if (parsed !== null) {
-      onChange(parsed);
+  const emitIfValid = (dStr: string, mStr: string, yStr: string) => {
+    if (!dStr && !mStr && !yStr) {
+      onChange('');
+      return;
+    }
+    const d = Number(dStr);
+    const m = Number(mStr);
+    const y = Number(yStr);
+
+    if (
+      dStr.length >= 1 && d >= 1 && d <= 31 &&
+      mStr.length >= 1 && m >= 1 && m <= 12 &&
+      yStr.length === 4 && y >= 1900 && y <= 2100
+    ) {
+      const iso = `${yStr}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      onChange(iso);
     }
   };
 
-  const handleBlur = () => {
-    const parsed = displayToIso(text);
-    if (parsed !== null) {
-      setText(isoToDisplay(parsed));
-      onChange(parsed);
-    } else if (!text.trim()) {
-      onChange('');
-    } else {
-      setText(isoToDisplay(value));
+  const handleDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let raw = e.target.value.replace(/\D/g, '');
+    if (raw.length === 1 && Number(raw) > 3) {
+      raw = '0' + raw;
+    }
+    const val = raw.slice(0, 2);
+    setDay(val);
+    emitIfValid(val, month, year);
+
+    if (val.length === 2) {
+      monthRef.current?.focus();
+      monthRef.current?.select();
+    }
+  };
+
+  const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let raw = e.target.value.replace(/\D/g, '');
+    if (raw.length === 1 && Number(raw) > 1) {
+      raw = '0' + raw;
+    }
+    const val = raw.slice(0, 2);
+    setMonth(val);
+    emitIfValid(day, val, year);
+
+    if (val.length === 2) {
+      yearRef.current?.focus();
+      yearRef.current?.select();
+    }
+  };
+
+  const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+    setYear(val);
+    emitIfValid(day, month, val);
+  };
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    field: 'day' | 'month' | 'year'
+  ) => {
+    if (e.key === 'Backspace') {
+      if (field === 'month' && !month) {
+        dayRef.current?.focus();
+      } else if (field === 'year' && !year) {
+        monthRef.current?.focus();
+      }
     }
   };
 
   return (
-    <input
+    <div
       id={id}
-      type="text"
-      placeholder="DD/MM/YYYY"
-      value={text}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      style={style}
-    />
+      style={{
+        ...style,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+        boxSizing: 'border-box',
+        cursor: 'text',
+      }}
+      onClick={() => {
+        if (!day) dayRef.current?.focus();
+      }}
+    >
+      <input
+        ref={dayRef}
+        type="text"
+        inputMode="numeric"
+        placeholder="DD"
+        maxLength={2}
+        value={day}
+        onChange={handleDayChange}
+        onKeyDown={(e) => handleKeyDown(e, 'day')}
+        style={css(
+          'width:22px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#23282a;padding:0'
+        )}
+      />
+      <span style={css('color:#8a9088;font-weight:600;user-select:none')}>/</span>
+      <input
+        ref={monthRef}
+        type="text"
+        inputMode="numeric"
+        placeholder="MM"
+        maxLength={2}
+        value={month}
+        onChange={handleMonthChange}
+        onKeyDown={(e) => handleKeyDown(e, 'month')}
+        style={css(
+          'width:24px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#23282a;padding:0'
+        )}
+      />
+      <span style={css('color:#8a9088;font-weight:600;user-select:none')}>/</span>
+      <input
+        ref={yearRef}
+        type="text"
+        inputMode="numeric"
+        placeholder="YYYY"
+        maxLength={4}
+        value={year}
+        onChange={handleYearChange}
+        onKeyDown={(e) => handleKeyDown(e, 'year')}
+        style={css(
+          'width:38px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#23282a;padding:0'
+        )}
+      />
+    </div>
   );
 }
 

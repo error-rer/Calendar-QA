@@ -287,7 +287,7 @@ export function AvailabilityDatePicker({
       {/* Top Controls Header */}
       <div style={css('display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #eef1ea;padding-bottom:10px')}>
         <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;color:#23282a;letter-spacing:.4px")}>
-          DATE SELECTION (WEEKDAYS ONLY)
+          DATE SELECTION
         </div>
       </div>
 
