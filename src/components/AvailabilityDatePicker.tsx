@@ -543,12 +543,6 @@ export function AvailabilityDatePicker({
               : 'No date range selected'}
           </div>
         </div>
-
-        {selectedRange && (
-          <div style={css("font-size:11px;font-weight:600;color:#15803d;background:#eefbf4;border:1px solid #bbf7d0;border-radius:6px;padding:4px 9px;display:flex;align-items:center;gap:4px")}>
-            ✓ Saved automatically
-          </div>
-        )}
       </div>
 
       {/* Legend Key */}
