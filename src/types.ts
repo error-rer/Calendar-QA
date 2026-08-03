@@ -140,9 +140,6 @@ export interface State {
   filterAuditType: string[];
   filterAuditTopic: string[];
   filterApptType: string[];
-  searchQuery: string;
-  searchFromDate: string;
-  searchToDate: string;
   adminFilterSite: string[];
   adminFilterDept: string[];
   dayDialog: { weekOffset: number; day: number } | null;
