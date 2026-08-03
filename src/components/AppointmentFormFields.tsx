@@ -372,12 +372,14 @@ function AutocompleteInput({
   onChange,
   placeholder,
   suggestions,
+  onAddNew,
 }: {
   id: string;
   value: string;
   onChange: (val: string) => void;
   placeholder?: string;
   suggestions: string[];
+  onAddNew?: (val: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -392,12 +394,28 @@ function AutocompleteInput({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const trimmedVal = (value || '').trim().toLowerCase();
+  const rawVal = value || '';
+  const trimmedVal = rawVal.trim().toLowerCase();
+
   const matches = useMemo(() => {
     const unique = Array.from(new Set(suggestions.map((s) => s.trim()).filter(Boolean)));
-    if (!trimmedVal) return unique.slice(0, 8);
-    return unique.filter((s) => s.toLowerCase().includes(trimmedVal)).slice(0, 8);
+    if (!trimmedVal) return unique;
+    return unique.filter((s) => s.toLowerCase().includes(trimmedVal));
   }, [suggestions, trimmedVal]);
+
+  const exactMatchExists = suggestions.some(
+    (s) => s.trim().toLowerCase() === trimmedVal
+  );
+
+  const handleAddNew = (newVal: string) => {
+    const clean = newVal.trim();
+    if (!clean) return;
+    if (onAddNew && !exactMatchExists) {
+      onAddNew(clean);
+    }
+    onChange(clean);
+    setOpen(false);
+  };
 
   return (
     <div ref={ref} style={{ position: 'relative', width: '100%' }}>
@@ -414,7 +432,7 @@ function AutocompleteInput({
         style={inp}
         autoComplete="off"
       />
-      {open && matches.length > 0 && (
+      {open && (matches.length > 0 || (onAddNew && rawVal.trim() && !exactMatchExists)) && (
         <div
           style={{
             position: 'absolute',
@@ -427,7 +445,7 @@ function AutocompleteInput({
             borderRadius: '8px',
             boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
             zIndex: 100,
-            maxHeight: '200px',
+            maxHeight: '220px',
             overflowY: 'auto',
             padding: '4px',
           }}
@@ -455,6 +473,34 @@ function AutocompleteInput({
               {item}
             </div>
           ))}
+
+          {onAddNew && rawVal.trim() && !exactMatchExists && (
+            <div
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleAddNew(rawVal);
+              }}
+              style={{
+                padding: '8px 10px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '12.5px',
+                fontFamily: "'Archivo',sans-serif",
+                fontWeight: 600,
+                color: '#2756d6',
+                background: '#eef2fd',
+                border: '1px solid #d8e2fa',
+                marginTop: matches.length > 0 ? '4px' : '0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#e0e8fc')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = '#eef2fd')}
+            >
+              <span>＋ Add "{rawVal.trim()}"</span>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -467,6 +513,7 @@ export function AppointmentFormFields({
   values: v,
   onChange,
   purposeOptions,
+  addPurposeOption,
   customerDepartmentOptions,
   internalDepartmentOptions,
   siteOptions,
@@ -479,6 +526,7 @@ export function AppointmentFormFields({
   values: AppointmentFormValues;
   onChange: (patch: Partial<AppointmentFormValues>) => void;
   purposeOptions: string[];
+  addPurposeOption?: (val: string) => void;
   customerDepartmentOptions: string[];
   internalDepartmentOptions: string[];
   siteOptions: string[];
@@ -599,10 +647,14 @@ export function AppointmentFormFields({
             {/* 5. PURPOSE */}
             <div style={fld}>
               <label htmlFor={id('purpose')} style={lbl}>PURPOSE</label>
-              <select id={id('purpose')} value={v.purpose} onChange={(e) => onChange({ purpose: e.target.value })} style={sel}>
-                <option value="">Select purpose...</option>
-                {purposeOptions.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
+              <AutocompleteInput
+                id={id('purpose')}
+                value={v.purpose}
+                onChange={(purpose) => onChange({ purpose })}
+                placeholder="Type or select purpose..."
+                suggestions={purposeOptions}
+                onAddNew={addPurposeOption}
+              />
             </div>
 
             {/* 6. AUDITOR */}

@@ -529,6 +529,9 @@ export function useScheduler() {
     if (d.sectionType === 'customer' && d.customer) {
       api.saveOption('customer_name', d.customer).catch(() => {});
     }
+    if (d.purpose) {
+      api.saveOption('purpose_options', d.purpose).catch(() => {});
+    }
     newAssignments.forEach((a) => api.createAssignment(a).catch(() => {}));
     setState((s) => ({
       orders: s.orders.concat([newOrder]),
@@ -536,6 +539,8 @@ export function useScheduler() {
       assignments: s.assignments.concat(newAssignments),
       customerOptions: d.sectionType === 'customer' && d.customer && !s.customerOptions.includes(d.customer)
         ? [...s.customerOptions, d.customer] : s.customerOptions,
+      purposeOptions: d.purpose && !s.purposeOptions.includes(d.purpose)
+        ? [...s.purposeOptions, d.purpose] : s.purposeOptions,
       selected: newAssignments[newAssignments.length - 1].id,
       createOpen: false,
     }));
@@ -634,6 +639,9 @@ export function useScheduler() {
     if (d.sectionType === 'customer' && d.customer) {
       api.saveOption('customer_name', d.customer).catch(() => {});
     }
+    if (d.purpose) {
+      api.saveOption('purpose_options', d.purpose).catch(() => {});
+    }
     const droppedSet = new Set(droppedIds);
     setState((s) => {
       const comments = droppedSet.size
@@ -641,7 +649,9 @@ export function useScheduler() {
         : s.comments;
       const customerOptions = d.sectionType === 'customer' && d.customer && !s.customerOptions.includes(d.customer)
         ? [...s.customerOptions, d.customer] : s.customerOptions;
-      return { assignments: others.concat(updated), comments, customerOptions };
+      const purposeOptions = d.purpose && !s.purposeOptions.includes(d.purpose)
+        ? [...s.purposeOptions, d.purpose] : s.purposeOptions;
+      return { assignments: others.concat(updated), comments, customerOptions, purposeOptions };
     });
     const prefix = d.sectionType === 'internal' ? 'IA' : 'CS';
     const name = d.sectionType === 'internal' ? (d.area || 'Internal Audit') : (d.customer || 'Customer Audit');
