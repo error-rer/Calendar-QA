@@ -163,14 +163,17 @@ export function AvailabilityDatePicker({
   // Computed selected range
   const selectedRange = useMemo(() => {
     if (!selectedStart) return null;
-    const start = selectedStart;
-    const end = selectedEnd || selectedStart;
+    const s = selectedStart;
+    const e = selectedEnd || selectedStart;
+    const start = s <= e ? s : e;
+    const end = s <= e ? e : s;
+
     const dates: Date[] = [];
     const curr = new Date(start.getFullYear(), start.getMonth(), start.getDate());
     const final = new Date(end.getFullYear(), end.getMonth(), end.getDate());
 
     while (curr <= final) {
-      if (!businessDaysOnly || !isWeekend(curr)) {
+      if (!isWeekend(curr)) {
         dates.push(new Date(curr.getTime()));
       }
       curr.setDate(curr.getDate() + 1);
@@ -182,7 +185,7 @@ export function AvailabilityDatePicker({
       end: dates[dates.length - 1],
       dates,
     };
-  }, [selectedStart, selectedEnd, businessDaysOnly]);
+  }, [selectedStart, selectedEnd]);
 
   // Auto-sync selectedRange to parent form
   useEffect(() => {

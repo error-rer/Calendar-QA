@@ -19,6 +19,7 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
   const dayRef = useRef<HTMLInputElement>(null);
   const monthRef = useRef<HTMLInputElement>(null);
   const yearRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const parseIso = (iso: string) => {
     if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
@@ -32,14 +33,18 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
   const [month, setMonth] = useState(() => parseIso(value).month);
   const [year, setYear] = useState(() => parseIso(value).year);
 
+  // Sync state if external value changes AND user is NOT currently typing inside this container
   useEffect(() => {
-    const parsed = parseIso(value);
-    setDay(parsed.day);
-    setMonth(parsed.month);
-    setYear(parsed.year);
+    const isFocused = containerRef.current && containerRef.current.contains(document.activeElement);
+    if (!isFocused) {
+      const parsed = parseIso(value);
+      setDay(parsed.day);
+      setMonth(parsed.month);
+      setYear(parsed.year);
+    }
   }, [value]);
 
-  const emitIfValid = (dStr: string, mStr: string, yStr: string) => {
+  const emitIfComplete = (dStr: string, mStr: string, yStr: string) => {
     if (!dStr && !mStr && !yStr) {
       onChange('');
       return;
@@ -48,13 +53,15 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
     const m = Number(mStr);
     const y = Number(yStr);
 
-    if (
-      dStr.length >= 1 && d >= 1 && d <= 31 &&
-      mStr.length >= 1 && m >= 1 && m <= 12 &&
-      yStr.length === 4 && y >= 1900 && y <= 2100
-    ) {
-      const iso = `${yStr}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      onChange(iso);
+    const isDayComplete = dStr.length === 2 && d >= 1 && d <= 31;
+    const isMonthComplete = mStr.length === 2 && m >= 1 && m <= 12;
+    const isYearComplete = yStr.length === 4 && y >= 1900 && y <= 2100;
+
+    if (isDayComplete && isMonthComplete && isYearComplete) {
+      const iso = `${yStr}-${mStr.padStart(2, '0')}-${dStr.padStart(2, '0')}`;
+      if (iso !== value) {
+        onChange(iso);
+      }
     }
   };
 
@@ -65,7 +72,7 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
     }
     const val = raw.slice(0, 2);
     setDay(val);
-    emitIfValid(val, month, year);
+    emitIfComplete(val, month, year);
 
     if (val.length === 2) {
       monthRef.current?.focus();
@@ -80,7 +87,7 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
     }
     const val = raw.slice(0, 2);
     setMonth(val);
-    emitIfValid(day, val, year);
+    emitIfComplete(day, val, year);
 
     if (val.length === 2) {
       yearRef.current?.focus();
@@ -91,7 +98,40 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
   const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/\D/g, '').slice(0, 4);
     setYear(val);
-    emitIfValid(day, month, val);
+    emitIfComplete(day, month, val);
+  };
+
+  const handleBlur = () => {
+    setTimeout(() => {
+      const isFocused = containerRef.current && containerRef.current.contains(document.activeElement);
+      if (!isFocused) {
+        let padD = day;
+        let padM = month;
+        if (day.length === 1 && Number(day) >= 1) padD = day.padStart(2, '0');
+        if (month.length === 1 && Number(month) >= 1) padM = month.padStart(2, '0');
+
+        setDay(padD);
+        setMonth(padM);
+
+        const d = Number(padD);
+        const m = Number(padM);
+        const y = Number(year);
+
+        if (padD && padM && year.length === 4 && d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1900 && y <= 2100) {
+          const iso = `${year}-${padM}-${padD}`;
+          if (iso !== value) {
+            onChange(iso);
+          }
+        } else if (!padD && !padM && !year) {
+          onChange('');
+        } else {
+          const parsed = parseIso(value);
+          setDay(parsed.day);
+          setMonth(parsed.month);
+          setYear(parsed.year);
+        }
+      }
+    }, 50);
   };
 
   const handleKeyDown = (
@@ -110,6 +150,7 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
   return (
     <div
       id={id}
+      ref={containerRef}
       style={{
         ...style,
         display: 'flex',
@@ -118,8 +159,12 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
         boxSizing: 'border-box',
         cursor: 'text',
       }}
-      onClick={() => {
-        if (!day) dayRef.current?.focus();
+      onClick={(e) => {
+        if (e.target === containerRef.current) {
+          if (!day) dayRef.current?.focus();
+          else if (!month) monthRef.current?.focus();
+          else yearRef.current?.focus();
+        }
       }}
     >
       <input
@@ -130,6 +175,7 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
         maxLength={2}
         value={day}
         onChange={handleDayChange}
+        onBlur={handleBlur}
         onKeyDown={(e) => handleKeyDown(e, 'day')}
         style={css(
           'width:22px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#23282a;padding:0'
@@ -144,6 +190,7 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
         maxLength={2}
         value={month}
         onChange={handleMonthChange}
+        onBlur={handleBlur}
         onKeyDown={(e) => handleKeyDown(e, 'month')}
         style={css(
           'width:24px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#23282a;padding:0'
@@ -158,6 +205,7 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
         maxLength={4}
         value={year}
         onChange={handleYearChange}
+        onBlur={handleBlur}
         onKeyDown={(e) => handleKeyDown(e, 'year')}
         style={css(
           'width:38px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#23282a;padding:0'
