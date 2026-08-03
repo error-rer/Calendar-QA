@@ -79,9 +79,19 @@ export function Schedule({ vm }: { vm: VM }) {
             <div style={css('display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e7eae3')}>
               <div style={css('display:flex;align-items:center;gap:10px')}>
                 <span style={css('font-size:15px;font-weight:700;color:#23282a')}>{vm.dayDialogInfo?.label}</span>
-                <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9aa097")}>{vm.dayDialogDate}</span>
+                <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#9aa097")}>{vm.dayDialogDate}</span>
               </div>
-              <button onClick={vm.closeDayDialog} style={css('width:30px;height:30px;border:1px solid #e2e5de;background:#fff;border-radius:7px;cursor:pointer;color:#6a706a;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0')}>✕</button>
+              <div style={css('display:flex;align-items:center;gap:8px')}>
+                <HButton
+                  onClick={() => vm.openCreateWithDate(vm.dayDialogDateISO)}
+                  title="Create New Appointment for this date"
+                  style={css("padding:6px 12px;border:1px solid #15191e;background:#15191e;color:#fff;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px;font-family:'Archivo',sans-serif")}
+                  hover={{ background: '#23282e' }}
+                >
+                  <span style={{ fontSize: '14px', fontWeight: 700, lineHeight: 1 }}>+</span> New Appointment
+                </HButton>
+                <HButton onClick={vm.closeDayDialog} style={css('width:30px;height:30px;border:1px solid #e2e5de;background:#fff;border-radius:7px;cursor:pointer;color:#6a706a;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0')} hover={{ background: '#f1f3ee' }}>✕</HButton>
+              </div>
             </div>
             <div className="scrl" style={css('flex:1;overflow:auto;padding:12px 16px')}>
               {vm.dayDialogChips.length === 0 ? (
@@ -91,13 +101,33 @@ export function Schedule({ vm }: { vm: VM }) {
                   {vm.dayDialogChips.map((chip) => {
                     const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
                     return (
-                      <div key={chip.id} onClick={chip.onClick} style={{ display: 'flex', alignItems: 'stretch', background: '#fff', border: '1px solid #e4e7e0', borderRadius: '7px', cursor: 'pointer', overflow: 'hidden' }}>
-                        <div style={{ width: '3px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
-                        <div style={css('min-width:0;flex:1;padding:9px 11px')}>
-                          <div style={css('font-size:12px;font-weight:600;color:#23282a')}>{chip.code}</div>
-                          {chip.purpose ? (
-                            <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
-                          ) : null}
+                      <div key={chip.id} style={{ display: 'flex', alignItems: 'stretch', background: '#fff', border: '1px solid #e4e7e0', borderRadius: '8px', overflow: 'hidden' }}>
+                        <div style={{ width: '4px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
+                        <div style={css('min-width:0;flex:1;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px')}>
+                          <div onClick={chip.onView} style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} title="Click to view details in right sidebar">
+                            <div style={css('font-size:12.5px;font-weight:600;color:#23282a')}>{chip.code}</div>
+                            {chip.purpose ? (
+                              <div style={css('font-size:11px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
+                            ) : null}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); chip.onView(); }}
+                              title="View details in Right Sidebar"
+                              style={css('width:30px;height:30px;border:1px solid #dde0d9;background:#f4f6f1;border-radius:7px;cursor:pointer;color:#3c423d;font-size:13px;display:flex;align-items:center;justify-content:center')}
+                            >
+                              👁
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); chip.onDelete(); }}
+                              title="Delete appointment"
+                              style={css('width:30px;height:30px;border:1px solid #fecaca;background:#fef2f2;border-radius:7px;cursor:pointer;color:#dc2626;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center')}
+                            >
+                              ✕
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );

@@ -413,6 +413,19 @@ export function useScheduler() {
   const openCreateAt = (engId: string, day: number) => {
     setState({ createOpen: true, userMenuOpen: false, createDraft: { order: '', eng: engId, day, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' } });
   };
+  const openCreateWithDate = (dateIso?: string) => {
+    const d = dateIso || '';
+    setState({
+      createOpen: true,
+      userMenuOpen: false,
+      dayDialog: null,
+      createDraft: {
+        order: '', eng: '', day: 0,
+        dateFrom: d, dateTo: d,
+        sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', auditor1: '', department2: '', site2: '', area: '', auditor2: ''
+      },
+    });
+  };
   const closeCreate = () => setState({ createOpen: false });
   const setDraft = (patch: Partial<CreateDraft>) =>
     setState((s) => ({ createDraft: { ...s.createDraft, ...patch } }));
@@ -1236,6 +1249,13 @@ export function useScheduler() {
 
   // ---- day dialog VM ----
   const dayDialogOpen = S.dayDialog !== null;
+  const dayDialogDateISO = dayDialogOpen
+    ? (() => {
+        const base = new Date(2026, 5, 29 + S.dayDialog!.weekOffset * 7);
+        base.setDate(base.getDate() + S.dayDialog!.day);
+        return fmtISO(base);
+      })()
+    : '';
   const dayDialogDate = dayDialogOpen
     ? (() => {
         const base = new Date(2026, 5, 29 + S.dayDialog!.weekOffset * 7);
@@ -1267,9 +1287,21 @@ export function useScheduler() {
       engName: auditorName,
       color,
       colors,
-      onClick: () => { closeDayDialog(); openEdit(a.id); },
+      onView: () => select(a.id),
+      onDelete: () => removeAssign(a.id),
+      onClick: () => select(a.id),
     };
-  }).filter(Boolean) as { id: string; code: string; purpose: string; engName: string; color: string; colors: string[]; onClick: () => void }[];
+  }).filter(Boolean) as {
+    id: string;
+    code: string;
+    purpose: string;
+    engName: string;
+    color: string;
+    colors: string[];
+    onView: () => void;
+    onDelete: () => void;
+    onClick: () => void;
+  }[];
   const dayDialogInfo = dayDialogOpen
     ? { label: S.dayDialog!.day >= 0 && S.dayDialog!.day < 5 ? dayNames[S.dayDialog!.day] : '', date: dayDialogDate }
     : null;
@@ -1356,8 +1388,8 @@ export function useScheduler() {
     toggleFilterAuditTopic: (v: string) => toggleFilterValue('filterAuditTopic', v),
     toggleFilterApptType,
     clearFilters,
-    dayDialogOpen, dayDialogDate, dayDialogChips, dayDialogInfo, closeDayDialog,
-    openCreate, closeCreate, createOpen: S.createOpen, create, stop: (e: React.MouseEvent) => e.stopPropagation(),
+    dayDialogOpen, dayDialogDate, dayDialogDateISO, dayDialogChips, dayDialogInfo, closeDayDialog,
+    openCreate, openCreateWithDate, closeCreate, createOpen: S.createOpen, create, stop: (e: React.MouseEvent) => e.stopPropagation(),
     editOpen: S.editOpen, editDraft: S.editDraft, setEditDraft, closeEdit, submitEdit,
     adminStats,
     tabEngineers: S.adminTab === 'engineers', tabOptions: S.adminTab === 'options',
