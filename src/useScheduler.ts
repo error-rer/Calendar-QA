@@ -1481,6 +1481,90 @@ export function useScheduler() {
     ? { flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '28px 22px 40px', background: '#f4f6f1' }
     : { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', background: '#f4f6f1' };
 
+  // ---- search & date range filter VM ----
+  const hasActiveSearch = !!(S.searchQuery.trim() || S.searchFromDate || S.searchToDate);
+
+  const getAssignmentDate = (a: Assignment) => {
+    const d = new Date(2026, 5, 29 + a.week * 7);
+    d.setDate(d.getDate() + a.day);
+    return d;
+  };
+
+  const searchResults = hasActiveSearch
+    ? S.assignments
+        .map((a) => {
+          const o = orderById(a.order);
+          const e = engById(a.eng);
+          if (!o || !e) return null;
+
+          const dateObj = getAssignmentDate(a);
+          const dateISO = fmtISO(dateObj);
+          const dateFormatted = fmtDate(dateObj);
+
+          if (S.searchFromDate && dateISO < S.searchFromDate) return null;
+          if (S.searchToDate && dateISO > S.searchToDate) return null;
+
+          if (S.searchQuery.trim()) {
+            const q = S.searchQuery.toLowerCase().trim();
+            const fieldsToMatch = [
+              a.customer,
+              o.customer,
+              a.endCustomer,
+              a.area,
+              a.purpose,
+              o.purpose,
+              a.site1,
+              a.site2,
+              a.auditor1,
+              a.auditor2,
+              e.name,
+              a.department1,
+              a.department2,
+              e.department,
+              ...(e.subDepartments || []),
+            ]
+              .filter(Boolean)
+              .map((s) => String(s).toLowerCase());
+
+            const matches = fieldsToMatch.some((f) => f.includes(q));
+            if (!matches) return null;
+          }
+
+          const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
+          const mainName = isInternal ? (a.area || 'Internal Audit') : (a.customer || o.customer || 'Customer Audit');
+          const site = (isInternal ? a.site2 : a.site1) || '';
+          const nameWithSite = site ? `${mainName} - ${site}` : mainName;
+          const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || e.name);
+          const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
+          const colors = siteColorsOfAssignment(a, S.siteColors);
+          const color = colors[0] || '#999';
+
+          return {
+            id: a.id,
+            dateObj,
+            dateISO,
+            dateFormatted,
+            code: apptAbbr(a) + ' · ' + nameWithSite,
+            purpose: chipPurpose,
+            engName: auditorName,
+            color,
+            colors,
+            isInternal,
+            site,
+            customer: a.customer || o.customer || '',
+            endCustomer: a.endCustomer || '',
+            area: a.area || '',
+            auditor: (isInternal ? a.auditor2 : a.auditor1) || e.name,
+            department: (isInternal ? a.department2 : a.department1) || '',
+            onView: () => select(a.id),
+            onEdit: () => openEdit(a.id),
+            onDelete: () => removeAssign(a.id),
+          };
+        })
+        .filter((r): r is NonNullable<typeof r> => r !== null)
+        .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime())
+    : [];
+
   return {
     loading,
     isMobile, showLogin: !S.authed, showApp: S.authed, showPresence: !isMobile, showStats: !isMobile, showLoginExtras: !isMobile,
@@ -1520,6 +1604,12 @@ export function useScheduler() {
     adminMainStyle, adminWrapStyle, adminStatGridStyle, loginWrapStyle, loginBrandStyle, loginFormWrapStyle,
     filterEmp: S.filterEmp, filterSite: S.filterSite, filterCompany: S.filterCompany, filterAuditType: S.filterAuditType, filterAuditTopic: S.filterAuditTopic, filterApptType: S.filterApptType,
     employeeOptions, siteOptions, customerTopicOptions, internalTopicOptions, companyNames, auditTypes, apptTypeOptions, hasFilters,
+    searchQuery: S.searchQuery, searchFromDate: S.searchFromDate, searchToDate: S.searchToDate,
+    setSearchQuery: (q: string) => setState({ searchQuery: q }),
+    setSearchFromDate: (d: string) => setState({ searchFromDate: d }),
+    setSearchToDate: (d: string) => setState({ searchToDate: d }),
+    clearSearch: () => setState({ searchQuery: '', searchFromDate: '', searchToDate: '' }),
+    hasActiveSearch, searchResults,
     toggleFilterEmp: (v: string) => toggleFilterValue('filterEmp', v),
     toggleFilterSite: (v: string) => toggleFilterValue('filterSite', v),
     toggleFilterCompany: (v: string) => toggleFilterValue('filterCompany', v),

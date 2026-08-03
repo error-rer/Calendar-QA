@@ -69,21 +69,27 @@ export function Schedule({ vm }: { vm: VM }) {
 
         <main className="scrl" style={css('flex:1;min-width:0;overflow:auto;background:#eef0ea;position:relative')}>
           <div style={css('position:absolute;inset:0;pointer-events:none;opacity:.35;background-image:radial-gradient(circle,#bcc2b4 1px,transparent 1px);background-size:22px 22px')} />
-          {vm.showWeekCalendar && <WeekCalendar vm={vm} />}
-          {vm.mobilePerson && <MobilePerson vm={vm} />}
-          {vm.mobileSite && <MobileSite vm={vm} />}
-          {vm.mobileSiteDept && <MobileSiteDept vm={vm} />}
-          {vm.monthDesktop && <MonthGrid vm={vm} />}
-          {vm.monthMobile && <MonthMobile vm={vm} />}
+          {vm.hasActiveSearch ? (
+            <SearchResultsPanel vm={vm} />
+          ) : (
+            <>
+              {vm.showWeekCalendar && <WeekCalendar vm={vm} />}
+              {vm.mobilePerson && <MobilePerson vm={vm} />}
+              {vm.mobileSite && <MobileSite vm={vm} />}
+              {vm.mobileSiteDept && <MobileSiteDept vm={vm} />}
+              {vm.monthDesktop && <MonthGrid vm={vm} />}
+              {vm.monthMobile && <MonthMobile vm={vm} />}
 
-          {vm.emptyWeek && (
-            <div style={css('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(238,240,234,.82)')}>
-              <div style={css('text-align:center;max-width:300px;padding:20px')}>
-                <div style={css('font-size:15px;font-weight:700;color:#3c423d;margin-bottom:6px')}>No plan drafted for this week</div>
-                <div style={css('font-size:12.5px;color:#7a807a;line-height:1.4;margin-bottom:16px')}>Start from the current week's coverage and adjust, or build from scratch.</div>
-                <button onClick={vm.copyWeek} style={css("background:#15191e;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}>Copy current week's plan</button>
-              </div>
-            </div>
+              {vm.emptyWeek && (
+                <div style={css('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(238,240,234,.82)')}>
+                  <div style={css('text-align:center;max-width:300px;padding:20px')}>
+                    <div style={css('font-size:15px;font-weight:700;color:#3c423d;margin-bottom:6px')}>No plan drafted for this week</div>
+                    <div style={css('font-size:12.5px;color:#7a807a;line-height:1.4;margin-bottom:16px')}>Start from the current week's coverage and adjust, or build from scratch.</div>
+                    <button onClick={vm.copyWeek} style={css("background:#15191e;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}>Copy current week's plan</button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </main>
       </div>
@@ -311,6 +317,91 @@ function EmbeddedNotes({ notes, onAddNote }: { notes: any[]; onAddNote: (t: stri
   );
 }
 
+function SearchResultsPanel({ vm }: { vm: VM }) {
+  if (!vm.hasActiveSearch) return null;
+
+  return (
+    <div style={css('background:#fff;border-radius:12px;border:1px solid #e4e7e0;box-shadow:0 4px 20px rgba(0,0,0,.08);margin:16px;padding:16px;display:flex;flex-direction:column;gap:12px')}>
+      <div style={css('display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e7eae3;padding-bottom:10px')}>
+        <div style={css('display:flex;align-items:center;gap:10px')}>
+          <span style={css('font-size:14px;font-weight:700;color:#23282a')}>🔍 Search Results</span>
+          <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;color:#7a8079;background:#f1f3ee;padding:3px 8px;border-radius:5px")}>
+            {vm.searchResults.length} matching appointment{vm.searchResults.length === 1 ? '' : 's'} (ordered chronologically)
+          </span>
+        </div>
+        <button
+          onClick={vm.clearSearch}
+          style={css("padding:5px 11px;border:1px solid #dde0d9;background:#f4f6f1;color:#3c423d;border-radius:6px;cursor:pointer;font-size:11.5px;font-weight:600;font-family:'Archivo',sans-serif")}
+        >
+          Clear Search
+        </button>
+      </div>
+
+      {vm.searchResults.length === 0 ? (
+        <div style={css('text-align:center;padding:36px 0;color:#9aa097;font-size:13px;font-style:italic')}>
+          No appointments found matching your search query or date range filter.
+        </div>
+      ) : (
+        <div style={css('display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 200px);overflow-y:auto')}>
+          {vm.searchResults.map((res) => {
+            const chColors = res.colors && res.colors.length > 0 ? res.colors : [res.color];
+            return (
+              <div
+                key={res.id}
+                style={css('display:flex;align-items:center;gap:12px;background:#fbfcfa;border:1px solid #e4e7e0;border-radius:8px;padding:8px 12px')}
+              >
+                {/* Full Date Badge */}
+                <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:700;color:#2756d6;background:#eef2fd;border:1px solid #d8e2fa;padding:6px 10px;border-radius:6px;flex-shrink:0;min-width:110px;text-align:center")}>
+                  {res.dateFormatted}
+                </div>
+
+                {/* Appointment Card Bar matching Week and Month view bars format */}
+                <div style={{ display: 'flex', alignItems: 'stretch', background: '#fff', border: '1px solid #e4e7e0', borderRadius: '7px', flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                  <div style={{ width: '4px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
+                  <div style={css('min-width:0;flex:1;padding:8px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px')}>
+                    <div onClick={res.onView} style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} title="Click to view details in right sidebar">
+                      <div style={css('font-size:12.5px;font-weight:600;color:#23282a')}>{renderApptCode(res.code)}</div>
+                      {res.purpose ? (
+                        <div style={css('font-size:11px;color:#5c625c;margin-top:2px')}>{res.purpose}</div>
+                      ) : null}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); res.onView(); }}
+                        title="View details in Right Sidebar"
+                        style={css('width:28px;height:28px;border:1px solid #dde0d9;background:#f4f6f1;border-radius:6px;cursor:pointer;color:#3c423d;font-size:12px;display:flex;align-items:center;justify-content:center')}
+                      >
+                        👁
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); res.onEdit(); }}
+                        title="Edit appointment details"
+                        style={css('width:28px;height:28px;border:1px solid #dde0d9;background:#f4f6f1;border-radius:6px;cursor:pointer;color:#3c423d;font-size:12px;display:flex;align-items:center;justify-content:center')}
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); res.onDelete(); }}
+                        title="Delete appointment"
+                        style={css('width:28px;height:28px;border:1px solid #fecaca;background:#fef2f2;border-radius:6px;cursor:pointer;color:#dc2626;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center')}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Sidebar({ vm }: { vm: VM }) {
   return (
     <aside className="scrl" style={vm.sidebarStyle}>
@@ -438,12 +529,51 @@ function Toolbar({ vm }: { vm: VM }) {
       {vm.isMobile && (
         <button onClick={vm.toggleSidebar} style={css('width:34px;height:34px;border:1px solid #dde0d9;background:#fff;border-radius:8px;cursor:pointer;color:#3c423d;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0')}>☰</button>
       )}
-      <div style={css('display:flex;background:#f1f3ee;border:1px solid #e0e3dc;border-radius:8px;padding:2px;gap:2px')}>
+      <div style={css('display:flex;background:#f1f3ee;border:1px solid #e0e3dc;border-radius:8px;padding:2px;gap:2px;flex-shrink:0')}>
         <button onClick={vm.setWeekScale} style={vm.weekScaleStyle}>Week</button>
         <button onClick={vm.setMonthScale} style={vm.monthScaleStyle}>Month</button>
       </div>
+
+      {/* Placement: Search Bar with Magnifying Glass Icon & Date Range Filter adjacent to Month View Menu Bar */}
+      <div style={css('display:flex;align-items:center;gap:6px;flex:1;max-width:540px;min-width:220px;margin:0 4px')}>
+        <div style={css('position:relative;flex:1;display:flex;align-items:center')}>
+          <span style={css('position:absolute;left:8px;font-size:12px;color:#8a9088;pointer-events:none')}>🔍</span>
+          <input
+            type="text"
+            value={vm.searchQuery}
+            onChange={(e) => vm.setSearchQuery(e.target.value)}
+            placeholder="Search Auditor, Dept, Site, Customer, Purpose..."
+            style={css("width:100%;padding:6px 24px 6px 25px;border:1px solid #dde0d9;border-radius:8px;background:#fff;font-size:11.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none")}
+          />
+          {vm.searchQuery && (
+            <button onClick={() => vm.setSearchQuery('')} style={css('position:absolute;right:6px;background:none;border:none;cursor:pointer;color:#9aa097;font-size:11px')} title="Clear search text">✕</button>
+          )}
+        </div>
+
+        {/* Date Range Filter (From Date - To Date) */}
+        <div style={css('display:flex;align-items:center;gap:3px;background:#fff;border:1px solid #dde0d9;border-radius:8px;padding:2px 6px;flex-shrink:0')}>
+          <span style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;color:#8a9088;font-weight:600")}>FROM</span>
+          <input
+            type="date"
+            value={vm.searchFromDate}
+            onChange={(e) => vm.setSearchFromDate(e.target.value)}
+            style={css("border:none;background:transparent;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#23282a;outline:none;padding:1px 0;max-width:105px")}
+          />
+          <span style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;color:#8a9088;font-weight:600")}>TO</span>
+          <input
+            type="date"
+            value={vm.searchToDate}
+            onChange={(e) => vm.setSearchToDate(e.target.value)}
+            style={css("border:none;background:transparent;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:#23282a;outline:none;padding:1px 0;max-width:105px")}
+          />
+          {(vm.searchFromDate || vm.searchToDate) && (
+            <button onClick={() => { vm.setSearchFromDate(''); vm.setSearchToDate(''); }} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:10px;padding:0 1px')} title="Clear date range">✕</button>
+          )}
+        </div>
+      </div>
+
       <div style={css('flex:1')} />
-      {vm.showStats && (
+      {vm.showStats && !vm.hasActiveSearch && (
         <div style={css('display:flex;align-items:center;gap:7px')}>
           <div style={css('display:flex;align-items:center;gap:6px;padding:5px 10px;background:#f6f7f4;border:1px solid #e4e7e0;border-radius:8px')}>
             <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600")}>{vm.stats.assignments}</span><span style={css('font-size:10.5px;color:#7a8079')}>appointments</span>
