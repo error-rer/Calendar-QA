@@ -114,7 +114,7 @@ export interface EditDraft {
 
 export type Page = 'schedule' | 'admin' | 'profile' | 'summary';
 export type View = 'person' | 'plant' | 'site' | 'timetable';
-export type TimeScale = 'week' | 'month';
+export type TimeScale = 'week' | 'month' | 'year';
 export type AdminTab = 'engineers' | 'options';
 
 export interface EngineerForm {

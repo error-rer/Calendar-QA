@@ -75,6 +75,7 @@ export function Schedule({ vm }: { vm: VM }) {
           {vm.mobileSiteDept && <MobileSiteDept vm={vm} />}
           {vm.monthDesktop && <MonthGrid vm={vm} />}
           {vm.monthMobile && <MonthMobile vm={vm} />}
+          {vm.isYear && <YearGrid vm={vm} />}
 
           {vm.emptyWeek && (
             <div style={css('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(238,240,234,.82)')}>
@@ -441,6 +442,7 @@ function Toolbar({ vm }: { vm: VM }) {
       <div style={css('display:flex;background:#f1f3ee;border:1px solid #e0e3dc;border-radius:8px;padding:2px;gap:2px')}>
         <button onClick={vm.setWeekScale} style={vm.weekScaleStyle}>Week</button>
         <button onClick={vm.setMonthScale} style={vm.monthScaleStyle}>Month</button>
+        <button onClick={vm.setYearScale} style={vm.yearScaleStyle}>Year</button>
       </div>
       <div style={css('flex:1')} />
       {vm.showStats && (
@@ -449,10 +451,20 @@ function Toolbar({ vm }: { vm: VM }) {
             <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600")}>{vm.stats.assignments}</span><span style={css('font-size:10.5px;color:#7a8079')}>appointments</span>
           </div>
           <div style={css('display:flex;align-items:center;gap:6px;padding:5px 10px;background:#eef3ea;border:1px solid #c7d8bf;border-radius:8px')}>
-            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;color:#3d7840")}>{vm.isMonth ? vm.stats.monthInternals : vm.stats.weekInternals}</span><span style={css('font-size:10.5px;color:#477349')}>{vm.isMonth ? 'internals this month' : 'internals this week'}</span>
+            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;color:#3d7840")}>
+              {vm.isYear ? vm.stats.yearInternals : vm.isMonth ? vm.stats.monthInternals : vm.stats.weekInternals}
+            </span>
+            <span style={css('font-size:10.5px;color:#477349')}>
+              {vm.isYear ? 'internals this year' : vm.isMonth ? 'internals this month' : 'internals this week'}
+            </span>
           </div>
           <div style={css('display:flex;align-items:center;gap:6px;padding:5px 10px;background:#f0f4fa;border:1px solid #d4def0;border-radius:8px')}>
-            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;color:#3a6bc4")}>{vm.isMonth ? vm.stats.monthCustomers : vm.stats.weekCustomers}</span><span style={css('font-size:10.5px;color:#6a7da8')}>{vm.isMonth ? 'customers this month' : 'customers this week'}</span>
+            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;color:#3a6bc4")}>
+              {vm.isYear ? vm.stats.yearCustomers : vm.isMonth ? vm.stats.monthCustomers : vm.stats.weekCustomers}
+            </span>
+            <span style={css('font-size:10.5px;color:#6a7da8')}>
+              {vm.isYear ? 'customers this year' : vm.isMonth ? 'customers this month' : 'customers this week'}
+            </span>
           </div>
         </div>
       )}
@@ -717,8 +729,173 @@ function MonthMobile({ vm }: { vm: VM }) {
                 {(c.more ?? 0) > 0 && <span style={css('font-size:8px;color:#5b7fd6;font-weight:600')}>{c.moreTxt}</span>}
               </div>
             </div>
-          ),
+          )
         )}
+      </div>
+    </div>
+  );
+}
+
+function YearGrid({ vm }: { vm: VM }) {
+  const WEEKDAY_MINI = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+  return (
+    <div style={css('padding:20px;max-width:1440px;margin:0 auto;display:flex;flex-direction:column;gap:20px')}>
+      {/* Year Header Banner */}
+      <div style={css('display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #e2e5de;border-radius:12px;padding:14px 18px;box-shadow:0 2px 8px rgba(0,0,0,.03);flex-wrap:wrap;gap:10px')}>
+        <div>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#2756d6;letter-spacing:.6px")}>
+            YEAR OVERVIEW · {vm.yearYear}
+          </div>
+          <div style={css('font-size:13px;font-weight:600;color:#5c625c;margin-top:2px')}>
+            Click any month block to jump to Month View
+          </div>
+        </div>
+        <div style={css('display:flex;align-items:center;gap:14px')}>
+          <div style={css('display:flex;align-items:center;gap:6px;font-size:11.5px;color:#23282a;font-weight:600')}>
+            <span style={css('width:9px;height:9px;border-radius:50%;background:#50e3c2')} /> Customer Audits
+          </div>
+          <div style={css('display:flex;align-items:center;gap:6px;font-size:11.5px;color:#23282a;font-weight:600')}>
+            <span style={css('width:9px;height:9px;border-radius:50%;background:#f5a623')} /> Internal Audits
+          </div>
+        </div>
+      </div>
+
+      {/* 12 Month Grid Cards */}
+      <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px')}>
+        {vm.yearMonths.map((m: any) => {
+          const isCurrentMonth = m.year === new Date().getFullYear() && m.monthIndex === new Date().getMonth();
+
+          return (
+            <div
+              key={m.monthIndex}
+              onClick={() => vm.jumpToMonth(m.year, m.monthIndex)}
+              style={css(
+                `background:#fff;border:1px solid ${isCurrentMonth ? '#2756d6' : '#e4e7e0'};border-radius:12px;padding:14px;cursor:pointer;transition:all .15s ease;display:flex;flex-direction:column;gap:10px;box-shadow:${
+                  isCurrentMonth ? '0 4px 14px rgba(39,86,214,.12)' : '0 2px 6px rgba(0,0,0,.02)'
+                }`
+              )}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#2756d6';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,.08)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = isCurrentMonth ? '#2756d6' : '#e4e7e0';
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = isCurrentMonth ? '0 4px 14px rgba(39,86,214,.12)' : '0 2px 6px rgba(0,0,0,.02)';
+              }}
+            >
+              {/* Card Month Title & Pill Badge */}
+              <div style={css('display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f0f2ed;padding-bottom:8px')}>
+                <div style={css('display:flex;align-items:center;gap:6px')}>
+                  <span style={css(`font-size:14px;font-weight:700;color:${isCurrentMonth ? '#2756d6' : '#15191e'}`)}>
+                    {m.monthName}
+                  </span>
+                  {isCurrentMonth && (
+                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;background:#eef2fd;color:#2756d6;border:1px solid #d8e2fa;padding:1px 5px;border-radius:4px")}>
+                      NOW
+                    </span>
+                  )}
+                </div>
+                <span
+                  style={css(
+                    `font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;${
+                      m.totalAppts > 0
+                        ? 'background:#eef8f3;color:#0f9d8c;border:1px solid #ccebe2;'
+                        : 'background:#f4f6f1;color:#8a9088;border:1px solid #e2e5de;'
+                    }`
+                  )}
+                >
+                  {m.totalAppts > 0 ? `${m.totalAppts} ${m.totalAppts === 1 ? 'Appt' : 'Appts'}` : 'Clear'}
+                </span>
+              </div>
+
+              {/* Mini Calendar Weekday Headers */}
+              <div style={css('display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center')}>
+                {WEEKDAY_MINI.map((w, idx) => (
+                  <div
+                    key={`${m.monthIndex}-head-${idx}`}
+                    style={css(
+                      `font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;${
+                        idx >= 5 ? 'color:#b0b5ab;' : 'color:#8a9088;'
+                      }`
+                    )}
+                  >
+                    {w}
+                  </div>
+                ))}
+              </div>
+
+              {/* Mini Calendar Days Grid */}
+              <div style={css('display:grid;grid-template-columns:repeat(7,1fr);gap:3px')}>
+                {m.days.map((d: any, dIdx: number) => {
+                  if (d.blank) {
+                    return <div key={`blank-${m.monthIndex}-${dIdx}`} style={css('height:22px')} />;
+                  }
+
+                  let bg = '#fafbf8';
+                  let border = '1px solid #eef1ea';
+                  let textColor = '#3c423d';
+
+                  if (d.isWeekend) {
+                    bg = '#f4f6f1';
+                    textColor = '#a6aca2';
+                    border = '1px solid #e8ebe4';
+                  } else if (d.hasAppts) {
+                    bg = '#15191e';
+                    textColor = '#fff';
+                    border = '1px solid #15191e';
+                  }
+
+                  return (
+                    <div
+                      key={d.dateISO}
+                      title={
+                        d.hasAppts
+                          ? `${d.dayNum} ${m.monthName}: ${d.totalApptsCount} appointments (${d.customerApptsCount} Customer, ${d.internalApptsCount} Internal)`
+                          : `${d.dayNum} ${m.monthName}`
+                      }
+                      style={css(
+                        `height:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:4px;font-size:10px;font-family:'Archivo',sans-serif;font-weight:${
+                          d.hasAppts || d.isToday ? '700' : '500'
+                        };position:relative;${
+                          d.isToday ? 'outline:2px solid #2756d6;outline-offset:-1px;' : ''
+                        };background:${bg};color:${textColor};border:${border}`
+                      )}
+                    >
+                      <span>{d.dayNum}</span>
+                      {/* Indicator Dots for Appointments */}
+                      {d.hasAppts && (
+                        <div style={css('display:flex;gap:1.5px;position:absolute;bottom:2px')}>
+                          {d.customerApptsCount > 0 && <span style={css('width:3px;height:3px;border-radius:50%;background:#50e3c2')} />}
+                          {d.internalApptsCount > 0 && <span style={css('width:3px;height:3px;border-radius:50%;background:#f5a623')} />}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Card Footer / Quick Action */}
+              <div style={css('display:flex;align-items:center;justify-content:space-between;border-top:1px solid #f0f2ed;padding-top:8px;margin-top:2px')}>
+                <div style={css('font-size:10.5px;color:#7a8079')}>
+                  {m.customerAppts > 0 || m.internalAppts > 0 ? (
+                    <span>
+                      <strong style={{ color: '#2756d6' }}>{m.customerAppts}</strong> Cust ·{' '}
+                      <strong style={{ color: '#0f9d8c' }}>{m.internalAppts}</strong> Int
+                    </span>
+                  ) : (
+                    'No scheduled audits'
+                  )}
+                </div>
+                <span style={css("font-family:'Archivo',sans-serif;font-size:11px;font-weight:700;color:#2756d6;display:flex;align-items:center;gap:3px")}>
+                  View Month →
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

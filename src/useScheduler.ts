@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type {
   Assignment,
   CreateDraft,
@@ -819,8 +819,9 @@ export function useScheduler() {
   const weekTag = S.weekOffset === todayWeekOffset ? 'CURRENT WEEK' : S.weekOffset > todayWeekOffset ? '+' + (S.weekOffset - todayWeekOffset) + ' WK AHEAD' : Math.abs(S.weekOffset - todayWeekOffset) + ' WK BACK';
   const gridCols = '220px repeat(5, minmax(168px, 1fr))';
 
-  // ======================= MONTH SCALE =======================
+  // ======================= MONTH & YEAR SCALE =======================
   const isMonth = S.timeScale === 'month';
+  const isYear = S.timeScale === 'year';
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const mb = monthBaseDate();
   const mYear = mb.getFullYear();
@@ -912,9 +913,120 @@ export function useScheduler() {
     })
     .sort((a, b) => Number(b.scheduled) - Number(a.scheduled) || b.appointments - a.appointments);
   const monthScheduledCount = monthOrders.filter((o) => o.scheduled).length;
-  const periodLabel = isMonth ? monthName : weekLabel;
-  const periodTag = isMonth
-    ? (S.monthOffset || 0) === todayMonthOffset ? 'THIS MONTH' : (S.monthOffset - todayMonthOffset > 0 ? '+' : '') + (S.monthOffset - todayMonthOffset) + ' MO'
+
+  // Jump to specific Month View from Year View
+  const jumpToMonth = (targetYear: number, monthIndex: number) => {
+    const targetMonthOffset = (targetYear - 2026) * 12 + (monthIndex - 5);
+    setState({
+      monthOffset: targetMonthOffset,
+      timeScale: 'month',
+      selected: null,
+      sidebarOpen: false,
+    });
+  };
+
+  // Compute 12-month data for Year View
+  const yearMonths = useMemo(() => {
+    const monthsData = [];
+    const year = mYear;
+
+    for (let m = 0; m < 12; m++) {
+      const firstDay = new Date(year, m, 1);
+      const daysCount = new Date(year, m + 1, 0).getDate();
+      const firstWd = (firstDay.getDay() + 6) % 7; // Mon = 0, Sun = 6
+
+      let customerAppts = 0;
+      let internalAppts = 0;
+      const days = [];
+
+      for (let i = 0; i < firstWd; i++) {
+        days.push({ blank: true });
+      }
+
+      for (let dn = 1; dn <= daysCount; dn++) {
+        const date = new Date(year, m, dn);
+        const slot = dateSlot(date);
+        const weekend = slot.wd > 4;
+
+        const matchingAppts = weekend ? [] : S.assignments.filter((a) => {
+          if (a.week !== slot.weekOffset || a.day !== slot.wd) return false;
+          const o = orderById(a.order);
+          return !!o && matchesFilters(a, o);
+        });
+
+        let custCountOnDay = 0;
+        let intCountOnDay = 0;
+
+        for (const a of matchingAppts) {
+          const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
+          if (isInternal) {
+            internalAppts++;
+            intCountOnDay++;
+          } else {
+            customerAppts++;
+            custCountOnDay++;
+          }
+        }
+
+        const isToday = year + '-' + m + '-' + dn === todayStr;
+
+        days.push({
+          blank: false,
+          dayNum: dn,
+          dateISO: fmtISO(date),
+          isToday,
+          isWeekend: weekend,
+          hasAppts: matchingAppts.length > 0,
+          customerApptsCount: custCountOnDay,
+          internalApptsCount: intCountOnDay,
+          totalApptsCount: matchingAppts.length,
+          colors: matchingAppts.flatMap((a) => siteColorsOfAssignment(a, S.siteColors)).slice(0, 3),
+        });
+      }
+
+      const totalAppts = customerAppts + internalAppts;
+
+      monthsData.push({
+        monthIndex: m,
+        monthName: monthNames[m],
+        year,
+        totalAppts,
+        customerAppts,
+        internalAppts,
+        days,
+      });
+    }
+
+    return monthsData;
+  }, [mYear, S.assignments, S.siteColors, S.filterEmp, S.filterSite, S.filterCompany, S.filterAuditType, S.filterAuditTopic, S.filterApptType]);
+
+  const yearCustomersSet = new Set<string>();
+  const yearInternalSet = new Set<string>();
+  let yearAssignmentsTotal = 0;
+  for (let m = 0; m < 12; m++) {
+    const daysCount = new Date(mYear, m + 1, 0).getDate();
+    for (let dn = 1; dn <= daysCount; dn++) {
+      const date = new Date(mYear, m, dn);
+      const slot = dateSlot(date);
+      if (slot.wd <= 4) {
+        const appts = S.assignments.filter((a) => a.week === slot.weekOffset && a.day === slot.wd);
+        appts.forEach((a) => {
+          const o = orderById(a.order);
+          if (o && matchesFilters(a, o)) {
+            yearAssignmentsTotal++;
+            yearCustomersSet.add(o.customer);
+            if (internalPlants.has(o.plant)) yearInternalSet.add(o.plant);
+          }
+        });
+      }
+    }
+  }
+
+  const periodLabel = isYear ? `Year ${mYear}` : isMonth ? monthName : weekLabel;
+  const periodTag = isYear
+    ? (mYear === today.getFullYear() ? 'THIS YEAR' : (mYear - today.getFullYear() > 0 ? '+' : '') + (mYear - today.getFullYear()) + ' YR')
+    : isMonth
+    ? ((S.monthOffset || 0) === todayMonthOffset ? 'THIS MONTH' : (S.monthOffset - todayMonthOffset > 0 ? '+' : '') + (S.monthOffset - todayMonthOffset) + ' MO')
     : weekTag;
 
   const daySel = days.map((d, i) => {
@@ -931,6 +1043,8 @@ export function useScheduler() {
   const weekInternals = [...new Set(wk.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.plant).filter((p) => internalPlants.has(p)))].length;
   const monthCustomers = monthCustomerSet.size;
   const monthInternals = monthInternalSet.size;
+  const yearCustomers = yearCustomersSet.size;
+  const yearInternals = yearInternalSet.size;
 
   const plantsVm = S.plants.map((p) => {
     const cnt = wk.filter((a) => {
@@ -1483,20 +1597,42 @@ export function useScheduler() {
     navSchedStyle: S.page === 'schedule' ? tabOn : tabOff, navAdminStyle: S.page === 'admin' ? tabOn : tabOff, navSummaryStyle: S.page === 'summary' ? tabOn : tabOff,
     userMenuOpen: S.userMenuOpen, toggleUserMenu,
     isPerson: S.view === 'person', isPlant: S.view === 'plant', isSiteDept: S.view === 'site',
-    isMonth, weekScaleStyle: isMonth ? tabOff : tabOn, monthScaleStyle: isMonth ? tabOn : tabOff,
-    setWeekScale: () => setScale('week'), setMonthScale: () => setScale('month'),
+    isMonth, isYear,
+    timeScale: S.timeScale,
+    weekScaleStyle: S.timeScale === 'week' ? tabOn : tabOff,
+    monthScaleStyle: S.timeScale === 'month' ? tabOn : tabOff,
+    yearScaleStyle: S.timeScale === 'year' ? tabOn : tabOff,
+    setWeekScale: () => setScale('week'),
+    setMonthScale: () => setScale('month'),
+    setYearScale: () => setScale('year'),
+    jumpToMonth,
+    yearMonths,
+    yearYear: mYear,
     monthDesktop: isMonth && !isMobile, monthMobile: isMonth && isMobile,
     monthCells, monthWeekdayHeads, monthName, monthOrders, monthScheduledCount, monthOrderCount: monthOrders.length,
-    gridPerson: S.view === 'person' && !isMobile && !isMonth, gridPlant: S.view === 'plant' && !isMobile && !isMonth, gridSiteDept: S.view === 'site' && !isMobile && !isMonth,
-    showWeekCalendar: !isMobile && !isMonth,
-    mobilePerson: isMobile && S.view === 'person' && !isMonth, mobileSite: isMobile && S.view === 'plant' && !isMonth, mobileSiteDept: isMobile && S.view === 'site' && !isMonth,
-    showDayStrip: isMobile && !isMonth,
+    gridPerson: S.view === 'person' && !isMobile && S.timeScale === 'week',
+    gridPlant: S.view === 'plant' && !isMobile && S.timeScale === 'week',
+    gridSiteDept: S.view === 'site' && !isMobile && S.timeScale === 'week',
+    showWeekCalendar: !isMobile && S.timeScale === 'week',
+    mobilePerson: isMobile && S.view === 'person' && S.timeScale === 'week',
+    mobileSite: isMobile && S.view === 'plant' && S.timeScale === 'week',
+    mobileSiteDept: isMobile && S.view === 'site' && S.timeScale === 'week',
+    showDayStrip: isMobile && S.timeScale === 'week',
     weekLabel, weekTag, periodLabel, periodTag, gridCols, days, daySel,
-    prevWeek: () => (isMonth ? shiftMonth(-1) : shiftWeek(-1)), nextWeek: () => (isMonth ? shiftMonth(1) : shiftWeek(1)),
+    prevWeek: () => (S.timeScale === 'year' ? shiftMonth(-12) : S.timeScale === 'month' ? shiftMonth(-1) : shiftWeek(-1)),
+    nextWeek: () => (S.timeScale === 'year' ? shiftMonth(12) : S.timeScale === 'month' ? shiftMonth(1) : shiftWeek(1)),
     profile,
     engForm, engFormOpen: S.engFormOpen, engEditingId: S.engEditingId, openEngForm, openEditEngineer: openEditEngForm, closeEngForm,
     assignments: S.assignments, engineers: S.engineers,
-    stats: { assignments: wk.length, weekCustomers, monthCustomers, weekInternals, monthInternals },
+    stats: {
+      assignments: isYear ? yearAssignmentsTotal : isMonth ? monthScheduledCount : wk.length,
+      weekCustomers,
+      monthCustomers,
+      yearCustomers,
+      weekInternals,
+      monthInternals,
+      yearInternals,
+    },
     plants: plantsVm,
     personRows, plantRows, siteRows, mobilePersonRows, mobileSiteRows, mobileSiteDeptRows,
     weekCalendarDays, weekMergedSpans,
