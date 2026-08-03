@@ -549,6 +549,7 @@ export function useScheduler() {
     const a = S.assignments.find((x) => x.id === aid);
     if (!a) return;
     const o = orderById(a.order);
+    const eng = engById(a.eng);
     const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
     // find all sibling assignments (same order + eng) for the full date range
     const siblings = S.assignments.filter((x) => x.eng === a.eng && x.order === a.order);
@@ -563,16 +564,17 @@ export function useScheduler() {
       editDraft: {
         targetId: aid,
         sectionType: isInternal ? 'internal' : 'customer',
-        dateFrom: fmtISO(fromDate), dateTo: fmtISO(toDate),
-        site1: a.site1 || '',
+        dateFrom: fmtISO(fromDate),
+        dateTo: fmtISO(toDate),
+        site1: a.site1 || (o ? o.plant : ''),
         customer: a.customer || (o ? o.customer : ''),
         endCustomer: a.endCustomer || '',
         purpose: a.purpose || (o ? o.purpose : ''),
-        auditor1: a.auditor1 || '',
+        auditor1: a.auditor1 || (eng ? eng.name : ''),
         department1: a.department1 || '',
-        site2: a.site2 || '',
+        site2: a.site2 || (o ? o.plant : ''),
         area: a.area || '',
-        auditor2: a.auditor2 || '',
+        auditor2: a.auditor2 || (eng ? eng.name : ''),
         department2: a.department2 || '',
       },
     });
