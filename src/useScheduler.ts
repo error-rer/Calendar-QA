@@ -1351,14 +1351,16 @@ export function useScheduler() {
     if (!o || !e) return null;
     const pl = plantById(o.plant);
     const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
+    const mainName = isInternal ? (a.area || 'Internal Audit') : (a.customer || o.customer || 'Customer Audit');
+    const site = (isInternal ? a.site2 : a.site1) || '';
+    const nameWithSite = site ? `${mainName} - ${site}` : mainName;
     const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || e.name);
-    const titleName = isInternal ? (a.area || 'Internal Audit') : (a.customer || o.customer || 'Customer Audit');
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
     const colors = siteColorsOfAssignment(a, S.siteColors);
     const color = colors[0] || (pl ? pl.color : '#999');
     return {
       id: a.id,
-      code: apptAbbr(a) + ' · ' + titleName,
+      code: apptAbbr(a) + ' · ' + nameWithSite,
       purpose: chipPurpose,
       engName: auditorName,
       color,
