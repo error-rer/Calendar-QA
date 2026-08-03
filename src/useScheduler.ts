@@ -1357,6 +1357,31 @@ export function useScheduler() {
     const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || e.name);
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
     const colors = siteColorsOfAssignment(a, S.siteColors);
+    const notesList = (S.comments[a.id] || []).map((m) => ({
+      id: m.id,
+      who: m.who,
+      initials: m.initials,
+      text: m.text,
+      ago: m.ago,
+      color: m.color,
+      avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '50%', background: m.color || '#2756d6', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9.5px', fontWeight: 600, flexShrink: 0 }),
+      onDelete: () => removeComment(a.id, m.id),
+    }));
+
+    const onAddNote = (text: string) => {
+      if (!text.trim()) return;
+      const comment = { id: 'c' + ids.current.id++, who: 'You', initials: 'YO', text: text.trim(), ago: 'just now', color: '#2756d6' };
+      api.createComment(a.id, comment).catch(() => {});
+      setState((s) => {
+        const list = (s.comments[a.id] || []).concat([comment]);
+        const nextComments = { ...s.comments, [a.id]: list };
+        try {
+          localStorage.setItem('calendar_qa_comments', JSON.stringify(nextComments));
+        } catch {}
+        return { comments: nextComments };
+      });
+    };
+
     const color = colors[0] || (pl ? pl.color : '#999');
     return {
       id: a.id,
@@ -1380,6 +1405,8 @@ export function useScheduler() {
       utl1: a.utl1,
       utl2: a.utl2,
       utl3: a.utl3,
+      notes: notesList,
+      onAddNote,
       onView: () => select(a.id),
       onEdit: () => { closeDayDialog(); openEdit(a.id); },
       onDelete: () => removeAssign(a.id),
@@ -1407,6 +1434,8 @@ export function useScheduler() {
     utl1?: number;
     utl2?: number;
     utl3?: number;
+    notes: { id: string; who: string; initials: string; text: string; ago: string; color: string; avatarStyle: CSSProperties; onDelete: () => void }[];
+    onAddNote: (text: string) => void;
     onView: () => void;
     onEdit: () => void;
     onDelete: () => void;

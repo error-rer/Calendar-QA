@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import type { VM } from '../useScheduler';
 import { getAccentBackground } from '../useScheduler';
-import { css, HButton } from '../ui';
+import { css, HButton, HInput } from '../ui';
 import { DetailPanel } from './DetailPanel';
 
 function renderApptCode(code: string) {
@@ -252,6 +252,8 @@ function DayDialogModal({ vm }: { vm: VM }) {
                             {!!chip.utl3 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL3: {chip.utl3}</span>}
                           </div>
                         ) : null}
+
+                        <EmbeddedNotes notes={chip.notes || []} onAddNote={chip.onAddNote} />
                       </div>
                     )}
                   </div>
@@ -260,6 +262,50 @@ function DayDialogModal({ vm }: { vm: VM }) {
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function EmbeddedNotes({ notes, onAddNote }: { notes: any[]; onAddNote: (t: string) => void }) {
+  const [text, setText] = useState('');
+  const handlePost = () => {
+    if (!text.trim()) return;
+    onAddNote(text);
+    setText('');
+  };
+  return (
+    <div style={css('margin-top:6px;border-top:1px dashed #e2e5de;padding-top:8px')}>
+      <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:6px")}>
+        NOTES - {notes.length}
+      </div>
+      <div style={css('display:flex;flex-direction:column;gap:8px;margin-bottom:8px')}>
+        {notes.map((m, i) => (
+          <div key={i} style={css('display:flex;gap:7px;align-items:flex-start')}>
+            <div style={m.avatarStyle}>{m.initials}</div>
+            <div style={css('min-width:0;flex:1')}>
+              <div style={css('display:flex;align-items:baseline;gap:6px')}>
+                <span style={css('font-size:11px;font-weight:600;color:#23282a')}>{m.who}</span>
+                <span style={css("font-size:9px;color:#a6aca2;font-family:'IBM Plex Mono',monospace")}>{m.ago}</span>
+                <span style={css('flex:1')} />
+                <span onClick={m.onDelete} style={css('font-size:10.5px;color:#bcc1b8;cursor:pointer;line-height:1')} title="Delete note">✕</span>
+              </div>
+              <div style={css('font-size:11px;color:#3c423d;line-height:1.3;margin-top:1px')}>{m.text}</div>
+            </div>
+          </div>
+        ))}
+        {notes.length === 0 && <div style={css('font-size:10.5px;color:#a6aca2;font-style:italic')}>No notes yet.</div>}
+      </div>
+      <div style={css('display:flex;gap:6px')}>
+        <HInput
+          value={text}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setText(e.target.value)}
+          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') handlePost(); }}
+          placeholder="Add a note…"
+          style={css("flex:1;border:1px solid #dde0d9;border-radius:6px;padding:6px 9px;font-size:11px;font-family:'Archivo',sans-serif;color:#23282a;outline:none")}
+          focus={{ borderColor: '#9bb0e8' }}
+        />
+        <button onClick={handlePost} style={css('background:#15191e;color:#fff;border:none;border-radius:6px;padding:0 11px;font-size:11px;font-weight:600;cursor:pointer')}>Post</button>
       </div>
     </div>
   );
