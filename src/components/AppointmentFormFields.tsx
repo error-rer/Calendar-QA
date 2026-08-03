@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import type { Assignment, Engineer } from '../types';
 import { css } from '../ui';
 import { AvailabilityDatePicker } from './AvailabilityDatePicker';
@@ -159,6 +159,101 @@ function MultiSiteSelect({
   );
 }
 
+function AutocompleteInput({
+  id,
+  value,
+  onChange,
+  placeholder,
+  suggestions,
+}: {
+  id: string;
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+  suggestions: string[];
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const trimmedVal = (value || '').trim().toLowerCase();
+  const matches = useMemo(() => {
+    const unique = Array.from(new Set(suggestions.map((s) => s.trim()).filter(Boolean)));
+    if (!trimmedVal) return unique.slice(0, 8);
+    return unique.filter((s) => s.toLowerCase().includes(trimmedVal)).slice(0, 8);
+  }, [suggestions, trimmedVal]);
+
+  return (
+    <div ref={ref} style={{ position: 'relative', width: '100%' }}>
+      <input
+        id={id}
+        type="text"
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        placeholder={placeholder}
+        style={inp}
+        autoComplete="off"
+      />
+      {open && matches.length > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            marginTop: '4px',
+            background: '#fff',
+            border: '1px solid #dde0d9',
+            borderRadius: '8px',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+            zIndex: 100,
+            maxHeight: '200px',
+            overflowY: 'auto',
+            padding: '4px',
+          }}
+        >
+          {matches.map((item) => (
+            <div
+              key={item}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onChange(item);
+                setOpen(false);
+              }}
+              style={{
+                padding: '7px 10px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '12.5px',
+                fontFamily: "'Archivo',sans-serif",
+                color: '#23282a',
+                transition: 'background .1s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#f0f2ec')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              {item}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Shared Customer/Internal Audit field set used by both CreateModal and EditModal. */
 export function AppointmentFormFields({
   idPrefix,
@@ -197,6 +292,23 @@ export function AppointmentFormFields({
     ? siteOptions.filter((s) => ['U1', 'U2', 'U3'].includes(s))
     : siteOptions;
 
+  const customerSuggestions = useMemo(() => {
+    const fromAssign = assignments.map((a) => a.customer).filter((s): s is string => Boolean(s));
+    return Array.from(new Set([...customerOptions, ...fromAssign])).sort();
+  }, [assignments, customerOptions]);
+
+  const endCustomerSuggestions = useMemo(() => {
+    const fromAssign = assignments.map((a) => a.endCustomer).filter((s): s is string => Boolean(s));
+    return Array.from(new Set(fromAssign)).sort();
+  }, [assignments]);
+
+  const auditorSuggestions = useMemo(() => {
+    const fromEng = engineers.map((e) => e.name).filter((s): s is string => Boolean(s));
+    const fromAssign1 = assignments.map((a) => a.auditor1).filter((s): s is string => Boolean(s));
+    const fromAssign2 = assignments.map((a) => a.auditor2).filter((s): s is string => Boolean(s));
+    return Array.from(new Set([...fromEng, ...fromAssign1, ...fromAssign2])).sort();
+  }, [engineers, assignments]);
+
   return (
     <>
       <div style={css('display:flex;gap:8px;margin-bottom:4px')}>
@@ -220,7 +332,7 @@ export function AppointmentFormFields({
           <div style={css('display:grid;grid-template-columns:1fr 1fr;gap:14px')}>
             {/* 1. DEPARTMENT */}
             <div style={fld}>
-              <label htmlFor={id('department1')} style={lbl}>DEPARTMENT <span style={{ color: '#dc2626' }}>*</span></label>
+              <label htmlFor={id('department1')} style={lbl}>DEPARTMENT</label>
               <select
                 id={id('department1')}
                 value={v.department1}
@@ -239,7 +351,7 @@ export function AppointmentFormFields({
 
             {/* 2. SITE */}
             <div style={fld}>
-              <label htmlFor={id('site1')} style={lbl}>SITE <span style={{ color: '#dc2626' }}>*</span></label>
+              <label htmlFor={id('site1')} style={lbl}>SITE</label>
               <MultiSiteSelect
                 id={id('site1')}
                 value={v.site1}
@@ -250,31 +362,31 @@ export function AppointmentFormFields({
 
             {/* 3. CUSTOMER */}
             <div style={fld}>
-              <label htmlFor={id('customer')} style={lbl}>CUSTOMER <span style={{ color: '#dc2626' }}>*</span></label>
-              <input id={id('customer')} value={v.customer} onChange={(e) => onChange({ customer: e.target.value })} placeholder="Type customer name..." style={inp} />
-              {customerOptions.length > 0 && (
-                <div style={css('display:flex;gap:6px;flex-wrap:wrap;margin-top:2px')}>
-                  {customerOptions.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => onChange({ customer: c })}
-                      style={css("font-size:10.5px;color:#5c625c;background:#f4f6f1;border:1px solid #e0e3dc;border-radius:20px;padding:3px 9px;cursor:pointer;font-family:'Archivo',sans-serif")}
-                    >{c}</button>
-                  ))}
-                </div>
-              )}
+              <label htmlFor={id('customer')} style={lbl}>CUSTOMER</label>
+              <AutocompleteInput
+                id={id('customer')}
+                value={v.customer}
+                onChange={(customer) => onChange({ customer })}
+                placeholder="Type customer name..."
+                suggestions={customerSuggestions}
+              />
             </div>
 
             {/* 4. END CUSTOMER */}
             <div style={fld}>
               <label htmlFor={id('endCustomer')} style={lbl}>END CUSTOMER</label>
-              <input id={id('endCustomer')} value={v.endCustomer} onChange={(e) => onChange({ endCustomer: e.target.value })} placeholder="Type end customer..." style={inp} />
+              <AutocompleteInput
+                id={id('endCustomer')}
+                value={v.endCustomer}
+                onChange={(endCustomer) => onChange({ endCustomer })}
+                placeholder="Type end customer..."
+                suggestions={endCustomerSuggestions}
+              />
             </div>
 
             {/* 5. PURPOSE */}
             <div style={fld}>
-              <label htmlFor={id('purpose')} style={lbl}>PURPOSE <span style={{ color: '#dc2626' }}>*</span></label>
+              <label htmlFor={id('purpose')} style={lbl}>PURPOSE</label>
               <select id={id('purpose')} value={v.purpose} onChange={(e) => onChange({ purpose: e.target.value })} style={sel}>
                 <option value="">Select purpose...</option>
                 {purposeOptions.map((p) => <option key={p} value={p}>{p}</option>)}
@@ -283,19 +395,25 @@ export function AppointmentFormFields({
 
             {/* 6. AUDITOR */}
             <div style={fld}>
-              <label htmlFor={id('auditor1')} style={lbl}>AUDITOR <span style={{ color: '#dc2626' }}>*</span></label>
-              <input id={id('auditor1')} value={v.auditor1} onChange={(e) => onChange({ auditor1: e.target.value })} placeholder="Type auditor name..." style={inp} />
+              <label htmlFor={id('auditor1')} style={lbl}>AUDITOR</label>
+              <AutocompleteInput
+                id={id('auditor1')}
+                value={v.auditor1}
+                onChange={(auditor1) => onChange({ auditor1 })}
+                placeholder="Type auditor name..."
+                suggestions={auditorSuggestions}
+              />
             </div>
 
             {/* 7. FROM */}
             <div style={fld}>
-              <label htmlFor={id('dateFrom')} style={lbl}>FROM <span style={{ color: '#dc2626' }}>*</span></label>
+              <label htmlFor={id('dateFrom')} style={lbl}>FROM</label>
               <input id={id('dateFrom')} type="date" value={v.dateFrom} onChange={(e) => onChange({ dateFrom: e.target.value })} style={inp} />
             </div>
 
             {/* 8. TO */}
             <div style={fld}>
-              <label htmlFor={id('dateTo')} style={lbl}>TO <span style={{ color: '#dc2626' }}>*</span></label>
+              <label htmlFor={id('dateTo')} style={lbl}>TO</label>
               <input id={id('dateTo')} type="date" value={v.dateTo} onChange={(e) => onChange({ dateTo: e.target.value })} style={inp} />
             </div>
 
@@ -322,7 +440,7 @@ export function AppointmentFormFields({
           <div style={css('display:grid;grid-template-columns:1fr 1fr;gap:14px')}>
             {/* 1. DEPARTMENT */}
             <div style={fld}>
-              <label htmlFor={id('department2')} style={lbl}>DEPARTMENT <span style={{ color: '#dc2626' }}>*</span></label>
+              <label htmlFor={id('department2')} style={lbl}>DEPARTMENT</label>
               <select
                 id={id('department2')}
                 value={v.department2}
@@ -341,7 +459,7 @@ export function AppointmentFormFields({
 
             {/* 2. SITE */}
             <div style={fld}>
-              <label htmlFor={id('site2')} style={lbl}>SITE <span style={{ color: '#dc2626' }}>*</span></label>
+              <label htmlFor={id('site2')} style={lbl}>SITE</label>
               <MultiSiteSelect
                 id={id('site2')}
                 value={v.site2}
@@ -352,25 +470,31 @@ export function AppointmentFormFields({
 
             {/* 3. AREA */}
             <div style={fld}>
-              <label htmlFor={id('area')} style={lbl}>AREA <span style={{ color: '#dc2626' }}>*</span></label>
+              <label htmlFor={id('area')} style={lbl}>AREA</label>
               <input id={id('area')} value={v.area} onChange={(e) => onChange({ area: e.target.value })} placeholder="Type area..." style={inp} />
             </div>
 
             {/* 4. AUDITOR */}
             <div style={fld}>
-              <label htmlFor={id('auditor2')} style={lbl}>AUDITOR <span style={{ color: '#dc2626' }}>*</span></label>
-              <input id={id('auditor2')} value={v.auditor2} onChange={(e) => onChange({ auditor2: e.target.value })} placeholder="Type auditor name..." style={inp} />
+              <label htmlFor={id('auditor2')} style={lbl}>AUDITOR</label>
+              <AutocompleteInput
+                id={id('auditor2')}
+                value={v.auditor2}
+                onChange={(auditor2) => onChange({ auditor2 })}
+                placeholder="Type auditor name..."
+                suggestions={auditorSuggestions}
+              />
             </div>
 
             {/* 5. FROM */}
             <div style={fld}>
-              <label htmlFor={id('dateFrom2')} style={lbl}>FROM <span style={{ color: '#dc2626' }}>*</span></label>
+              <label htmlFor={id('dateFrom2')} style={lbl}>FROM</label>
               <input id={id('dateFrom2')} type="date" value={v.dateFrom} onChange={(e) => onChange({ dateFrom: e.target.value })} style={inp} />
             </div>
 
             {/* 6. TO */}
             <div style={fld}>
-              <label htmlFor={id('dateTo2')} style={lbl}>TO <span style={{ color: '#dc2626' }}>*</span></label>
+              <label htmlFor={id('dateTo2')} style={lbl}>TO</label>
               <input id={id('dateTo2')} type="date" value={v.dateTo} onChange={(e) => onChange({ dateTo: e.target.value })} style={inp} />
             </div>
 

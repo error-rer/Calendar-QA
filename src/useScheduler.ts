@@ -428,27 +428,20 @@ export function useScheduler() {
   };
   const closeCreate = () => setState({ createOpen: false });
   const setDraft = (patch: Partial<CreateDraft>) =>
-    setState((s) => ({ createDraft: { ...s.createDraft, warn: false, warnText: '', ...patch } }));
+    setState((s) => ({ createDraft: { ...s.createDraft, ...patch } }));
   const submitCreate = () => {
     const d = S.createDraft;
-    if (d.sectionType === 'customer') {
-      if (!d.department1.trim() || !d.site1.trim() || !d.customer.trim() || !d.purpose.trim() || !d.auditor1.trim() || !d.dateFrom || !d.dateTo) {
-        setState((s) => ({ createDraft: { ...s.createDraft, warn: true, warnText: 'Please complete all required fields (Department, Site, Customer, Purpose, Auditor, From, and To).' } }));
-        return;
-      }
-    } else {
-      if (!d.department2.trim() || !d.site2.trim() || !d.area.trim() || !d.auditor2.trim() || !d.dateFrom || !d.dateTo) {
-        setState((s) => ({ createDraft: { ...s.createDraft, warn: true, warnText: 'Please complete all required fields (Department, Site, Area, Auditor, From, and To).' } }));
-        return;
-      }
-    }
-    const auditorName = d.auditor1 || d.auditor2 || 'bird';
+    const todayISO = fmtISO(new Date());
+    const dateFrom = d.dateFrom || todayISO;
+    const dateTo = d.dateTo || dateFrom;
+
+    const auditorName = (d.sectionType === 'customer' ? d.auditor1 : d.auditor2) || 'Unassigned';
     const existingEng = S.engineers.find((e) => e.name.toLowerCase() === auditorName.toLowerCase());
     const engId = existingEng ? existingEng.id : 'e' + ids.current.id++;
     const newAssignments: Assignment[] = [];
     const orderId = 'o' + ids.current.id++;
-    const start = new Date(d.dateFrom + 'T00:00:00');
-    const end = new Date(d.dateTo + 'T00:00:00');
+    const start = new Date(dateFrom + 'T00:00:00');
+    const end = new Date(dateTo + 'T00:00:00');
     for (let cur = new Date(start); cur <= end; cur.setDate(cur.getDate() + 1)) {
       const slot = dateSlot(cur);
       if (slot.wd < 5) {
@@ -471,8 +464,8 @@ export function useScheduler() {
     if (newAssignments.length === 0) return;
     const newOrder = {
       id: orderId, code: 'NEW-' + String(S.orders.length + 1).padStart(3, '0'),
-      customer: d.customer, product: d.endCustomer || d.area,
-      plant: d.sectionType === 'internal' ? d.department2 : d.site1, purpose: d.purpose || '',
+      customer: d.customer || 'Unassigned', product: d.endCustomer || d.area || 'QA Audit',
+      plant: d.sectionType === 'internal' ? (d.department2 || d.site2 || 'U1') : (d.site1 || 'U1'), purpose: d.purpose || '',
     };
     const newEngineer = { id: engId, name: auditorName, role: 'QA', department: siteToDept(d.sectionType === 'internal' ? d.site2 : d.site1), subDepartments: [] };
     api.createOrder(newOrder).catch(() => {});
@@ -530,24 +523,15 @@ export function useScheduler() {
   };
   const closeEdit = () => setState({ editOpen: false });
   const setEditDraft = (patch: Partial<EditDraft>) =>
-    setState((s) => ({ editDraft: { ...s.editDraft, warn: false, warnText: '', ...patch } }));
+    setState((s) => ({ editDraft: { ...s.editDraft, ...patch } }));
   const submitEdit = () => {
     const d = S.editDraft;
-    if (d.sectionType === 'customer') {
-      if (!d.department1.trim() || !d.site1.trim() || !d.customer.trim() || !d.purpose.trim() || !d.auditor1.trim() || !d.dateFrom || !d.dateTo) {
-        setState((s) => ({ editDraft: { ...s.editDraft, warn: true, warnText: 'Please complete all required fields (Department, Site, Customer, Purpose, Auditor, From, and To).' } }));
-        return;
-      }
-    } else {
-      if (!d.department2.trim() || !d.site2.trim() || !d.area.trim() || !d.auditor2.trim() || !d.dateFrom || !d.dateTo) {
-        setState((s) => ({ editDraft: { ...s.editDraft, warn: true, warnText: 'Please complete all required fields (Department, Site, Area, Auditor, From, and To).' } }));
-        return;
-      }
-    }
     const target = S.assignments.find((x) => x.id === d.targetId);
     if (!target) return;
-    const start = new Date(d.dateFrom + 'T00:00:00');
-    const end = new Date(d.dateTo + 'T00:00:00');
+    const dateFrom = d.dateFrom || fmtISO(new Date());
+    const dateTo = d.dateTo || dateFrom;
+    const start = new Date(dateFrom + 'T00:00:00');
+    const end = new Date(dateTo + 'T00:00:00');
     const slots: { weekOffset: number; wd: number }[] = [];
     for (let cur = new Date(start); cur <= end; cur.setDate(cur.getDate() + 1)) {
       const slot = dateSlot(cur);
@@ -1117,18 +1101,15 @@ export function useScheduler() {
 
   // ---- create modal VM ----
   const cd = S.createDraft;
-  const canCreate = cd.sectionType === 'customer'
-    ? !!(cd.department1.trim() && cd.site1.trim() && cd.customer.trim() && cd.purpose.trim() && cd.auditor1.trim() && cd.dateFrom && cd.dateTo)
-    : !!(cd.department2.trim() && cd.site2.trim() && cd.area.trim() && cd.auditor2.trim() && cd.dateFrom && cd.dateTo);
   const create = {
     sectionType: cd.sectionType,
     purpose: cd.purpose, department1: cd.department1, site1: cd.site1, customer: cd.customer, endCustomer: cd.endCustomer, auditor1: cd.auditor1,
     department2: cd.department2, site2: cd.site2, area: cd.area, auditor2: cd.auditor2,
     dateFrom: cd.dateFrom ?? '', dateTo: cd.dateTo ?? '',
     onChange: setDraft,
-    warn: !!cd.warn, warnText: cd.warnText || '',
+    warn: false, warnText: '',
     submit: () => submitCreate(),
-    submitStyle: sx({ background: canCreate ? '#15191e' : '#c4c9bf', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 18px', fontSize: '12.5px', fontWeight: 600, cursor: canCreate ? 'pointer' : 'default', fontFamily: "'Archivo',sans-serif" }),
+    submitStyle: sx({ background: '#15191e', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 18px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Archivo',sans-serif" }),
   };
 
   // ---- profile VM ----
