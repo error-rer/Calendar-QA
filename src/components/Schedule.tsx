@@ -12,7 +12,7 @@ function renderApptCode(code: string) {
       const rest = code.slice(spaceDotIdx);
       return (
         <>
-          <span style={{ color: '#999999', fontWeight: 600 }}>{prefix}</span>
+          <span style={{ color: '#757575', fontWeight: 600 }}>{prefix}</span>
           <span>{rest}</span>
         </>
       );
