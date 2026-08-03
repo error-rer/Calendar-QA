@@ -349,18 +349,7 @@ export function AvailabilityDatePicker({
     return days;
   }, [viewYear, viewMonth]);
 
-  // Prompt state if site or auditor is not selected yet
-  if (!site.trim() || !auditor.trim()) {
-    return (
-      <div style={css('padding:20px;border:1px dashed #cdd2c9;border-radius:10px;background:#fafbf9;text-align:center;margin-top:8px')}>
-        <div style={css('font-size:20px;margin-bottom:6px')}>📅</div>
-        <div style={css('font-size:12.5px;font-weight:600;color:#23282a')}>Select Site and Auditor to see availability</div>
-        <div style={css('font-size:11px;color:#7a8079;margin-top:3px')}>
-          Choose a Site and Auditor above to calculate real-time appointment availability.
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div style={css('border:1px solid #e2e5de;border-radius:12px;background:#fff;padding:14px;display:flex;flex-direction:column;gap:12px;margin-top:6px')}>
