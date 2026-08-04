@@ -843,9 +843,9 @@ function YearGrid({ vm }: { vm: VM }) {
                     textColor = '#a6aca2';
                     border = '1px solid #e8ebe4';
                   } else if (d.hasAppts) {
-                    bg = '#15191e';
+                    bg = '#333333';
                     textColor = '#fff';
-                    border = '1px solid #15191e';
+                    border = '1px solid #333333';
                   }
 
                   return (
