@@ -110,16 +110,39 @@ export function useScheduler() {
           ]);
           const customerOptions = [...new Set([...(s.customerOptions || []), ...historicalCustomers])];
 
+          const serverAssignments = data.assignments || [];
+          const serverOrders = data.orders || [];
+          const serverEngineers = data.engineers || [];
+          const serverComments = data.comments || {};
+
           let mergedAssignments = s.assignments;
           let mergedOrders = s.orders;
           let mergedEngineers = s.engineers;
           let mergedComments = s.comments;
 
           if (!hasLocalSnapshot) {
-            mergedAssignments = data.assignments && data.assignments.length ? data.assignments : s.assignments;
-            mergedOrders = data.orders && data.orders.length ? data.orders : s.orders;
-            mergedEngineers = data.engineers && data.engineers.length ? data.engineers : s.engineers;
-            mergedComments = data.comments && Object.keys(data.comments).length ? data.comments : s.comments;
+            mergedAssignments = serverAssignments.length ? serverAssignments : s.assignments;
+            mergedOrders = serverOrders.length ? serverOrders : s.orders;
+            mergedEngineers = serverEngineers.length ? serverEngineers : s.engineers;
+            mergedComments = Object.keys(serverComments).length ? serverComments : s.comments;
+          } else {
+            const localAssignIds = new Set(s.assignments.map((x) => x.id));
+            const newServerAssigns = serverAssignments.filter((x) => !localAssignIds.has(x.id));
+            if (newServerAssigns.length > 0) {
+              mergedAssignments = [...s.assignments, ...newServerAssigns];
+            }
+
+            const localOrderIds = new Set(s.orders.map((x) => x.id));
+            const newServerOrders = serverOrders.filter((x) => !localOrderIds.has(x.id));
+            if (newServerOrders.length > 0) {
+              mergedOrders = [...s.orders, ...newServerOrders];
+            }
+
+            const localEngIds = new Set(s.engineers.map((x) => x.id));
+            const newServerEngs = serverEngineers.filter((x) => !localEngIds.has(x.id));
+            if (newServerEngs.length > 0) {
+              mergedEngineers = [...s.engineers, ...newServerEngs];
+            }
           }
 
           const purposeOptions = s.purposeOptions && s.purposeOptions.length ? s.purposeOptions : (data.purposeOptions || []);
