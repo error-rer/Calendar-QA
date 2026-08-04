@@ -585,17 +585,22 @@ export function useScheduler() {
     const newEngineer = { id: engId, name: auditorName, role: 'QA', department: siteToDept(d.sectionType === 'internal' ? d.site2 : d.site1), subDepartments: [] };
     api.createOrder(newOrder).catch(() => {});
     if (!existingEng) api.createEngineer(newEngineer).catch(() => {});
-    if (d.sectionType === 'customer' && d.customer) {
-      api.saveOption('customer_name', d.customer).catch(() => {});
+    const newCustomer = d.sectionType === 'customer' && d.customer ? d.customer.trim() : '';
+    const newPurpose = d.purpose ? d.purpose.trim() : '';
+
+    if (newCustomer) {
+      api.saveOption('customer_name', newCustomer).catch(() => {});
     }
-    if (d.purpose) {
-      api.saveOption('purpose', d.purpose).catch(() => {});
+    if (newPurpose) {
+      api.saveOption('purpose', newPurpose).catch(() => {});
     }
     newAssignments.forEach((a) => api.createAssignment(a).catch(() => {}));
     setState((s) => ({
       orders: s.orders.concat([newOrder]),
       engineers: existingEng ? s.engineers : s.engineers.concat([newEngineer]),
       assignments: s.assignments.concat(newAssignments),
+      customerOptions: newCustomer && !s.customerOptions.includes(newCustomer) ? [...s.customerOptions, newCustomer] : s.customerOptions,
+      purposeOptions: newPurpose && !s.purposeOptions.includes(newPurpose) ? [...s.purposeOptions, newPurpose] : s.purposeOptions,
       selected: newAssignments[newAssignments.length - 1].id,
       createOpen: false,
     }));
@@ -719,18 +724,57 @@ export function useScheduler() {
     });
     droppedIds.forEach((id) => api.deleteAssignment(id).catch(() => {}));
 
-    if (d.sectionType === 'customer' && d.customer) {
-      api.saveOption('customer_name', d.customer).catch(() => {});
+    const oldCustomer = target.customer || '';
+    const newCustomer = d.sectionType === 'customer' && d.customer ? d.customer.trim() : '';
+    const oldPurpose = target.purpose || '';
+    const newPurpose = d.purpose ? d.purpose.trim() : '';
+
+    if (newCustomer) {
+      api.saveOption('customer_name', newCustomer).catch(() => {});
     }
-    if (d.purpose) {
-      api.saveOption('purpose', d.purpose).catch(() => {});
+    if (newPurpose) {
+      api.saveOption('purpose', newPurpose).catch(() => {});
     }
+
     const droppedSet = new Set(droppedIds);
     setState((s) => {
       const comments = droppedSet.size
         ? Object.fromEntries(Object.entries(s.comments).filter(([aid]) => !droppedSet.has(aid)))
         : s.comments;
-      return { assignments: others.concat(updated), comments, engineers: updatedEngineers };
+
+      const nextAssignments = others.concat(updated);
+
+      let nextCustomerOptions = s.customerOptions;
+      if (newCustomer && !nextCustomerOptions.includes(newCustomer)) {
+        nextCustomerOptions = [...nextCustomerOptions, newCustomer];
+      }
+      if (oldCustomer && oldCustomer !== newCustomer) {
+        const isOldCustomerStillUsed = nextAssignments.some((a) => a.customer === oldCustomer);
+        if (!isOldCustomerStillUsed) {
+          nextCustomerOptions = nextCustomerOptions.filter((c) => c !== oldCustomer);
+          api.deleteOption('customer_name', oldCustomer).catch(() => {});
+        }
+      }
+
+      let nextPurposeOptions = s.purposeOptions;
+      if (newPurpose && !nextPurposeOptions.includes(newPurpose)) {
+        nextPurposeOptions = [...nextPurposeOptions, newPurpose];
+      }
+      if (oldPurpose && oldPurpose !== newPurpose) {
+        const isOldPurposeStillUsed = nextAssignments.some((a) => a.purpose === oldPurpose);
+        if (!isOldPurposeStillUsed) {
+          nextPurposeOptions = nextPurposeOptions.filter((p) => p !== oldPurpose);
+          api.deleteOption('purpose', oldPurpose).catch(() => {});
+        }
+      }
+
+      return {
+        assignments: nextAssignments,
+        comments,
+        engineers: updatedEngineers,
+        customerOptions: nextCustomerOptions,
+        purposeOptions: nextPurposeOptions,
+      };
     });
     const prefix = d.sectionType === 'internal' ? 'IA' : 'CS';
     const name = d.sectionType === 'internal' ? (d.area || 'Internal Audit') : (d.customer || 'Customer Audit');
