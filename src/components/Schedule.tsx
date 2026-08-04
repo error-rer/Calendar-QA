@@ -742,7 +742,7 @@ function YearGrid({ vm }: { vm: VM }) {
   return (
     <div style={css('padding:20px;max-width:1440px;margin:0 auto;display:flex;flex-direction:column;gap:20px')}>
       {/* Year Header Banner */}
-      <div style={css('display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #e2e5de;border-radius:12px;padding:14px 18px;box-shadow:0 2px 8px rgba(0,0,0,.03);flex-wrap:wrap;gap:10px')}>
+      <div style={css('display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #e2e5de;border-radius:12px;padding:14px 18px;box-shadow:0 2px 8px rgba(0,0,0,.03);flex-wrap:wrap;gap:12px')}>
         <div>
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#2756d6;letter-spacing:.6px")}>
             YEAR OVERVIEW · {vm.yearYear}
@@ -751,12 +751,20 @@ function YearGrid({ vm }: { vm: VM }) {
             Click any month block to jump to Month View
           </div>
         </div>
-        <div style={css('display:flex;align-items:center;gap:14px')}>
-          <div style={css('display:flex;align-items:center;gap:6px;font-size:11.5px;color:#23282a;font-weight:600')}>
-            <span style={css('width:9px;height:9px;border-radius:50%;background:#50e3c2')} /> Customer Audits
+        <div style={css('display:flex;align-items:center;gap:10px;flex-wrap:wrap')}>
+          <div style={css('display:flex;align-items:center;gap:6px;padding:6px 12px;background:#f6f7f4;border:1px solid #e4e7e0;border-radius:8px')}>
+            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:700;color:#15191e")}>{vm.stats.assignments}</span>
+            <span style={css('font-size:11px;color:#6a706a;font-weight:600')}>Appointments</span>
           </div>
-          <div style={css('display:flex;align-items:center;gap:6px;font-size:11.5px;color:#23282a;font-weight:600')}>
-            <span style={css('width:9px;height:9px;border-radius:50%;background:#f5a623')} /> Internal Audits
+          <div style={css('display:flex;align-items:center;gap:6px;padding:6px 12px;background:#f0f4fa;border:1px solid #d4def0;border-radius:8px')}>
+            <span style={css('width:8px;height:8px;border-radius:50%;background:#50e3c2')} />
+            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:700;color:#2756d6")}>{vm.stats.yearCustomerAuditsTotal}</span>
+            <span style={css('font-size:11px;color:#2756d6;font-weight:600')}>Customer Audits (CS)</span>
+          </div>
+          <div style={css('display:flex;align-items:center;gap:6px;padding:6px 12px;background:#fef7ea;border:1px solid #fce3b5;border-radius:8px')}>
+            <span style={css('width:8px;height:8px;border-radius:50%;background:#f5a623')} />
+            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:700;color:#d97706")}>{vm.stats.yearInternalAuditsTotal}</span>
+            <span style={css('font-size:11px;color:#d97706;font-weight:600')}>Internal Audits (IA)</span>
           </div>
         </div>
       </div>

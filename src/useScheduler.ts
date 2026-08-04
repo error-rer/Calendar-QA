@@ -1947,6 +1947,8 @@ export function useScheduler() {
       weekInternals,
       monthInternals,
       yearInternals,
+      yearCustomerAuditsTotal: yearMonths.reduce((acc: number, m: any) => acc + m.customerAppts, 0),
+      yearInternalAuditsTotal: yearMonths.reduce((acc: number, m: any) => acc + m.internalAppts, 0),
     },
     plants: plantsVm,
     personRows, plantRows, siteRows, mobilePersonRows, mobileSiteRows, mobileSiteDeptRows,
