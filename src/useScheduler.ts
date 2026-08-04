@@ -847,28 +847,64 @@ export function useScheduler() {
     });
   const submitEngForm = () => {
     const f = S.engForm;
-    if (!f.name.trim()) return;
+    const newName = f.name.trim();
+    if (!newName) return;
     if (S.engEditingId) {
       const id = S.engEditingId;
       const existing = S.engineers.find((e) => e.id === id);
-      const updatedEng = { id, name: f.name.trim(), role: existing?.role || 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice() };
+      const oldName = existing?.name || '';
+      const updatedEng = { id, name: newName, role: existing?.role || 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice() };
       api.updateEngineer(id, updatedEng).catch(() => {});
-      setState((s) => ({
-        engineers: s.engineers.map((e) => (e.id === id ? { ...e, ...updatedEng } : e)),
-        engFormOpen: false,
-        engEditingId: null,
-      }));
-      log('You', `updated auditor ${f.name.trim().split(' ')[0]}`, '#2756d6');
+
+      if (oldName && oldName !== newName) {
+        api.saveOption('auditor', newName).catch(() => {});
+        api.deleteOption('auditor', oldName).catch(() => {});
+      }
+
+      setState((s) => {
+        const nextAssignments = oldName && oldName !== newName
+          ? s.assignments.map((a) => {
+              if (a.eng === id || a.auditor1 === oldName || a.auditor2 === oldName) {
+                const patch = {
+                  auditor1: a.auditor1 === oldName ? newName : a.auditor1,
+                  auditor2: a.auditor2 === oldName ? newName : a.auditor2,
+                };
+                api.updateAssignment(a.id, patch).catch(() => {});
+                return { ...a, ...patch };
+              }
+              return a;
+            })
+          : s.assignments;
+
+        let nextAuditorOptions = s.auditorOptions || [];
+        if (!nextAuditorOptions.includes(newName)) {
+          nextAuditorOptions = [...nextAuditorOptions, newName];
+        }
+        if (oldName && oldName !== newName) {
+          nextAuditorOptions = nextAuditorOptions.filter((a) => a !== oldName);
+        }
+
+        return {
+          engineers: s.engineers.map((e) => (e.id === id ? { ...e, ...updatedEng } : e)),
+          assignments: nextAssignments,
+          auditorOptions: nextAuditorOptions,
+          engFormOpen: false,
+          engEditingId: null,
+        };
+      });
+      log('You', `updated auditor ${newName.split(' ')[0]}`, '#2756d6');
     } else {
       const id = 'e' + ids.current.id++;
-      const newEng = { id, name: f.name.trim(), role: 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice() };
+      const newEng = { id, name: newName, role: 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice() };
       api.createEngineer(newEng).catch(() => {});
+      api.saveOption('auditor', newName).catch(() => {});
       setState((s) => ({
         engineers: s.engineers.concat([newEng]),
+        auditorOptions: !(s.auditorOptions || []).includes(newName) ? [...(s.auditorOptions || []), newName] : (s.auditorOptions || []),
         engFormOpen: false,
         engEditingId: null,
       }));
-      log('You', `added ${f.name.trim().split(' ')[0]}`, '#2756d6');
+      log('You', `added ${newName.split(' ')[0]}`, '#2756d6');
     }
   };
   const removeEngineer = (id: string) => {
