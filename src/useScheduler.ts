@@ -587,12 +587,16 @@ export function useScheduler() {
     if (!existingEng) api.createEngineer(newEngineer).catch(() => {});
     const newCustomer = d.sectionType === 'customer' && d.customer ? d.customer.trim() : '';
     const newPurpose = d.purpose ? d.purpose.trim() : '';
+    const newAuditor = auditorName && auditorName !== 'Unassigned' ? auditorName.trim() : '';
 
     if (newCustomer) {
       api.saveOption('customer_name', newCustomer).catch(() => {});
     }
     if (newPurpose) {
       api.saveOption('purpose', newPurpose).catch(() => {});
+    }
+    if (newAuditor) {
+      api.saveOption('auditor', newAuditor).catch(() => {});
     }
     newAssignments.forEach((a) => api.createAssignment(a).catch(() => {}));
     setState((s) => ({
@@ -601,6 +605,7 @@ export function useScheduler() {
       assignments: s.assignments.concat(newAssignments),
       customerOptions: newCustomer && !s.customerOptions.includes(newCustomer) ? [...s.customerOptions, newCustomer] : s.customerOptions,
       purposeOptions: newPurpose && !s.purposeOptions.includes(newPurpose) ? [...s.purposeOptions, newPurpose] : s.purposeOptions,
+      auditorOptions: newAuditor && !(s.auditorOptions || []).includes(newAuditor) ? [...(s.auditorOptions || []), newAuditor] : (s.auditorOptions || []),
       selected: newAssignments[newAssignments.length - 1].id,
       createOpen: false,
     }));
@@ -659,6 +664,7 @@ export function useScheduler() {
       if (slot.wd < 5) slots.push(slot);
     }
     if (slots.length === 0) return;
+    const oldAuditorName = (target.auditor1 || target.auditor2 || S.engineers.find((e) => e.id === target.eng)?.name || '').trim();
     const newAuditorName = ((d.sectionType === 'customer' ? d.auditor1 : d.auditor2) || '').trim();
     let finalEngId = target.eng;
     let updatedEngineers = S.engineers;
@@ -669,11 +675,15 @@ export function useScheduler() {
         finalEngId = existingMatchingEng.id;
       } else {
         const currentEng = S.engineers.find((e) => e.id === target.eng);
-        if (currentEng && currentEng.name !== newAuditorName) {
+        const otherApptsUsingCurrentEng = S.assignments.filter(
+          (a) => a.id !== d.targetId && (a.eng === target.eng || a.auditor1 === currentEng?.name || a.auditor2 === currentEng?.name)
+        );
+
+        if (currentEng && currentEng.name !== newAuditorName && otherApptsUsingCurrentEng.length === 0) {
           const updatedEng = { ...currentEng, name: newAuditorName };
           api.updateEngineer(target.eng, updatedEng).catch(() => {});
           updatedEngineers = S.engineers.map((e) => (e.id === target.eng ? updatedEng : e));
-        } else if (!currentEng) {
+        } else {
           const newEngId = 'e' + ids.current.id++;
           const newEng = {
             id: newEngId,
@@ -768,12 +778,41 @@ export function useScheduler() {
         }
       }
 
+      let nextAuditorOptions = s.auditorOptions || [];
+      if (newAuditorName && !nextAuditorOptions.includes(newAuditorName)) {
+        nextAuditorOptions = [...nextAuditorOptions, newAuditorName];
+        api.saveOption('auditor', newAuditorName).catch(() => {});
+      }
+      if (oldAuditorName && oldAuditorName !== newAuditorName) {
+        const isOldAuditorStillUsedInAssignments = nextAssignments.some(
+          (a) => a.auditor1 === oldAuditorName || a.auditor2 === oldAuditorName
+        );
+        const isOldAuditorStillUsedInEngineers = updatedEngineers.some(
+          (e) => e.name === oldAuditorName && nextAssignments.some((a) => a.eng === e.id)
+        );
+
+        if (!isOldAuditorStillUsedInAssignments && !isOldAuditorStillUsedInEngineers) {
+          nextAuditorOptions = nextAuditorOptions.filter((a) => a !== oldAuditorName);
+          api.deleteOption('auditor', oldAuditorName).catch(() => {});
+
+          const oldEng = updatedEngineers.find((e) => e.name === oldAuditorName);
+          if (oldEng && oldEng.id !== finalEngId) {
+            const hasOtherAppts = nextAssignments.some((a) => a.eng === oldEng.id);
+            if (!hasOtherAppts) {
+              updatedEngineers = updatedEngineers.filter((e) => e.id !== oldEng.id);
+              api.deleteEngineer(oldEng.id).catch(() => {});
+            }
+          }
+        }
+      }
+
       return {
         assignments: nextAssignments,
         comments,
         engineers: updatedEngineers,
         customerOptions: nextCustomerOptions,
         purposeOptions: nextPurposeOptions,
+        auditorOptions: nextAuditorOptions,
       };
     });
     const prefix = d.sectionType === 'internal' ? 'IA' : 'CS';
