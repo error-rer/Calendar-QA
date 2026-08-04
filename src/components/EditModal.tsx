@@ -24,11 +24,13 @@ export function EditModal({ vm }: { vm: VM }) {
             purposeOptions={vm.purposeOptions}
             removePurposeOption={vm.removePurposeOption}
             removeCustomerOption={vm.removeCustomerOption}
+            removeAuditorOption={vm.removeAuditorOption}
             removeGenericOption={vm.removeGenericOption}
             customerDepartmentOptions={vm.customerDepartmentOptions}
             internalDepartmentOptions={vm.internalDepartmentOptions}
             siteOptions={vm.siteCodeOptions}
             customerOptions={vm.customerOptions}
+            auditorOptions={vm.auditorOptions}
             removedOptions={vm.removedOptions}
             assignments={vm.assignments}
             engineers={vm.engineers}

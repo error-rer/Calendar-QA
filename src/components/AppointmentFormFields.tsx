@@ -560,11 +560,13 @@ export function AppointmentFormFields({
   purposeOptions,
   removePurposeOption,
   removeCustomerOption,
+  removeAuditorOption,
   removeGenericOption,
   customerDepartmentOptions,
   internalDepartmentOptions,
   siteOptions,
   customerOptions,
+  auditorOptions = [],
   removedOptions = [],
   assignments = [],
   engineers = [],
@@ -576,11 +578,13 @@ export function AppointmentFormFields({
   purposeOptions: string[];
   removePurposeOption?: (val: string) => void;
   removeCustomerOption?: (val: string) => void;
+  removeAuditorOption?: (val: string) => void;
   removeGenericOption?: (val: string) => void;
   customerDepartmentOptions: string[];
   internalDepartmentOptions: string[];
   siteOptions: string[];
   customerOptions: string[];
+  auditorOptions?: string[];
   removedOptions?: string[];
   assignments?: Assignment[];
   engineers?: Engineer[];
@@ -631,10 +635,10 @@ export function AppointmentFormFields({
     const fromEng = engineers.map((e) => e.name).filter((s): s is string => Boolean(s));
     const fromAssign1 = assignments.map((a) => a.auditor1).filter((s): s is string => Boolean(s));
     const fromAssign2 = assignments.map((a) => a.auditor2).filter((s): s is string => Boolean(s));
-    return Array.from(new Set([...fromEng, ...fromAssign1, ...fromAssign2]))
+    return Array.from(new Set([...auditorOptions, ...fromEng, ...fromAssign1, ...fromAssign2]))
       .filter((s) => !removedSet.has(s))
       .sort();
-  }, [engineers, assignments, removedSet]);
+  }, [auditorOptions, engineers, assignments, removedSet]);
 
   const areaSuggestions = useMemo(() => {
     const fromAssign = assignments.map((a) => a.area).filter((s): s is string => Boolean(s));
@@ -742,6 +746,7 @@ export function AppointmentFormFields({
                 onChange={(auditor1) => onChange({ auditor1 })}
                 placeholder="Type auditor name..."
                 suggestions={auditorSuggestions}
+                onRemoveOption={removeAuditorOption}
               />
             </div>
 
@@ -830,6 +835,7 @@ export function AppointmentFormFields({
                 onChange={(auditor2) => onChange({ auditor2 })}
                 placeholder="Type auditor name..."
                 suggestions={auditorSuggestions}
+                onRemoveOption={removeAuditorOption}
               />
             </div>
 

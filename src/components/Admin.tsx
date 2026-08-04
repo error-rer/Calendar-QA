@@ -296,6 +296,14 @@ function OptionsPanel({ vm }: { vm: VM }) {
         placeholder="e.g. Company F"
       />
       <TagListEditor
+        title="Auditor"
+        count={vm.auditorOptions.length}
+        values={vm.auditorOptions}
+        onAdd={vm.addAuditorOption}
+        onRemove={vm.removeAuditorOption}
+        placeholder="e.g. Jordan Lee"
+      />
+      <TagListEditor
         title="Purpose"
         count={vm.purposeOptions.length}
         values={vm.purposeOptions}

@@ -845,13 +845,14 @@ export function useScheduler() {
   };
 
   // ---- appointment option lists (Purpose / Department / Site) ----
-  type OptionListField = 'purposeOptions' | 'customerDepartmentOptions' | 'internalDepartmentOptions' | 'siteCodeOptions' | 'customerOptions';
+  type OptionListField = 'purposeOptions' | 'customerDepartmentOptions' | 'internalDepartmentOptions' | 'siteCodeOptions' | 'customerOptions' | 'auditorOptions';
   const fieldToCategory: Record<OptionListField, string> = {
     purposeOptions: 'purpose',
     customerDepartmentOptions: 'customer_department',
     internalDepartmentOptions: 'internal_department',
     siteCodeOptions: 'site_code',
     customerOptions: 'customer_name',
+    auditorOptions: 'auditor',
   };
 
   const addOption = (field: OptionListField, value: string, meta = '') => {
@@ -872,6 +873,8 @@ export function useScheduler() {
         linkedCount = S.assignments.filter((a) => a.customer === v).length;
       } else if (field === 'purposeOptions') {
         linkedCount = S.assignments.filter((a) => a.purpose === v).length;
+      } else if (field === 'auditorOptions') {
+        linkedCount = S.assignments.filter((a) => a.auditor1 === v || a.auditor2 === v || (engById(a.eng)?.name === v)).length;
       } else if (field === 'customerDepartmentOptions') {
         linkedCount = S.assignments.filter((a) => a.department1 === v).length;
       } else if (field === 'internalDepartmentOptions') {
@@ -903,11 +906,13 @@ export function useScheduler() {
     if (!v) return;
     api.deleteOption('customer_name', v).catch(() => {});
     api.deleteOption('purpose', v).catch(() => {});
+    api.deleteOption('auditor', v).catch(() => {});
     setState((s) => {
       const removedOptions = (s.removedOptions || []).includes(v) ? (s.removedOptions || []) : [...(s.removedOptions || []), v];
       return {
         customerOptions: (s.customerOptions || []).filter((x) => x !== v),
         purposeOptions: (s.purposeOptions || []).filter((x) => x !== v),
+        auditorOptions: (s.auditorOptions || []).filter((x) => x !== v),
         customerDepartmentOptions: (s.customerDepartmentOptions || []).filter((x) => x !== v),
         internalDepartmentOptions: (s.internalDepartmentOptions || []).filter((x) => x !== v),
         siteCodeOptions: (s.siteCodeOptions || []).filter((x) => x !== v),
@@ -1601,20 +1606,6 @@ export function useScheduler() {
       };
     });
   // ---- filters VM ----
-  const employeeOptions = [{ value: '', label: 'All employees' }].concat(S.engineers.filter((e) => !['unassigned', '111', 'ant', 'bird'].includes(e.name.toLowerCase())).map((e) => ({ value: e.id, label: e.name })));
-  const availableSiteCodes = S.filterAuditTopic.includes('EHS')
-    ? S.siteCodeOptions.filter((s) => ['U1', 'U2', 'U3'].includes(s))
-    : S.siteCodeOptions;
-  const siteOptions = [{ value: '', label: 'All sites' }, ...availableSiteCodes.map((s) => ({ value: s, label: s }))];
-  const siteColorList = S.siteCodeOptions.map((s) => ({ site: s, color: S.siteColors[s] || '#999' }));
-  // filter dropdowns share the same admin-managed lists as the appointment form
-  // (Manage > Options), so adding/removing an option there updates both. When the
-  // Type filter narrows to just one type, the Department/Purpose dropdowns narrow
-  // to match (Purpose has no internal-audit equivalent, so it empties for IA-only).
-  const typeIsCS = S.filterApptType.length === 1 && S.filterApptType[0] === 'CS';
-  const typeIsIA = S.filterApptType.length === 1 && S.filterApptType[0] === 'IA';
-  const customerTopicOptions = typeIsIA ? [] : S.customerDepartmentOptions;
-  const internalTopicOptions = typeIsCS ? [] : S.internalDepartmentOptions;
   const removedSet = useMemo(() => new Set(S.removedOptions || []), [S.removedOptions]);
 
   const computedCustomerOptions = useMemo(() => {
@@ -1630,6 +1621,40 @@ export function useScheduler() {
       .filter((p) => !removedSet.has(p))
       .sort();
   }, [S.assignments, S.purposeOptions, removedSet]);
+
+  const computedAuditorOptions = useMemo(() => {
+    const fromEng = S.engineers.map((e) => e.name).filter((s): s is string => Boolean(s) && !removedSet.has(s as string));
+    const fromAssign1 = S.assignments.map((a) => a.auditor1).filter((s): s is string => Boolean(s) && !removedSet.has(s as string));
+    const fromAssign2 = S.assignments.map((a) => a.auditor2).filter((s): s is string => Boolean(s) && !removedSet.has(s as string));
+    return Array.from(new Set([...(S.auditorOptions || []), ...fromEng, ...fromAssign1, ...fromAssign2]))
+      .filter((s) => !removedSet.has(s))
+      .sort();
+  }, [S.engineers, S.assignments, S.auditorOptions, removedSet]);
+
+  const employeeOptions = useMemo(() => {
+    const filterOptions = S.engineers
+      .filter((e) => !['unassigned', '111', 'ant', 'bird'].includes(e.name.toLowerCase()))
+      .map((e) => ({ value: e.id, label: e.name }));
+    const engNames = new Set(S.engineers.map((e) => e.name));
+    const extraAuditors = computedAuditorOptions
+      .filter((name) => !engNames.has(name))
+      .map((name) => ({ value: name, label: name }));
+    return [{ value: '', label: 'All employees' }, ...filterOptions, ...extraAuditors];
+  }, [S.engineers, computedAuditorOptions]);
+
+  const availableSiteCodes = S.filterAuditTopic.includes('EHS')
+    ? S.siteCodeOptions.filter((s) => ['U1', 'U2', 'U3'].includes(s))
+    : S.siteCodeOptions;
+  const siteOptions = [{ value: '', label: 'All sites' }, ...availableSiteCodes.map((s) => ({ value: s, label: s }))];
+  const siteColorList = S.siteCodeOptions.map((s) => ({ site: s, color: S.siteColors[s] || '#999' }));
+  // filter dropdowns share the same admin-managed lists as the appointment form
+  // (Manage > Options), so adding/removing an option there updates both. When the
+  // Type filter narrows to just one type, the Department/Purpose dropdowns narrow
+  // to match (Purpose has no internal-audit equivalent, so it empties for IA-only).
+  const typeIsCS = S.filterApptType.length === 1 && S.filterApptType[0] === 'CS';
+  const typeIsIA = S.filterApptType.length === 1 && S.filterApptType[0] === 'IA';
+  const customerTopicOptions = typeIsIA ? [] : S.customerDepartmentOptions;
+  const internalTopicOptions = typeIsCS ? [] : S.internalDepartmentOptions;
 
   const companyNames = computedCustomerOptions;
   const auditTypes = typeIsIA ? [] : computedPurposeOptions;
@@ -1894,6 +1919,10 @@ export function useScheduler() {
     siteCodeOptions: S.siteCodeOptions,
     customerOptions: computedCustomerOptions,
     masterCustomerOptions: S.customerOptions,
+    auditorOptions: computedAuditorOptions,
+    masterAuditorOptions: S.auditorOptions,
+    addAuditorOption: (v: string) => addOption('auditorOptions', v),
+    removeAuditorOption: (v: string) => removeOption('auditorOptions', v),
     siteColorList, siteColors: S.siteColors, setSiteColor,
     addSiteCodeOption: (v: string) => addOption('siteCodeOptions', v),
     removeSiteCodeOption,
