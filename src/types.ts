@@ -169,6 +169,7 @@ export interface State {
   siteCodeOptions: string[];
   siteColors: Record<string, string>;
   customerOptions: string[];
+  removedOptions: string[];
   plants: Plant[];
   engineers: Engineer[];
   orders: Order[];

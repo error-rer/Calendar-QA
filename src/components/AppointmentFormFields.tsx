@@ -561,10 +561,12 @@ export function AppointmentFormFields({
   addPurposeOption,
   removePurposeOption,
   removeCustomerOption,
+  removeGenericOption,
   customerDepartmentOptions,
   internalDepartmentOptions,
   siteOptions,
   customerOptions,
+  removedOptions = [],
   assignments = [],
   engineers = [],
   editingTargetId,
@@ -576,10 +578,12 @@ export function AppointmentFormFields({
   addPurposeOption?: (val: string) => void;
   removePurposeOption?: (val: string) => void;
   removeCustomerOption?: (val: string) => void;
+  removeGenericOption?: (val: string) => void;
   customerDepartmentOptions: string[];
   internalDepartmentOptions: string[];
   siteOptions: string[];
   customerOptions: string[];
+  removedOptions?: string[];
   assignments?: Assignment[];
   engineers?: Engineer[];
   editingTargetId?: string;
@@ -596,30 +600,44 @@ export function AppointmentFormFields({
     ? siteOptions.filter((s) => ['U1', 'U2', 'U3'].includes(s))
     : siteOptions;
 
+  const removedSet = useMemo(() => new Set(removedOptions), [removedOptions]);
+
   const customerSuggestions = useMemo(() => {
     const activeAssignments = editingTargetId
       ? assignments.filter((a) => a.id !== editingTargetId)
       : assignments;
     const fromAssign = activeAssignments.map((a) => a.customer).filter((s): s is string => Boolean(s));
-    return Array.from(new Set([...customerOptions, ...fromAssign])).sort();
-  }, [assignments, customerOptions, editingTargetId]);
+    return Array.from(new Set([...customerOptions, ...fromAssign]))
+      .filter((s) => !removedSet.has(s))
+      .sort();
+  }, [assignments, customerOptions, editingTargetId, removedSet]);
 
   const endCustomerSuggestions = useMemo(() => {
     const fromAssign = assignments.map((a) => a.endCustomer).filter((s): s is string => Boolean(s));
-    return Array.from(new Set(fromAssign)).sort();
-  }, [assignments]);
+    return Array.from(new Set(fromAssign))
+      .filter((s) => !removedSet.has(s))
+      .sort();
+  }, [assignments, removedSet]);
+
+  const filteredPurposeOptions = useMemo(() => {
+    return purposeOptions.filter((s) => !removedSet.has(s));
+  }, [purposeOptions, removedSet]);
 
   const auditorSuggestions = useMemo(() => {
     const fromEng = engineers.map((e) => e.name).filter((s): s is string => Boolean(s));
     const fromAssign1 = assignments.map((a) => a.auditor1).filter((s): s is string => Boolean(s));
     const fromAssign2 = assignments.map((a) => a.auditor2).filter((s): s is string => Boolean(s));
-    return Array.from(new Set([...fromEng, ...fromAssign1, ...fromAssign2])).sort();
-  }, [engineers, assignments]);
+    return Array.from(new Set([...fromEng, ...fromAssign1, ...fromAssign2]))
+      .filter((s) => !removedSet.has(s))
+      .sort();
+  }, [engineers, assignments, removedSet]);
 
   const areaSuggestions = useMemo(() => {
     const fromAssign = assignments.map((a) => a.area).filter((s): s is string => Boolean(s));
-    return Array.from(new Set(fromAssign)).sort();
-  }, [assignments]);
+    return Array.from(new Set(fromAssign))
+      .filter((s) => !removedSet.has(s))
+      .sort();
+  }, [assignments, removedSet]);
 
   return (
     <>
@@ -694,6 +712,7 @@ export function AppointmentFormFields({
                 onChange={(endCustomer) => onChange({ endCustomer })}
                 placeholder="Type end customer..."
                 suggestions={endCustomerSuggestions}
+                onRemoveOption={removeGenericOption}
               />
             </div>
 
@@ -705,7 +724,7 @@ export function AppointmentFormFields({
                 value={v.purpose}
                 onChange={(purpose) => onChange({ purpose })}
                 placeholder="Type or select purpose..."
-                suggestions={purposeOptions}
+                suggestions={filteredPurposeOptions}
                 onAddNew={addPurposeOption}
                 onRemoveOption={removePurposeOption}
               />
@@ -795,6 +814,7 @@ export function AppointmentFormFields({
                 onChange={(area) => onChange({ area })}
                 placeholder="Type area..."
                 suggestions={areaSuggestions}
+                onRemoveOption={removeGenericOption}
               />
             </div>
 

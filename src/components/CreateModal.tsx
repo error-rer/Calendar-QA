@@ -25,10 +25,12 @@ export function CreateModal({ vm }: { vm: VM }) {
             addPurposeOption={vm.addPurposeOption}
             removePurposeOption={vm.removePurposeOption}
             removeCustomerOption={vm.removeCustomerOption}
+            removeGenericOption={vm.removeGenericOption}
             customerDepartmentOptions={vm.customerDepartmentOptions}
             internalDepartmentOptions={vm.internalDepartmentOptions}
             siteOptions={vm.siteCodeOptions}
             customerOptions={vm.customerOptions}
+            removedOptions={vm.removedOptions}
             assignments={vm.assignments}
             engineers={vm.engineers}
           />

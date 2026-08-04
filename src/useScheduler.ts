@@ -104,11 +104,12 @@ export function useScheduler() {
     api.fetchState()
       .then((data) => {
         setRaw((s) => {
+          const removedSet = new Set(s.removedOptions || []);
           const historicalCustomers = new Set([
-            ...(data.orders || []).map((o) => o.customer).filter((c): c is string => Boolean(c)),
-            ...(data.assignments || []).map((a) => a.customer).filter((c): c is string => Boolean(c)),
+            ...(data.orders || []).map((o) => o.customer).filter((c): c is string => Boolean(c) && !removedSet.has(c as string)),
+            ...(data.assignments || []).map((a) => a.customer).filter((c): c is string => Boolean(c) && !removedSet.has(c as string)),
           ]);
-          const customerOptions = [...new Set([...(s.customerOptions || []), ...historicalCustomers])];
+          const customerOptions = [...new Set([...(s.customerOptions || []), ...historicalCustomers])].filter((c) => !removedSet.has(c));
 
           const serverAssignments = data.assignments || [];
           const serverOrders = data.orders || [];
@@ -145,10 +146,10 @@ export function useScheduler() {
             }
           }
 
-          const purposeOptions = s.purposeOptions && s.purposeOptions.length ? s.purposeOptions : (data.purposeOptions || []);
-          const customerDepartmentOptions = s.customerDepartmentOptions && s.customerDepartmentOptions.length ? s.customerDepartmentOptions : (data.customerDepartmentOptions || []);
-          const internalDepartmentOptions = s.internalDepartmentOptions && s.internalDepartmentOptions.length ? s.internalDepartmentOptions : (data.internalDepartmentOptions || []);
-          const siteCodeOptions = s.siteCodeOptions && s.siteCodeOptions.length ? s.siteCodeOptions : (data.siteCodeOptions || []);
+          const purposeOptions = (s.purposeOptions && s.purposeOptions.length ? s.purposeOptions : (data.purposeOptions || [])).filter((c) => !removedSet.has(c));
+          const customerDepartmentOptions = (s.customerDepartmentOptions && s.customerDepartmentOptions.length ? s.customerDepartmentOptions : (data.customerDepartmentOptions || [])).filter((c) => !removedSet.has(c));
+          const internalDepartmentOptions = (s.internalDepartmentOptions && s.internalDepartmentOptions.length ? s.internalDepartmentOptions : (data.internalDepartmentOptions || [])).filter((c) => !removedSet.has(c));
+          const siteCodeOptions = (s.siteCodeOptions && s.siteCodeOptions.length ? s.siteCodeOptions : (data.siteCodeOptions || [])).filter((c) => !removedSet.has(c));
           const siteColors = s.siteColors && Object.keys(s.siteColors).length ? s.siteColors : (data.siteColors || {});
 
           const mergedState = {
@@ -166,6 +167,7 @@ export function useScheduler() {
             siteCodeOptions,
             siteColors,
             customerOptions,
+            removedOptions: s.removedOptions || [],
           };
 
           try {
@@ -181,6 +183,7 @@ export function useScheduler() {
               siteCodeOptions: mergedState.siteCodeOptions,
               siteColors: mergedState.siteColors,
               customerOptions: mergedState.customerOptions,
+              removedOptions: mergedState.removedOptions,
               activePlants: mergedState.activePlants,
               plants: mergedState.plants,
             }));
@@ -211,6 +214,7 @@ export function useScheduler() {
         siteCodeOptions: state.siteCodeOptions,
         siteColors: state.siteColors,
         customerOptions: state.customerOptions,
+        removedOptions: state.removedOptions,
         activePlants: state.activePlants,
         plants: state.plants,
       };
@@ -231,6 +235,7 @@ export function useScheduler() {
     state.siteCodeOptions,
     state.siteColors,
     state.customerOptions,
+    state.removedOptions,
     state.activePlants,
     state.plants,
   ]);
@@ -759,9 +764,36 @@ export function useScheduler() {
   };
 
   const removeOption = (field: OptionListField, value: string) => {
+    const v = value.trim();
+    if (!v) return;
     const category = fieldToCategory[field];
-    if (category) api.deleteOption(category, value).catch(() => {});
-    setState((s) => ({ [field]: s[field].filter((x) => x !== value) }));
+    if (category) api.deleteOption(category, v).catch(() => {});
+    setState((s) => {
+      const fieldList = (s[field] || []).filter((x) => x !== v);
+      const removedOptions = (s.removedOptions || []).includes(v) ? (s.removedOptions || []) : [...(s.removedOptions || []), v];
+      return {
+        [field]: fieldList,
+        removedOptions,
+      };
+    });
+  };
+
+  const removeGenericOption = (value: string) => {
+    const v = value.trim();
+    if (!v) return;
+    api.deleteOption('customer_name', v).catch(() => {});
+    api.deleteOption('purpose', v).catch(() => {});
+    setState((s) => {
+      const removedOptions = (s.removedOptions || []).includes(v) ? (s.removedOptions || []) : [...(s.removedOptions || []), v];
+      return {
+        customerOptions: (s.customerOptions || []).filter((x) => x !== v),
+        purposeOptions: (s.purposeOptions || []).filter((x) => x !== v),
+        customerDepartmentOptions: (s.customerDepartmentOptions || []).filter((x) => x !== v),
+        internalDepartmentOptions: (s.internalDepartmentOptions || []).filter((x) => x !== v),
+        siteCodeOptions: (s.siteCodeOptions || []).filter((x) => x !== v),
+        removedOptions,
+      };
+    });
   };
 
   const setSiteColor = (site: string, color: string) => {
@@ -1705,6 +1737,7 @@ export function useScheduler() {
     siteCodeOptions: S.siteCodeOptions, customerOptions: S.customerOptions, siteColorList, siteColors: S.siteColors, setSiteColor,
     addSiteCodeOption: (v: string) => addOption('siteCodeOptions', v), removeSiteCodeOption,
     addCustomerOption: (v: string) => addOption('customerOptions', v), removeCustomerOption: (v: string) => removeOption('customerOptions', v),
+    removedOptions: S.removedOptions || [], removeGenericOption,
   };
 }
 
