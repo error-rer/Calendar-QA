@@ -79,10 +79,32 @@ interface MonthCell {
   onClick?: () => void;
 }
 
+const idNumber = (id: string): number => {
+  const m = /(\d+)$/.exec(id || '');
+  return m ? parseInt(m[1], 10) : 0;
+};
+
 export function useScheduler() {
   const [state, setRaw] = useState<State>(initialState);
   const [loading, setLoading] = useState(true);
   const ids = useRef({ id: 100 });
+
+  const updateMaxId = useCallback((stateObj: State) => {
+    const allIds: string[] = [
+      ...stateObj.assignments.map((a) => a.id),
+      ...stateObj.orders.map((o) => o.id),
+      ...stateObj.engineers.map((e) => e.id),
+      ...Object.values(stateObj.comments || {}).flat().map((c: any) => c?.id || ''),
+    ];
+    const maxIdNum = allIds.reduce((max, id) => Math.max(max, idNumber(id)), 0);
+    if (maxIdNum >= ids.current.id) {
+      ids.current.id = maxIdNum + 1;
+    }
+  }, []);
+
+  useEffect(() => {
+    updateMaxId(state);
+  }, []);
 
   const setState = useCallback(
     (patch: Partial<State> | ((s: State) => Partial<State>)) => {
@@ -184,6 +206,19 @@ export function useScheduler() {
               plants: mergedState.plants,
             }));
           } catch {}
+
+          const allIds: string[] = [
+            ...mergedState.assignments.map((a) => a.id),
+            ...mergedState.orders.map((o) => o.id),
+            ...mergedState.engineers.map((e) => e.id),
+            ...Object.values(mergedState.comments).flat().map((c: any) => c.id),
+          ];
+
+          const maxIdNum = allIds.reduce((max, id) => Math.max(max, idNumber(id)), 0);
+
+          if (maxIdNum >= ids.current.id) {
+            ids.current.id = maxIdNum + 1;
+          }
 
           return mergedState;
         });
