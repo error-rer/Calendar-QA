@@ -853,7 +853,7 @@ function YearGrid({ vm }: { vm: VM }) {
                       key={d.dateISO}
                       title={
                         d.hasAppts
-                          ? `${d.dayNum} ${m.monthName}: ${d.totalApptsCount} appointments (${d.customerApptsCount} Customer, ${d.internalApptsCount} Internal)`
+                          ? `${d.dayNum} ${m.monthName}: ${d.totalApptsCount} appointments (${d.customerApptsCount} CS, ${d.internalApptsCount} IA)`
                           : `${d.dayNum} ${m.monthName}`
                       }
                       style={css(
@@ -882,8 +882,8 @@ function YearGrid({ vm }: { vm: VM }) {
                 <div style={css('font-size:10.5px;color:#7a8079')}>
                   {m.customerAppts > 0 || m.internalAppts > 0 ? (
                     <span>
-                      <strong style={{ color: '#2756d6' }}>{m.customerAppts}</strong> Cust ·{' '}
-                      <strong style={{ color: '#0f9d8c' }}>{m.internalAppts}</strong> Int
+                      <strong style={{ color: '#2756d6' }}>{m.customerAppts}</strong> CS ·{' '}
+                      <strong style={{ color: '#0f9d8c' }}>{m.internalAppts}</strong> IA
                     </span>
                   ) : (
                     'No scheduled audits'
