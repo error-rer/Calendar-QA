@@ -1331,20 +1331,35 @@ export function useScheduler() {
       onDelete: () => removeComment(selA.id, m.id),
     }));
     const isInternal = !!(selA.site2 || selA.auditor2 || selA.department2 || selA.area);
+    const siblings = S.assignments.filter((x) => x.eng === selA.eng && x.order === selA.order);
+    const minWeek = Math.min(...siblings.map((x) => x.week));
+    const maxWeek = Math.max(...siblings.map((x) => x.week));
+    const minDay = Math.min(...siblings.filter((x) => x.week === minWeek).map((x) => x.day));
+    const maxDay = Math.max(...siblings.filter((x) => x.week === maxWeek).map((x) => x.day));
+    const fromDate = new Date(2026, 5, 29 + minWeek * 7 + minDay);
+    const toDate = new Date(2026, 5, 29 + maxWeek * 7 + maxDay);
+    const dateFromStr = fmtDate(fromDate);
+    const dateToStr = fmtDate(toDate);
+    const durationDays = siblings.length;
+    const dateRangeLabel = dateFromStr === dateToStr
+      ? `${dateFromStr} (${durationDays} ${durationDays === 1 ? 'day' : 'days'})`
+      : `${dateFromStr} - ${dateToStr} (${durationDays} ${durationDays === 1 ? 'day' : 'days'})`;
+
     return {
-      aid: selA.id, isInternal, orderCode: ord?.code || '', product: selA.endCustomer || selA.area || (ord ? ord.product : ''), customer: selA.customer || (ord ? ord.customer : ''), plantName: pl.name + ' - ' + pl.loc,
-      engName: eng.name, engRole: eng.role, engInitials: initials(eng.name), dayName: dayNames[selA.day],
+      aid: selA.id, isInternal, orderCode: ord?.code || '', product: selA.endCustomer || selA.area || '', customer: selA.customer || '', plantName: pl ? pl.name + ' - ' + pl.loc : '',
+      engName: eng ? eng.name : '', engRole: eng ? eng.role : '', engInitials: eng ? initials(eng.name) : '', dayName: dayNames[selA.day],
       avatarStyle: sx({ width: '34px', height: '34px', borderRadius: '9px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '12px', fontWeight: 600, flexShrink: 0 }),
-      department: eng.department, subDepartments: eng.subDepartments,
+      department: eng ? eng.department : '', subDepartments: eng ? eng.subDepartments : [],
       comments, commentCount: comments.length, noComments: comments.length === 0, draft: S.draft,
       onDraft: (e: React.ChangeEvent<HTMLInputElement>) => setState({ draft: e.target.value }),
       onKey: (e: React.KeyboardEvent) => { if (e.key === 'Enter') addComment(); },
       addComment: () => addComment(), remove: () => removeAssign(selA.id), duplicate: () => duplicate(selA.id), close: () => setState({ selected: null }),
       onEdit: () => { closeSidebar(); openEdit(selA.id); },
-      site1: selA.site1, endCustomer: selA.endCustomer,
-      auditor1: selA.auditor1, site2: selA.site2, area: selA.area, auditor2: selA.auditor2,
-      department1: selA.department1, department2: selA.department2,
+      site1: selA.site1 || '', endCustomer: selA.endCustomer || '',
+      auditor1: selA.auditor1 || '', site2: selA.site2 || '', area: selA.area || '', auditor2: selA.auditor2 || '',
+      department1: selA.department1 || '', department2: selA.department2 || '',
       purpose: selA.purpose || '',
+      dateRangeLabel, durationDays,
       major: selA.major ?? 0, minor: selA.minor ?? 0, ofi: selA.ofi ?? 0, request: selA.request ?? 0,
       utl1: selA.utl1 ?? 0, utl2: selA.utl2 ?? 0, utl3: selA.utl3 ?? 0,
     };

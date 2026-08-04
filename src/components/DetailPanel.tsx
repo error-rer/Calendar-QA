@@ -23,6 +23,12 @@ export function DetailPanel({ vm }: { vm: VM }) {
           </div>
 
           <div style={css('display:flex;flex-direction:column;gap:3px')}>
+            {detail.dateRangeLabel ? (
+              <div style={css('font-size:11.5px;color:#5c625c;font-weight:500;margin-bottom:2px')}>
+                Date: <span style={css('color:#15191e;font-weight:600')}>{detail.dateRangeLabel}</span>
+              </div>
+            ) : null}
+
             {site ? (
               <div style={css('font-size:12.5px;color:#23282a;font-weight:600')}>
                 Site: <span style={css('color:#15191e')}>{site}</span>
