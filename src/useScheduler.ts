@@ -520,8 +520,8 @@ export function useScheduler() {
     if (newAssignments.length === 0) return;
     const newOrder = {
       id: orderId, code: 'NEW-' + String(S.orders.length + 1).padStart(3, '0'),
-      customer: d.customer || 'Unassigned', product: d.endCustomer || d.area || 'QA Audit',
-      plant: d.sectionType === 'internal' ? (d.department2 || d.site2 || 'U1') : (d.site1 || 'U1'), purpose: d.purpose || '',
+      customer: d.customer || '', product: d.endCustomer || d.area || '',
+      plant: d.sectionType === 'internal' ? (d.department2 || d.site2 || '') : (d.site1 || ''), purpose: d.purpose || '',
     };
     const newEngineer = { id: engId, name: auditorName, role: 'QA', department: siteToDept(d.sectionType === 'internal' ? d.site2 : d.site1), subDepartments: [] };
     api.createOrder(newOrder).catch(() => {});
@@ -553,8 +553,6 @@ export function useScheduler() {
   const openEdit = (aid: string) => {
     const a = S.assignments.find((x) => x.id === aid);
     if (!a) return;
-    const o = orderById(a.order);
-    const eng = engById(a.eng);
     const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
     // find all sibling assignments (same order + eng) for the full date range
     const siblings = S.assignments.filter((x) => x.eng === a.eng && x.order === a.order);
@@ -571,15 +569,15 @@ export function useScheduler() {
         sectionType: isInternal ? 'internal' : 'customer',
         dateFrom: fmtISO(fromDate),
         dateTo: fmtISO(toDate),
-        site1: a.site1 || (o ? o.plant : ''),
-        customer: a.customer || (o ? o.customer : ''),
+        site1: a.site1 || '',
+        customer: a.customer || '',
         endCustomer: a.endCustomer || '',
-        purpose: a.purpose || (o ? o.purpose : ''),
-        auditor1: a.auditor1 || (eng ? eng.name : ''),
+        purpose: a.purpose || '',
+        auditor1: a.auditor1 || '',
         department1: a.department1 || '',
-        site2: a.site2 || (o ? o.plant : ''),
+        site2: a.site2 || '',
         area: a.area || '',
-        auditor2: a.auditor2 || (eng ? eng.name : ''),
+        auditor2: a.auditor2 || '',
         department2: a.department2 || '',
       },
     });
@@ -759,7 +757,6 @@ export function useScheduler() {
 
   // ---- chip builders ----
   const buildChip = (a: Assignment) => {
-    const ord = orderById(a.order);
     const dim = chipDimmed(a);
     const sel = S.selected === a.id;
     const colors = siteColorsOfAssignment(a, S.siteColors);
@@ -770,15 +767,14 @@ export function useScheduler() {
       boxShadow: sel ? '0 0 0 2px ' + hexA(colors[0] || '#999', 0.55) : '0 1px 1px rgba(20,25,30,.05)',
       opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', transition: 'box-shadow .12s',
     };
-    const e = engById(a.eng);
     const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
-    const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : ''));
-    const mainName = isInternal ? (a.area || '') : (a.customer || (ord ? ord.customer : ''));
+    const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || '');
+    const mainName = isInternal ? (a.area || '') : (a.customer || '');
     const site = (isInternal ? a.site2 : a.site1) || '';
-    const nameWithSite = site ? `${mainName} - ${site}` : mainName;
+    const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
     return {
-      aid: a.id, code: (ord ? apptAbbr(a) + ' · ' + (nameWithSite || 'Audit') : '?'), purpose: chipPurpose, style: base,
+      aid: a.id, code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, style: base,
       onClick: () => select(a.id),
       onDragStart: (e: React.DragEvent) => { e.stopPropagation(); setState({ drag: { kind: 'assign', id: a.id } }); },
       onDragEnd: () => setState({ drag: null, overCell: null }),
@@ -793,13 +789,13 @@ export function useScheduler() {
     const colors = accent ? [accent] : siteColorsOfAssignment(a, S.siteColors);
     const accentStyle = getAccentStyle(colors, 3);
     const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
-    const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : ''));
-    const mainName = isInternal ? (a.area || '') : (a.customer || (ord ? ord.customer : ''));
+    const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || '');
+    const mainName = isInternal ? (a.area || '') : (a.customer || '');
     const site = (isInternal ? a.site2 : a.site1) || '';
-    const nameWithSite = site ? `${mainName} - ${site}` : mainName;
+    const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
     return {
-      aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: (ord ? apptAbbr(a) + ' · ' + (nameWithSite || 'Audit') : '?'), purpose: chipPurpose, plantCode: pl ? pl.code : '?',
+      aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, plantCode: pl ? pl.code : '?',
       style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: '#fff', border: '1px solid #e8ebe4', ...accentStyle, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none' }),
       avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       onClick: () => select(a.id),
@@ -868,18 +864,17 @@ export function useScheduler() {
     });
     const chips: MonthChip[] = appointments.slice(0, 3).map((a) => {
       const o = orderById(a.order)!;
-      const e = engById(a.eng);
       const pl = plantById(o.plant);
       const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
-      const mainName = isInternal ? (a.area || '') : (a.customer || o.customer || o.product);
+      const mainName = isInternal ? (a.area || '') : (a.customer || '');
       const site = (isInternal ? a.site2 : a.site1) || '';
-      const nameWithSite = site ? `${mainName} - ${site}` : mainName;
-      const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : ''));
+      const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
+      const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || '');
       const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
       const colors = siteColorsOfAssignment(a, S.siteColors);
       const color = colors[0] || (pl ? pl.color : '#999');
       return {
-        code: apptAbbr(a) + ' · ' + (nameWithSite || 'Audit'), purpose: chipPurpose, engName: auditorName, color, colors,
+        code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, engName: auditorName, color, colors,
         countTxt: '',
         dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: color, flexShrink: 0 }),
         style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: '#23282a', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
@@ -1498,18 +1493,22 @@ export function useScheduler() {
     const color = colors[0] || (pl ? pl.color : '#999');
     return {
       id: a.id,
-      code: apptAbbr(a) + ' · ' + nameWithSite,
+      code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''),
       purpose: chipPurpose,
       engName: auditorName,
       color,
       colors,
       isInternal,
       site,
-      customer: a.customer || (o ? o.customer : ''),
+      customer: a.customer || '',
       endCustomer: a.endCustomer || '',
       area: a.area || '',
-      auditor: (isInternal ? a.auditor2 : a.auditor1) || e.name,
+      auditor: (isInternal ? a.auditor2 : a.auditor1) || '',
+      auditor1: a.auditor1 || '',
+      auditor2: a.auditor2 || '',
       department: (isInternal ? a.department2 : a.department1) || '',
+      department1: a.department1 || '',
+      department2: a.department2 || '',
       apptPurpose: a.purpose || '',
       major: a.major,
       minor: a.minor,
