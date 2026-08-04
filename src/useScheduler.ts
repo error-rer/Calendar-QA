@@ -654,6 +654,36 @@ export function useScheduler() {
       if (slot.wd < 5) slots.push(slot);
     }
     if (slots.length === 0) return;
+    const newAuditorName = ((d.sectionType === 'customer' ? d.auditor1 : d.auditor2) || '').trim();
+    let finalEngId = target.eng;
+    let updatedEngineers = S.engineers;
+
+    if (newAuditorName) {
+      const existingMatchingEng = S.engineers.find((e) => e.name.toLowerCase() === newAuditorName.toLowerCase());
+      if (existingMatchingEng) {
+        finalEngId = existingMatchingEng.id;
+      } else {
+        const currentEng = S.engineers.find((e) => e.id === target.eng);
+        if (currentEng && currentEng.name !== newAuditorName) {
+          const updatedEng = { ...currentEng, name: newAuditorName };
+          api.updateEngineer(target.eng, updatedEng).catch(() => {});
+          updatedEngineers = S.engineers.map((e) => (e.id === target.eng ? updatedEng : e));
+        } else if (!currentEng) {
+          const newEngId = 'e' + ids.current.id++;
+          const newEng = {
+            id: newEngId,
+            name: newAuditorName,
+            role: 'QA',
+            department: siteToDept(d.sectionType === 'internal' ? d.site2 : d.site1),
+            subDepartments: [],
+          };
+          api.createEngineer(newEng).catch(() => {});
+          finalEngId = newEngId;
+          updatedEngineers = S.engineers.concat([newEng]);
+        }
+      }
+    }
+
     const fields = {
       site1: d.sectionType === 'customer' ? d.site1 : '',
       customer: d.sectionType === 'customer' ? d.customer : '',
@@ -677,14 +707,14 @@ export function useScheduler() {
     const reuseIds = [d.targetId, ...siblings.filter((x) => x.id !== d.targetId).map((x) => x.id)];
     const updated: Assignment[] = slots.map((slot, i) => ({
       id: reuseIds[i] || 'a' + ids.current.id++,
-      eng: target.eng, order: target.order,
+      eng: finalEngId, order: target.order,
       day: slot.wd, week: slot.weekOffset,
       ...fields,
     }));
     const droppedIds = reuseIds.slice(slots.length);
 
     updated.forEach((a, i) => {
-      if (i < siblings.length) api.updateAssignment(a.id, { day: a.day, week: a.week, ...fields }).catch(() => {});
+      if (i < siblings.length) api.updateAssignment(a.id, { eng: a.eng, day: a.day, week: a.week, ...fields }).catch(() => {});
       else api.createAssignment(a).catch(() => {});
     });
     droppedIds.forEach((id) => api.deleteAssignment(id).catch(() => {}));
@@ -700,7 +730,7 @@ export function useScheduler() {
       const comments = droppedSet.size
         ? Object.fromEntries(Object.entries(s.comments).filter(([aid]) => !droppedSet.has(aid)))
         : s.comments;
-      return { assignments: others.concat(updated), comments };
+      return { assignments: others.concat(updated), comments, engineers: updatedEngineers };
     });
     const prefix = d.sectionType === 'internal' ? 'IA' : 'CS';
     const name = d.sectionType === 'internal' ? (d.area || 'Internal Audit') : (d.customer || 'Customer Audit');
