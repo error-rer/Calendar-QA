@@ -22,7 +22,6 @@ export function CreateModal({ vm }: { vm: VM }) {
             values={create}
             onChange={create.onChange}
             purposeOptions={vm.purposeOptions}
-            addPurposeOption={vm.addPurposeOption}
             removePurposeOption={vm.removePurposeOption}
             removeCustomerOption={vm.removeCustomerOption}
             removeGenericOption={vm.removeGenericOption}

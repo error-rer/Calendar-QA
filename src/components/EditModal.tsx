@@ -22,7 +22,6 @@ export function EditModal({ vm }: { vm: VM }) {
             values={ed}
             onChange={vm.setEditDraft}
             purposeOptions={vm.purposeOptions}
-            addPurposeOption={vm.addPurposeOption}
             removePurposeOption={vm.removePurposeOption}
             removeCustomerOption={vm.removeCustomerOption}
             removeGenericOption={vm.removeGenericOption}

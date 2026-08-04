@@ -558,7 +558,6 @@ export function AppointmentFormFields({
   values: v,
   onChange,
   purposeOptions,
-  addPurposeOption,
   removePurposeOption,
   removeCustomerOption,
   removeGenericOption,
@@ -575,7 +574,6 @@ export function AppointmentFormFields({
   values: AppointmentFormValues;
   onChange: (patch: Partial<AppointmentFormValues>) => void;
   purposeOptions: string[];
-  addPurposeOption?: (val: string) => void;
   removePurposeOption?: (val: string) => void;
   removeCustomerOption?: (val: string) => void;
   removeGenericOption?: (val: string) => void;
@@ -731,7 +729,6 @@ export function AppointmentFormFields({
                 onChange={(purpose) => onChange({ purpose })}
                 placeholder="Type or select purpose..."
                 suggestions={purposeSuggestions}
-                onAddNew={addPurposeOption}
                 onRemoveOption={removePurposeOption}
               />
             </div>

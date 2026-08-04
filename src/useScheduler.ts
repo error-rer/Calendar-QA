@@ -558,7 +558,7 @@ export function useScheduler() {
       api.saveOption('customer_name', d.customer).catch(() => {});
     }
     if (d.purpose) {
-      api.saveOption('purpose_options', d.purpose).catch(() => {});
+      api.saveOption('purpose', d.purpose).catch(() => {});
     }
     newAssignments.forEach((a) => api.createAssignment(a).catch(() => {}));
     setState((s) => ({
@@ -666,7 +666,7 @@ export function useScheduler() {
       api.saveOption('customer_name', d.customer).catch(() => {});
     }
     if (d.purpose) {
-      api.saveOption('purpose_options', d.purpose).catch(() => {});
+      api.saveOption('purpose', d.purpose).catch(() => {});
     }
     const droppedSet = new Set(droppedIds);
     setState((s) => {
