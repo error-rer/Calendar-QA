@@ -289,16 +289,16 @@ function OptionsPanel({ vm }: { vm: VM }) {
       <DepartmentEditor vm={vm} />
       <TagListEditor
         title="Customer"
-        count={vm.customerOptions.length}
-        values={vm.customerOptions}
+        count={(vm.masterCustomerOptions || vm.customerOptions).length}
+        values={vm.masterCustomerOptions || vm.customerOptions}
         onAdd={vm.addCustomerOption}
         onRemove={vm.removeCustomerOption}
         placeholder="e.g. Company F"
       />
       <TagListEditor
         title="Purpose"
-        count={vm.purposeOptions.length}
-        values={vm.purposeOptions}
+        count={(vm.masterPurposeOptions || vm.purposeOptions).length}
+        values={vm.masterPurposeOptions || vm.purposeOptions}
         onAdd={vm.addPurposeOption}
         onRemove={vm.removePurposeOption}
         placeholder="e.g. supplier audit"

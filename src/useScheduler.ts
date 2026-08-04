@@ -105,11 +105,7 @@ export function useScheduler() {
       .then((data) => {
         setRaw((s) => {
           const removedSet = new Set(s.removedOptions || []);
-          const historicalCustomers = new Set([
-            ...(data.orders || []).map((o) => o.customer).filter((c): c is string => Boolean(c) && !removedSet.has(c as string)),
-            ...(data.assignments || []).map((a) => a.customer).filter((c): c is string => Boolean(c) && !removedSet.has(c as string)),
-          ]);
-          const customerOptions = [...new Set([...(s.customerOptions || []), ...historicalCustomers])].filter((c) => !removedSet.has(c));
+          const customerOptions = (s.customerOptions && s.customerOptions.length ? s.customerOptions : (data.customerOptions || [])).filter((c) => !removedSet.has(c));
 
           const serverAssignments = data.assignments || [];
           const serverOrders = data.orders || [];
@@ -565,10 +561,6 @@ export function useScheduler() {
       orders: s.orders.concat([newOrder]),
       engineers: existingEng ? s.engineers : s.engineers.concat([newEngineer]),
       assignments: s.assignments.concat(newAssignments),
-      customerOptions: d.sectionType === 'customer' && d.customer && !s.customerOptions.includes(d.customer)
-        ? [...s.customerOptions, d.customer] : s.customerOptions,
-      purposeOptions: d.purpose && !s.purposeOptions.includes(d.purpose)
-        ? [...s.purposeOptions, d.purpose] : s.purposeOptions,
       selected: newAssignments[newAssignments.length - 1].id,
       createOpen: false,
     }));
@@ -673,11 +665,7 @@ export function useScheduler() {
       const comments = droppedSet.size
         ? Object.fromEntries(Object.entries(s.comments).filter(([aid]) => !droppedSet.has(aid)))
         : s.comments;
-      const customerOptions = d.sectionType === 'customer' && d.customer && !s.customerOptions.includes(d.customer)
-        ? [...s.customerOptions, d.customer] : s.customerOptions;
-      const purposeOptions = d.purpose && !s.purposeOptions.includes(d.purpose)
-        ? [...s.purposeOptions, d.purpose] : s.purposeOptions;
-      return { assignments: others.concat(updated), comments, customerOptions, purposeOptions };
+      return { assignments: others.concat(updated), comments };
     });
     const prefix = d.sectionType === 'internal' ? 'IA' : 'CS';
     const name = d.sectionType === 'internal' ? (d.area || 'Internal Audit') : (d.customer || 'Customer Audit');
@@ -736,13 +724,15 @@ export function useScheduler() {
     }
   };
   const removeEngineer = (id: string) => {
-    if (!confirm('Remove this auditor and their appointments?')) return;
+    const eng = S.engineers.find((e) => e.id === id);
+    if (!eng) return;
+    const linkedAppts = S.assignments.filter((a) => a.eng === id || a.auditor1 === eng.name || a.auditor2 === eng.name);
+    if (linkedAppts.length > 0) {
+      alert(`Cannot remove auditor "${eng.name}" because they are currently assigned to ${linkedAppts.length} active appointment(s). Please reassign or update those appointments first.`);
+      return;
+    }
     api.deleteEngineer(id).catch(() => {});
-    setState((s) => {
-      const droppedIds = new Set(s.assignments.filter((a) => a.eng === id).map((a) => a.id));
-      const comments = Object.fromEntries(Object.entries(s.comments).filter(([aid]) => !droppedIds.has(aid)));
-      return { engineers: s.engineers.filter((e) => e.id !== id), assignments: s.assignments.filter((a) => a.eng !== id), comments };
-    });
+    setState((s) => ({ engineers: s.engineers.filter((e) => e.id !== id) }));
   };
 
   // ---- appointment option lists (Purpose / Department / Site) ----
@@ -763,9 +753,30 @@ export function useScheduler() {
     setState((s) => (s[field].includes(v) ? {} : { [field]: [...s[field], v] }));
   };
 
-  const removeOption = (field: OptionListField, value: string) => {
+  const removeOption = (field: OptionListField, value: string, force = false) => {
     const v = value.trim();
     if (!v) return;
+
+    if (!force) {
+      let linkedCount = 0;
+      if (field === 'customerOptions') {
+        linkedCount = S.assignments.filter((a) => a.customer === v).length;
+      } else if (field === 'purposeOptions') {
+        linkedCount = S.assignments.filter((a) => a.purpose === v).length;
+      } else if (field === 'customerDepartmentOptions') {
+        linkedCount = S.assignments.filter((a) => a.department1 === v).length;
+      } else if (field === 'internalDepartmentOptions') {
+        linkedCount = S.assignments.filter((a) => a.department2 === v).length;
+      } else if (field === 'siteCodeOptions') {
+        linkedCount = S.assignments.filter((a) => (a.site1 && a.site1.split('/').includes(v)) || (a.site2 && a.site2.split('/').includes(v))).length;
+      }
+
+      if (linkedCount > 0) {
+        alert(`Cannot remove option "${v}" because it is currently linked to ${linkedCount} active appointment(s). Please update or delete those appointments first.`);
+        return;
+      }
+    }
+
     const category = fieldToCategory[field];
     if (category) api.deleteOption(category, v).catch(() => {});
     setState((s) => {
@@ -1480,8 +1491,24 @@ export function useScheduler() {
   const typeIsIA = S.filterApptType.length === 1 && S.filterApptType[0] === 'IA';
   const customerTopicOptions = typeIsIA ? [] : S.customerDepartmentOptions;
   const internalTopicOptions = typeIsCS ? [] : S.internalDepartmentOptions;
-  const companyNames = S.customerOptions.slice().sort();
-  const auditTypes = typeIsIA ? [] : S.purposeOptions;
+  const removedSet = useMemo(() => new Set(S.removedOptions || []), [S.removedOptions]);
+
+  const computedCustomerOptions = useMemo(() => {
+    const active = S.assignments.map((a) => a.customer).filter((c): c is string => Boolean(c) && !removedSet.has(c as string));
+    return Array.from(new Set([...(S.customerOptions || []), ...active]))
+      .filter((c) => !removedSet.has(c))
+      .sort();
+  }, [S.assignments, S.customerOptions, removedSet]);
+
+  const computedPurposeOptions = useMemo(() => {
+    const active = S.assignments.map((a) => a.purpose).filter((p): p is string => Boolean(p) && !removedSet.has(p as string));
+    return Array.from(new Set([...(S.purposeOptions || []), ...active]))
+      .filter((p) => !removedSet.has(p))
+      .sort();
+  }, [S.assignments, S.purposeOptions, removedSet]);
+
+  const companyNames = computedCustomerOptions;
+  const auditTypes = typeIsIA ? [] : computedPurposeOptions;
   const apptTypeOptions = [{ value: 'CS', label: 'Customer (CS)' }, { value: 'IA', label: 'Internal Audit (IA)' }];
   const hasFilters = !!(S.filterEmp.length || S.filterSite.length || S.filterCompany.length || S.filterAuditType.length || S.filterAuditTopic.length || S.filterApptType.length) || S.plants.some((p) => !S.activePlants[p.id]);
 
@@ -1730,13 +1757,24 @@ export function useScheduler() {
     addEngineer: openEngForm,
     summaryPeriods, summaryRows, summaryCells, utlRows, utlCells, summaryYear: S.summaryYear,
     setSummaryYear: (y: number) => setState({ summaryYear: y }),
-    purposeOptions: S.purposeOptions, customerDepartmentOptions: S.customerDepartmentOptions, internalDepartmentOptions: S.internalDepartmentOptions,
-    addPurposeOption: (v: string) => addOption('purposeOptions', v), removePurposeOption: (v: string) => removeOption('purposeOptions', v),
-    addCustomerDepartmentOption: (v: string) => addOption('customerDepartmentOptions', v), removeCustomerDepartmentOption: (v: string) => removeOption('customerDepartmentOptions', v),
-    addInternalDepartmentOption: (v: string) => addOption('internalDepartmentOptions', v), removeInternalDepartmentOption: (v: string) => removeOption('internalDepartmentOptions', v),
-    siteCodeOptions: S.siteCodeOptions, customerOptions: S.customerOptions, siteColorList, siteColors: S.siteColors, setSiteColor,
-    addSiteCodeOption: (v: string) => addOption('siteCodeOptions', v), removeSiteCodeOption,
-    addCustomerOption: (v: string) => addOption('customerOptions', v), removeCustomerOption: (v: string) => removeOption('customerOptions', v),
+    purposeOptions: computedPurposeOptions,
+    masterPurposeOptions: S.purposeOptions,
+    customerDepartmentOptions: S.customerDepartmentOptions,
+    internalDepartmentOptions: S.internalDepartmentOptions,
+    addPurposeOption: (v: string) => addOption('purposeOptions', v),
+    removePurposeOption: (v: string) => removeOption('purposeOptions', v),
+    addCustomerDepartmentOption: (v: string) => addOption('customerDepartmentOptions', v),
+    removeCustomerDepartmentOption: (v: string) => removeOption('customerDepartmentOptions', v),
+    addInternalDepartmentOption: (v: string) => addOption('internalDepartmentOptions', v),
+    removeInternalDepartmentOption: (v: string) => removeOption('internalDepartmentOptions', v),
+    siteCodeOptions: S.siteCodeOptions,
+    customerOptions: computedCustomerOptions,
+    masterCustomerOptions: S.customerOptions,
+    siteColorList, siteColors: S.siteColors, setSiteColor,
+    addSiteCodeOption: (v: string) => addOption('siteCodeOptions', v),
+    removeSiteCodeOption,
+    addCustomerOption: (v: string) => addOption('customerOptions', v),
+    removeCustomerOption: (v: string) => removeOption('customerOptions', v),
     removedOptions: S.removedOptions || [], removeGenericOption,
   };
 }
