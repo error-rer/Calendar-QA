@@ -619,9 +619,15 @@ export function AppointmentFormFields({
       .sort();
   }, [assignments, removedSet]);
 
-  const filteredPurposeOptions = useMemo(() => {
-    return purposeOptions.filter((s) => !removedSet.has(s));
-  }, [purposeOptions, removedSet]);
+  const purposeSuggestions = useMemo(() => {
+    const activeAssignments = editingTargetId
+      ? assignments.filter((a) => a.id !== editingTargetId)
+      : assignments;
+    const fromAssign = activeAssignments.map((a) => a.purpose).filter((s): s is string => Boolean(s));
+    return Array.from(new Set([...purposeOptions, ...fromAssign]))
+      .filter((s) => !removedSet.has(s))
+      .sort();
+  }, [assignments, purposeOptions, editingTargetId, removedSet]);
 
   const auditorSuggestions = useMemo(() => {
     const fromEng = engineers.map((e) => e.name).filter((s): s is string => Boolean(s));
@@ -724,7 +730,7 @@ export function AppointmentFormFields({
                 value={v.purpose}
                 onChange={(purpose) => onChange({ purpose })}
                 placeholder="Type or select purpose..."
-                suggestions={filteredPurposeOptions}
+                suggestions={purposeSuggestions}
                 onAddNew={addPurposeOption}
                 onRemoveOption={removePurposeOption}
               />
