@@ -132,6 +132,15 @@ function EyeOnIcon({ size = 15, color = '#2756d6' }: { size?: number; color?: st
   );
 }
 
+function SearchIcon({ size = 16, color = '#15191e' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="7" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  );
+}
+
 function ApptCard({ chip }: { chip: any }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; code: string; onDelete: () => void } | null>(null);
@@ -546,21 +555,38 @@ function Toolbar({ vm }: { vm: VM }) {
         <button onClick={vm.setWeekScale} style={vm.weekScaleStyle}>Week</button>
         <button onClick={vm.setMonthScale} style={vm.monthScaleStyle}>Month</button>
         <button onClick={vm.setYearScale} style={vm.yearScaleStyle}>Year</button>
-        <button
-          onClick={() => { vm.setSearchScale(); setTimeout(() => searchRef.current?.focus(), 80); }}
-          style={vm.searchScaleStyle}
-        >🔍 Search</button>
       </div>
-      {vm.isSearch && (
-        <input
-          ref={searchRef}
-          type="text"
-          placeholder="Search appointments…"
-          value={vm.searchQuery}
-          onChange={(e) => vm.setSearchQuery(e.target.value)}
-          style={css("flex:1;min-width:160px;max-width:340px;border:1px solid #d4def0;border-radius:8px;padding:6px 12px;font-size:13px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fff;box-shadow:0 0 0 2px rgba(39,86,214,.06)")}
-        />
-      )}
+      {/* Standalone search */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 } as React.CSSProperties}>
+        {vm.isSearch ? (
+          <div style={css('display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid #15191e;background:#fff;border-radius:8px;flex-shrink:0')}>
+            <span style={{ display: 'flex', alignItems: 'center' }}><SearchIcon size={15} color="#15191e" /></span>
+            <input
+              ref={searchRef}
+              type="text"
+              placeholder="Search appointments…"
+              value={vm.searchQuery}
+              onChange={(e) => vm.setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  vm.setSearchQuery((e.target as HTMLInputElement).value);
+                  (e.target as HTMLInputElement).blur();
+                }
+              }}
+              style={css("width:180px;min-width:140px;border:none;outline:none;font-size:13px;font-family:'Archivo',sans-serif;color:#23282a;background:transparent;padding:0")}
+            />
+          </div>
+        ) : (
+          <button
+            onClick={() => { vm.setSearchScale(); setTimeout(() => searchRef.current?.focus(), 80); }}
+            title="Search appointments"
+            style={css("width:36px;height:36px;border:1px solid #dde0d9;background:#f4f6f1;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0")}
+          >
+            <SearchIcon size={16} color="#15191e" />
+          </button>
+        )}
+      </div>
       <div style={css('flex:1')} />
       {vm.showStats && (
         <div style={css('display:flex;align-items:center;gap:7px')}>
