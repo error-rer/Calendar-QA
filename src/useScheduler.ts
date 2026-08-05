@@ -340,17 +340,19 @@ export function useScheduler() {
     return !matchesFilters(a, o);
   };
 
-  /** CS key = distinct (Purpose, Customer, Site); IA key = distinct (Area, Site). */
+  /** CS key = distinct (Month, Purpose, Customer, Site); IA key = distinct (Month, Area, Site). */
   const summaryCounts = (assignments: Assignment[]) => {
     const csKeys = new Set<string>();
     const iaKeys = new Set<string>();
     for (const a of assignments) {
       const o = orderById(a.order);
       if (!o) continue;
+      const d = new Date(2026, 5, 29 + a.week * 7 + a.day);
+      const ym = d.getFullYear() + '-' + d.getMonth();
       if (apptAbbr(a) === 'IA') {
-        iaKeys.add((a.area || '') + '\u0001' + (a.site2 || o.plant || ''));
+        iaKeys.add(ym + '\u0001' + (a.area || '') + '\u0001' + (a.site2 || o.plant || ''));
       } else {
-        csKeys.add((a.purpose || o.purpose || '') + '\u0001' + (a.customer || o.customer || '') + '\u0001' + (a.site1 || o.plant || ''));
+        csKeys.add(ym + '\u0001' + (a.purpose || o.purpose || '') + '\u0001' + (a.customer || o.customer || '') + '\u0001' + (a.site1 || o.plant || ''));
       }
     }
     return { cs: csKeys.size, ia: iaKeys.size };
@@ -1290,22 +1292,6 @@ export function useScheduler() {
     return monthsData;
   }, [mYear, S.assignments, S.siteColors, S.filterEmp, S.filterSite, S.filterCompany, S.filterAuditType, S.filterAuditTopic, S.filterApptType]);
 
-  let yearAssignmentsTotal = 0;
-  for (let m = 0; m < 12; m++) {
-    const daysCount = new Date(mYear, m + 1, 0).getDate();
-    for (let dn = 1; dn <= daysCount; dn++) {
-      const date = new Date(mYear, m, dn);
-      const slot = dateSlot(date);
-      if (slot.wd <= 4) {
-        const appts = S.assignments.filter((a) => a.week === slot.weekOffset && a.day === slot.wd);
-        appts.forEach((a) => {
-          const o = orderById(a.order);
-          if (o && matchesFilters(a, o)) yearAssignmentsTotal++;
-        });
-      }
-    }
-  }
-
   const periodLabel = isYear ? `Year ${mYear}` : isMonth ? monthName : weekLabel;
   const periodTag = isYear
     ? (mYear === today.getFullYear() ? 'THIS YEAR' : (mYear - today.getFullYear() > 0 ? '+' : '') + (mYear - today.getFullYear()) + ' YR')
@@ -1972,7 +1958,7 @@ export function useScheduler() {
     engForm, engFormOpen: S.engFormOpen, engEditingId: S.engEditingId, openEngForm, openEditEngineer: openEditEngForm, closeEngForm,
     assignments: S.assignments, engineers: S.engineers,
     stats: {
-      assignments: isYear ? yearAssignmentsTotal : isMonth ? monthScheduledCount : wk.length,
+      assignments: isYear ? yearSummary.cs + yearSummary.ia : isMonth ? monthScheduledCount : wk.length,
       weekCustomers,
       monthCustomers,
       yearCustomers,
