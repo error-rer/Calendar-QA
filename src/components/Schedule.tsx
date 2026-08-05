@@ -187,7 +187,7 @@ function DayDialogModal({ vm }: { vm: VM }) {
                       <div style={{ width: '4px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
                       <div style={css('min-width:0;flex:1;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px')}>
                         <div onClick={() => toggleExpand(chip.id)} style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} title="Click to expand embedded details">
-                          <div style={css('font-size:12.5px;font-weight:600;color:#23282a')}>{renderApptCode(chip.code)}</div>
+                          <div style={css(`font-size:12.5px;font-weight:600;color:${chip.isInternal ? '#10b981' : '#2756d6'}`)}>{renderApptCode(chip.code)}</div>
                           {chip.purpose ? (
                             <div style={css('font-size:11px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
                           ) : null}
@@ -558,7 +558,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
                 }}>
                   <div style={{ width: '3px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
                   <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{renderApptCode(chip.customer)}</div>
+                    <div style={{ fontSize: '11.5px', fontWeight: 600, color: chip.isInternal ? '#10b981' : '#2756d6' }}>{renderApptCode(chip.customer)}</div>
                     {chip.purpose ? (
                       <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{chip.purpose}</div>
                     ) : null}
@@ -575,7 +575,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
       {vm.weekMergedSpans.map((sp) => {
         const spColors = sp.colors && sp.colors.length > 0 ? sp.colors : [sp.color];
         return (
-          <div key={sp.id} onClick={sp.onClick} title={[sp.customer, sp.auditor2 || sp.purpose, sp.auditor2 ? '' : sp.auditor1].filter(Boolean).join(' - ')} style={{
+          <div onClick={sp.onClick} title={[sp.customer, sp.auditor2 || sp.purpose, sp.auditor2 ? '' : sp.auditor1].filter(Boolean).join(' - ')} style={{
             gridColumn: `${sp.startDay + 1} / span ${sp.span}`,
             gridRow: `${sp.gridRow + 2}`,
             zIndex: 2,
@@ -587,7 +587,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
           }}>
             <div style={{ width: '3px', background: getAccentBackground(spColors), flexShrink: 0, alignSelf: 'stretch' }} />
             <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#23282a' }}>{renderApptCode(sp.customer)}</div>
+              <div style={{ fontSize: '11.5px', fontWeight: 600, color: sp.isInternal ? '#10b981' : '#2756d6' }}>{renderApptCode(sp.customer)}</div>
               {sp.purpose ? (
                 <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{sp.purpose}</div>
               ) : null}

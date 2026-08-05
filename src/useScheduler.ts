@@ -1422,7 +1422,7 @@ export function useScheduler() {
     const nameWithSite = site ? `${mainName} - ${site}` : mainName;
     const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || (eng ? eng.name : ''));
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
-    return { ...a, _customer: apptAbbr(a) + ' · ' + (nameWithSite || 'Audit'), _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _colors: colors, _sel: sel, _onClick: () => select(a.id), _ord: ord, _eng: eng };
+    return { ...a, _customer: apptAbbr(a) + ' · ' + (nameWithSite || 'Audit'), _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _colors: colors, _sel: sel, _onClick: () => openDayDialog(a.week, a.day), _ord: ord, _eng: eng, _isInternal: isInternal };
   });
   // group consecutive same-order same-eng assignments into merged spans
   const sorted = [...weekCalendarChips].sort((a, b) => {
@@ -1452,8 +1452,8 @@ export function useScheduler() {
       ids: g.ids, startDay: g.startDay, span: g.endDay - g.startDay + 1, gridRow: row,
       id: c.id, site1: c.site1 || '', customer: c._customer, purpose: c._purpose,
       auditor1: c._auditor, color: c._color, colors: c._colors, selected: sel,
-      area: c.area || '', auditor2: c.auditor2 || '',
-      onClick: () => select(c.id),
+      area: c.area || '', auditor2: c.auditor2 || '', isInternal: c._isInternal,
+      onClick: () => openDayDialog(c.week, c.day),
     };
   });
   const weekCalendarDays = [0, 1, 2, 3, 4].map((day) => {
@@ -1461,7 +1461,7 @@ export function useScheduler() {
     const chips = weekCalendarChips.filter((c) => c.day === day && !mergedIds.has(c.id)).map((c) => ({
       id: c.id, site1: c.site1 || '', customer: c._customer, purpose: c._purpose,
       auditor1: c._auditor, qa: c._qa, color: c._color, colors: c._colors, onClick: c._onClick, selected: c._sel,
-      area: c.area || '', auditor2: c.auditor2 || '',
+      area: c.area || '', auditor2: c.auditor2 || '', isInternal: c._isInternal,
     }));
     return { day, chips, count: chips.length };
   });
