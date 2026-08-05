@@ -450,20 +450,20 @@ function Toolbar({ vm }: { vm: VM }) {
           <div style={css('display:flex;align-items:center;gap:6px;padding:5px 10px;background:#f6f7f4;border:1px solid #e4e7e0;border-radius:8px')}>
             <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600")}>{vm.stats.assignments}</span><span style={css('font-size:10.5px;color:#7a8079')}>appointments</span>
           </div>
-          <div style={css('display:flex;align-items:center;gap:6px;padding:5px 10px;background:#eef3ea;border:1px solid #c7d8bf;border-radius:8px')}>
-            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;color:#3d7840")}>
-              {vm.isYear ? vm.stats.yearInternals : vm.isMonth ? vm.stats.monthInternals : vm.stats.weekInternals}
-            </span>
-            <span style={css('font-size:10.5px;color:#477349')}>
-              {vm.isYear ? 'internals this year' : vm.isMonth ? 'internals this month' : 'internals this week'}
-            </span>
-          </div>
           <div style={css('display:flex;align-items:center;gap:6px;padding:5px 10px;background:#f0f4fa;border:1px solid #d4def0;border-radius:8px')}>
             <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;color:#3a6bc4")}>
               {vm.isYear ? vm.stats.yearCustomers : vm.isMonth ? vm.stats.monthCustomers : vm.stats.weekCustomers}
             </span>
             <span style={css('font-size:10.5px;color:#6a7da8')}>
               {vm.isYear ? 'customers this year' : vm.isMonth ? 'customers this month' : 'customers this week'}
+            </span>
+          </div>
+          <div style={css('display:flex;align-items:center;gap:6px;padding:5px 10px;background:#eef3ea;border:1px solid #c7d8bf;border-radius:8px')}>
+            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;color:#3d7840")}>
+              {vm.isYear ? vm.stats.yearInternals : vm.isMonth ? vm.stats.monthInternals : vm.stats.weekInternals}
+            </span>
+            <span style={css('font-size:10.5px;color:#477349')}>
+              {vm.isYear ? 'internals this year' : vm.isMonth ? 'internals this month' : 'internals this week'}
             </span>
           </div>
         </div>
