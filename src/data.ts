@@ -68,6 +68,7 @@ export function initialState(): State {
     overCell: null,
     draft: '',
     summaryYear: 2026,
+    searchQuery: '',
     purposeOptions: snapshot.purposeOptions || initialPurposeOptions.slice(),
     customerDepartmentOptions: snapshot.customerDepartmentOptions || initialCustomerDepartmentOptions.slice(),
     internalDepartmentOptions: snapshot.internalDepartmentOptions || initialInternalDepartmentOptions.slice(),

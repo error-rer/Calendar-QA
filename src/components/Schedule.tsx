@@ -77,8 +77,9 @@ export function Schedule({ vm }: { vm: VM }) {
           {vm.monthDesktop && <MonthGrid vm={vm} />}
           {vm.monthMobile && <MonthMobile vm={vm} />}
           {vm.isYear && <YearGrid vm={vm} />}
+          {vm.isSearch && <SearchView vm={vm} />}
 
-          {vm.emptyWeek && !vm.isMonth && !vm.isYear && (
+          {vm.emptyWeek && !vm.isMonth && !vm.isYear && !vm.isSearch && (
             <div style={css('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(238,240,234,.82)')}>
               <div style={css('text-align:center;max-width:300px;padding:20px')}>
                 <div style={css('font-size:15px;font-weight:700;color:#3c423d;margin-bottom:6px')}>No plan drafted for this week</div>
@@ -486,7 +487,132 @@ function MobileTimetable({ vm }: { vm: VM }) {
   );
 }
 
+function SearchView({ vm }: { vm: VM }) {
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const totalResults = vm.searchResults.reduce((n: number, g: any) => n + g.items.length, 0);
+
+  return (
+    <div style={css('padding:20px;max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px')}>
+      {/* Header bar */}
+      <div style={css('display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px')}>
+        <div style={css('display:flex;align-items:center;gap:10px')}>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#2756d6;letter-spacing:.6px")}>ALL APPOINTMENTS · SEARCH</div>
+          <div style={css('display:flex;align-items:center;gap:5px;padding:3px 8px;background:#f0f4fa;border:1px solid #d4def0;border-radius:6px')}>
+            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#3a6bc4")}>{totalResults}</span>
+            <span style={css('font-size:9.5px;color:#6a7da8')}>results</span>
+          </div>
+        </div>
+        <div style={css('font-size:12px;color:#8a9088')}>Sorted oldest → newest</div>
+      </div>
+
+      {vm.searchResults.length === 0 ? (
+        <div style={css('display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;background:#fff;border:1px solid #e4e7e0;border-radius:14px;gap:10px')}>
+          <div style={css('font-size:32px')}>🔍</div>
+          <div style={css('font-size:15px;font-weight:700;color:#3c423d')}>
+            {vm.searchQuery ? 'No results found' : 'No appointments match active filters'}
+          </div>
+          <div style={css('font-size:12.5px;color:#8a9088;text-align:center;max-width:300px;line-height:1.5')}>
+            {vm.searchQuery ? `No appointments match "${vm.searchQuery}"` : 'Try adjusting the sidebar filters or clear them.'}
+          </div>
+        </div>
+      ) : (
+        <div style={css('display:flex;flex-direction:column;gap:20px')}>
+          {vm.searchResults.map((group: any) => (
+            <div key={group.dateISO}>
+              {/* Date header */}
+              <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:10px')}>
+                <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:700;color:#15191e;background:#fff;border:1px solid #e0e3dc;border-radius:7px;padding:4px 10px")}>
+                  {group.dateLabel}
+                </div>
+                <div style={css('flex:1;height:1px;background:#e4e7e0')} />
+                <div style={css('font-size:10px;color:#a6aca2')}>{group.items.length} {group.items.length === 1 ? 'appt' : 'appts'}</div>
+              </div>
+
+              {/* Cards */}
+              <div style={css('display:flex;flex-direction:column;gap:8px')}>
+                {group.items.map((item: any) => {
+                  const isCS = !item.isInternal;
+                  const accentBg = isCS ? 'rgba(39,86,214,.07)' : 'rgba(16,185,129,.07)';
+                  const accentBorder = isCS ? '#c8d8f8' : '#a7dfc5';
+                  const accentBar = isCS ? '#2756d6' : '#10b981';
+                  const confirming = deleteConfirmId === item.id;
+                  return (
+                    <div key={item.id} style={{
+                      display: 'flex', alignItems: 'stretch',
+                      background: accentBg,
+                      border: `1px solid ${accentBorder}`,
+                      borderRadius: '10px', overflow: 'hidden',
+                      boxShadow: '0 2px 8px rgba(0,0,0,.04)',
+                    }}>
+                      {/* Left accent bar */}
+                      <div style={{ width: '4px', background: accentBar, flexShrink: 0 }} />
+
+                      {/* Content */}
+                      <div style={css('flex:1;padding:12px 14px;display:flex;flex-direction:column;gap:6px')}>
+                        <div style={css('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
+                          <span style={{
+                            fontFamily: "'IBM Plex Mono',monospace", fontSize: '10px', fontWeight: 700,
+                            padding: '2px 6px', borderRadius: '5px',
+                            background: isCS ? '#eef2fd' : '#e8f8f2',
+                            color: isCS ? '#2756d6' : '#10b981',
+                            border: `1px solid ${accentBorder}`,
+                            flexShrink: 0,
+                          } as React.CSSProperties}>{isCS ? 'CS' : 'IA'}</span>
+                          <span style={css('font-size:13.5px;font-weight:700;color:#15191e;line-height:1.3')}>
+                            {renderApptCode(item.code)}
+                          </span>
+                        </div>
+                        {item.purpose && (
+                          <div style={css('font-size:11.5px;color:#5c625c')}>{item.purpose}</div>
+                        )}
+                      </div>
+
+                      {/* Action buttons */}
+                      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '4px', padding: '10px 12px', borderLeft: `1px solid ${accentBorder}`, flexShrink: 0 } as React.CSSProperties}>
+                        {confirming ? (
+                          <>
+                            <div style={css('font-size:10px;font-weight:600;color:#c0392b;text-align:center;margin-bottom:2px')}>Delete?</div>
+                            <button
+                              onClick={() => { item.onDelete(); setDeleteConfirmId(null); }}
+                              style={css("padding:4px 10px;border:1px solid #e8b4b0;background:#fef2f2;color:#c0392b;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Archivo',sans-serif")}
+                            >Confirm</button>
+                            <button
+                              onClick={() => setDeleteConfirmId(null)}
+                              style={css("padding:4px 10px;border:1px solid #e2e5de;background:#fff;color:#5c625c;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
+                            >Cancel</button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={item.onView}
+                              style={css("padding:5px 10px;border:1px solid #e2e5de;background:#fff;color:#23282a;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;white-space:nowrap")}
+                            >Detail</button>
+                            <button
+                              onClick={item.onEdit}
+                              style={css("padding:5px 10px;border:1px solid #d4def0;background:#eef2fd;color:#2756d6;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;white-space:nowrap")}
+                            >Edit</button>
+                            <button
+                              onClick={() => setDeleteConfirmId(item.id)}
+                              style={css("padding:5px 10px;border:1px solid #f0d0d0;background:#fef2f2;color:#c0392b;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;white-space:nowrap")}
+                            >Delete</button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 function Toolbar({ vm }: { vm: VM }) {
+  const searchRef = useRef<HTMLInputElement>(null);
   return (
     <div style={vm.toolbarStyle}>
       {vm.isMobile && (
@@ -496,7 +622,21 @@ function Toolbar({ vm }: { vm: VM }) {
         <button onClick={vm.setWeekScale} style={vm.weekScaleStyle}>Week</button>
         <button onClick={vm.setMonthScale} style={vm.monthScaleStyle}>Month</button>
         <button onClick={vm.setYearScale} style={vm.yearScaleStyle}>Year</button>
+        <button
+          onClick={() => { vm.setSearchScale(); setTimeout(() => searchRef.current?.focus(), 80); }}
+          style={vm.searchScaleStyle}
+        >🔍 Search</button>
       </div>
+      {vm.isSearch && (
+        <input
+          ref={searchRef}
+          type="text"
+          placeholder="Search appointments…"
+          value={vm.searchQuery}
+          onChange={(e) => vm.setSearchQuery(e.target.value)}
+          style={css("flex:1;min-width:160px;max-width:340px;border:1px solid #d4def0;border-radius:8px;padding:6px 12px;font-size:13px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fff;box-shadow:0 0 0 2px rgba(39,86,214,.06)")}
+        />
+      )}
       <div style={css('flex:1')} />
       {vm.showStats && (
         <div style={css('display:flex;align-items:center;gap:7px')}>

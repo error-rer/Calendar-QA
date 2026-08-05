@@ -114,7 +114,7 @@ export interface EditDraft {
 
 export type Page = 'schedule' | 'admin' | 'profile' | 'summary';
 export type View = 'person' | 'plant' | 'site' | 'timetable';
-export type TimeScale = 'week' | 'month' | 'year';
+export type TimeScale = 'week' | 'month' | 'year' | 'search';
 export type AdminTab = 'engineers' | 'options';
 
 export interface EngineerForm {
@@ -163,6 +163,7 @@ export interface State {
   overCell: string | null;
   draft: string;
   summaryYear: number;
+  searchQuery: string;
   purposeOptions: string[];
   customerDepartmentOptions: string[];
   internalDepartmentOptions: string[];

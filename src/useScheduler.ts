@@ -1321,6 +1321,88 @@ export function useScheduler() {
   const yearCustomers = yearSummary.cs;
   const yearInternals = yearSummary.ia;
 
+  const isSearch = S.timeScale === 'search';
+  const setSearchQuery = (q: string) => setState({ searchQuery: q });
+  const setSearchScale = () => setState({ timeScale: 'search', selected: null, sidebarOpen: false, dayDialog: null });
+
+  // ---- search results (chronological, grouped by date) ----
+  const searchResults = useMemo(() => {
+    const q = (S.searchQuery || '').toLowerCase().trim();
+    const groups: {
+      dateLabel: string;
+      dateISO: string;
+      items: {
+        id: string; code: string; purpose: string; engName: string;
+        color: string; colors: string[]; isInternal: boolean;
+        onView: () => void; onEdit: () => void; onDelete: () => void;
+        weekOffset: number; day: number;
+      }[];
+    }[] = [];
+    const grouped: Record<string, typeof groups[0]> = {};
+
+    const allFiltered = S.assignments.filter((a) => {
+      const o = orderById(a.order);
+      if (!o) return false;
+      if (!matchesFilters(a, o)) return false;
+      if (!q) return true;
+      const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
+      const haystack = [
+        isInternal ? 'IA' : 'CS',
+        a.customer || o.customer || '',
+        a.area || '',
+        a.purpose || o.purpose || '',
+        a.site1 || a.site2 || o.plant || '',
+        a.auditor1 || '', a.auditor2 || '',
+        a.department1 || '', a.department2 || '',
+      ].join(' ').toLowerCase();
+      return haystack.includes(q);
+    });
+
+    // Sort by date (oldest first)
+    const sorted = [...allFiltered].sort((a, b) => {
+      const da = a.week * 5 + a.day;
+      const db = b.week * 5 + b.day;
+      return da - db;
+    });
+
+    for (const a of sorted) {
+      const o = orderById(a.order)!;
+      const e = engById(a.eng);
+      const pl = plantById(o.plant);
+      const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
+      const mainName = isInternal ? (a.area || 'Internal Audit') : (a.customer || o.customer || 'Customer Audit');
+      const site = (isInternal ? a.site2 : a.site1) || '';
+      const nameWithSite = site ? `${mainName} - ${site}` : mainName;
+      const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : ''));
+      const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
+      const colors = siteColorsOfAssignment(a, S.siteColors);
+      const color = colors[0] || (pl ? pl.color : '#999');
+
+      const base = new Date(2026, 5, 29 + a.week * 7);
+      base.setDate(base.getDate() + a.day);
+      const iso = fmtISO(base);
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const label = `${base.getDate()} ${months[base.getMonth()]} ${base.getFullYear()}`;
+
+      if (!grouped[iso]) {
+        grouped[iso] = { dateLabel: label, dateISO: iso, items: [] };
+        groups.push(grouped[iso]);
+      }
+      grouped[iso].items.push({
+        id: a.id,
+        code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''),
+        purpose: chipPurpose,
+        engName: auditorName,
+        color, colors, isInternal,
+        weekOffset: a.week, day: a.day,
+        onView: () => select(a.id),
+        onEdit: () => openEdit(a.id),
+        onDelete: () => removeAssign(a.id),
+      });
+    }
+    return groups;
+  }, [S.assignments, S.searchQuery, S.filterEmp, S.filterSite, S.filterCompany, S.filterAuditType, S.filterAuditTopic, S.filterApptType, S.siteColors]);
+
   const plantsVm = S.plants.map((p) => {
     const cnt = wk.filter((a) => {
       const o = orderById(a.order);
@@ -1940,6 +2022,8 @@ export function useScheduler() {
     yearYear: mYear,
     monthDesktop: isMonth && !isMobile, monthMobile: isMonth && isMobile,
     monthCells, monthWeekdayHeads, monthName, monthOrders, monthScheduledCount, monthOrderCount: monthOrders.length,
+    isSearch, searchQuery: S.searchQuery, setSearchQuery, setSearchScale, searchResults,
+    searchScaleStyle: S.timeScale === 'search' ? tabOn : tabOff,
     gridPerson: S.view === 'person' && !isMobile && S.timeScale === 'week',
     gridPlant: S.view === 'plant' && !isMobile && S.timeScale === 'week',
     gridSiteDept: S.view === 'site' && !isMobile && S.timeScale === 'week',
