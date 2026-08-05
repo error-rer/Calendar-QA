@@ -727,7 +727,7 @@ function MonthGrid({ vm }: { vm: VM }) {
                     }}>
                       <div style={{ width: '3px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
                       <div style={{ padding: '3px 5px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
-                        <div style={{ fontSize: '10.5px', fontWeight: 600, color: '#23282a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code)}</div>
+                        <div style={{ fontSize: '10.5px', fontWeight: 600, color: ch.isInternal ? '#10b981' : '#2756d6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code)}</div>
                         {ch.purpose ? (
                           <div style={{ fontSize: '9.5px', color: '#5c625c', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
                         ) : null}
@@ -771,7 +771,7 @@ function MonthMobile({ vm }: { vm: VM }) {
                     }}>
                       <div style={{ width: '2px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
                       <div style={{ padding: '2px 4px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
-                        <div style={{ fontSize: '8px', fontWeight: 600, color: '#23282a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code)}</div>
+                        <div style={{ fontSize: '8px', fontWeight: 600, color: ch.isInternal ? '#10b981' : '#2756d6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code)}</div>
                         {ch.purpose ? (
                           <div style={{ fontSize: '7.5px', color: '#5c625c', marginTop: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
                         ) : null}

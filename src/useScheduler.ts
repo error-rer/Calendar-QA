@@ -65,6 +65,7 @@ interface MonthChip {
   countTxt: string;
   dotStyle: CSSProperties;
   style: CSSProperties;
+  isInternal: boolean;
 }
 interface MonthCell {
   blank: boolean;
@@ -1130,6 +1131,7 @@ export function useScheduler() {
       const color = colors[0] || (pl ? pl.color : '#999');
       return {
         code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, engName: auditorName, color, colors,
+        isInternal,
         countTxt: '',
         dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: color, flexShrink: 0 }),
         style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: '#23282a', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
