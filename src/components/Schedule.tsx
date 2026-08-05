@@ -10,9 +10,10 @@ function renderApptCode(code: string) {
     if (spaceDotIdx !== -1) {
       const prefix = code.slice(0, spaceDotIdx);
       const rest = code.slice(spaceDotIdx);
+      const prefixColor = code.startsWith('CS') ? '#2756d6' : '#10b981';
       return (
         <>
-          <span style={{ color: '#757575', fontWeight: 600 }}>{prefix}</span>
+          <span style={{ color: prefixColor, fontWeight: 700 }}>{prefix}</span>
           <span>{rest}</span>
         </>
       );
