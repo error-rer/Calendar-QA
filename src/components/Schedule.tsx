@@ -925,14 +925,20 @@ function YearGrid({ vm }: { vm: VM }) {
 
               {/* Card Footer / Quick Action */}
               <div style={css('display:flex;align-items:center;justify-content:space-between;border-top:1px solid #f0f2ed;padding-top:8px;margin-top:2px')}>
-                <div style={css('font-size:10.5px;color:#7a8079')}>
+                <div style={css('display:flex;align-items:center;gap:5px')}>
                   {m.customerAppts > 0 || m.internalAppts > 0 ? (
-                    <span>
-                      <strong style={{ color: '#2756d6' }}>{m.customerAppts}</strong> CS ·{' '}
-                      <strong style={{ color: '#10b981' }}>{m.internalAppts}</strong> IA
-                    </span>
+                    <>
+                      <div style={css('display:flex;align-items:center;gap:4px;padding:3px 7px;background:#f0f4fa;border:1px solid #d4def0;border-radius:6px')}>
+                        <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#3a6bc4")}>{m.customerAppts}</span>
+                        <span style={css('font-size:9.5px;color:#6a7da8')}>CS</span>
+                      </div>
+                      <div style={css('display:flex;align-items:center;gap:4px;padding:3px 7px;background:#eef3ea;border:1px solid #c7d8bf;border-radius:6px')}>
+                        <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#3d7840")}>{m.internalAppts}</span>
+                        <span style={css('font-size:9.5px;color:#477349')}>IA</span>
+                      </div>
+                    </>
                   ) : (
-                    'No scheduled audits'
+                    <span style={css('font-size:10px;color:#a6aca2')}>No scheduled audits</span>
                   )}
                 </div>
                 <span style={css("font-family:'Archivo',sans-serif;font-size:11px;font-weight:700;color:#2756d6;display:flex;align-items:center;gap:3px")}>
