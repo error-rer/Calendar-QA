@@ -1124,7 +1124,7 @@ export function useScheduler() {
   const firstWd = mb.getDay();
   const daysInMonth = new Date(mYear, mMon + 1, 0).getDate();
   const monthWeekdayHeads = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-  const blankCellStyle = (): CSSProperties => ({ background: '#f8f9f6', border: '1px solid #e6e9e2', minHeight: isMobile ? '52px' : '112px' });
+  const blankCellStyle = (): CSSProperties => ({ background: '#f8f9f6', borderRight: '1px solid #e6e9e2', borderBottom: '1px solid #e6e9e2', minHeight: isMobile ? '52px' : '112px' });
   const monthCells: MonthCell[] = [];
   for (let i = 0; i < firstWd; i++) monthCells.push({ blank: true, style: blankCellStyle() });
   const monthOrderAgg: Record<string, { appointments: number; days: Record<number, 1>; engs: Record<string, 1> }> = {};
@@ -1171,7 +1171,7 @@ export function useScheduler() {
       blank: false, dateNum: String(dn), countTxt: appointments.length ? String(appointments.length) : '',
       chips, more, moreTxt: more > 0 ? '+' + more + ' more' : '',
       onClick: weekend ? () => {} : () => openDayDialog(slot.weekOffset, slot.wd),
-      style: sx({ position: 'relative', background: isSelected ? '#D1E3FF' : weekend ? '#f8f9f6' : '#fff', border: '1px solid #e6e9e2', minHeight: isMobile ? '52px' : '112px', padding: isMobile ? '5px' : '6px 8px', cursor: weekend ? 'default' : 'pointer', display: 'flex', flexDirection: 'column', gap: isMobile ? '2px' : '4px', overflow: 'hidden' }),
+      style: sx({ position: 'relative', background: isSelected ? '#D1E3FF' : weekend ? '#f8f9f6' : '#fff', borderRight: '1px solid #e6e9e2', borderBottom: '1px solid #e6e9e2', minHeight: isMobile ? '52px' : '112px', padding: isMobile ? '5px' : '6px 8px', cursor: weekend ? 'default' : 'pointer', display: 'flex', flexDirection: 'column', gap: isMobile ? '2px' : '4px', overflow: 'hidden' }),
       numStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: isMobile ? '11px' : '12px', fontWeight: isToday ? 700 : 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: isMobile ? '20px' : '24px', height: isMobile ? '20px' : '24px', borderRadius: '50%', background: isToday ? '#15191e' : 'transparent', color: isToday ? '#fff' : '#9aa097' }),
       countDotStyle: sx({ display: 'none' }),
     });
