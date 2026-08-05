@@ -703,12 +703,12 @@ function MobileSite({ vm }: { vm: VM }) {
 function MonthGrid({ vm }: { vm: VM }) {
   return (
     <div style={css('height:100%;display:flex;flex-direction:column')}>
-      <div style={css('display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid #e6e9e2;border-left:1px solid #e6e9e2;border-bottom:1px solid #e6e9e2')}>
+      <div style={css('display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid #e6e9e2;border-left:1px solid #e6e9e2')}>
         {vm.monthWeekdayHeads.map((h, i) => (
           <div key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.5px;text-align:center;padding:7px 0;border-right:1px solid #e6e9e2")}>{h}</div>
         ))}
       </div>
-      <div style={css('flex:1;display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;border-left:1px solid #e6e9e2')}>
+      <div style={css('flex:1;display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;border-left:1px solid #e6e9e2;border-bottom:1px solid #e6e9e2')}>
         {vm.monthCells.map((c, i) =>
           c.blank ? (
             <div key={i} style={c.style} />
@@ -748,12 +748,12 @@ function MonthGrid({ vm }: { vm: VM }) {
 function MonthMobile({ vm }: { vm: VM }) {
   return (
     <div style={css('height:100%;display:flex;flex-direction:column')}>
-      <div style={css('display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid #e6e9e2;border-left:1px solid #e6e9e2;border-bottom:1px solid #e6e9e2')}>
+      <div style={css('display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid #e6e9e2;border-left:1px solid #e6e9e2')}>
         {vm.monthWeekdayHeads.map((h, i) => (
           <div key={i} style={css("font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:600;color:#9aa097;text-align:center;padding:5px 0;border-right:1px solid #e6e9e2")}>{h}</div>
         ))}
       </div>
-      <div style={css('flex:1;display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;border-left:1px solid #e6e9e2')}>
+      <div style={css('flex:1;display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;border-left:1px solid #e6e9e2;border-bottom:1px solid #e6e9e2')}>
         {vm.monthCells.map((c, i) =>
           c.blank ? (
             <div key={i} style={c.style} />
