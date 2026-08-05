@@ -340,6 +340,36 @@ export function useScheduler() {
     return !matchesFilters(a, o);
   };
 
+  /** CS key = distinct (Purpose, Customer, Site); IA key = distinct (Area, Site). */
+  const summaryCounts = (assignments: Assignment[]) => {
+    const csKeys = new Set<string>();
+    const iaKeys = new Set<string>();
+    for (const a of assignments) {
+      const o = orderById(a.order);
+      if (!o) continue;
+      if (apptAbbr(a) === 'IA') {
+        iaKeys.add((a.area || '') + '\u0001' + (a.site2 || o.plant || ''));
+      } else {
+        csKeys.add((a.purpose || o.purpose || '') + '\u0001' + (a.customer || o.customer || '') + '\u0001' + (a.site1 || o.plant || ''));
+      }
+    }
+    return { cs: csKeys.size, ia: iaKeys.size };
+  };
+  /** Assignments (respecting sidebar filters) whose date falls within [start, end]. */
+  const assignmentsInRange = (start: Date, end: Date) => {
+    const out: Assignment[] = [];
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const slot = dateSlot(d);
+      if (slot.wd > 4) continue;
+      for (const a of S.assignments) {
+        if (a.week !== slot.weekOffset || a.day !== slot.wd) continue;
+        const o = orderById(a.order);
+        if (o && matchesFilters(a, o)) out.push(a);
+      }
+    }
+    return out;
+  };
+
   const log = (who: string, text: string, color: string) => {
     api.logActivity({ id: 'act' + ids.current.id++, who, text, ago: 'just now', color }).catch(() => {});
     setState((s) => ({
@@ -1096,9 +1126,6 @@ export function useScheduler() {
   const monthCells: MonthCell[] = [];
   for (let i = 0; i < firstWd; i++) monthCells.push({ blank: true, style: blankCellStyle() });
   const monthOrderAgg: Record<string, { appointments: number; days: Record<number, 1>; engs: Record<string, 1> }> = {};
-  const monthCustomerSet = new Set<string>();
-  const monthInternalSet = new Set<string>();
-  const internalPlants = new Set(['QMS', 'EHS', 'ESD']);
   for (let dn = 1; dn <= daysInMonth; dn++) {
     const date = new Date(mYear, mMon, dn);
     const slot = dateSlot(date);
@@ -1111,8 +1138,6 @@ export function useScheduler() {
     all.forEach((a) => {
       const o = orderById(a.order);
       if (!o || !matchesFilters(a, o)) return;
-      monthCustomerSet.add(o.customer);
-      if (internalPlants.has(o.plant)) monthInternalSet.add(o.plant);
       const g = monthOrderAgg[o.id] || (monthOrderAgg[o.id] = { appointments: 0, days: {}, engs: {} });
       g.appointments++;
       g.days[dn] = 1;
@@ -1197,8 +1222,9 @@ export function useScheduler() {
       const daysCount = new Date(year, m + 1, 0).getDate();
       const firstWd = (firstDay.getDay() + 6) % 7; // Mon = 0, Sun = 6
 
-      let customerAppts = 0;
-      let internalAppts = 0;
+      const csKeys = new Set<string>();
+      const iaKeys = new Set<string>();
+      let totalAppts = 0;
       const days = [];
 
       for (let i = 0; i < firstWd; i++) {
@@ -1220,12 +1246,13 @@ export function useScheduler() {
         let intCountOnDay = 0;
 
         for (const a of matchingAppts) {
-          const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
-          if (isInternal) {
-            internalAppts++;
+          const o = orderById(a.order)!;
+          totalAppts++;
+          if (apptAbbr(a) === 'IA') {
+            iaKeys.add((a.area || '') + '\u0001' + (a.site2 || o.plant || ''));
             intCountOnDay++;
           } else {
-            customerAppts++;
+            csKeys.add((a.purpose || o.purpose || '') + '\u0001' + (a.customer || o.customer || '') + '\u0001' + (a.site1 || o.plant || ''));
             custCountOnDay++;
           }
         }
@@ -1246,7 +1273,8 @@ export function useScheduler() {
         });
       }
 
-      const totalAppts = customerAppts + internalAppts;
+      const customerAppts = csKeys.size;
+      const internalAppts = iaKeys.size;
 
       monthsData.push({
         monthIndex: m,
@@ -1262,8 +1290,6 @@ export function useScheduler() {
     return monthsData;
   }, [mYear, S.assignments, S.siteColors, S.filterEmp, S.filterSite, S.filterCompany, S.filterAuditType, S.filterAuditTopic, S.filterApptType]);
 
-  const yearCustomersSet = new Set<string>();
-  const yearInternalSet = new Set<string>();
   let yearAssignmentsTotal = 0;
   for (let m = 0; m < 12; m++) {
     const daysCount = new Date(mYear, m + 1, 0).getDate();
@@ -1274,11 +1300,7 @@ export function useScheduler() {
         const appts = S.assignments.filter((a) => a.week === slot.weekOffset && a.day === slot.wd);
         appts.forEach((a) => {
           const o = orderById(a.order);
-          if (o && matchesFilters(a, o)) {
-            yearAssignmentsTotal++;
-            yearCustomersSet.add(o.customer);
-            if (internalPlants.has(o.plant)) yearInternalSet.add(o.plant);
-          }
+          if (o && matchesFilters(a, o)) yearAssignmentsTotal++;
         });
       }
     }
@@ -1301,26 +1323,20 @@ export function useScheduler() {
     };
   });
 
-  const weekCustomers = [...new Set(wk.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.customer).filter(Boolean))].length;
-  const weekInternals = [...new Set(wk.map((a) => orderById(a.order)).filter(Boolean).map((o) => o!.plant).filter((p) => internalPlants.has(p)))].length;
-  const monthCustomers = monthCustomerSet.size;
-  const monthInternals = monthInternalSet.size;
-  const yearCustomers = yearCustomersSet.size;
-  const yearInternals = yearInternalSet.size;
-  let monthCsCount = 0;
-  let monthIaCount = 0;
-  for (let dn = 1; dn <= daysInMonth; dn++) {
-    const date = new Date(mYear, mMon, dn);
-    const slot = dateSlot(date);
-    if (slot.wd > 4) continue;
-    S.assignments.forEach((a) => {
-      if (a.week !== slot.weekOffset || a.day !== slot.wd) return;
-      const o = orderById(a.order);
-      if (!o || !matchesFilters(a, o)) return;
-      if (a.site2 || a.auditor2 || a.department2 || a.area) monthIaCount++;
-      else monthCsCount++;
-    });
-  }
+  const weekSummary = summaryCounts(wk.filter((a) => {
+    const o = orderById(a.order);
+    return o ? matchesFilters(a, o) : false;
+  }));
+  const monthSummary = summaryCounts(assignmentsInRange(new Date(mYear, mMon, 1), new Date(mYear, mMon + 1, 0)));
+  const yearSummary = summaryCounts(assignmentsInRange(new Date(mYear, 0, 1), new Date(mYear, 11, 31)));
+  const weekCustomers = weekSummary.cs;
+  const weekInternals = weekSummary.ia;
+  const monthCustomers = monthSummary.cs;
+  const monthInternals = monthSummary.ia;
+  const yearCustomers = yearSummary.cs;
+  const yearInternals = yearSummary.ia;
+  const monthCsCount = monthSummary.cs;
+  const monthIaCount = monthSummary.ia;
 
   const plantsVm = S.plants.map((p) => {
     const cnt = wk.filter((a) => {
