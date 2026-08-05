@@ -1956,7 +1956,7 @@ export function useScheduler() {
     showTimetable, timetableRows, timetableGridCols, timetableEngName: timetableEng?.name || '',
     closeTimetable, mobileTimetableRows,
     presence, activity, detail,
-    emptyWeek: S.weekOffset !== todayWeekOffset && wk.length === 0 && !isMonth, copyWeek,
+    emptyWeek: S.timeScale === 'week' && S.weekOffset !== todayWeekOffset && wk.length === 0, copyWeek,
     toggleSidebar, closeSidebar, showSidebarBackdrop: isMobile && S.sidebarOpen,
     sidebarStyle, toolbarStyle, detailAsideStyle, modalOverlayStyle, modalCardStyle, modalColsStyle, modalColLeftStyle, modalColRightStyle,
     adminMainStyle, adminWrapStyle, adminStatGridStyle, loginWrapStyle, loginBrandStyle, loginFormWrapStyle,

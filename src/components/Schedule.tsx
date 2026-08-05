@@ -77,7 +77,7 @@ export function Schedule({ vm }: { vm: VM }) {
           {vm.monthMobile && <MonthMobile vm={vm} />}
           {vm.isYear && <YearGrid vm={vm} />}
 
-          {vm.emptyWeek && (
+          {vm.emptyWeek && !vm.isMonth && !vm.isYear && (
             <div style={css('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(238,240,234,.82)')}>
               <div style={css('text-align:center;max-width:300px;padding:20px')}>
                 <div style={css('font-size:15px;font-weight:700;color:#3c423d;margin-bottom:6px')}>No plan drafted for this week</div>
