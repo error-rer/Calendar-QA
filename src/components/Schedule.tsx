@@ -741,16 +741,6 @@ function MonthGrid({ vm }: { vm: VM }) {
           ),
         )}
       </div>
-      <div style={css('display:flex;align-items:center;gap:12px;padding:10px 14px;border-top:1px solid #e6e9e2;background:#fff')}>
-        <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.6px")}>MONTH SUMMARY</span>
-        <span style={css('font-size:13px;font-weight:600;color:#3c423d')}>
-          <strong style={{ color: '#2756d6' }}>{vm.monthCsCount}</strong> CS
-        </span>
-        <span style={css('font-size:13px;color:#cdd2c9')}>·</span>
-        <span style={css('font-size:13px;font-weight:600;color:#3c423d')}>
-          <strong style={{ color: '#10b981' }}>{vm.monthIaCount}</strong> IA
-        </span>
-      </div>
     </div>
   );
 }
@@ -794,16 +784,6 @@ function MonthMobile({ vm }: { vm: VM }) {
             </div>
           )
         )}
-      </div>
-      <div style={css('display:flex;align-items:center;gap:10px;padding:8px 12px;border-top:1px solid #e6e9e2;background:#fff')}>
-        <span style={css("font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>SUMMARY</span>
-        <span style={css('font-size:12px;font-weight:600;color:#3c423d')}>
-          <strong style={{ color: '#2756d6' }}>{vm.monthCsCount}</strong> CS
-        </span>
-        <span style={css('font-size:12px;color:#cdd2c9')}>·</span>
-        <span style={css('font-size:12px;font-weight:600;color:#3c423d')}>
-          <strong style={{ color: '#10b981' }}>{vm.monthIaCount}</strong> IA
-        </span>
       </div>
     </div>
   );

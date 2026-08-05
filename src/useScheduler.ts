@@ -1320,8 +1320,6 @@ export function useScheduler() {
   const monthInternals = monthSummary.ia;
   const yearCustomers = yearSummary.cs;
   const yearInternals = yearSummary.ia;
-  const monthCsCount = monthSummary.cs;
-  const monthIaCount = monthSummary.ia;
 
   const plantsVm = S.plants.map((p) => {
     const cnt = wk.filter((a) => {
@@ -1970,7 +1968,6 @@ export function useScheduler() {
     plants: plantsVm,
     personRows, plantRows, siteRows, mobilePersonRows, mobileSiteRows, mobileSiteDeptRows,
     weekCalendarDays, weekMergedSpans,
-    monthCsCount, monthIaCount,
     showTimetable, timetableRows, timetableGridCols, timetableEngName: timetableEng?.name || '',
     closeTimetable, mobileTimetableRows,
     presence, activity, detail,
