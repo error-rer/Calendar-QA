@@ -190,7 +190,7 @@ function DayDialogModal({ vm }: { vm: VM }) {
                         <div onClick={() => toggleExpand(chip.id)} style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} title="Click to expand embedded details">
                           <div style={css(`font-size:12.5px;font-weight:600;color:${chip.isInternal ? '#10b981' : '#2756d6'}`)}>{renderApptCode(chip.code)}</div>
                           {chip.purpose ? (
-                            <div style={css('font-size:11px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
+                            <div style={css(`font-size:11px;color:${chip.isInternal ? '#059669' : '#1d4ed8'};margin-top:2px;opacity:0.8`)}>{chip.purpose}</div>
                           ) : null}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
@@ -561,7 +561,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
                   <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
                     <div style={{ fontSize: '11.5px', fontWeight: 600, color: chip.isInternal ? '#10b981' : '#2756d6' }}>{renderApptCode(chip.customer)}</div>
                     {chip.purpose ? (
-                      <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{chip.purpose}</div>
+                      <div style={{ fontSize: '10px', color: chip.isInternal ? '#059669' : '#1d4ed8', marginTop: '1px', opacity: 0.8 }}>{chip.purpose}</div>
                     ) : null}
                   </div>
                 </div>
@@ -590,7 +590,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
             <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: '11.5px', fontWeight: 600, color: sp.isInternal ? '#10b981' : '#2756d6' }}>{renderApptCode(sp.customer)}</div>
               {sp.purpose ? (
-                <div style={{ fontSize: '10px', color: '#5c625c', marginTop: '1px' }}>{sp.purpose}</div>
+                <div style={{ fontSize: '10px', color: sp.isInternal ? '#059669' : '#1d4ed8', marginTop: '1px', opacity: 0.8 }}>{sp.purpose}</div>
               ) : null}
             </div>
           </div>
