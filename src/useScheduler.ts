@@ -1226,7 +1226,6 @@ export function useScheduler() {
 
       const csKeys = new Set<string>();
       const iaKeys = new Set<string>();
-      let totalAppts = 0;
       const days = [];
 
       for (let i = 0; i < firstWd; i++) {
@@ -1249,7 +1248,6 @@ export function useScheduler() {
 
         for (const a of matchingAppts) {
           const o = orderById(a.order)!;
-          totalAppts++;
           if (apptAbbr(a) === 'IA') {
             iaKeys.add((a.area || '') + '\u0001' + (a.site2 || o.plant || ''));
             intCountOnDay++;
@@ -1277,6 +1275,7 @@ export function useScheduler() {
 
       const customerAppts = csKeys.size;
       const internalAppts = iaKeys.size;
+      const totalAppts = customerAppts + internalAppts;
 
       monthsData.push({
         monthIndex: m,
