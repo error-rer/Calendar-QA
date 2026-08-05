@@ -751,22 +751,6 @@ function YearGrid({ vm }: { vm: VM }) {
             Click any month block to jump to Month View
           </div>
         </div>
-        <div style={css('display:flex;align-items:center;gap:10px;flex-wrap:wrap')}>
-          <div style={css('display:flex;align-items:center;gap:6px;padding:6px 12px;background:#f6f7f4;border:1px solid #e4e7e0;border-radius:8px')}>
-            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:700;color:#15191e")}>{vm.stats.assignments}</span>
-            <span style={css('font-size:11px;color:#6a706a;font-weight:600')}>Appointments</span>
-          </div>
-          <div style={css('display:flex;align-items:center;gap:6px;padding:6px 12px;background:#f0f4fa;border:1px solid #d4def0;border-radius:8px')}>
-            <span style={css('width:8px;height:8px;border-radius:50%;background:#50e3c2')} />
-            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:700;color:#2756d6")}>{vm.stats.yearCustomerAuditsTotal}</span>
-            <span style={css('font-size:11px;color:#2756d6;font-weight:600')}>Customer Audits (CS)</span>
-          </div>
-          <div style={css('display:flex;align-items:center;gap:6px;padding:6px 12px;background:#fef7ea;border:1px solid #fce3b5;border-radius:8px')}>
-            <span style={css('width:8px;height:8px;border-radius:50%;background:#f5a623')} />
-            <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:700;color:#d97706")}>{vm.stats.yearInternalAuditsTotal}</span>
-            <span style={css('font-size:11px;color:#d97706;font-weight:600')}>Internal Audits (IA)</span>
-          </div>
-        </div>
       </div>
 
       {/* 12 Month Grid Cards */}
@@ -851,9 +835,17 @@ function YearGrid({ vm }: { vm: VM }) {
                     textColor = '#a6aca2';
                     border = '1px solid #e8ebe4';
                   } else if (d.hasAppts) {
-                    bg = '#333333';
                     textColor = '#fff';
-                    border = '1px solid #333333';
+                    if (d.customerApptsCount > 0 && d.internalApptsCount > 0) {
+                      bg = 'linear-gradient(135deg, #2756d6 50%, #10b981 50%)';
+                      border = '1px solid #1e40af';
+                    } else if (d.customerApptsCount > 0) {
+                      bg = '#2756d6';
+                      border = '1px solid #1d4ed8';
+                    } else {
+                      bg = '#10b981';
+                      border = '1px solid #059669';
+                    }
                   }
 
                   return (
@@ -873,13 +865,6 @@ function YearGrid({ vm }: { vm: VM }) {
                       )}
                     >
                       <span>{d.dayNum}</span>
-                      {/* Indicator Dots for Appointments */}
-                      {d.hasAppts && (
-                        <div style={css('display:flex;gap:1.5px;position:absolute;bottom:2px')}>
-                          {d.customerApptsCount > 0 && <span style={css('width:3px;height:3px;border-radius:50%;background:#50e3c2')} />}
-                          {d.internalApptsCount > 0 && <span style={css('width:3px;height:3px;border-radius:50%;background:#f5a623')} />}
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -891,7 +876,7 @@ function YearGrid({ vm }: { vm: VM }) {
                   {m.customerAppts > 0 || m.internalAppts > 0 ? (
                     <span>
                       <strong style={{ color: '#2756d6' }}>{m.customerAppts}</strong> CS ·{' '}
-                      <strong style={{ color: '#0f9d8c' }}>{m.internalAppts}</strong> IA
+                      <strong style={{ color: '#C5C0FA' }}>{m.internalAppts}</strong> IA
                     </span>
                   ) : (
                     'No scheduled audits'
