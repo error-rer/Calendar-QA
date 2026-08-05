@@ -1307,6 +1307,20 @@ export function useScheduler() {
   const monthInternals = monthInternalSet.size;
   const yearCustomers = yearCustomersSet.size;
   const yearInternals = yearInternalSet.size;
+  let monthCsCount = 0;
+  let monthIaCount = 0;
+  for (let dn = 1; dn <= daysInMonth; dn++) {
+    const date = new Date(mYear, mMon, dn);
+    const slot = dateSlot(date);
+    if (slot.wd > 4) continue;
+    S.assignments.forEach((a) => {
+      if (a.week !== slot.weekOffset || a.day !== slot.wd) return;
+      const o = orderById(a.order);
+      if (!o || !matchesFilters(a, o)) return;
+      if (a.site2 || a.auditor2 || a.department2 || a.area) monthIaCount++;
+      else monthCsCount++;
+    });
+  }
 
   const plantsVm = S.plants.map((p) => {
     const cnt = wk.filter((a) => {
@@ -1955,6 +1969,7 @@ export function useScheduler() {
     plants: plantsVm,
     personRows, plantRows, siteRows, mobilePersonRows, mobileSiteRows, mobileSiteDeptRows,
     weekCalendarDays, weekMergedSpans,
+    monthCsCount, monthIaCount,
     showTimetable, timetableRows, timetableGridCols, timetableEngName: timetableEng?.name || '',
     closeTimetable, mobileTimetableRows,
     presence, activity, detail,
