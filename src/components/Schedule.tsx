@@ -794,7 +794,7 @@ function YearGrid({ vm }: { vm: VM }) {
                   style={css(
                     `font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;${
                       m.totalAppts > 0
-                        ? 'background:#eef8f3;color:#0f9d8c;border:1px solid #ccebe2;'
+                        ? 'background:#f3e8ff;color:#7c3aed;border:1px solid #ddd6fe;'
                         : 'background:#f4f6f1;color:#8a9088;border:1px solid #e2e5de;'
                     }`
                   )}
@@ -835,16 +835,16 @@ function YearGrid({ vm }: { vm: VM }) {
                     textColor = '#a6aca2';
                     border = '1px solid #e8ebe4';
                   } else if (d.hasAppts) {
-                    textColor = '#fff';
+                    textColor = '#15191e';
                     if (d.customerApptsCount > 0 && d.internalApptsCount > 0) {
-                      bg = 'linear-gradient(135deg, #2756d6 50%, #10b981 50%)';
-                      border = '1px solid #1e40af';
+                      bg = 'linear-gradient(135deg, #ADCEFF 50%, #CCEDD0 50%)';
+                      border = '1px solid #93c5fd';
                     } else if (d.customerApptsCount > 0) {
-                      bg = '#2756d6';
-                      border = '1px solid #1d4ed8';
+                      bg = '#ADCEFF';
+                      border = '1px solid #93c5fd';
                     } else {
-                      bg = '#10b981';
-                      border = '1px solid #059669';
+                      bg = '#CCEDD0';
+                      border = '1px solid #a7f3d0';
                     }
                   }
 
@@ -876,7 +876,7 @@ function YearGrid({ vm }: { vm: VM }) {
                   {m.customerAppts > 0 || m.internalAppts > 0 ? (
                     <span>
                       <strong style={{ color: '#2756d6' }}>{m.customerAppts}</strong> CS ·{' '}
-                      <strong style={{ color: '#C5C0FA' }}>{m.internalAppts}</strong> IA
+                      <strong style={{ color: '#10b981' }}>{m.internalAppts}</strong> IA
                     </span>
                   ) : (
                     'No scheduled audits'
