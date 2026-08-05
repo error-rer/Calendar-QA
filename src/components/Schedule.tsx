@@ -132,9 +132,23 @@ function EyeOnIcon({ size = 15, color = '#2756d6' }: { size?: number; color?: st
 
 function DayDialogModal({ vm }: { vm: VM }) {
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
+  const [confirmDeleteChip, setConfirmDeleteChip] = useState<{ id: string; code: string; onDelete: () => void } | null>(null);
 
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const requestDelete = (chip: any) => {
+    setConfirmDeleteChip({ id: chip.id, code: chip.code, onDelete: chip.onDelete });
+  };
+
+  const confirmDelete = () => {
+    confirmDeleteChip?.onDelete();
+    setConfirmDeleteChip(null);
+  };
+
+  const cancelDelete = () => {
+    setConfirmDeleteChip(null);
   };
 
   if (!vm.dayDialogOpen) return null;
@@ -197,7 +211,7 @@ function DayDialogModal({ vm }: { vm: VM }) {
                           </button>
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); chip.onDelete(); }}
+                            onClick={(e) => { e.stopPropagation(); requestDelete(chip); }}
                             title="Delete appointment"
                             style={css('width:30px;height:30px;border:1px solid #fecaca;background:#fef2f2;border-radius:7px;cursor:pointer;color:#dc2626;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center')}
                           >
@@ -264,6 +278,44 @@ function DayDialogModal({ vm }: { vm: VM }) {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Popup */}
+      {confirmDeleteChip && (
+        <div
+          onClick={cancelDelete}
+          style={css('position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(15,20,25,0.55);animation:fadeIn .12s ease')}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={css('background:#fff;border-radius:14px;padding:28px 28px 22px;width:100%;max-width:360px;box-shadow:0 12px 48px rgba(0,0,0,.22);display:flex;flex-direction:column;gap:18px;margin:20px')}
+          >
+            {/* Icon */}
+            <div style={css('display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center')}>
+              <div style={css('width:48px;height:48px;border-radius:50%;background:#fef2f2;border:1.5px solid #fecaca;display:flex;align-items:center;justify-content:center;font-size:20px')}>🗑️</div>
+              <div style={css('font-size:15px;font-weight:700;color:#15191e')}>Delete this appointment?</div>
+              <div style={css('font-size:12px;color:#6a706a;line-height:1.5')}>
+                <span style={css('font-weight:600;color:#23282a')}>{confirmDeleteChip.code}</span>
+                {' '}will be permanently removed. This action cannot be undone.
+              </div>
+            </div>
+            {/* Buttons */}
+            <div style={css('display:flex;gap:10px')}>
+              <button
+                onClick={cancelDelete}
+                style={css("flex:1;padding:9px 0;border:1px solid #dde0d9;background:#f4f6f1;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#3c423d;font-family:'Archivo',sans-serif")}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                style={css("flex:1;padding:9px 0;border:none;background:#dc2626;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#fff;font-family:'Archivo',sans-serif")}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
