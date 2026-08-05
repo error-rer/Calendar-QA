@@ -132,27 +132,150 @@ function EyeOnIcon({ size = 15, color = '#2756d6' }: { size?: number; color?: st
   );
 }
 
+function ApptCard({ chip }: { chip: any }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; code: string; onDelete: () => void } | null>(null);
+
+  const toggleExpand = () => setIsExpanded((prev) => !prev);
+  const requestDelete = () => setConfirmDelete({ id: chip.id, code: chip.code, onDelete: chip.onDelete });
+  const confirmDeleteAction = () => {
+    confirmDelete?.onDelete();
+    setConfirmDelete(null);
+  };
+  const cancelDelete = () => setConfirmDelete(null);
+
+  const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #e4e7e0', borderRadius: '8px', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'stretch' }}>
+        <div style={{ width: '4px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
+        <div style={css('min-width:0;flex:1;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px')}>
+          <div onClick={toggleExpand} style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} title="Click to expand embedded details">
+            <div style={css(`font-size:12.5px;font-weight:600;color:${chip.isInternal ? '#10b981' : '#2756d6'}`)}>{renderApptCode(chip.code)}</div>
+            {chip.purpose ? (
+              <div style={css('font-size:11px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
+            ) : null}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); toggleExpand(); }}
+              title={isExpanded ? 'Hide embedded details' : 'Show embedded details'}
+              style={css('width:30px;height:30px;border:1px solid ' + (isExpanded ? '#9bb0e8' : '#dde0d9') + ';background:' + (isExpanded ? '#eef2fd' : '#f4f6f1') + ';border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')}
+            >
+              {isExpanded ? <EyeOnIcon size={15} color="#2756d6" /> : <EyeOffIcon size={15} color="#5c625c" />}
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); chip.onEdit(); }}
+              title="Edit appointment details"
+              style={css('width:30px;height:30px;border:1px solid #dde0d9;background:#f4f6f1;border-radius:7px;cursor:pointer;color:#3c423d;font-size:13px;display:flex;align-items:center;justify-content:center')}
+            >
+              ✏️
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); requestDelete(); }}
+              title="Delete appointment"
+              style={css('width:30px;height:30px;border:1px solid #fecaca;background:#fef2f2;border-radius:7px;cursor:pointer;color:#dc2626;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center')}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div style={css('border-top:1px solid #e7eae3;background:#fafbf8;padding:12px 14px;display:flex;flex-direction:column;gap:8px')}>
+          <div style={css('display:flex;align-items:center;gap:8px')}>
+            <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;${
+              chip.isInternal
+                ? 'color:#0f9d8c;background:#eef8f3;border:1px solid #ccebe2;'
+                : 'color:#2756d6;background:#eef2fd;border:1px solid #d8e2fa;'
+            }`)}>
+              {chip.isInternal ? 'Internal Audit' : 'Customer Audit'}
+            </span>
+            {chip.site && (
+              <span style={css('font-size:11.5px;color:#23282a;font-weight:600')}>
+                Site: <span style={css('color:#15191e')}>{chip.site}</span>
+              </span>
+            )}
+          </div>
+
+          <div style={css('display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:#5c625c')}>
+            {!chip.isInternal ? (
+              <>
+                {chip.customer && <div>Customer: <span style={css('color:#15191e;font-weight:600')}>{chip.customer}</span></div>}
+                {chip.endCustomer && <div>End customer: <span style={css('color:#3c423d')}>{chip.endCustomer}</span></div>}
+                {chip.apptPurpose && <div>Purpose: <span style={css('color:#3c423d')}>{chip.apptPurpose}</span></div>}
+                {chip.auditor && <div>Auditor: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
+                {chip.department && <div>Department: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
+              </>
+            ) : (
+              <>
+                {chip.area && <div>Area: <span style={css('color:#15191e;font-weight:600')}>{chip.area}</span></div>}
+                {chip.auditor && <div>Auditor: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
+                {chip.department && <div>Department: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
+              </>
+            )}
+          </div>
+
+          {(chip.major || chip.minor || chip.ofi || chip.request || chip.utl1 || chip.utl2 || chip.utl3) ? (
+            <div style={css('display:flex;gap:8px;flex-wrap:wrap;margin-top:2px')}>
+              {!!chip.major && <span style={css('font-size:10px;color:#b32f2f;font-weight:600')}>Major: {chip.major}</span>}
+              {!!chip.minor && <span style={css('font-size:10px;color:#c2620c;font-weight:600')}>Minor: {chip.minor}</span>}
+              {!!chip.ofi && <span style={css('font-size:10px;color:#5b7fd6;font-weight:600')}>OFI: {chip.ofi}</span>}
+              {!!chip.request && <span style={css('font-size:10px;color:#1f8a5b;font-weight:600')}>Request: {chip.request}</span>}
+              {!!chip.utl1 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL1: {chip.utl1}</span>}
+              {!!chip.utl2 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL2: {chip.utl2}</span>}
+              {!!chip.utl3 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL3: {chip.utl3}</span>}
+            </div>
+          ) : null}
+
+          <EmbeddedNotes notes={chip.notes || []} onAddNote={chip.onAddNote} />
+        </div>
+      )}
+
+      {confirmDelete && (
+        <div
+          onClick={cancelDelete}
+          style={css('position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(15,20,25,0.55);animation:fadeIn .12s ease')}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={css('background:#fff;border-radius:14px;padding:28px 28px 22px;width:100%;max-width:360px;box-shadow:0 12px 48px rgba(0,0,0,.22);display:flex;flex-direction:column;gap:18px;margin:20px')}
+          >
+            <div style={css('display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center')}>
+              <div style={css('width:48px;height:48px;border-radius:50%;background:#fef2f2;border:1.5px solid #fecaca;display:flex;align-items:center;justify-content:center;font-size:20px')}>🗑️</div>
+              <div style={css('font-size:15px;font-weight:700;color:#15191e')}>Delete this appointment?</div>
+              <div style={css('font-size:12px;color:#6a706a;line-height:1.5')}>
+                <span style={css('font-weight:600;color:#23282a')}>{confirmDelete.code}</span>
+                {' '}will be permanently removed. This action cannot be undone.
+              </div>
+            </div>
+            <div style={css('display:flex;gap:10px')}>
+              <button
+                onClick={cancelDelete}
+                style={css("flex:1;padding:9px 0;border:1px solid #dde0d9;background:#f4f6f1;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#3c423d;font-family:'Archivo',sans-serif")}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteAction}
+                style={css("flex:1;padding:9px 0;border:none;background:#dc2626;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#fff;font-family:'Archivo',sans-serif")}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DayDialogModal({ vm }: { vm: VM }) {
-  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
-  const [confirmDeleteChip, setConfirmDeleteChip] = useState<{ id: string; code: string; onDelete: () => void } | null>(null);
-
-  const toggleExpand = (id: string) => {
-    setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const requestDelete = (chip: any) => {
-    setConfirmDeleteChip({ id: chip.id, code: chip.code, onDelete: chip.onDelete });
-  };
-
-  const confirmDelete = () => {
-    confirmDeleteChip?.onDelete();
-    setConfirmDeleteChip(null);
-  };
-
-  const cancelDelete = () => {
-    setConfirmDeleteChip(null);
-  };
-
   if (!vm.dayDialogOpen) return null;
 
   return (
@@ -180,144 +303,14 @@ function DayDialogModal({ vm }: { vm: VM }) {
             <div style={css('text-align:center;padding:24px 0;color:#9aa097;font-size:12px;font-style:italic')}>No appointments this day</div>
           ) : (
             <div style={css('display:flex;flex-direction:column;gap:8px')}>
-              {vm.dayDialogChips.map((chip) => {
-                const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
-                const isExpanded = !!expandedIds[chip.id];
-                return (
-                  <div key={chip.id} style={{ display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #e4e7e0', borderRadius: '8px', overflow: 'hidden' }}>
-                    <div style={{ display: 'flex', alignItems: 'stretch' }}>
-                      <div style={{ width: '4px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
-                      <div style={css('min-width:0;flex:1;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px')}>
-                        <div onClick={() => toggleExpand(chip.id)} style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} title="Click to expand embedded details">
-                          <div style={css(`font-size:12.5px;font-weight:600;color:${chip.isInternal ? '#10b981' : '#2756d6'}`)}>{renderApptCode(chip.code)}</div>
-                          {chip.purpose ? (
-                            <div style={css('font-size:11px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
-                          ) : null}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); toggleExpand(chip.id); }}
-                            title={isExpanded ? 'Hide embedded details' : 'Show embedded details'}
-                            style={css('width:30px;height:30px;border:1px solid ' + (isExpanded ? '#9bb0e8' : '#dde0d9') + ';background:' + (isExpanded ? '#eef2fd' : '#f4f6f1') + ';border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')}
-                          >
-                            {isExpanded ? <EyeOnIcon size={15} color="#2756d6" /> : <EyeOffIcon size={15} color="#5c625c" />}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); chip.onEdit(); }}
-                            title="Edit appointment details"
-                            style={css('width:30px;height:30px;border:1px solid #dde0d9;background:#f4f6f1;border-radius:7px;cursor:pointer;color:#3c423d;font-size:13px;display:flex;align-items:center;justify-content:center')}
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); requestDelete(chip); }}
-                            title="Delete appointment"
-                            style={css('width:30px;height:30px;border:1px solid #fecaca;background:#fef2f2;border-radius:7px;cursor:pointer;color:#dc2626;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center')}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {isExpanded && (
-                      <div style={css('border-top:1px solid #e7eae3;background:#fafbf8;padding:12px 14px;display:flex;flex-direction:column;gap:8px')}>
-                        <div style={css('display:flex;align-items:center;gap:8px')}>
-                          <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;${
-                            chip.isInternal
-                              ? 'color:#0f9d8c;background:#eef8f3;border:1px solid #ccebe2;'
-                              : 'color:#2756d6;background:#eef2fd;border:1px solid #d8e2fa;'
-                          }`)}>
-                            {chip.isInternal ? 'Internal Audit' : 'Customer Audit'}
-                          </span>
-                          {chip.site && (
-                            <span style={css('font-size:11.5px;color:#23282a;font-weight:600')}>
-                              Site: <span style={css('color:#15191e')}>{chip.site}</span>
-                            </span>
-                          )}
-                        </div>
-
-                        <div style={css('display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:#5c625c')}>
-                          {!chip.isInternal ? (
-                            <>
-                              {chip.customer && <div>Customer: <span style={css('color:#15191e;font-weight:600')}>{chip.customer}</span></div>}
-                              {chip.endCustomer && <div>End customer: <span style={css('color:#3c423d')}>{chip.endCustomer}</span></div>}
-                              {chip.apptPurpose && <div>Purpose: <span style={css('color:#3c423d')}>{chip.apptPurpose}</span></div>}
-                              {chip.auditor && <div>Auditor: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
-                              {chip.department && <div>Department: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
-                            </>
-                          ) : (
-                            <>
-                              {chip.area && <div>Area: <span style={css('color:#15191e;font-weight:600')}>{chip.area}</span></div>}
-                              {chip.auditor && <div>Auditor: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
-                              {chip.department && <div>Department: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
-                            </>
-                          )}
-                        </div>
-
-                        {(chip.major || chip.minor || chip.ofi || chip.request || chip.utl1 || chip.utl2 || chip.utl3) ? (
-                          <div style={css('display:flex;gap:8px;flex-wrap:wrap;margin-top:2px')}>
-                            {!!chip.major && <span style={css('font-size:10px;color:#b32f2f;font-weight:600')}>Major: {chip.major}</span>}
-                            {!!chip.minor && <span style={css('font-size:10px;color:#c2620c;font-weight:600')}>Minor: {chip.minor}</span>}
-                            {!!chip.ofi && <span style={css('font-size:10px;color:#5b7fd6;font-weight:600')}>OFI: {chip.ofi}</span>}
-                            {!!chip.request && <span style={css('font-size:10px;color:#1f8a5b;font-weight:600')}>Request: {chip.request}</span>}
-                            {!!chip.utl1 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL1: {chip.utl1}</span>}
-                            {!!chip.utl2 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL2: {chip.utl2}</span>}
-                            {!!chip.utl3 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL3: {chip.utl3}</span>}
-                          </div>
-                        ) : null}
-
-                        <EmbeddedNotes notes={chip.notes || []} onAddNote={chip.onAddNote} />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              {vm.dayDialogChips.map((chip) => (
+                <ApptCard key={chip.id} chip={chip} />
+              ))}
             </div>
           )}
         </div>
       </div>
 
-      {/* Delete Confirmation Popup */}
-      {confirmDeleteChip && (
-        <div
-          onClick={cancelDelete}
-          style={css('position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(15,20,25,0.55);animation:fadeIn .12s ease')}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={css('background:#fff;border-radius:14px;padding:28px 28px 22px;width:100%;max-width:360px;box-shadow:0 12px 48px rgba(0,0,0,.22);display:flex;flex-direction:column;gap:18px;margin:20px')}
-          >
-            {/* Icon */}
-            <div style={css('display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center')}>
-              <div style={css('width:48px;height:48px;border-radius:50%;background:#fef2f2;border:1.5px solid #fecaca;display:flex;align-items:center;justify-content:center;font-size:20px')}>🗑️</div>
-              <div style={css('font-size:15px;font-weight:700;color:#15191e')}>Delete this appointment?</div>
-              <div style={css('font-size:12px;color:#6a706a;line-height:1.5')}>
-                <span style={css('font-weight:600;color:#23282a')}>{confirmDeleteChip.code}</span>
-                {' '}will be permanently removed. This action cannot be undone.
-              </div>
-            </div>
-            {/* Buttons */}
-            <div style={css('display:flex;gap:10px')}>
-              <button
-                onClick={cancelDelete}
-                style={css("flex:1;padding:9px 0;border:1px solid #dde0d9;background:#f4f6f1;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#3c423d;font-family:'Archivo',sans-serif")}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                style={css("flex:1;padding:9px 0;border:none;background:#dc2626;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#fff;font-family:'Archivo',sans-serif")}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -488,7 +481,6 @@ function MobileTimetable({ vm }: { vm: VM }) {
 }
 
 function SearchView({ vm }: { vm: VM }) {
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const totalResults = vm.searchResults.reduce((n: number, g: any) => n + g.items.length, 0);
 
   return (
@@ -530,77 +522,9 @@ function SearchView({ vm }: { vm: VM }) {
 
               {/* Cards */}
               <div style={css('display:flex;flex-direction:column;gap:8px')}>
-                {group.items.map((item: any) => {
-                  const isCS = !item.isInternal;
-                  const accentBg = isCS ? 'rgba(39,86,214,.07)' : 'rgba(16,185,129,.07)';
-                  const accentBorder = isCS ? '#c8d8f8' : '#a7dfc5';
-                  const accentBar = isCS ? '#2756d6' : '#10b981';
-                  const confirming = deleteConfirmId === item.id;
-                  return (
-                    <div key={item.id} style={{
-                      display: 'flex', alignItems: 'stretch',
-                      background: accentBg,
-                      border: `1px solid ${accentBorder}`,
-                      borderRadius: '10px', overflow: 'hidden',
-                      boxShadow: '0 2px 8px rgba(0,0,0,.04)',
-                    }}>
-                      {/* Left accent bar */}
-                      <div style={{ width: '4px', background: accentBar, flexShrink: 0 }} />
-
-                      {/* Content */}
-                      <div style={css('flex:1;padding:12px 14px;display:flex;flex-direction:column;gap:6px')}>
-                        <div style={css('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
-                          <span style={{
-                            fontFamily: "'IBM Plex Mono',monospace", fontSize: '10px', fontWeight: 700,
-                            padding: '2px 6px', borderRadius: '5px',
-                            background: isCS ? '#eef2fd' : '#e8f8f2',
-                            color: isCS ? '#2756d6' : '#10b981',
-                            border: `1px solid ${accentBorder}`,
-                            flexShrink: 0,
-                          } as React.CSSProperties}>{isCS ? 'CS' : 'IA'}</span>
-                          <span style={css('font-size:13.5px;font-weight:700;color:#15191e;line-height:1.3')}>
-                            {renderApptCode(item.code)}
-                          </span>
-                        </div>
-                        {item.purpose && (
-                          <div style={css('font-size:11.5px;color:#5c625c')}>{item.purpose}</div>
-                        )}
-                      </div>
-
-                      {/* Action buttons */}
-                      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '4px', padding: '10px 12px', borderLeft: `1px solid ${accentBorder}`, flexShrink: 0 } as React.CSSProperties}>
-                        {confirming ? (
-                          <>
-                            <div style={css('font-size:10px;font-weight:600;color:#c0392b;text-align:center;margin-bottom:2px')}>Delete?</div>
-                            <button
-                              onClick={() => { item.onDelete(); setDeleteConfirmId(null); }}
-                              style={css("padding:4px 10px;border:1px solid #e8b4b0;background:#fef2f2;color:#c0392b;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Archivo',sans-serif")}
-                            >Confirm</button>
-                            <button
-                              onClick={() => setDeleteConfirmId(null)}
-                              style={css("padding:4px 10px;border:1px solid #e2e5de;background:#fff;color:#5c625c;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
-                            >Cancel</button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              onClick={item.onView}
-                              style={css("padding:5px 10px;border:1px solid #e2e5de;background:#fff;color:#23282a;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;white-space:nowrap")}
-                            >Detail</button>
-                            <button
-                              onClick={item.onEdit}
-                              style={css("padding:5px 10px;border:1px solid #d4def0;background:#eef2fd;color:#2756d6;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;white-space:nowrap")}
-                            >Edit</button>
-                            <button
-                              onClick={() => setDeleteConfirmId(item.id)}
-                              style={css("padding:5px 10px;border:1px solid #f0d0d0;background:#fef2f2;color:#c0392b;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;white-space:nowrap")}
-                            >Delete</button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                {group.items.map((item: any) => (
+                  <ApptCard key={item.id} chip={item} />
+                ))}
               </div>
             </div>
           ))}

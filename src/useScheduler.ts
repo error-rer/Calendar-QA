@@ -1325,20 +1325,81 @@ export function useScheduler() {
   const setSearchQuery = (q: string) => setState({ searchQuery: q });
   const setSearchScale = () => setState({ timeScale: 'search', selected: null, sidebarOpen: false, dayDialog: null });
 
+  // ---- shared appointment chip fields (used by Day popup and Search results) ----
+  const apptChipFields = (a: Assignment) => {
+    const o = orderById(a.order)!;
+    const e = engById(a.eng);
+    const pl = plantById(o.plant);
+    const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
+    const mainName = isInternal ? (a.area || 'Internal Audit') : (a.customer || o.customer || 'Customer Audit');
+    const site = (isInternal ? a.site2 : a.site1) || '';
+    const nameWithSite = site ? `${mainName} - ${site}` : mainName;
+    const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : ''));
+    const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
+    const colors = siteColorsOfAssignment(a, S.siteColors);
+    const color = colors[0] || (pl ? pl.color : '#999');
+    const notesList = (S.comments[a.id] || []).map((m) => ({
+      id: m.id,
+      who: m.who,
+      initials: m.initials,
+      text: m.text,
+      ago: m.ago,
+      color: m.color,
+      avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '50%', background: m.color || '#2756d6', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9.5px', fontWeight: 600, flexShrink: 0 }),
+      onDelete: () => removeComment(a.id, m.id),
+    }));
+    const onAddNote = (text: string) => {
+      if (!text.trim()) return;
+      const comment = { id: 'c' + ids.current.id++, who: 'You', initials: 'YO', text: text.trim(), ago: 'just now', color: '#2756d6' };
+      api.createComment(a.id, comment).catch(() => {});
+      setState((s) => {
+        const list = (s.comments[a.id] || []).concat([comment]);
+        const nextComments = { ...s.comments, [a.id]: list };
+        try {
+          localStorage.setItem('calendar_qa_comments', JSON.stringify(nextComments));
+        } catch {}
+        return { comments: nextComments };
+      });
+    };
+    return {
+      id: a.id,
+      code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''),
+      purpose: chipPurpose,
+      engName: auditorName,
+      color, colors, isInternal,
+      site,
+      customer: a.customer || '',
+      endCustomer: a.endCustomer || '',
+      area: a.area || '',
+      auditor: (isInternal ? a.auditor2 : a.auditor1) || '',
+      auditor1: a.auditor1 || '',
+      auditor2: a.auditor2 || '',
+      department: (isInternal ? a.department2 : a.department1) || '',
+      department1: a.department1 || '',
+      department2: a.department2 || '',
+      apptPurpose: a.purpose || '',
+      major: a.major,
+      minor: a.minor,
+      ofi: a.ofi,
+      request: a.request,
+      utl1: a.utl1,
+      utl2: a.utl2,
+      utl3: a.utl3,
+      notes: notesList,
+      onAddNote,
+    };
+  };
+
   // ---- search results (chronological, grouped by date) ----
   const searchResults = useMemo(() => {
     const q = (S.searchQuery || '').toLowerCase().trim();
-    const groups: {
+    type SearchGroup = {
       dateLabel: string;
       dateISO: string;
-      items: {
-        id: string; code: string; purpose: string; engName: string;
-        color: string; colors: string[]; isInternal: boolean;
-        onView: () => void; onEdit: () => void; onDelete: () => void;
-        weekOffset: number; day: number;
-      }[];
-    }[] = [];
-    const grouped: Record<string, typeof groups[0]> = {};
+      items: (ReturnType<typeof apptChipFields> & { weekOffset: number; day: number; onView: () => void; onEdit: () => void; onDelete: () => void })[];
+    };
+    const groups: SearchGroup[] = [];
+    const grouped: Record<string, SearchGroup> = {};
 
     const allFiltered = S.assignments.filter((a) => {
       const o = orderById(a.order);
@@ -1366,18 +1427,6 @@ export function useScheduler() {
     });
 
     for (const a of sorted) {
-      const o = orderById(a.order)!;
-      const e = engById(a.eng);
-      const pl = plantById(o.plant);
-      const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
-      const mainName = isInternal ? (a.area || 'Internal Audit') : (a.customer || o.customer || 'Customer Audit');
-      const site = (isInternal ? a.site2 : a.site1) || '';
-      const nameWithSite = site ? `${mainName} - ${site}` : mainName;
-      const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : ''));
-      const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
-      const colors = siteColorsOfAssignment(a, S.siteColors);
-      const color = colors[0] || (pl ? pl.color : '#999');
-
       const base = new Date(2026, 5, 29 + a.week * 7);
       base.setDate(base.getDate() + a.day);
       const iso = fmtISO(base);
@@ -1389,11 +1438,7 @@ export function useScheduler() {
         groups.push(grouped[iso]);
       }
       grouped[iso].items.push({
-        id: a.id,
-        code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''),
-        purpose: chipPurpose,
-        engName: auditorName,
-        color, colors, isInternal,
+        ...apptChipFields(a),
         weekOffset: a.week, day: a.day,
         onView: () => select(a.id),
         onEdit: () => openEdit(a.id),
@@ -1401,7 +1446,7 @@ export function useScheduler() {
       });
     }
     return groups;
-  }, [S.assignments, S.searchQuery, S.filterEmp, S.filterSite, S.filterCompany, S.filterAuditType, S.filterAuditTopic, S.filterApptType, S.siteColors]);
+  }, [S.assignments, S.searchQuery, S.comments, S.filterEmp, S.filterSite, S.filterCompany, S.filterAuditType, S.filterAuditTopic, S.filterApptType, S.siteColors]);
 
   const plantsVm = S.plants.map((p) => {
     const cnt = wk.filter((a) => {
@@ -1857,105 +1902,21 @@ export function useScheduler() {
       })
     : [];
   const dayDialogChips = dayDialogAssignments.map((a) => {
-    const o = orderById(a.order);
     const e = engById(a.eng);
-    if (!o || !e) return null;
-    const pl = plantById(o.plant);
-    const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
-    const mainName = isInternal ? (a.area || 'Internal Audit') : (a.customer || o.customer || 'Customer Audit');
-    const site = (isInternal ? a.site2 : a.site1) || '';
-    const nameWithSite = site ? `${mainName} - ${site}` : mainName;
-    const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || e.name);
-    const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
-    const colors = siteColorsOfAssignment(a, S.siteColors);
-    const notesList = (S.comments[a.id] || []).map((m) => ({
-      id: m.id,
-      who: m.who,
-      initials: m.initials,
-      text: m.text,
-      ago: m.ago,
-      color: m.color,
-      avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '50%', background: m.color || '#2756d6', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9.5px', fontWeight: 600, flexShrink: 0 }),
-      onDelete: () => removeComment(a.id, m.id),
-    }));
-
-    const onAddNote = (text: string) => {
-      if (!text.trim()) return;
-      const comment = { id: 'c' + ids.current.id++, who: 'You', initials: 'YO', text: text.trim(), ago: 'just now', color: '#2756d6' };
-      api.createComment(a.id, comment).catch(() => {});
-      setState((s) => {
-        const list = (s.comments[a.id] || []).concat([comment]);
-        const nextComments = { ...s.comments, [a.id]: list };
-        try {
-          localStorage.setItem('calendar_qa_comments', JSON.stringify(nextComments));
-        } catch {}
-        return { comments: nextComments };
-      });
-    };
-
-    const color = colors[0] || (pl ? pl.color : '#999');
+    if (!e) return null;
     return {
-      id: a.id,
-      code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''),
-      purpose: chipPurpose,
-      engName: auditorName,
-      color,
-      colors,
-      isInternal,
-      site,
-      customer: a.customer || '',
-      endCustomer: a.endCustomer || '',
-      area: a.area || '',
-      auditor: (isInternal ? a.auditor2 : a.auditor1) || '',
-      auditor1: a.auditor1 || '',
-      auditor2: a.auditor2 || '',
-      department: (isInternal ? a.department2 : a.department1) || '',
-      department1: a.department1 || '',
-      department2: a.department2 || '',
-      apptPurpose: a.purpose || '',
-      major: a.major,
-      minor: a.minor,
-      ofi: a.ofi,
-      request: a.request,
-      utl1: a.utl1,
-      utl2: a.utl2,
-      utl3: a.utl3,
-      notes: notesList,
-      onAddNote,
+      ...apptChipFields(a),
       onView: () => select(a.id),
       onEdit: () => { closeDayDialog(); openEdit(a.id); },
       onDelete: () => removeAssign(a.id),
       onClick: () => select(a.id),
     };
-  }).filter(Boolean) as {
-    id: string;
-    code: string;
-    purpose: string;
-    engName: string;
-    color: string;
-    colors: string[];
-    isInternal: boolean;
-    site: string;
-    customer: string;
-    endCustomer: string;
-    area: string;
-    auditor: string;
-    department: string;
-    apptPurpose: string;
-    major?: number;
-    minor?: number;
-    ofi?: number;
-    request?: number;
-    utl1?: number;
-    utl2?: number;
-    utl3?: number;
-    notes: { id: string; who: string; initials: string; text: string; ago: string; color: string; avatarStyle: CSSProperties; onDelete: () => void }[];
-    onAddNote: (text: string) => void;
+  }).filter(Boolean) as (ReturnType<typeof apptChipFields> & {
     onView: () => void;
     onEdit: () => void;
     onDelete: () => void;
     onClick: () => void;
-  }[];
+  })[];
   const dayDialogInfo = dayDialogOpen
     ? { label: S.dayDialog!.day >= 0 && S.dayDialog!.day < 5 ? dayNames[S.dayDialog!.day] : '', date: dayDialogDate }
     : null;
