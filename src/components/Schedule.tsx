@@ -14,7 +14,7 @@ function renderApptCode(code: string) {
       return (
         <>
           <span style={{ color: prefixColor, fontWeight: 700 }}>{prefix}</span>
-          <span>{rest}</span>
+          <span style={{ color: prefixColor }}>{rest}</span>
         </>
       );
     }
