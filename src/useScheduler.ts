@@ -1484,14 +1484,17 @@ export function useScheduler() {
       if (!o) return false;
       if (!matchesFilters(a, o)) return false;
       if (!q) return true;
+      const e = engById(a.eng);
       const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
       const haystack = [
         isInternal ? 'IA' : 'CS',
         a.customer || o.customer || '',
+        a.endCustomer || '',
         a.area || '',
         a.purpose || o.purpose || '',
         a.site1 || a.site2 || o.plant || '',
         a.auditor1 || '', a.auditor2 || '',
+        e ? e.name : '',
         a.department1 || '', a.department2 || '',
       ].join(' ').toLowerCase();
       return haystack.includes(q);
@@ -1526,54 +1529,7 @@ export function useScheduler() {
     return groups;
   }, [S.assignments, S.searchQuery, S.comments, S.filterEmp, S.filterSite, S.filterCompany, S.filterAuditType, S.filterAuditTopic, S.filterApptType, S.siteColors]);
 
-  // ---- search autocomplete suggestions (global data connection across attributes) ----
-  const searchSuggestions = useMemo(() => {
-    const activeAssignments = S.assignments.filter((a) => {
-      const o = orderById(a.order);
-      return !!o && matchesFilters(a, o);
-    });
 
-    const suggestionsMap = new Map<string, { label: string; category: string }>();
-
-    const addSuggestion = (text: string, category: string) => {
-      const clean = text.trim();
-      if (!clean) return;
-      const key = clean.toLowerCase();
-      if (!suggestionsMap.has(key)) {
-        suggestionsMap.set(key, { label: clean, category });
-      }
-    };
-
-    // Preset type suggestions
-    addSuggestion('CS', 'Type');
-    addSuggestion('IA', 'Type');
-
-    for (const a of activeAssignments) {
-      const o = orderById(a.order)!;
-      const e = engById(a.eng);
-
-      if (a.customer) addSuggestion(a.customer, 'Customer');
-      if (o.customer) addSuggestion(o.customer, 'Customer');
-      if (a.endCustomer) addSuggestion(a.endCustomer, 'End Customer');
-
-      if (a.site1) a.site1.split('/').forEach((s) => addSuggestion(s, 'Site'));
-      if (a.site2) a.site2.split('/').forEach((s) => addSuggestion(s, 'Site'));
-      if (o.plant) addSuggestion(o.plant, 'Plant');
-
-      if (a.area) addSuggestion(a.area, 'Area');
-      if (a.purpose) addSuggestion(a.purpose, 'Purpose');
-      if (o.purpose) addSuggestion(o.purpose, 'Purpose');
-
-      if (a.department1) addSuggestion(a.department1, 'Department');
-      if (a.department2) addSuggestion(a.department2, 'Department');
-
-      if (e && e.name) addSuggestion(e.name, 'Auditor');
-      if (a.auditor1) a.auditor1.split(',').forEach((s) => addSuggestion(s, 'Auditor'));
-      if (a.auditor2) a.auditor2.split(',').forEach((s) => addSuggestion(s, 'Auditor'));
-    }
-
-    return Array.from(suggestionsMap.values()).sort((a, b) => a.label.localeCompare(b.label));
-  }, [S.assignments, S.engineers, S.orders, S.filterEmp, S.filterSite, S.filterCompany, S.filterAuditType, S.filterAuditTopic, S.filterApptType]);
 
   const plantsVm = S.plants.map((p) => {
     const cnt = wk.filter((a) => {
@@ -1974,6 +1930,68 @@ export function useScheduler() {
       .filter((s) => !removedSet.has(s))
       .sort();
   }, [S.engineers, S.assignments, S.auditorOptions, removedSet]);
+
+  // ---- search autocomplete suggestions (filter-driven & appointment card data connected) ----
+  const searchSuggestions = useMemo(() => {
+    const activeAssignments = S.assignments.filter((a) => {
+      const o = orderById(a.order);
+      return !!o && matchesFilters(a, o);
+    });
+
+    const suggestionsMap = new Map<string, { label: string; category: string }>();
+
+    const addSuggestion = (text: string, category: string) => {
+      const clean = text.trim();
+      if (!clean) return;
+      const key = clean.toLowerCase();
+      if (!suggestionsMap.has(key)) {
+        suggestionsMap.set(key, { label: clean, category });
+      }
+    };
+
+    // 1. Classification Types
+    addSuggestion('CS', 'Type');
+    addSuggestion('IA', 'Type');
+
+    // 2. Filter Criteria options
+    computedAuditorOptions.forEach((name) => addSuggestion(name, 'Auditor'));
+    computedCustomerOptions.forEach((c) => addSuggestion(c, 'Customer'));
+    computedPurposeOptions.forEach((p) => addSuggestion(p, 'Purpose'));
+    S.siteCodeOptions.forEach((s) => addSuggestion(s, 'Site'));
+    S.customerDepartmentOptions.forEach((d) => addSuggestion(d, 'Department'));
+    S.internalDepartmentOptions.forEach((d) => addSuggestion(d, 'Department'));
+
+    // 3. Appointment Card attributes
+    for (const a of activeAssignments) {
+      const o = orderById(a.order)!;
+      const e = engById(a.eng);
+
+      if (a.customer) addSuggestion(a.customer, 'Customer');
+      if (o.customer) addSuggestion(o.customer, 'Customer');
+      if (a.endCustomer) addSuggestion(a.endCustomer, 'End Customer');
+
+      if (a.site1) a.site1.split('/').forEach((s) => addSuggestion(s, 'Site'));
+      if (a.site2) a.site2.split('/').forEach((s) => addSuggestion(s, 'Site'));
+      if (o.plant) addSuggestion(o.plant, 'Plant');
+
+      if (a.area) addSuggestion(a.area, 'Area');
+      if (a.purpose) addSuggestion(a.purpose, 'Purpose');
+      if (o.purpose) addSuggestion(o.purpose, 'Purpose');
+
+      if (a.department1) addSuggestion(a.department1, 'Department');
+      if (a.department2) addSuggestion(a.department2, 'Department');
+
+      if (e && e.name) addSuggestion(e.name, 'Auditor');
+      if (a.auditor1) a.auditor1.split(',').forEach((s) => addSuggestion(s, 'Auditor'));
+      if (a.auditor2) a.auditor2.split(',').forEach((s) => addSuggestion(s, 'Auditor'));
+    }
+
+    return Array.from(suggestionsMap.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [
+    S.assignments, S.engineers, S.orders, S.siteCodeOptions, S.customerDepartmentOptions, S.internalDepartmentOptions,
+    computedAuditorOptions, computedCustomerOptions, computedPurposeOptions,
+    S.filterEmp, S.filterSite, S.filterCompany, S.filterAuditType, S.filterAuditTopic, S.filterApptType
+  ]);
 
   const employeeOptions = useMemo(() => {
     const filterOptions = S.engineers
