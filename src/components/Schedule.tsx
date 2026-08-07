@@ -79,15 +79,6 @@ export function Schedule({ vm }: { vm: VM }) {
           {vm.isYear && <YearGrid vm={vm} />}
           {vm.isSearch && <SearchView vm={vm} />}
 
-          {vm.emptyWeek && !vm.isMonth && !vm.isYear && !vm.isSearch && (
-            <div style={css('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(238,240,234,.82)')}>
-              <div style={css('text-align:center;max-width:300px;padding:20px')}>
-                <div style={css('font-size:15px;font-weight:700;color:#3c423d;margin-bottom:6px')}>No plan drafted for this week</div>
-                <div style={css('font-size:12.5px;color:#7a807a;line-height:1.4;margin-bottom:16px')}>Start from the current week's coverage and adjust, or build from scratch.</div>
-                <button onClick={vm.copyWeek} style={css("background:#15191e;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}>Copy current week's plan</button>
-              </div>
-            </div>
-          )}
         </main>
       </div>
 
