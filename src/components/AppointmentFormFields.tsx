@@ -780,9 +780,9 @@ export function AppointmentFormFields({
   const id = (name: string) => `${idPrefix}-${name}`;
 
   const isCustomerEHS = v.department1 === 'EHS';
-  const customerSiteOptions = isCustomerEHS
-    ? siteOptions.filter((s) => ['U1', 'U2', 'U3'].includes(s))
-    : siteOptions;
+  // Customer site is always restricted to these 5 fixed values (EHS filtering no longer applies)
+  void isCustomerEHS; // retained for future use
+  const customerSiteOptions = ['U1', 'U2A', 'U2B', 'U3A', 'U3T'];
 
   const isInternalEHS = v.department2 === 'EHS';
   const internalSiteOptions = isInternalEHS
@@ -864,7 +864,8 @@ export function AppointmentFormFields({
                 onChange={(e) => {
                   const newDept = e.target.value;
                   const currentSites = v.site1.split('/').map((s) => s.trim()).filter(Boolean);
-                  const validSites = currentSites.filter((s) => !newDept || newDept !== 'EHS' || ['U1', 'U2', 'U3'].includes(s));
+                  // Re-validate against the fixed customer site list
+                  const validSites = currentSites.filter((s) => customerSiteOptions.includes(s));
                   onChange({ department1: newDept, site1: validSites.join('/') });
                 }}
                 style={sel}
