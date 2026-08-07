@@ -325,15 +325,70 @@ export function useScheduler() {
   // identically. Reads the assignment's own site/customer/department where it has one
   // (matching the denormalized model), falling back to the order's for older/incomplete data.
   const matchesFilters = (a: Assignment, o: Order) => {
-    if (S.filterEmp.length > 0 && !S.filterEmp.includes(a.eng)) return false;
-    if (S.filterCompany.length > 0 && !S.filterCompany.includes(a.customer || o.customer)) return false;
+    if (S.filterEmp.length > 0) {
+      const e = engById(a.eng);
+      const apptEmpValues = new Set<string>();
+      if (a.eng) apptEmpValues.add(a.eng);
+      if (e && e.name) apptEmpValues.add(e.name.toLowerCase());
+      if (a.auditor1) {
+        a.auditor1.split(',').forEach((s) => {
+          const t = s.trim().toLowerCase();
+          if (t) apptEmpValues.add(t);
+        });
+      }
+      if (a.auditor2) {
+        a.auditor2.split(',').forEach((s) => {
+          const t = s.trim().toLowerCase();
+          if (t) apptEmpValues.add(t);
+        });
+      }
+      const matchesEmp = S.filterEmp.some((filterVal) => {
+        const f = filterVal.toLowerCase();
+        return apptEmpValues.has(filterVal) || apptEmpValues.has(f);
+      });
+      if (!matchesEmp) return false;
+    }
+
+    if (S.filterCompany.length > 0) {
+      const apptCustomerStr = a.customer || o.customer || '';
+      const apptCustomers = apptCustomerStr.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+      const matchesCompany = S.filterCompany.some((filterVal) => {
+        const f = filterVal.toLowerCase();
+        return apptCustomers.includes(f) || apptCustomerStr.toLowerCase() === f;
+      });
+      if (!matchesCompany) return false;
+    }
+
     if (S.filterSite.length > 0) {
       const apptSiteStr = a.site1 || a.site2 || o.plant || '';
-      const apptSites = apptSiteStr.split('/').map((s) => s.trim()).filter(Boolean);
-      if (!apptSites.some((site) => S.filterSite.includes(site))) return false;
+      const apptSites = apptSiteStr.split('/').map((s) => s.trim().toLowerCase()).filter(Boolean);
+      const matchesSite = S.filterSite.some((filterVal) => {
+        const f = filterVal.toLowerCase();
+        return apptSites.includes(f);
+      });
+      if (!matchesSite) return false;
     }
-    if (S.filterAuditTopic.length > 0 && !S.filterAuditTopic.includes(a.department1 || a.department2 || '')) return false;
-    if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(a.purpose || o.purpose)) return false;
+
+    if (S.filterAuditTopic.length > 0) {
+      const deptStr = a.department1 || a.department2 || '';
+      const depts = deptStr.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+      const matchesTopic = S.filterAuditTopic.some((filterVal) => {
+        const f = filterVal.toLowerCase();
+        return depts.includes(f) || deptStr.toLowerCase() === f;
+      });
+      if (!matchesTopic) return false;
+    }
+
+    if (S.filterAuditType.length > 0) {
+      const purposeStr = a.purpose || o.purpose || '';
+      const purposes = purposeStr.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+      const matchesType = S.filterAuditType.some((filterVal) => {
+        const f = filterVal.toLowerCase();
+        return purposes.includes(f) || purposeStr.toLowerCase() === f;
+      });
+      if (!matchesType) return false;
+    }
+
     if (S.filterApptType.length > 0 && !S.filterApptType.includes(apptAbbr(a))) return false;
     return true;
   };
