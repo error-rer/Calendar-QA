@@ -331,7 +331,9 @@ export function useScheduler() {
       const apptAuditors = apptAuditorStr.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
       const matchesEmp = S.filterEmp.some((filterVal) => {
         const f = filterVal.toLowerCase();
-        return apptAuditors.includes(f);
+        const matchingEng = S.engineers.find((eng) => eng.id === filterVal);
+        const engName = matchingEng ? matchingEng.name.toLowerCase() : '';
+        return apptAuditors.includes(f) || (engName && apptAuditors.includes(engName));
       });
       if (!matchesEmp) return false;
     }
