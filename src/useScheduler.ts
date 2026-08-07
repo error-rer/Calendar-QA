@@ -327,24 +327,11 @@ export function useScheduler() {
   const matchesFilters = (a: Assignment, o: Order) => {
     if (S.filterEmp.length > 0) {
       const e = engById(a.eng);
-      const apptEmpValues = new Set<string>();
-      if (a.eng) apptEmpValues.add(a.eng);
-      if (e && e.name) apptEmpValues.add(e.name.toLowerCase());
-      if (a.auditor1) {
-        a.auditor1.split(',').forEach((s) => {
-          const t = s.trim().toLowerCase();
-          if (t) apptEmpValues.add(t);
-        });
-      }
-      if (a.auditor2) {
-        a.auditor2.split(',').forEach((s) => {
-          const t = s.trim().toLowerCase();
-          if (t) apptEmpValues.add(t);
-        });
-      }
+      const apptAuditorStr = [a.auditor1 || '', a.auditor2 || '', e ? e.name : '', a.eng || ''].join(',');
+      const apptAuditors = apptAuditorStr.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
       const matchesEmp = S.filterEmp.some((filterVal) => {
         const f = filterVal.toLowerCase();
-        return apptEmpValues.has(filterVal) || apptEmpValues.has(f);
+        return apptAuditors.includes(f);
       });
       if (!matchesEmp) return false;
     }
