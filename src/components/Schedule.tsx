@@ -692,6 +692,126 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
   );
 }
 
+function SearchSortDropdown({ vm }: { vm: VM }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const currentSort = vm.searchSort || 'oldest';
+  const label = currentSort === 'newest' ? 'Sorted: Newest → Oldest' : 'Sorted: Oldest → Newest';
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative', display: 'inline-block' }}>
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '5px 11px',
+          background: '#fff',
+          border: '1px solid #dde0d9',
+          borderRadius: '7px',
+          cursor: 'pointer',
+          fontSize: '12px',
+          fontFamily: "'Archivo',sans-serif",
+          color: '#3c423d',
+          fontWeight: 600,
+          boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+        }}
+      >
+        <span>{label}</span>
+        <span style={{ fontSize: '9px', color: '#8a9088', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}>▼</span>
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            right: 0,
+            marginTop: '4px',
+            background: '#fff',
+            border: '1px solid #dde0d9',
+            borderRadius: '8px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+            zIndex: 100,
+            minWidth: '170px',
+            padding: '4px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '2px',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              vm.setSearchSort('oldest');
+              setOpen(false);
+            }}
+            style={{
+              padding: '7px 10px',
+              borderRadius: '6px',
+              border: 'none',
+              background: currentSort === 'oldest' ? '#eef2fd' : 'transparent',
+              color: currentSort === 'oldest' ? '#2756d6' : '#23282a',
+              fontSize: '12px',
+              fontFamily: "'Archivo',sans-serif",
+              fontWeight: currentSort === 'oldest' ? 700 : 500,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+              textAlign: 'left',
+            }}
+          >
+            <span>Oldest (Default)</span>
+            {currentSort === 'oldest' && <span style={{ color: '#2756d6', fontWeight: 700 }}>✓</span>}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              vm.setSearchSort('newest');
+              setOpen(false);
+            }}
+            style={{
+              padding: '7px 10px',
+              borderRadius: '6px',
+              border: 'none',
+              background: currentSort === 'newest' ? '#eef2fd' : 'transparent',
+              color: currentSort === 'newest' ? '#2756d6' : '#23282a',
+              fontSize: '12px',
+              fontFamily: "'Archivo',sans-serif",
+              fontWeight: currentSort === 'newest' ? 700 : 500,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+              textAlign: 'left',
+            }}
+          >
+            <span>Newest</span>
+            {currentSort === 'newest' && <span style={{ color: '#2756d6', fontWeight: 700 }}>✓</span>}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SearchView({ vm }: { vm: VM }) {
   const totalResults = vm.searchResults.reduce((n: number, g: any) => n + g.items.length, 0);
 
@@ -716,7 +836,7 @@ function SearchView({ vm }: { vm: VM }) {
             <span style={css('font-size:9.5px;color:#6a7da8')}>results</span>
           </div>
         </div>
-        <div style={css('font-size:12px;color:#8a9088')}>Sorted oldest → newest</div>
+        <SearchSortDropdown vm={vm} />
       </div>
 
       {allItems.length === 0 ? (

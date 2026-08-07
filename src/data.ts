@@ -69,6 +69,7 @@ export function initialState(): State {
     draft: '',
     summaryYear: 2026,
     searchQuery: '',
+    searchSort: 'oldest',
     purposeOptions: snapshot.purposeOptions || initialPurposeOptions.slice(),
     customerDepartmentOptions: snapshot.customerDepartmentOptions || initialCustomerDepartmentOptions.slice(),
     internalDepartmentOptions: snapshot.internalDepartmentOptions || initialInternalDepartmentOptions.slice(),

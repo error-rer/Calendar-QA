@@ -1500,11 +1500,12 @@ export function useScheduler() {
       return haystack.includes(q);
     });
 
-    // Sort by date (oldest first)
+    // Sort by date: 'oldest' (default) -> past to future; 'newest' -> future to past
+    const isNewest = S.searchSort === 'newest';
     const sorted = [...allFiltered].sort((a, b) => {
       const da = a.week * 5 + a.day;
       const db = b.week * 5 + b.day;
-      return da - db;
+      return isNewest ? db - da : da - db;
     });
 
     for (const a of sorted) {
@@ -1527,7 +1528,7 @@ export function useScheduler() {
       });
     }
     return groups;
-  }, [S.assignments, S.searchQuery, S.comments, S.filterEmp, S.filterSite, S.filterCompany, S.filterAuditType, S.filterAuditTopic, S.filterApptType, S.siteColors]);
+  }, [S.assignments, S.searchQuery, S.searchSort, S.comments, S.filterEmp, S.filterSite, S.filterCompany, S.filterAuditType, S.filterAuditTopic, S.filterApptType, S.siteColors]);
 
 
 
@@ -2129,6 +2130,7 @@ export function useScheduler() {
     monthDesktop: isMonth && !isMobile, monthMobile: isMonth && isMobile,
     monthCells, monthWeekdayHeads, monthName, monthOrders, monthScheduledCount, monthOrderCount: monthOrders.length,
     isSearch, searchQuery: S.searchQuery, setSearchQuery, setSearchScale, searchResults, searchSuggestions,
+    searchSort: S.searchSort || 'oldest', setSearchSort: (sort: 'oldest' | 'newest') => setState({ searchSort: sort }),
     searchScaleStyle: S.timeScale === 'search' ? tabOn : tabOff,
     gridPerson: S.view === 'person' && !isMobile && S.timeScale === 'week',
     gridPlant: S.view === 'plant' && !isMobile && S.timeScale === 'week',

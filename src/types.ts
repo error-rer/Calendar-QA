@@ -164,6 +164,7 @@ export interface State {
   draft: string;
   summaryYear: number;
   searchQuery: string;
+  searchSort?: 'oldest' | 'newest';
   purposeOptions: string[];
   customerDepartmentOptions: string[];
   internalDepartmentOptions: string[];
