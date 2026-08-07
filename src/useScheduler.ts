@@ -1526,6 +1526,57 @@ export function useScheduler() {
     return groups;
   }, [S.assignments, S.searchQuery, S.comments, S.filterEmp, S.filterSite, S.filterCompany, S.filterAuditType, S.filterAuditTopic, S.filterApptType, S.siteColors]);
 
+  // ---- search autocomplete suggestions (global data connection across attributes) ----
+  const searchSuggestions = useMemo(() => {
+    const activeAssignments = S.assignments.filter((a) => {
+      const o = orderById(a.order);
+      return !!o && matchesFilters(a, o);
+    });
+
+    const suggestionsMap = new Map<string, { label: string; category: string }>();
+
+    const addSuggestion = (text: string, category: string) => {
+      const clean = text.trim();
+      if (!clean) return;
+      const key = clean.toLowerCase();
+      if (!suggestionsMap.has(key)) {
+        suggestionsMap.set(key, { label: clean, category });
+      }
+    };
+
+    // Preset type suggestions
+    addSuggestion('CS', 'Type');
+    addSuggestion('IA', 'Type');
+    addSuggestion('Customer Audit', 'Type');
+    addSuggestion('Internal Audit', 'Type');
+
+    for (const a of activeAssignments) {
+      const o = orderById(a.order)!;
+      const e = engById(a.eng);
+
+      if (a.customer) addSuggestion(a.customer, 'Customer');
+      if (o.customer) addSuggestion(o.customer, 'Customer');
+      if (a.endCustomer) addSuggestion(a.endCustomer, 'End Customer');
+
+      if (a.site1) a.site1.split('/').forEach((s) => addSuggestion(s, 'Site'));
+      if (a.site2) a.site2.split('/').forEach((s) => addSuggestion(s, 'Site'));
+      if (o.plant) addSuggestion(o.plant, 'Plant');
+
+      if (a.area) addSuggestion(a.area, 'Area');
+      if (a.purpose) addSuggestion(a.purpose, 'Purpose');
+      if (o.purpose) addSuggestion(o.purpose, 'Purpose');
+
+      if (a.department1) addSuggestion(a.department1, 'Department');
+      if (a.department2) addSuggestion(a.department2, 'Department');
+
+      if (e && e.name) addSuggestion(e.name, 'Auditor');
+      if (a.auditor1) a.auditor1.split(',').forEach((s) => addSuggestion(s, 'Auditor'));
+      if (a.auditor2) a.auditor2.split(',').forEach((s) => addSuggestion(s, 'Auditor'));
+    }
+
+    return Array.from(suggestionsMap.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [S.assignments, S.engineers, S.orders, S.filterEmp, S.filterSite, S.filterCompany, S.filterAuditType, S.filterAuditTopic, S.filterApptType]);
+
   const plantsVm = S.plants.map((p) => {
     const cnt = wk.filter((a) => {
       const o = orderById(a.order);
@@ -2061,7 +2112,7 @@ export function useScheduler() {
     yearYear: mYear,
     monthDesktop: isMonth && !isMobile, monthMobile: isMonth && isMobile,
     monthCells, monthWeekdayHeads, monthName, monthOrders, monthScheduledCount, monthOrderCount: monthOrders.length,
-    isSearch, searchQuery: S.searchQuery, setSearchQuery, setSearchScale, searchResults,
+    isSearch, searchQuery: S.searchQuery, setSearchQuery, setSearchScale, searchResults, searchSuggestions,
     searchScaleStyle: S.timeScale === 'search' ? tabOn : tabOff,
     gridPerson: S.view === 'person' && !isMobile && S.timeScale === 'week',
     gridPlant: S.view === 'plant' && !isMobile && S.timeScale === 'week',
