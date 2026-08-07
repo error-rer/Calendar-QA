@@ -1547,8 +1547,6 @@ export function useScheduler() {
     // Preset type suggestions
     addSuggestion('CS', 'Type');
     addSuggestion('IA', 'Type');
-    addSuggestion('Customer Audit', 'Type');
-    addSuggestion('Internal Audit', 'Type');
 
     for (const a of activeAssignments) {
       const o = orderById(a.order)!;
