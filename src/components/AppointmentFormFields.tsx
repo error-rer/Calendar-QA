@@ -820,8 +820,8 @@ export function AppointmentFormFields({
 
   const auditorSuggestions = useMemo(() => {
     const fromEng = engineers.map((e) => e.name).filter((s): s is string => Boolean(s));
-    const fromAssign1 = assignments.map((a) => a.auditor1).filter((s): s is string => Boolean(s));
-    const fromAssign2 = assignments.map((a) => a.auditor2).filter((s): s is string => Boolean(s));
+    const fromAssign1 = assignments.flatMap((a) => (a.auditor1 || '').split(',').map((s) => s.trim())).filter((s): s is string => Boolean(s));
+    const fromAssign2 = assignments.flatMap((a) => (a.auditor2 || '').split(',').map((s) => s.trim())).filter((s): s is string => Boolean(s));
     return Array.from(new Set([...auditorOptions, ...fromEng, ...fromAssign1, ...fromAssign2]))
       .filter((s) => !removedSet.has(s))
       .sort();

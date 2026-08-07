@@ -18,7 +18,11 @@ import { api } from './api';
 
 /** Identity tag that supplies a contextual CSSProperties type to a style literal. */
 const sx = (o: CSSProperties): CSSProperties => o;
-const firstName = (name: string) => name.trim().split(' ')[0] || '';
+const formatAuditors = (auditorStr?: string, defaultEngName?: string) => {
+  const str = (auditorStr || defaultEngName || '').trim();
+  if (!str) return '';
+  return str.split(',').map((s) => s.trim()).filter(Boolean).join(', ');
+};
 
 export const siteColorsOfAssignment = (a: Assignment, siteColors: Record<string, string>): string[] => {
   const siteStr = a.site1 || a.site2 || '';
@@ -622,8 +626,16 @@ export function useScheduler() {
     if (!existingEng) api.createEngineer(newEngineer).catch(() => {});
     const newCustomer = d.sectionType === 'customer' && d.customer ? d.customer.trim() : '';
     const newPurpose = d.purpose ? d.purpose.trim() : '';
-    // Save each individual auditor name (not the merged string) to the master list
-    const newAuditorNames = auditorRaw.split(',').map((n) => n.trim()).filter((n) => n && n !== 'Unassigned');
+    const existingMasterSet = new Set(
+      (S.auditorOptions || [])
+        .concat(S.engineers.map((e) => e.name))
+        .map((n) => n.trim().toLowerCase())
+    );
+    // Only single unique custom names that do NOT yet exist in the database trigger creation of a new entry
+    const newAuditorNames = auditorRaw
+      .split(',')
+      .map((n) => n.trim())
+      .filter((n) => Boolean(n) && n !== 'Unassigned' && !existingMasterSet.has(n.toLowerCase()));
 
     if (newCustomer) {
       api.saveOption('customer_name', newCustomer).catch(() => {});
@@ -821,11 +833,19 @@ export function useScheduler() {
         }
       }
 
+      const existingMasterSet = new Set(
+        (s.auditorOptions || [])
+          .concat(updatedEngineers.map((e) => e.name))
+          .map((n) => n.trim().toLowerCase())
+      );
       let nextAuditorOptions = s.auditorOptions || [];
-      // Save each individual auditor name separately; never save the merged string
-      const newAuditorIndividuals = newAuditorRaw.split(',').map((n) => n.trim()).filter(Boolean);
+      // Only single unique custom names that do NOT yet exist in the database trigger creation of a new entry
+      const newAuditorIndividuals = newAuditorRaw
+        .split(',')
+        .map((n) => n.trim())
+        .filter((n) => Boolean(n) && n !== 'Unassigned' && !existingMasterSet.has(n.toLowerCase()));
       for (const n of newAuditorIndividuals) {
-        if (!nextAuditorOptions.includes(n)) {
+        if (!nextAuditorOptions.some((opt) => opt.toLowerCase() === n.toLowerCase())) {
           nextAuditorOptions = [...nextAuditorOptions, n];
           api.saveOption('auditor', n).catch(() => {});
         }
@@ -1070,7 +1090,7 @@ export function useScheduler() {
       opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', transition: 'box-shadow .12s',
     };
     const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
-    const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || '');
+    const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
     const mainName = isInternal ? (a.area || '') : (a.customer || '');
     const site = (isInternal ? a.site2 : a.site1) || '';
     const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
@@ -1091,7 +1111,7 @@ export function useScheduler() {
     const colors = accent ? [accent] : siteColorsOfAssignment(a, S.siteColors);
     const accentStyle = getAccentStyle(colors, 3);
     const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
-    const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || '');
+    const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
     const mainName = isInternal ? (a.area || '') : (a.customer || '');
     const site = (isInternal ? a.site2 : a.site1) || '';
     const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
@@ -1166,7 +1186,7 @@ export function useScheduler() {
       const mainName = isInternal ? (a.area || '') : (a.customer || '');
       const site = (isInternal ? a.site2 : a.site1) || '';
       const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
-      const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || '');
+      const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
       const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
       const colors = siteColorsOfAssignment(a, S.siteColors);
       const color = colors[0] || (pl ? pl.color : '#999');
@@ -1348,7 +1368,7 @@ export function useScheduler() {
     const mainName = isInternal ? (a.area || 'Internal Audit') : (a.customer || o.customer || 'Customer Audit');
     const site = (isInternal ? a.site2 : a.site1) || '';
     const nameWithSite = site ? `${mainName} - ${site}` : mainName;
-    const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || (e ? e.name : ''));
+    const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1, e?.name);
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
     const colors = siteColorsOfAssignment(a, S.siteColors);
     const color = colors[0] || (pl ? pl.color : '#999');
@@ -1576,7 +1596,7 @@ export function useScheduler() {
     const mainName = isInternal ? (a.area || '') : (a.customer || (ord ? ord.customer : ''));
     const site = (isInternal ? a.site2 : a.site1) || '';
     const nameWithSite = site ? `${mainName} - ${site}` : mainName;
-    const auditorName = firstName((isInternal ? a.auditor2 : a.auditor1) || (eng ? eng.name : ''));
+    const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1, eng?.name);
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
     return { ...a, _customer: apptAbbr(a) + ' · ' + (nameWithSite || 'Audit'), _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _colors: colors, _sel: sel, _onClick: () => openDayDialog(a.week, a.day), _ord: ord, _eng: eng, _isInternal: isInternal };
   });
@@ -1855,8 +1875,8 @@ export function useScheduler() {
 
   const computedAuditorOptions = useMemo(() => {
     const fromEng = S.engineers.map((e) => e.name).filter((s): s is string => Boolean(s) && !removedSet.has(s as string));
-    const fromAssign1 = S.assignments.map((a) => a.auditor1).filter((s): s is string => Boolean(s) && !removedSet.has(s as string));
-    const fromAssign2 = S.assignments.map((a) => a.auditor2).filter((s): s is string => Boolean(s) && !removedSet.has(s as string));
+    const fromAssign1 = S.assignments.flatMap((a) => (a.auditor1 || '').split(',').map((s) => s.trim())).filter((s): s is string => Boolean(s) && !removedSet.has(s as string));
+    const fromAssign2 = S.assignments.flatMap((a) => (a.auditor2 || '').split(',').map((s) => s.trim())).filter((s): s is string => Boolean(s) && !removedSet.has(s as string));
     return Array.from(new Set([...(S.auditorOptions || []), ...fromEng, ...fromAssign1, ...fromAssign2]))
       .filter((s) => !removedSet.has(s))
       .sort();
