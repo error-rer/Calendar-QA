@@ -763,9 +763,33 @@ function MaskedDateInput({
     }
   };
 
+  const handleBoxClick = () => {
+    if (!dd) {
+      ddRef.current?.focus();
+    } else if (!mm) {
+      mmRef.current?.focus();
+    } else if (!yyyy) {
+      yyyyRef.current?.focus();
+    } else {
+      ddRef.current?.focus();
+    }
+  };
+
   return (
     <div
-      style={css("display:flex;align-items:center;padding:5px 9px;border:1px solid #dde0d9;background:#fff;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#15191e")}
+      onClick={handleBoxClick}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        padding: '6px 10px',
+        border: '1px solid #dde0d9',
+        background: '#fff',
+        borderRadius: '6px',
+        fontFamily: "'IBM Plex Mono',monospace",
+        fontSize: '12.5px',
+        color: '#15191e',
+        cursor: 'text',
+      }}
     >
       <input
         ref={ddRef}
@@ -773,7 +797,7 @@ function MaskedDateInput({
         placeholder="DD"
         value={dd}
         onChange={handleDdChange}
-        style={{ width: '22px', border: 'none', outline: 'none', background: 'transparent', textAlign: 'center', fontSize: '12.5px', fontFamily: "'IBM Plex Mono',monospace", padding: 0 }}
+        style={{ width: '24px', border: 'none', outline: 'none', background: 'transparent', textAlign: 'center', fontSize: '12.5px', fontFamily: "'IBM Plex Mono',monospace", padding: 0 }}
       />
       <span style={{ color: '#a6aca2', margin: '0 2px' }}>/</span>
       <input
@@ -783,7 +807,7 @@ function MaskedDateInput({
         value={mm}
         onChange={handleMmChange}
         onKeyDown={handleMmKeyDown}
-        style={{ width: '24px', border: 'none', outline: 'none', background: 'transparent', textAlign: 'center', fontSize: '12.5px', fontFamily: "'IBM Plex Mono',monospace", padding: 0 }}
+        style={{ width: '26px', border: 'none', outline: 'none', background: 'transparent', textAlign: 'center', fontSize: '12.5px', fontFamily: "'IBM Plex Mono',monospace", padding: 0 }}
       />
       <span style={{ color: '#a6aca2', margin: '0 2px' }}>/</span>
       <input
@@ -793,7 +817,7 @@ function MaskedDateInput({
         value={yyyy}
         onChange={handleYyyyChange}
         onKeyDown={handleYyyyKeyDown}
-        style={{ width: '42px', border: 'none', outline: 'none', background: 'transparent', textAlign: 'center', fontSize: '12.5px', fontFamily: "'IBM Plex Mono',monospace", padding: 0 }}
+        style={{ width: '44px', border: 'none', outline: 'none', background: 'transparent', textAlign: 'center', fontSize: '12.5px', fontFamily: "'IBM Plex Mono',monospace", padding: 0 }}
       />
     </div>
   );
@@ -861,7 +885,7 @@ function DurationDropdown({ vm }: { vm: VM }) {
             borderRadius: '10px',
             boxShadow: '0 10px 28px rgba(0,0,0,0.14)',
             zIndex: 100,
-            width: '240px',
+            width: '220px',
             padding: '14px',
             display: 'flex',
             flexDirection: 'column',
@@ -874,7 +898,7 @@ function DurationDropdown({ vm }: { vm: VM }) {
 
           {/* First row: From date input */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 600, color: '#5c625c' }}>From (DD/MM/YYYY)</label>
+            <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#3c423d' }}>From</label>
             <MaskedDateInput
               value={vm.searchDateFrom}
               onChange={(val) => vm.setSearchDateRange(val, vm.searchDateTo)}
@@ -883,7 +907,7 @@ function DurationDropdown({ vm }: { vm: VM }) {
 
           {/* Second row: To date input */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 600, color: '#5c625c' }}>To (DD/MM/YYYY)</label>
+            <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#3c423d' }}>To</label>
             <MaskedDateInput
               value={vm.searchDateTo}
               onChange={(val) => vm.setSearchDateRange(vm.searchDateFrom, val)}
