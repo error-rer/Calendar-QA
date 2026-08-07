@@ -165,6 +165,8 @@ export interface State {
   summaryYear: number;
   searchQuery: string;
   searchSort?: 'oldest' | 'newest';
+  searchDateFrom?: string;
+  searchDateTo?: string;
   purposeOptions: string[];
   customerDepartmentOptions: string[];
   internalDepartmentOptions: string[];

@@ -692,6 +692,230 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
   );
 }
 
+function MaskedDateInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+}) {
+  const parts = (value || '').split('/');
+  const initialDD = parts[0] || '';
+  const initialMM = parts[1] || '';
+  const initialYYYY = parts[2] || '';
+
+  const [dd, setDd] = useState(initialDD);
+  const [mm, setMm] = useState(initialMM);
+  const [yyyy, setYyyy] = useState(initialYYYY);
+
+  const ddRef = useRef<HTMLInputElement>(null);
+  const mmRef = useRef<HTMLInputElement>(null);
+  const yyyyRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const p = (value || '').split('/');
+    setDd(p[0] || '');
+    setMm(p[1] || '');
+    setYyyy(p[2] || '');
+  }, [value]);
+
+  const updateAll = (nextDd: string, nextMm: string, nextYyyy: string) => {
+    setDd(nextDd);
+    setMm(nextMm);
+    setYyyy(nextYyyy);
+    if (!nextDd && !nextMm && !nextYyyy) {
+      onChange('');
+    } else {
+      onChange(`${nextDd}/${nextMm}/${nextYyyy}`);
+    }
+  };
+
+  const handleDdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 2);
+    updateAll(digits, mm, yyyy);
+    if (digits.length === 2) {
+      mmRef.current?.focus();
+    }
+  };
+
+  const handleMmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 2);
+    updateAll(dd, digits, yyyy);
+    if (digits.length === 2) {
+      yyyyRef.current?.focus();
+    }
+  };
+
+  const handleYyyyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 4);
+    updateAll(dd, mm, digits);
+  };
+
+  const handleMmKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !mm) {
+      ddRef.current?.focus();
+    }
+  };
+
+  const handleYyyyKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !yyyy) {
+      mmRef.current?.focus();
+    }
+  };
+
+  return (
+    <div
+      style={css("display:flex;align-items:center;padding:5px 9px;border:1px solid #dde0d9;background:#fff;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#15191e")}
+    >
+      <input
+        ref={ddRef}
+        type="text"
+        placeholder="DD"
+        value={dd}
+        onChange={handleDdChange}
+        style={{ width: '22px', border: 'none', outline: 'none', background: 'transparent', textAlign: 'center', fontSize: '12.5px', fontFamily: "'IBM Plex Mono',monospace", padding: 0 }}
+      />
+      <span style={{ color: '#a6aca2', margin: '0 2px' }}>/</span>
+      <input
+        ref={mmRef}
+        type="text"
+        placeholder="MM"
+        value={mm}
+        onChange={handleMmChange}
+        onKeyDown={handleMmKeyDown}
+        style={{ width: '24px', border: 'none', outline: 'none', background: 'transparent', textAlign: 'center', fontSize: '12.5px', fontFamily: "'IBM Plex Mono',monospace", padding: 0 }}
+      />
+      <span style={{ color: '#a6aca2', margin: '0 2px' }}>/</span>
+      <input
+        ref={yyyyRef}
+        type="text"
+        placeholder="YYYY"
+        value={yyyy}
+        onChange={handleYyyyChange}
+        onKeyDown={handleYyyyKeyDown}
+        style={{ width: '42px', border: 'none', outline: 'none', background: 'transparent', textAlign: 'center', fontSize: '12.5px', fontFamily: "'IBM Plex Mono',monospace", padding: 0 }}
+      />
+    </div>
+  );
+}
+
+function DurationDropdown({ vm }: { vm: VM }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const hasRange = Boolean(vm.searchDateFrom || vm.searchDateTo);
+  let label = 'Duration';
+  if (vm.searchDateFrom && vm.searchDateTo) {
+    label = `Duration: ${vm.searchDateFrom} - ${vm.searchDateTo}`;
+  } else if (vm.searchDateFrom) {
+    label = `Duration: From ${vm.searchDateFrom}`;
+  } else if (vm.searchDateTo) {
+    label = `Duration: To ${vm.searchDateTo}`;
+  }
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative', display: 'inline-block' }}>
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '5px 11px',
+          background: hasRange ? '#eef2fd' : '#fff',
+          border: '1px solid ' + (hasRange ? '#9bb0e8' : '#dde0d9'),
+          borderRadius: '7px',
+          cursor: 'pointer',
+          fontSize: '12px',
+          fontFamily: "'Archivo',sans-serif",
+          color: hasRange ? '#2756d6' : '#3c423d',
+          fontWeight: 600,
+          boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+        }}
+      >
+        <span>📅</span>
+        <span>{label}</span>
+        <span style={{ fontSize: '9px', color: hasRange ? '#2756d6' : '#8a9088', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}>▼</span>
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            right: 0,
+            marginTop: '4px',
+            background: '#fff',
+            border: '1px solid #dde0d9',
+            borderRadius: '10px',
+            boxShadow: '0 10px 28px rgba(0,0,0,0.14)',
+            zIndex: 100,
+            width: '240px',
+            padding: '14px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+          }}
+        >
+          <div style={{ fontSize: '11px', fontWeight: 700, color: '#15191e', letterSpacing: '0.4px', textTransform: 'uppercase', fontFamily: "'IBM Plex Mono',monospace" }}>
+            Date Duration Range
+          </div>
+
+          {/* First row: From date input */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '11px', fontWeight: 600, color: '#5c625c' }}>From (DD/MM/YYYY)</label>
+            <MaskedDateInput
+              value={vm.searchDateFrom}
+              onChange={(val) => vm.setSearchDateRange(val, vm.searchDateTo)}
+            />
+          </div>
+
+          {/* Second row: To date input */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontSize: '11px', fontWeight: 600, color: '#5c625c' }}>To (DD/MM/YYYY)</label>
+            <MaskedDateInput
+              value={vm.searchDateTo}
+              onChange={(val) => vm.setSearchDateRange(vm.searchDateFrom, val)}
+            />
+          </div>
+
+          {hasRange && (
+            <button
+              type="button"
+              onClick={() => vm.setSearchDateRange('', '')}
+              style={{
+                marginTop: '2px',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                border: '1px solid #fecaca',
+                background: '#fef2f2',
+                color: '#dc2626',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                textAlign: 'center',
+              }}
+            >
+              Clear Range
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SearchSortDropdown({ vm }: { vm: VM }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -836,7 +1060,10 @@ function SearchView({ vm }: { vm: VM }) {
             <span style={css('font-size:9.5px;color:#6a7da8')}>results</span>
           </div>
         </div>
-        <SearchSortDropdown vm={vm} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <DurationDropdown vm={vm} />
+          <SearchSortDropdown vm={vm} />
+        </div>
       </div>
 
       {allItems.length === 0 ? (

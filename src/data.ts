@@ -70,6 +70,8 @@ export function initialState(): State {
     summaryYear: 2026,
     searchQuery: '',
     searchSort: 'oldest',
+    searchDateFrom: '',
+    searchDateTo: '',
     purposeOptions: snapshot.purposeOptions || initialPurposeOptions.slice(),
     customerDepartmentOptions: snapshot.customerDepartmentOptions || initialCustomerDepartmentOptions.slice(),
     internalDepartmentOptions: snapshot.internalDepartmentOptions || initialInternalDepartmentOptions.slice(),

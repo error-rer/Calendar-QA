@@ -24,6 +24,21 @@ const formatAuditors = (auditorStr?: string, defaultEngName?: string) => {
   return str.split(',').map((s) => s.trim()).filter(Boolean).join(', ');
 };
 
+const parseDateToISO = (str?: string) => {
+  if (!str) return '';
+  const clean = str.trim();
+  if (clean.includes('/')) {
+    const parts = clean.split('/');
+    if (parts.length === 3 && parts[2].length === 4) {
+      const dd = parts[0].padStart(2, '0');
+      const mm = parts[1].padStart(2, '0');
+      const yyyy = parts[2];
+      return `${yyyy}-${mm}-${dd}`;
+    }
+  }
+  return clean;
+};
+
 export const siteColorsOfAssignment = (a: Assignment, siteColors: Record<string, string>): string[] => {
   const siteStr = a.site1 || a.site2 || '';
   const sites = siteStr.split('/').map((s) => s.trim()).filter(Boolean);
@@ -1479,10 +1494,21 @@ export function useScheduler() {
     const groups: SearchGroup[] = [];
     const grouped: Record<string, SearchGroup> = {};
 
+    const fromISO = parseDateToISO(S.searchDateFrom);
+    const toISO = parseDateToISO(S.searchDateTo);
+
     const allFiltered = S.assignments.filter((a) => {
       const o = orderById(a.order);
       if (!o) return false;
       if (!matchesFilters(a, o)) return false;
+
+      const base = new Date(2026, 5, 29 + a.week * 7);
+      base.setDate(base.getDate() + a.day);
+      const aISO = fmtISO(base);
+
+      if (fromISO && aISO < fromISO) return false;
+      if (toISO && aISO > toISO) return false;
+
       if (!q) return true;
       const e = engById(a.eng);
       const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
@@ -1528,7 +1554,7 @@ export function useScheduler() {
       });
     }
     return groups;
-  }, [S.assignments, S.searchQuery, S.searchSort, S.comments, S.filterEmp, S.filterSite, S.filterCompany, S.filterAuditType, S.filterAuditTopic, S.filterApptType, S.siteColors]);
+  }, [S.assignments, S.searchQuery, S.searchSort, S.searchDateFrom, S.searchDateTo, S.comments, S.filterEmp, S.filterSite, S.filterCompany, S.filterAuditType, S.filterAuditTopic, S.filterApptType, S.siteColors]);
 
 
 
@@ -2131,6 +2157,8 @@ export function useScheduler() {
     monthCells, monthWeekdayHeads, monthName, monthOrders, monthScheduledCount, monthOrderCount: monthOrders.length,
     isSearch, searchQuery: S.searchQuery, setSearchQuery, setSearchScale, searchResults, searchSuggestions,
     searchSort: S.searchSort || 'oldest', setSearchSort: (sort: 'oldest' | 'newest') => setState({ searchSort: sort }),
+    searchDateFrom: S.searchDateFrom || '', searchDateTo: S.searchDateTo || '',
+    setSearchDateRange: (from: string, to: string) => setState({ searchDateFrom: from, searchDateTo: to }),
     searchScaleStyle: S.timeScale === 'search' ? tabOn : tabOff,
     gridPerson: S.view === 'person' && !isMobile && S.timeScale === 'week',
     gridPlant: S.view === 'plant' && !isMobile && S.timeScale === 'week',
