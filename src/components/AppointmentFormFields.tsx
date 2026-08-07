@@ -552,6 +552,193 @@ function AutocompleteInput({
   );
 }
 
+/** Multi-select auditor field — checkboxes + free-text add, serialized as comma-separated string. */
+function MultiAuditorSelect({
+  id,
+  value,
+  onChange,
+  suggestions,
+  onAddNew,
+}: {
+  id: string;
+  value: string;
+  onChange: (val: string) => void;
+  suggestions: string[];
+  onAddNew?: (val: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [inputVal, setInputVal] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const selectedAuditors = value
+    ? value.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setInputVal('');
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const toggleAuditor = (name: string) => {
+    const next = selectedAuditors.includes(name)
+      ? selectedAuditors.filter((a) => a !== name)
+      : [...selectedAuditors, name];
+    onChange(next.join(', '));
+  };
+
+  const addCustom = () => {
+    const clean = inputVal.trim();
+    if (!clean) return;
+    if (!selectedAuditors.includes(clean)) {
+      onChange([...selectedAuditors, clean].join(', '));
+      if (onAddNew && !suggestions.some((s) => s.toLowerCase() === clean.toLowerCase())) {
+        onAddNew(clean);
+      }
+    }
+    setInputVal('');
+    inputRef.current?.focus();
+  };
+
+  const filteredSuggestions = useMemo(() => {
+    const q = inputVal.trim().toLowerCase();
+    const unique = Array.from(new Set(suggestions.map((s) => s.trim()).filter(Boolean)));
+    return q ? unique.filter((s) => s.toLowerCase().includes(q)) : unique;
+  }, [suggestions, inputVal]);
+
+  const displayText = selectedAuditors.length > 0
+    ? selectedAuditors.join(', ')
+    : 'Select auditor(s)...';
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
+      {/* Trigger button */}
+      <button
+        id={id}
+        type="button"
+        onClick={() => { setOpen(!open); setTimeout(() => inputRef.current?.focus(), 60); }}
+        style={{
+          border: '1px solid #dde0d9', borderRadius: '8px', padding: '8px 10px',
+          fontSize: '12.5px', fontFamily: "'Archivo',sans-serif",
+          color: selectedAuditors.length > 0 ? '#23282a' : '#8a9088',
+          outline: 'none', background: '#fff', width: '100%',
+          boxSizing: 'border-box', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', textAlign: 'left',
+        } as React.CSSProperties}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+          {displayText}
+        </span>
+        <span style={{ fontSize: '9px', color: '#8a9088', marginLeft: '6px', flexShrink: 0 }}>
+          {open ? '▲' : '▼'}
+        </span>
+      </button>
+
+      {/* Selected chips shown below when >1 selected */}
+      {selectedAuditors.length > 1 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '5px' }}>
+          {selectedAuditors.map((name) => (
+            <span key={name} style={{
+              display: 'inline-flex', alignItems: 'center', gap: '4px',
+              padding: '2px 7px', borderRadius: '5px',
+              background: '#eef2fd', border: '1px solid #d4def0',
+              fontSize: '11px', fontFamily: "'Archivo',sans-serif",
+              fontWeight: 600, color: '#2756d6',
+            }}>
+              {name}
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); toggleAuditor(name); }}
+                style={{ border: 'none', background: 'transparent', color: '#2756d6', cursor: 'pointer', padding: 0, fontSize: '10px', lineHeight: 1, display: 'flex', alignItems: 'center' }}
+              >✕</button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Dropdown */}
+      {open && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px',
+          background: '#fff', border: '1px solid #dde0d9', borderRadius: '8px',
+          boxShadow: '0 6px 20px rgba(0,0,0,0.12)', zIndex: 100, padding: '6px',
+        }}>
+          {/* Search/add input */}
+          <div style={{ display: 'flex', gap: '5px', marginBottom: '6px' }}>
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Search or type new name…"
+              value={inputVal}
+              onChange={(e) => setInputVal(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } }}
+              style={{
+                flex: 1, border: '1px solid #dde0d9', borderRadius: '6px',
+                padding: '6px 8px', fontSize: '12px',
+                fontFamily: "'Archivo',sans-serif", outline: 'none', color: '#23282a',
+              }}
+              autoComplete="off"
+            />
+            {inputVal.trim() && (
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); addCustom(); }}
+                style={{
+                  border: '1px solid #d4def0', background: '#eef2fd', color: '#2756d6',
+                  borderRadius: '6px', padding: '5px 9px', fontSize: '11px', fontWeight: 700,
+                  fontFamily: "'Archivo',sans-serif", cursor: 'pointer', flexShrink: 0,
+                } as React.CSSProperties}
+              >＋ Add</button>
+            )}
+          </div>
+
+          {/* Checkbox list */}
+          <div style={{ maxHeight: '190px', overflowY: 'auto' }}>
+            {filteredSuggestions.length === 0 && (
+              <div style={{ padding: '8px 10px', fontSize: '12px', color: '#8a9088', fontFamily: "'Archivo',sans-serif" }}>
+                {inputVal.trim() ? `Press Enter or "＋ Add" to save "${inputVal.trim()}"` : 'No auditors found'}
+              </div>
+            )}
+            {filteredSuggestions.map((name) => {
+              const isSel = selectedAuditors.includes(name);
+              return (
+                <div
+                  key={name}
+                  onClick={() => toggleAuditor(name)}
+                  style={{
+                    padding: '7px 10px', borderRadius: '6px', cursor: 'pointer',
+                    fontSize: '12.5px', fontFamily: "'Archivo',sans-serif",
+                    fontWeight: isSel ? 600 : 400,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    background: isSel ? '#eef2fd' : '#fff',
+                    color: isSel ? '#2756d6' : '#23282a',
+                    transition: 'background .1s ease',
+                  }}
+                >
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{name}</span>
+                  <span style={{
+                    width: '14px', height: '14px', borderRadius: '3px', flexShrink: 0,
+                    border: '1px solid ' + (isSel ? '#2756d6' : '#cdd2c9'),
+                    background: isSel ? '#2756d6' : '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '9px', color: '#fff',
+                  }}>{isSel ? '✓' : ''}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Shared Customer/Internal Audit field set used by both CreateModal and EditModal. */
 export function AppointmentFormFields({
   idPrefix,
@@ -740,13 +927,12 @@ export function AppointmentFormFields({
             {/* 6. AUDITOR */}
             <div style={fld}>
               <label htmlFor={id('auditor1')} style={lbl}>AUDITOR</label>
-              <AutocompleteInput
+              <MultiAuditorSelect
                 id={id('auditor1')}
                 value={v.auditor1}
                 onChange={(auditor1) => onChange({ auditor1 })}
-                placeholder="Type auditor name..."
                 suggestions={auditorSuggestions}
-                onRemoveOption={removeAuditorOption}
+                onAddNew={(_name) => { if (removeAuditorOption) { /* addAuditor handled by save */ } }}
               />
             </div>
 
@@ -829,13 +1015,12 @@ export function AppointmentFormFields({
             {/* 4. AUDITOR */}
             <div style={fld}>
               <label htmlFor={id('auditor2')} style={lbl}>AUDITOR</label>
-              <AutocompleteInput
+              <MultiAuditorSelect
                 id={id('auditor2')}
                 value={v.auditor2}
                 onChange={(auditor2) => onChange({ auditor2 })}
-                placeholder="Type auditor name..."
                 suggestions={auditorSuggestions}
-                onRemoveOption={removeAuditorOption}
+                onAddNew={(_name) => { if (removeAuditorOption) { /* addAuditor handled by save */ } }}
               />
             </div>
 
