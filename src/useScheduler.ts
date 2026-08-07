@@ -583,8 +583,10 @@ export function useScheduler() {
     const dateFrom = d.dateFrom || todayISO;
     const dateTo = d.dateTo || dateFrom;
 
-    const auditorName = (d.sectionType === 'customer' ? d.auditor1 : d.auditor2) || 'Unassigned';
-    const existingEng = S.engineers.find((e) => e.name.toLowerCase() === auditorName.toLowerCase());
+    // Multi-auditor: parse comma-separated; use primary name for engineer record
+    const auditorRaw = (d.sectionType === 'customer' ? d.auditor1 : d.auditor2) || '';
+    const auditorPrimary = auditorRaw.split(',')[0].trim() || 'Unassigned';
+    const existingEng = S.engineers.find((e) => e.name.toLowerCase() === auditorPrimary.toLowerCase());
     const engId = existingEng ? existingEng.id : 'e' + ids.current.id++;
     const newAssignments: Assignment[] = [];
     const orderId = 'o' + ids.current.id++;
@@ -615,12 +617,13 @@ export function useScheduler() {
       customer: d.customer || '', product: d.endCustomer || d.area || '',
       plant: d.sectionType === 'internal' ? (d.department2 || d.site2 || '') : (d.site1 || ''), purpose: d.purpose || '',
     };
-    const newEngineer = { id: engId, name: auditorName, role: 'QA', department: siteToDept(d.sectionType === 'internal' ? d.site2 : d.site1), subDepartments: [] };
+    const newEngineer = { id: engId, name: auditorPrimary, role: 'QA', department: siteToDept(d.sectionType === 'internal' ? d.site2 : d.site1), subDepartments: [] };
     api.createOrder(newOrder).catch(() => {});
     if (!existingEng) api.createEngineer(newEngineer).catch(() => {});
     const newCustomer = d.sectionType === 'customer' && d.customer ? d.customer.trim() : '';
     const newPurpose = d.purpose ? d.purpose.trim() : '';
-    const newAuditor = auditorName && auditorName !== 'Unassigned' ? auditorName.trim() : '';
+    // Save each individual auditor name (not the merged string) to the master list
+    const newAuditorNames = auditorRaw.split(',').map((n) => n.trim()).filter((n) => n && n !== 'Unassigned');
 
     if (newCustomer) {
       api.saveOption('customer_name', newCustomer).catch(() => {});
@@ -628,9 +631,7 @@ export function useScheduler() {
     if (newPurpose) {
       api.saveOption('purpose', newPurpose).catch(() => {});
     }
-    if (newAuditor) {
-      api.saveOption('auditor', newAuditor).catch(() => {});
-    }
+    newAuditorNames.forEach((n) => { api.saveOption('auditor', n).catch(() => {}); });
     newAssignments.forEach((a) => api.createAssignment(a).catch(() => {}));
     setState((s) => ({
       orders: s.orders.concat([newOrder]),
@@ -638,7 +639,13 @@ export function useScheduler() {
       assignments: s.assignments.concat(newAssignments),
       customerOptions: newCustomer && !s.customerOptions.includes(newCustomer) ? [...s.customerOptions, newCustomer] : s.customerOptions,
       purposeOptions: newPurpose && !s.purposeOptions.includes(newPurpose) ? [...s.purposeOptions, newPurpose] : s.purposeOptions,
-      auditorOptions: newAuditor && !(s.auditorOptions || []).includes(newAuditor) ? [...(s.auditorOptions || []), newAuditor] : (s.auditorOptions || []),
+      auditorOptions: (() => {
+        let opts = s.auditorOptions || [];
+        for (const n of newAuditorNames) {
+          if (!opts.includes(n)) opts = [...opts, n];
+        }
+        return opts;
+      })(),
       selected: newAssignments[newAssignments.length - 1].id,
       createOpen: false,
     }));
@@ -698,12 +705,15 @@ export function useScheduler() {
     }
     if (slots.length === 0) return;
     const oldAuditorName = (target.auditor1 || target.auditor2 || S.engineers.find((e) => e.id === target.eng)?.name || '').trim();
-    const newAuditorName = ((d.sectionType === 'customer' ? d.auditor1 : d.auditor2) || '').trim();
+    const newAuditorRaw = ((d.sectionType === 'customer' ? d.auditor1 : d.auditor2) || '').trim();
+    // Primary auditor = first name in comma-separated list; used for engineer record
+    const newAuditorPrimary = newAuditorRaw.split(',')[0].trim();
+    const newAuditorName = newAuditorRaw; // full raw string (stored in assignment as-is)
     let finalEngId = target.eng;
     let updatedEngineers = S.engineers;
 
-    if (newAuditorName) {
-      const existingMatchingEng = S.engineers.find((e) => e.name.toLowerCase() === newAuditorName.toLowerCase());
+    if (newAuditorPrimary) {
+      const existingMatchingEng = S.engineers.find((e) => e.name.toLowerCase() === newAuditorPrimary.toLowerCase());
       if (existingMatchingEng) {
         finalEngId = existingMatchingEng.id;
       } else {
@@ -712,15 +722,15 @@ export function useScheduler() {
           (a) => a.id !== d.targetId && (a.eng === target.eng || a.auditor1 === currentEng?.name || a.auditor2 === currentEng?.name)
         );
 
-        if (currentEng && currentEng.name !== newAuditorName && otherApptsUsingCurrentEng.length === 0) {
-          const updatedEng = { ...currentEng, name: newAuditorName };
+        if (currentEng && currentEng.name !== newAuditorPrimary && otherApptsUsingCurrentEng.length === 0) {
+          const updatedEng = { ...currentEng, name: newAuditorPrimary };
           api.updateEngineer(target.eng, updatedEng).catch(() => {});
           updatedEngineers = S.engineers.map((e) => (e.id === target.eng ? updatedEng : e));
         } else {
           const newEngId = 'e' + ids.current.id++;
           const newEng = {
             id: newEngId,
-            name: newAuditorName,
+            name: newAuditorPrimary,
             role: 'QA',
             department: siteToDept(d.sectionType === 'internal' ? d.site2 : d.site1),
             subDepartments: [],
@@ -812,9 +822,13 @@ export function useScheduler() {
       }
 
       let nextAuditorOptions = s.auditorOptions || [];
-      if (newAuditorName && !nextAuditorOptions.includes(newAuditorName)) {
-        nextAuditorOptions = [...nextAuditorOptions, newAuditorName];
-        api.saveOption('auditor', newAuditorName).catch(() => {});
+      // Save each individual auditor name separately; never save the merged string
+      const newAuditorIndividuals = newAuditorRaw.split(',').map((n) => n.trim()).filter(Boolean);
+      for (const n of newAuditorIndividuals) {
+        if (!nextAuditorOptions.includes(n)) {
+          nextAuditorOptions = [...nextAuditorOptions, n];
+          api.saveOption('auditor', n).catch(() => {});
+        }
       }
       if (oldAuditorName && oldAuditorName !== newAuditorName) {
         const isOldAuditorStillUsedInAssignments = nextAssignments.some(
