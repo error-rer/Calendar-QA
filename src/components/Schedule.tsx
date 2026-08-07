@@ -480,11 +480,233 @@ function MobileTimetable({ vm }: { vm: VM }) {
   );
 }
 
+function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: any; isLast: boolean }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; code: string; onDelete: () => void } | null>(null);
+
+  const toggleExpand = () => setIsExpanded((prev) => !prev);
+  const requestDelete = () => setConfirmDelete({ id: chip.id, code: chip.code, onDelete: chip.onDelete });
+  const confirmDeleteAction = () => {
+    confirmDelete?.onDelete();
+    setConfirmDelete(null);
+  };
+  const cancelDelete = () => setConfirmDelete(null);
+
+  const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', borderBottom: isLast ? 'none' : '1px solid #e8ebe4', background: '#fff' }}>
+      <div style={{ display: 'flex', alignItems: 'stretch', minHeight: '52px' }}>
+        {/* Left-Aligned Date Column */}
+        <div style={{
+          width: '125px',
+          minWidth: '105px',
+          padding: '10px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          background: '#fafbf9',
+          borderRight: '1px solid #e8ebe4',
+          flexShrink: 0,
+        }}>
+          <span style={{
+            fontFamily: "'IBM Plex Mono',monospace",
+            fontSize: '12px',
+            fontWeight: 700,
+            color: '#15191e',
+            letterSpacing: '0.2px',
+          }}>
+            {dateLabel}
+          </span>
+        </div>
+
+        {/* Color accent bar */}
+        <div style={{ width: '4px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
+
+        {/* Main Appointment Content Strip */}
+        <div style={{ flex: 1, minWidth: 0, padding: '9px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+          <div onClick={toggleExpand} style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} title="Click to expand embedded details">
+            <div style={css(`font-size:12.5px;font-weight:600;color:${chip.isInternal ? '#10b981' : '#2756d6'}`)}>
+              {renderApptCode(chip.code)}
+            </div>
+            {chip.purpose ? (
+              <div style={css('font-size:11px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
+            ) : null}
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); toggleExpand(); }}
+              title={isExpanded ? 'Hide embedded details' : 'Show embedded details'}
+              style={css('width:30px;height:30px;border:1px solid ' + (isExpanded ? '#9bb0e8' : '#dde0d9') + ';background:' + (isExpanded ? '#eef2fd' : '#f4f6f1') + ';border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')}
+            >
+              {isExpanded ? <EyeOnIcon size={15} color="#2756d6" /> : <EyeOffIcon size={15} color="#5c625c" />}
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); chip.onEdit(); }}
+              title="Edit appointment details"
+              style={css('width:30px;height:30px;border:1px solid #dde0d9;background:#f4f6f1;border-radius:7px;cursor:pointer;color:#3c423d;font-size:13px;display:flex;align-items:center;justify-content:center')}
+            >
+              ✏️
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); requestDelete(); }}
+              title="Delete appointment"
+              style={css('width:30px;height:30px;border:1px solid #fecaca;background:#fef2f2;border-radius:7px;cursor:pointer;color:#dc2626;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center')}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Embedded Details Panel */}
+      {isExpanded && (
+        <div style={css('border-top:1px solid #e7eae3;background:#fafbf8;padding:12px 14px 12px 143px;display:flex;flex-direction:column;gap:8px')}>
+          <div style={css('display:flex;align-items:center;gap:8px')}>
+            <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;${
+              chip.isInternal
+                ? 'color:#0f9d8c;background:#eef8f3;border:1px solid #ccebe2;'
+                : 'color:#2756d6;background:#eef2fd;border:1px solid #d8e2fa;'
+            }`)}>
+              {chip.isInternal ? 'Internal Audit' : 'Customer Audit'}
+            </span>
+            {chip.site && (
+              <span style={css('font-size:11.5px;color:#23282a;font-weight:600')}>
+                Site: <span style={css('color:#15191e')}>{chip.site}</span>
+              </span>
+            )}
+          </div>
+
+          <div style={css('display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:#5c625c')}>
+            {!chip.isInternal ? (
+              <>
+                {chip.customer && <div>Customer: <span style={css('color:#15191e;font-weight:600')}>{chip.customer}</span></div>}
+                {chip.endCustomer && <div>End customer: <span style={css('color:#3c423d')}>{chip.endCustomer}</span></div>}
+                {chip.apptPurpose && <div>Purpose: <span style={css('color:#3c423d')}>{chip.apptPurpose}</span></div>}
+                {chip.auditor && <div>Auditor: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
+                {chip.department && <div>Department: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
+              </>
+            ) : (
+              <>
+                {chip.area && <div>Area: <span style={css('color:#15191e;font-weight:600')}>{chip.area}</span></div>}
+                {chip.auditor && <div>Auditor: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
+                {chip.department && <div>Department: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
+              </>
+            )}
+          </div>
+
+          {(chip.major || chip.minor || chip.ofi || chip.request || chip.utl1 || chip.utl2 || chip.utl3) ? (
+            <div style={css('display:flex;gap:8px;flex-wrap:wrap;margin-top:2px')}>
+              {!!chip.major && <span style={css('font-size:10px;color:#b32f2f;font-weight:600')}>Major: {chip.major}</span>}
+              {!!chip.minor && <span style={css('font-size:10px;color:#c2620c;font-weight:600')}>Minor: {chip.minor}</span>}
+              {!!chip.ofi && <span style={css('font-size:10px;color:#5b7fd6;font-weight:600')}>OFI: {chip.ofi}</span>}
+              {!!chip.request && <span style={css('font-size:10px;color:#1f8a5b;font-weight:600')}>Request: {chip.request}</span>}
+              {!!chip.utl1 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL1: {chip.utl1}</span>}
+              {!!chip.utl2 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL2: {chip.utl2}</span>}
+              {!!chip.utl3 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL3: {chip.utl3}</span>}
+            </div>
+          ) : null}
+
+          <EmbeddedNotes notes={chip.notes || []} onAddNote={chip.onAddNote} />
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {confirmDelete && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(15,20,25,0.45)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #dde0d9',
+              borderRadius: '12px',
+              padding: '20px',
+              maxWidth: '360px',
+              width: '100%',
+              boxShadow: '0 12px 32px rgba(0,0,0,0.18)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#dc2626', fontSize: '15px', fontWeight: 700 }}>
+              <span>⚠️ Delete Appointment?</span>
+            </div>
+            <div style={{ fontSize: '13px', color: '#3c423d', lineHeight: '1.4' }}>
+              Are you sure you want to delete <strong style={{ color: '#15191e' }}>{confirmDelete.code}</strong>? This action cannot be undone.
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
+              <button
+                type="button"
+                onClick={cancelDelete}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '7px',
+                  border: '1px solid #dde0d9',
+                  background: '#f4f6f1',
+                  color: '#3c423d',
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteAction}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '7px',
+                  border: 'none',
+                  background: '#dc2626',
+                  color: '#fff',
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SearchView({ vm }: { vm: VM }) {
   const totalResults = vm.searchResults.reduce((n: number, g: any) => n + g.items.length, 0);
 
+  const allItems = useMemo(() => {
+    const list: { dateLabel: string; dateISO: string; item: any }[] = [];
+    for (const group of vm.searchResults) {
+      for (const item of group.items) {
+        list.push({ dateLabel: group.dateLabel, dateISO: group.dateISO, item });
+      }
+    }
+    return list;
+  }, [vm.searchResults]);
+
   return (
-    <div style={css('padding:20px;max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px')}>
+    <div style={css('padding:20px;max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:16px')}>
       {/* Header bar */}
       <div style={css('display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px')}>
         <div style={css('display:flex;align-items:center;gap:10px')}>
@@ -497,7 +719,7 @@ function SearchView({ vm }: { vm: VM }) {
         <div style={css('font-size:12px;color:#8a9088')}>Sorted oldest → newest</div>
       </div>
 
-      {vm.searchResults.length === 0 ? (
+      {allItems.length === 0 ? (
         <div style={css('display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;background:#fff;border:1px solid #e4e7e0;border-radius:14px;gap:10px')}>
           <div style={css('font-size:32px')}>🔍</div>
           <div style={css('font-size:15px;font-weight:700;color:#3c423d')}>
@@ -508,25 +730,15 @@ function SearchView({ vm }: { vm: VM }) {
           </div>
         </div>
       ) : (
-        <div style={css('display:flex;flex-direction:column;gap:20px')}>
-          {vm.searchResults.map((group: any) => (
-            <div key={group.dateISO}>
-              {/* Date header */}
-              <div style={css('display:flex;align-items:center;gap:10px;margin-bottom:10px')}>
-                <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:700;color:#15191e;background:#fff;border:1px solid #e0e3dc;border-radius:7px;padding:4px 10px")}>
-                  {group.dateLabel}
-                </div>
-                <div style={css('flex:1;height:1px;background:#e4e7e0')} />
-                <div style={css('font-size:10px;color:#a6aca2')}>{group.items.length} {group.items.length === 1 ? 'appt' : 'appts'}</div>
-              </div>
-
-              {/* Cards */}
-              <div style={css('display:flex;flex-direction:column;gap:8px')}>
-                {group.items.map((item: any) => (
-                  <ApptCard key={item.id} chip={item} />
-                ))}
-              </div>
-            </div>
+        /* Compact Bordered List Container */
+        <div style={{ display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #dde0d9', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          {allItems.map((entry, index) => (
+            <SearchRowItem
+              key={entry.item.id + '-' + index}
+              dateLabel={entry.dateLabel}
+              chip={entry.item}
+              isLast={index === allItems.length - 1}
+            />
           ))}
         </div>
       )}
