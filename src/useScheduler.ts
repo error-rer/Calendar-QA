@@ -76,7 +76,6 @@ export const getAccentStyle = (colors: string[], borderPx = 3): CSSProperties =>
 };
 
 interface MonthChip {
-  id?: string;
   code: string;
   purpose: string;
   engName: string;
@@ -86,7 +85,6 @@ interface MonthChip {
   dotStyle: CSSProperties;
   style: CSSProperties;
   isInternal: boolean;
-  onClick?: () => void;
 }
 interface MonthCell {
   blank: boolean;
@@ -1252,13 +1250,11 @@ export function useScheduler() {
       const colors = siteColorsOfAssignment(a, S.siteColors);
       const color = colors[0] || (pl ? pl.color : '#999');
       return {
-        id: a.id,
         code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, engName: auditorName, color, colors,
         isInternal,
         countTxt: '',
         dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: color, flexShrink: 0 }),
         style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: '#23282a', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
-        onClick: () => select(a.id),
       };
     });
     const more = appointments.length - chips.length;
@@ -1678,7 +1674,7 @@ export function useScheduler() {
     const nameWithSite = site ? `${mainName} - ${site}` : mainName;
     const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1, eng?.name);
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
-    return { ...a, _customer: apptAbbr(a) + ' · ' + (nameWithSite || 'Audit'), _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _colors: colors, _sel: sel, _onClick: () => select(a.id), _ord: ord, _eng: eng, _isInternal: isInternal };
+    return { ...a, _customer: apptAbbr(a) + ' · ' + (nameWithSite || 'Audit'), _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _colors: colors, _sel: sel, _onClick: () => openDayDialog(a.week, a.day), _ord: ord, _eng: eng, _isInternal: isInternal };
   });
   // group consecutive same-order same-eng assignments into merged spans
   const sorted = [...weekCalendarChips].sort((a, b) => {
@@ -1709,7 +1705,7 @@ export function useScheduler() {
       id: c.id, site1: c.site1 || '', customer: c._customer, purpose: c._purpose,
       auditor1: c._auditor, color: c._color, colors: c._colors, selected: sel,
       area: c.area || '', auditor2: c.auditor2 || '', isInternal: c._isInternal,
-      onClick: () => select(c.id),
+      onClick: () => openDayDialog(c.week, c.day),
     };
   });
   const weekCalendarDays = [0, 1, 2, 3, 4].map((day) => {

@@ -151,15 +151,7 @@ function ApptCard({ chip }: { chip: any }) {
       <div style={{ display: 'flex', alignItems: 'stretch' }}>
         <div style={{ width: '4px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
         <div style={css('min-width:0;flex:1;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px')}>
-          <div
-            onClick={() => {
-              if (chip.onClick) chip.onClick();
-              else if (chip.onView) chip.onView();
-              toggleExpand();
-            }}
-            style={{ minWidth: 0, flex: 1, cursor: 'pointer' }}
-            title="Click to view details"
-          >
+          <div onClick={toggleExpand} style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} title="Click to expand embedded details">
             <div style={css(`font-size:12.5px;font-weight:600;color:${chip.isInternal ? '#10b981' : '#2756d6'}`)}>{renderApptCode(chip.code)}</div>
             {chip.purpose ? (
               <div style={css('font-size:11px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
@@ -1533,20 +1525,12 @@ function MonthGrid({ vm }: { vm: VM }) {
                 {(c.chips ?? []).map((ch, ci) => {
                   const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
                   return (
-                    <div
-                      key={ci}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (ch.onClick) ch.onClick();
-                      }}
-                      style={{
-                        display: 'flex', alignItems: 'stretch',
-                        background: '#f0f2ec', borderRadius: '5px',
-                        boxShadow: '0 1px 2px rgba(0,0,0,.05)',
-                        cursor: 'pointer',
-                        overflow: 'hidden',
-                      }}
-                    >
+                    <div key={ci} style={{
+                      display: 'flex', alignItems: 'stretch',
+                      background: '#f0f2ec', borderRadius: '5px',
+                      boxShadow: '0 1px 2px rgba(0,0,0,.05)',
+                      overflow: 'hidden',
+                    }}>
                       <div style={{ width: '3px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
                       <div style={{ padding: '3px 5px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
                         <div style={{ fontSize: '10.5px', fontWeight: 600, color: ch.isInternal ? '#10b981' : '#2756d6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code)}</div>
@@ -1586,19 +1570,11 @@ function MonthMobile({ vm }: { vm: VM }) {
                 {(c.chips ?? []).map((ch, ci) => {
                   const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
                   return (
-                    <div
-                      key={ci}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (ch.onClick) ch.onClick();
-                      }}
-                      style={{
-                        display: 'flex', alignItems: 'stretch',
-                        background: '#f0f2ec', borderRadius: '3px',
-                        cursor: 'pointer',
-                        overflow: 'hidden',
-                      }}
-                    >
+                    <div key={ci} style={{
+                      display: 'flex', alignItems: 'stretch',
+                      background: '#f0f2ec', borderRadius: '3px',
+                      overflow: 'hidden',
+                    }}>
                       <div style={{ width: '2px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
                       <div style={{ padding: '2px 4px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
                         <div style={{ fontSize: '8px', fontWeight: 600, color: ch.isInternal ? '#10b981' : '#2756d6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code)}</div>
