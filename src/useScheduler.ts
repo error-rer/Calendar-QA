@@ -9,6 +9,7 @@ import type {
   State,
   SubDepartment,
 } from './types';
+import { isIncompleteAssignment } from './types';
 import {
   dayLabels,
   dayNames,
@@ -86,6 +87,7 @@ interface MonthChip {
   dotStyle: CSSProperties;
   style: CSSProperties;
   isInternal: boolean;
+  isIncomplete?: boolean;
   onClick?: () => void;
 }
 interface MonthCell {
@@ -1232,6 +1234,15 @@ export function useScheduler() {
       const o = orderById(a.order);
       return !!o && matchesFilters(a, o);
     });
+
+    appointments.sort((a, b) => {
+      const aInc = isIncompleteAssignment(a);
+      const bInc = isIncompleteAssignment(b);
+      if (aInc && !bInc) return -1;
+      if (!aInc && bInc) return 1;
+      return 0;
+    });
+
     all.forEach((a) => {
       const o = orderById(a.order);
       if (!o || !matchesFilters(a, o)) return;
@@ -1244,6 +1255,7 @@ export function useScheduler() {
       const o = orderById(a.order)!;
       const pl = plantById(o.plant);
       const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
+      const isIncomplete = isIncompleteAssignment(a);
       const mainName = isInternal ? (a.area || '') : (a.customer || '');
       const site = (isInternal ? a.site2 : a.site1) || '';
       const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
@@ -1255,9 +1267,10 @@ export function useScheduler() {
         id: a.id,
         code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, engName: auditorName, color, colors,
         isInternal,
+        isIncomplete,
         countTxt: '',
-        dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: color, flexShrink: 0 }),
-        style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: '#23282a', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
+        dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: isIncomplete ? '#FF0000' : color, flexShrink: 0 }),
+        style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: isIncomplete ? '#FFFFFF' : '#23282a', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
         onClick: () => select(a.id),
       };
     });
@@ -1673,15 +1686,20 @@ export function useScheduler() {
     const colors = siteColorsOfAssignment(a, S.siteColors);
     const color = colors[0] || (pl ? pl.color : '#999');
     const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
+    const isIncomplete = isIncompleteAssignment(a);
     const mainName = isInternal ? (a.area || '') : (a.customer || (ord ? ord.customer : ''));
     const site = (isInternal ? a.site2 : a.site1) || '';
     const nameWithSite = site ? `${mainName} - ${site}` : mainName;
     const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1, eng?.name);
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
-    return { ...a, _customer: apptAbbr(a) + ' · ' + (nameWithSite || 'Audit'), _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _colors: colors, _sel: sel, _onClick: () => { select(a.id); openDayDialog(a.week, a.day); }, _ord: ord, _eng: eng, _isInternal: isInternal };
+    return { ...a, _customer: apptAbbr(a) + ' · ' + (nameWithSite || 'Audit'), _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _colors: colors, _sel: sel, _onClick: () => { select(a.id); openDayDialog(a.week, a.day); }, _ord: ord, _eng: eng, _isInternal: isInternal, _isIncomplete: isIncomplete };
   });
   // group consecutive same-order same-eng assignments into merged spans
   const sorted = [...weekCalendarChips].sort((a, b) => {
+    const aInc = a._isIncomplete;
+    const bInc = b._isIncomplete;
+    if (aInc && !bInc) return -1;
+    if (!aInc && bInc) return 1;
     if (a.order !== b.order) return a.order < b.order ? -1 : 1;
     if (a.eng !== b.eng) return a.eng < b.eng ? -1 : 1;
     return a.day - b.day;
@@ -1709,6 +1727,7 @@ export function useScheduler() {
       id: c.id, site1: c.site1 || '', customer: c._customer, purpose: c._purpose,
       auditor1: c._auditor, color: c._color, colors: c._colors, selected: sel,
       area: c.area || '', auditor2: c.auditor2 || '', isInternal: c._isInternal,
+      isIncomplete: c._isIncomplete,
       onClick: () => { select(c.id); openDayDialog(c.week, c.day); },
     };
   });
@@ -1718,7 +1737,13 @@ export function useScheduler() {
       id: c.id, site1: c.site1 || '', customer: c._customer, purpose: c._purpose,
       auditor1: c._auditor, qa: c._qa, color: c._color, colors: c._colors, onClick: c._onClick, selected: c._sel,
       area: c.area || '', auditor2: c.auditor2 || '', isInternal: c._isInternal,
+      isIncomplete: c._isIncomplete,
     }));
+    chips.sort((a, b) => {
+      if (a.isIncomplete && !b.isIncomplete) return -1;
+      if (!a.isIncomplete && b.isIncomplete) return 1;
+      return 0;
+    });
     return { day, chips, count: chips.length };
   });
 

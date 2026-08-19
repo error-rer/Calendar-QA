@@ -52,6 +52,25 @@ export interface Assignment {
   utl3?: number;
 }
 
+export function isIncompleteAssignment(a: Assignment): boolean {
+  const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
+  if (isInternal) {
+    const site = (a.site2 || '').trim();
+    const dept = (a.department2 || '').trim();
+    const area = (a.area || '').trim();
+    const auditor = (a.auditor2 || '').trim();
+    const purpose = (a.purpose || '').trim();
+    return !site || !dept || !area || !auditor || !purpose;
+  } else {
+    const site = (a.site1 || '').trim();
+    const cust = (a.customer || '').trim();
+    const purpose = (a.purpose || '').trim();
+    const auditor = (a.auditor1 || '').trim();
+    const dept = (a.department1 || '').trim();
+    return !site || !cust || !purpose || !auditor || !dept;
+  }
+}
+
 export interface Comment {
   id: string;
   who: string;
