@@ -1,29 +1,9 @@
 import type { VM } from '../useScheduler';
-import { css, HButton, HInput } from '../ui';
 
-export function DetailPanel({ vm }: { vm: VM }) {
-  const detail = vm.detail;
-  if (!detail) return null;
-
-  const isInternal = detail.isInternal;
-  const site = isInternal ? (detail.site2 || detail.site1) : (detail.site1 || detail.site2);
-
-  return (
-    <aside className="scrl" style={vm.detailAsideStyle}>
-      <div style={css('padding:14px 16px;border-bottom:1px solid #e7eae3;display:flex;align-items:flex-start;gap:10px')}>
-        <div style={css('flex:1;min-width:0')}>
-          <div style={css('display:flex;align-items:center;gap:8px;margin-bottom:6px')}>
-            <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;${
-              isInternal
-                ? 'color:#0f9d8c;background:#eef8f3;border:1px solid #ccebe2;'
-                : 'color:#2756d6;background:#eef2fd;border:1px solid #d8e2fa;'
-            }`)}>
-              {isInternal ? 'Internal Audit' : 'Customer Audit'}
-            </span>
-          </div>
-
-          <div style={css('display:flex;flex-direction:column;gap:3px')}>
-            {detail.dateRangeLabel ? (
+export function DetailPanel({ vm: _vm }: { vm: VM }) {
+  return null;
+}
+/*
               <div style={css('font-size:11.5px;color:#5c625c;font-weight:500;margin-bottom:2px')}>
                 Date: <span style={css('color:#15191e;font-weight:600')}>{detail.dateRangeLabel}</span>
               </div>
@@ -138,3 +118,4 @@ export function DetailPanel({ vm }: { vm: VM }) {
     </aside>
   );
 }
+*/

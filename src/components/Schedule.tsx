@@ -2,7 +2,6 @@ import { Fragment, useEffect, useRef, useState, useMemo } from 'react';
 import type { VM } from '../useScheduler';
 import { getAccentBackground } from '../useScheduler';
 import { css, HButton, HInput } from '../ui';
-import { DetailPanel } from './DetailPanel';
 
 function renderApptCode(code: string, overrideColor?: string) {
   if (typeof code === 'string' && (code.startsWith('CS') || code.startsWith('IA'))) {
@@ -82,7 +81,6 @@ export function Schedule({ vm }: { vm: VM }) {
         </main>
       </div>
 
-      <DetailPanel vm={vm} />
       <DayDialogModal vm={vm} />
 
       {vm.showTimetable && (
@@ -158,13 +156,9 @@ function ApptCard({ chip }: { chip: any }) {
         <div style={{ width: '4px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
         <div style={css('min-width:0;flex:1;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px')}>
           <div
-            onClick={() => {
-              if (chip.onClick) chip.onClick();
-              else if (chip.onView) chip.onView();
-              toggleExpand();
-            }}
+            onClick={toggleExpand}
             style={{ minWidth: 0, flex: 1, cursor: 'pointer' }}
-            title="Click to view details"
+            title="Click to expand embedded details"
           >
             <div style={css(`font-size:12.5px;font-weight:600;color:${titleColor}`)}>{renderApptCode(chip.code, isInc ? '#FFFFFF' : undefined)}</div>
             {chip.purpose ? (

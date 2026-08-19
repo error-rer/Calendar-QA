@@ -1271,7 +1271,7 @@ export function useScheduler() {
         countTxt: '',
         dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: isIncomplete ? '#FF0000' : color, flexShrink: 0 }),
         style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: isIncomplete ? '#FFFFFF' : '#23282a', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
-        onClick: () => select(a.id),
+        onClick: () => openDayDialog(slot.weekOffset, slot.wd),
       };
     });
     const more = appointments.length - chips.length;
@@ -1693,7 +1693,7 @@ export function useScheduler() {
     const nameWithSite = site ? `${mainName} - ${site}` : mainName;
     const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1, eng?.name);
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
-    return { ...a, _customer: apptAbbr(a) + ' · ' + (nameWithSite || 'Audit'), _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _colors: colors, _sel: sel, _onClick: () => { select(a.id); openDayDialog(a.week, a.day); }, _ord: ord, _eng: eng, _isInternal: isInternal, _isIncomplete: isIncomplete };
+    return { ...a, _customer: apptAbbr(a) + ' · ' + (nameWithSite || 'Audit'), _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _colors: colors, _sel: sel, _onClick: () => openDayDialog(a.week, a.day), _ord: ord, _eng: eng, _isInternal: isInternal, _isIncomplete: isIncomplete };
   });
   // group consecutive same-order same-eng assignments into merged spans
   const sorted = [...weekCalendarChips].sort((a, b) => {
@@ -1729,7 +1729,7 @@ export function useScheduler() {
       auditor1: c._auditor, color: c._color, colors: c._colors, selected: sel,
       area: c.area || '', auditor2: c.auditor2 || '', isInternal: c._isInternal,
       isIncomplete: c._isIncomplete,
-      onClick: () => { select(c.id); openDayDialog(c.week, c.day); },
+      onClick: () => openDayDialog(c.week, c.day),
     };
   });
   const weekCalendarDays = [0, 1, 2, 3, 4].map((day) => {
@@ -2116,16 +2116,12 @@ export function useScheduler() {
     if (!e) return null;
     return {
       ...apptChipFields(a),
-      onView: () => select(a.id),
       onEdit: () => { closeDayDialog(); openEdit(a.id); },
       onDelete: () => removeAssign(a.id),
-      onClick: () => select(a.id),
     };
   }).filter(Boolean) as (ReturnType<typeof apptChipFields> & {
-    onView: () => void;
     onEdit: () => void;
     onDelete: () => void;
-    onClick: () => void;
   })[];
   const dayDialogInfo = dayDialogOpen
     ? { label: S.dayDialog!.day >= 0 && S.dayDialog!.day < 5 ? dayNames[S.dayDialog!.day] : '', date: dayDialogDate }
