@@ -2127,6 +2127,33 @@ export function useScheduler() {
     ? { label: S.dayDialog!.day >= 0 && S.dayDialog!.day < 5 ? dayNames[S.dayDialog!.day] : '', date: dayDialogDate }
     : null;
 
+  // ---- incomplete appointments VM ----
+  const incompleteAppointments = useMemo(() => {
+    return S.assignments
+      .filter((a) => isIncompleteAssignment(a))
+      .map((a) => {
+        const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
+        const mainName = isInternal ? (a.area || 'Internal Audit') : (a.customer || 'Customer Audit');
+        const site = (isInternal ? a.site2 : a.site1) || '';
+        const nameWithSite = site ? `${mainName} - ${site}` : mainName;
+        const code = apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : '');
+        const base = new Date(2026, 5, 29 + a.week * 7);
+        base.setDate(base.getDate() + a.day);
+        const dateStr = fmtDate(base);
+
+        return {
+          id: a.id,
+          code,
+          dateStr,
+          isInternal,
+          onClick: () => {
+            closeSidebar();
+            openEdit(a.id);
+          },
+        };
+      });
+  }, [S.assignments, S.siteColors, S.orders, S.engineers]);
+
   // ---- responsive styles ----
   const sidebarStyle: CSSProperties = isMobile
     ? { position: 'fixed', top: 0, left: 0, bottom: 0, width: '86%', maxWidth: '320px', zIndex: 80, background: '#fbfcfa', borderRight: '1px solid #d8dcd4', display: 'flex', flexDirection: 'column', boxShadow: '0 0 44px rgba(20,25,30,.28)', transform: S.sidebarOpen ? 'translateX(0)' : 'translateX(-104%)', transition: 'transform .22s ease', overflowY: 'auto' }
@@ -2224,7 +2251,7 @@ export function useScheduler() {
     weekCalendarDays, weekMergedSpans,
     showTimetable, timetableRows, timetableGridCols, timetableEngName: timetableEng?.name || '',
     closeTimetable, mobileTimetableRows,
-    presence, activity, detail,
+    presence, activity, detail, incompleteAppointments,
     emptyWeek: S.timeScale === 'week' && S.weekOffset !== todayWeekOffset && wk.length === 0, copyWeek,
     toggleSidebar, closeSidebar, showSidebarBackdrop: isMobile && S.sidebarOpen,
     sidebarStyle, toolbarStyle, detailAsideStyle, modalOverlayStyle, modalCardStyle, modalColsStyle, modalColLeftStyle, modalColRightStyle,
