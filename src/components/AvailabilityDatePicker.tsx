@@ -102,12 +102,12 @@ export function AvailabilityDatePicker({
     const set = new Set<string>();
     const details = new Map<string, { site: string; auditor: string; title: string }>();
 
-    if (!site.trim() || !auditor.trim()) {
+    const siteTokens = site.split('/').flatMap((s) => s.split(',')).map((s) => s.trim().toLowerCase()).filter(Boolean);
+    const auditorTokens = auditor.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+
+    if (siteTokens.length === 0 && auditorTokens.length === 0) {
       return { bookedDatesSet: set, bookedDetailsMap: details };
     }
-
-    const normSite = site.trim().toLowerCase();
-    const normAuditor = auditor.trim().toLowerCase();
 
     // Map engineer IDs to names
     const engMap = new Map<string, string>();
@@ -133,20 +133,29 @@ export function AvailabilityDatePicker({
         continue;
       }
 
-      const aSite = (a.site1 || a.site2 || '').trim().toLowerCase();
-      const engName = (engMap.get(a.eng) || '').trim().toLowerCase();
-      const aAuditor1 = (a.auditor1 || '').trim().toLowerCase();
-      const aAuditor2 = (a.auditor2 || '').trim().toLowerCase();
+      // Extract site tokens of assignment a
+      const aSiteStr = (a.site1 || a.site2 || '');
+      const aSiteTokens = aSiteStr.split('/').flatMap((s) => s.split(',')).map((s) => s.trim().toLowerCase()).filter(Boolean);
 
-      // Check if site and auditor match the selection
-      const siteMatch = aSite === normSite || !aSite;
-      const auditorMatch =
-        engName === normAuditor ||
-        aAuditor1 === normAuditor ||
-        aAuditor2 === normAuditor;
+      // Extract auditor tokens of assignment a
+      const aEngName = (engMap.get(a.eng) || '').trim().toLowerCase();
+      const aAuditor1Tokens = (a.auditor1 || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+      const aAuditor2Tokens = (a.auditor2 || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+      const aAuditorTokens = Array.from(new Set([aEngName, ...aAuditor1Tokens, ...aAuditor2Tokens].filter(Boolean)));
 
+      // Evaluate site and auditor matches
+      let siteMatch = true;
+      if (siteTokens.length > 0) {
+        siteMatch = aSiteTokens.length === 0 || siteTokens.some((st) => aSiteTokens.includes(st));
+      }
+
+      let auditorMatch = true;
+      if (auditorTokens.length > 0) {
+        auditorMatch = auditorTokens.some((at) => aAuditorTokens.includes(at));
+      }
+
+      // If both match (or single match when only one criteria specified)
       if (siteMatch && auditorMatch) {
-        // Calculate date for this assignment row (week + day)
         const dayOffset = a.week * 7 + a.day;
         const assignDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + dayOffset);
         const iso = fmtISO(assignDate);
@@ -191,6 +200,12 @@ export function AvailabilityDatePicker({
       dates,
     };
   }, [dateFrom, _dateTo]);
+
+  // Check if current selection has any booked date conflict
+  const hasConflict = useMemo(() => {
+    if (!selectedRange) return false;
+    return selectedRange.dates.some((d) => bookedDatesSet.has(fmtISO(d)));
+  }, [selectedRange, bookedDatesSet]);
 
   // Handle Date Click reading directly from props
   const handleSelectDate = (d: Date) => {
@@ -386,9 +401,12 @@ export function AvailabilityDatePicker({
           } else if (inSelected) {
             const borderRadius = isStart && isEnd ? '7px' : isStart ? '7px 0 0 7px' : isEnd ? '0 7px 7px 0' : '0';
             cellStyle = `background:#15191e;color:#fff;border:1px solid #15191e;font-weight:700;border-radius:${borderRadius};cursor:pointer;`;
+            if (isBooked && blocking) {
+              tooltip = `Selected (Booked): ${fmtDisplay(day)} — ${blocking.site} / ${blocking.auditor} (${blocking.title})`;
+            }
           } else if (isBooked) {
             cellStyle = 'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;font-weight:600;border-radius:6px;';
-            tooltip = blocking ? `Booked: ${blocking.site} — ${blocking.auditor} (${blocking.title})` : 'Booked date';
+            tooltip = blocking ? `⚠️ Booked: ${blocking.site} — ${blocking.auditor} (${blocking.title})` : 'Booked date';
           } else {
             cellStyle = 'background:#eefbf4;color:#15803d;border:1px solid #bbf7d0;font-weight:600;border-radius:6px;cursor:pointer;';
           }
@@ -403,6 +421,21 @@ export function AvailabilityDatePicker({
               )}
             >
               <span>{day.getDate()}</span>
+              {isBooked && (
+                <span
+                  style={{
+                    width: inSelected ? '6px' : '5px',
+                    height: inSelected ? '6px' : '5px',
+                    borderRadius: '50%',
+                    background: inSelected ? '#ef4444' : '#dc2626',
+                    border: inSelected ? '1px solid #fff' : 'none',
+                    position: 'absolute',
+                    top: '3px',
+                    right: '3px',
+                  }}
+                  title={blocking ? `Booked: ${blocking.site} — ${blocking.auditor}` : 'Booked date'}
+                />
+              )}
             </div>
           );
         })}
@@ -420,6 +453,15 @@ export function AvailabilityDatePicker({
         </div>
       </div>
 
+      {hasConflict && (
+        <div style={css('display:flex;align-items:center;gap:7px;font-size:11.5px;color:#dc2626;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:8px 12px')}>
+          <span style={{ fontSize: '13px' }}>⚠️</span>
+          <span>
+            <strong>Booking Notice:</strong> Selected date range includes existing booking(s) for the selected Site/Auditor. You can still proceed if intended.
+          </span>
+        </div>
+      )}
+
       {/* Legend Key */}
       <div style={css('display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-top:1px solid #eef1ea;padding-top:8px')}>
         <div style={css('display:flex;align-items:center;gap:5px')}>
@@ -432,7 +474,7 @@ export function AvailabilityDatePicker({
         </div>
         <div style={css('display:flex;align-items:center;gap:5px')}>
           <span style={css('width:10px;height:10px;border-radius:3px;background:#fef2f2;border:1px solid #fca5a5')} />
-          <span style={css('font-size:10.5px;color:#5c625c')}>Booked</span>
+          <span style={css('font-size:10.5px;color:#dc2626;font-weight:600')}>Booked</span>
         </div>
         <div style={css('display:flex;align-items:center;gap:5px')}>
           <span style={css('width:10px;height:10px;border-radius:3px;background:#f4f6f1;border:1px solid #e8ebe4')} />
