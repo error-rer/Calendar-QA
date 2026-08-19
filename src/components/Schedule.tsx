@@ -4,13 +4,13 @@ import { getAccentBackground } from '../useScheduler';
 import { css, HButton, HInput } from '../ui';
 import { DetailPanel } from './DetailPanel';
 
-function renderApptCode(code: string) {
+function renderApptCode(code: string, overrideColor?: string) {
   if (typeof code === 'string' && (code.startsWith('CS') || code.startsWith('IA'))) {
     const spaceDotIdx = code.indexOf(' · ');
     if (spaceDotIdx !== -1) {
       const prefix = code.slice(0, spaceDotIdx);
       const rest = code.slice(spaceDotIdx);
-      const prefixColor = code.startsWith('CS') ? '#2756d6' : '#10b981';
+      const prefixColor = overrideColor || (code.startsWith('CS') ? '#2756d6' : '#10b981');
       return (
         <>
           <span style={{ color: prefixColor, fontWeight: 700 }}>{prefix}</span>
@@ -1367,7 +1367,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
               const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
               const barBg = isInc ? '#FF0000' : '#f0f2ec';
               const titleColor = isInc ? '#FFFFFF' : (chip.isInternal ? '#10b981' : '#2756d6');
-              const purposeColor = isInc ? 'rgba(255,255,255,0.9)' : '#5c625c';
+              const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
               const accentBg = isInc ? '#B91C1C' : getAccentBackground(chColors);
 
               return (
@@ -1379,7 +1379,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
                 }}>
                   <div style={{ width: '3px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
                   <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: '11.5px', fontWeight: 600, color: titleColor }}>{renderApptCode(chip.customer)}</div>
+                    <div style={{ fontSize: '11.5px', fontWeight: 600, color: titleColor }}>{renderApptCode(chip.customer, isInc ? '#FFFFFF' : undefined)}</div>
                     {chip.purpose ? (
                       <div style={{ fontSize: '10px', color: purposeColor, marginTop: '1px' }}>{chip.purpose}</div>
                     ) : null}
@@ -1398,7 +1398,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
         const spColors = sp.colors && sp.colors.length > 0 ? sp.colors : [sp.color];
         const barBg = isInc ? '#FF0000' : '#f0f2ec';
         const titleColor = isInc ? '#FFFFFF' : (sp.isInternal ? '#10b981' : '#2756d6');
-        const purposeColor = isInc ? 'rgba(255,255,255,0.9)' : '#5c625c';
+        const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
         const accentBg = isInc ? '#B91C1C' : getAccentBackground(spColors);
 
         return (
@@ -1414,7 +1414,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
           }}>
             <div style={{ width: '3px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
             <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: '11.5px', fontWeight: 600, color: titleColor }}>{renderApptCode(sp.customer)}</div>
+              <div style={{ fontSize: '11.5px', fontWeight: 600, color: titleColor }}>{renderApptCode(sp.customer, isInc ? '#FFFFFF' : undefined)}</div>
               {sp.purpose ? (
                 <div style={{ fontSize: '10px', color: purposeColor, marginTop: '1px' }}>{sp.purpose}</div>
               ) : null}
@@ -1547,7 +1547,7 @@ function MonthGrid({ vm }: { vm: VM }) {
                   const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
                   const barBg = isInc ? '#FF0000' : '#f0f2ec';
                   const titleColor = isInc ? '#FFFFFF' : (ch.isInternal ? '#10b981' : '#2756d6');
-                  const purposeColor = isInc ? 'rgba(255,255,255,0.9)' : '#5c625c';
+                  const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
                   const accentBg = isInc ? '#B91C1C' : getAccentBackground(chColors);
 
                   return (
@@ -1566,7 +1566,7 @@ function MonthGrid({ vm }: { vm: VM }) {
                     >
                       <div style={{ width: '3px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
                       <div style={{ padding: '3px 5px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
-                        <div style={{ fontSize: '10.5px', fontWeight: 600, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code)}</div>
+                        <div style={{ fontSize: '10.5px', fontWeight: 600, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code, isInc ? '#FFFFFF' : undefined)}</div>
                         {ch.purpose ? (
                           <div style={{ fontSize: '9.5px', color: purposeColor, marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
                         ) : null}
@@ -1605,7 +1605,7 @@ function MonthMobile({ vm }: { vm: VM }) {
                   const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
                   const barBg = isInc ? '#FF0000' : '#f0f2ec';
                   const titleColor = isInc ? '#FFFFFF' : (ch.isInternal ? '#10b981' : '#2756d6');
-                  const purposeColor = isInc ? 'rgba(255,255,255,0.9)' : '#5c625c';
+                  const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
                   const accentBg = isInc ? '#B91C1C' : getAccentBackground(chColors);
 
                   return (
@@ -1623,7 +1623,7 @@ function MonthMobile({ vm }: { vm: VM }) {
                     >
                       <div style={{ width: '2px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
                       <div style={{ padding: '2px 4px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
-                        <div style={{ fontSize: '8px', fontWeight: 600, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code)}</div>
+                        <div style={{ fontSize: '8px', fontWeight: 600, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code, isInc ? '#FFFFFF' : undefined)}</div>
                         {ch.purpose ? (
                           <div style={{ fontSize: '7.5px', color: purposeColor, marginTop: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
                         ) : null}
