@@ -1471,12 +1471,13 @@ export function useScheduler() {
         return { comments: nextComments };
       });
     };
+    const isIncomplete = isIncompleteAssignment(a);
     return {
       id: a.id,
       code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''),
       purpose: chipPurpose,
       engName: auditorName,
-      color, colors, isInternal,
+      color, colors, isInternal, isIncomplete,
       site,
       customer: a.customer || '',
       endCustomer: a.endCustomer || '',
@@ -2102,6 +2103,14 @@ export function useScheduler() {
         return !!o && matchesFilters(a, o);
       })
     : [];
+
+  dayDialogAssignments.sort((a, b) => {
+    const aInc = isIncompleteAssignment(a);
+    const bInc = isIncompleteAssignment(b);
+    if (aInc && !bInc) return -1;
+    if (!aInc && bInc) return 1;
+    return 0;
+  });
   const dayDialogChips = dayDialogAssignments.map((a) => {
     const e = engById(a.eng);
     if (!e) return null;

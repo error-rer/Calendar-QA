@@ -144,12 +144,18 @@ function ApptCard({ chip }: { chip: any }) {
   };
   const cancelDelete = () => setConfirmDelete(null);
 
+  const isInc = chip.isIncomplete;
   const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
+  const barBg = isInc ? '#FF0000' : '#fff';
+  const accentBg = isInc ? '#B91C1C' : getAccentBackground(chColors);
+  const titleColor = isInc ? '#FFFFFF' : (chip.isInternal ? '#10b981' : '#2756d6');
+  const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
+  const cardBorder = isInc ? '1px solid #dc2626' : '1px solid #e4e7e0';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #e4e7e0', borderRadius: '8px', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', background: barBg, border: cardBorder, borderRadius: '8px', overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'stretch' }}>
-        <div style={{ width: '4px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
+        <div style={{ width: '4px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
         <div style={css('min-width:0;flex:1;padding:9px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px')}>
           <div
             onClick={() => {
@@ -160,9 +166,9 @@ function ApptCard({ chip }: { chip: any }) {
             style={{ minWidth: 0, flex: 1, cursor: 'pointer' }}
             title="Click to view details"
           >
-            <div style={css(`font-size:12.5px;font-weight:600;color:${chip.isInternal ? '#10b981' : '#2756d6'}`)}>{renderApptCode(chip.code)}</div>
+            <div style={css(`font-size:12.5px;font-weight:600;color:${titleColor}`)}>{renderApptCode(chip.code, isInc ? '#FFFFFF' : undefined)}</div>
             {chip.purpose ? (
-              <div style={css('font-size:11px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
+              <div style={css(`font-size:11px;color:${purposeColor};margin-top:2px`)}>{chip.purpose}</div>
             ) : null}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
@@ -170,15 +176,15 @@ function ApptCard({ chip }: { chip: any }) {
               type="button"
               onClick={(e) => { e.stopPropagation(); toggleExpand(); }}
               title={isExpanded ? 'Hide embedded details' : 'Show embedded details'}
-              style={css('width:30px;height:30px;border:1px solid ' + (isExpanded ? '#9bb0e8' : '#dde0d9') + ';background:' + (isExpanded ? '#eef2fd' : '#f4f6f1') + ';border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')}
+              style={css('width:30px;height:30px;border:1px solid ' + (isExpanded ? (isInc ? '#fff' : '#9bb0e8') : (isInc ? '#fca5a5' : '#dde0d9')) + ';background:' + (isExpanded ? (isInc ? '#dc2626' : '#eef2fd') : (isInc ? '#ef4444' : '#f4f6f1')) + ';border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')}
             >
-              {isExpanded ? <EyeOnIcon size={15} color="#2756d6" /> : <EyeOffIcon size={15} color="#5c625c" />}
+              {isExpanded ? <EyeOnIcon size={15} color={isInc ? '#ffffff' : '#2756d6'} /> : <EyeOffIcon size={15} color={isInc ? '#ffffff' : '#5c625c'} />}
             </button>
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); chip.onEdit(); }}
               title="Edit appointment details"
-              style={css('width:30px;height:30px;border:1px solid #dde0d9;background:#f4f6f1;border-radius:7px;cursor:pointer;color:#3c423d;font-size:13px;display:flex;align-items:center;justify-content:center')}
+              style={css('width:30px;height:30px;border:1px solid ' + (isInc ? '#fca5a5' : '#dde0d9') + ';background:' + (isInc ? '#ef4444' : '#f4f6f1') + ';border-radius:7px;cursor:pointer;color:' + (isInc ? '#ffffff' : '#3c423d') + ';font-size:13px;display:flex;align-items:center;justify-content:center')}
             >
               ✏️
             </button>
@@ -186,7 +192,7 @@ function ApptCard({ chip }: { chip: any }) {
               type="button"
               onClick={(e) => { e.stopPropagation(); requestDelete(); }}
               title="Delete appointment"
-              style={css('width:30px;height:30px;border:1px solid #fecaca;background:#fef2f2;border-radius:7px;cursor:pointer;color:#dc2626;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center')}
+              style={css('width:30px;height:30px;border:1px solid ' + (isInc ? '#fff' : '#fecaca') + ';background:' + (isInc ? '#b91c1c' : '#fef2f2') + ';border-radius:7px;cursor:pointer;color:#ffffff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center')}
             >
               ✕
             </button>
@@ -204,6 +210,11 @@ function ApptCard({ chip }: { chip: any }) {
             }`)}>
               {chip.isInternal ? 'Internal Audit' : 'Customer Audit'}
             </span>
+            {isInc && (
+              <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;color:#dc2626;background:#fef2f2;border:1px solid #fca5a5;")}>
+                Incomplete Data
+              </span>
+            )}
             {chip.site && (
               <span style={css('font-size:11.5px;color:#23282a;font-weight:600')}>
                 Site: <span style={css('color:#15191e')}>{chip.site}</span>
