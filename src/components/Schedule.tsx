@@ -433,7 +433,7 @@ function Sidebar({ vm }: { vm: VM }) {
                       {renderApptCode(item.code, '#991b1b')}
                     </div>
                     <div style={css("font-size:9.5px;color:#b91c1c;margin-top:2px;font-family:'IBM Plex Mono',monospace")}>
-                      {item.dateStr} · Missing required fields
+                      {item.dateStr}
                     </div>
                   </div>
                   <span style={css('font-size:11px;color:#ef4444;flex-shrink:0')}>✏️</span>

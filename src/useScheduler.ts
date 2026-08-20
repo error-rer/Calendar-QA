@@ -9,7 +9,7 @@ import type {
   State,
   SubDepartment,
 } from './types';
-import { isAppointmentIncomplete, isIncompleteAssignment, isInternalAssignment } from './types';
+import { getMissingFields, isAppointmentIncomplete, isIncompleteAssignment, isInternalAssignment } from './types';
 import {
   dayLabels,
   dayNames,
@@ -2151,14 +2151,40 @@ export function useScheduler() {
       const site = (isInternal ? a.site2 : a.site1) || '';
       const nameWithSite = site ? `${mainName} - ${site}` : mainName;
       const code = apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : '');
-      const base = new Date(2026, 5, 29 + a.week * 7);
-      base.setDate(base.getDate() + a.day);
-      const dateStr = fmtDate(base);
+
+      // Compute multi-date range across all sibling slots for this appointment
+      const siblings = S.assignments.filter((x) => x.order === a.order && x.eng === a.eng);
+      const slotDates = (siblings.length > 0 ? siblings : [a]).map((x) => {
+        const d = new Date(2026, 5, 29 + x.week * 7);
+        d.setDate(d.getDate() + x.day);
+        return d;
+      }).sort((d1, d2) => d1.getTime() - d2.getTime());
+
+      const minDate = slotDates[0];
+      const maxDate = slotDates[slotDates.length - 1];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      let dateRangeStr = '';
+      if (minDate.toDateString() === maxDate.toDateString()) {
+        dateRangeStr = months[minDate.getMonth()] + ' ' + minDate.getDate();
+      } else if (minDate.getMonth() === maxDate.getMonth() && minDate.getFullYear() === maxDate.getFullYear()) {
+        dateRangeStr = months[minDate.getMonth()] + ' ' + minDate.getDate() + '–' + maxDate.getDate();
+      } else {
+        dateRangeStr = months[minDate.getMonth()] + ' ' + minDate.getDate() + '–' + months[maxDate.getMonth()] + ' ' + maxDate.getDate();
+      }
+
+      // Compute specific missing required fields
+      const missingFields = getMissingFields(a);
+      const missingStr = missingFields.length > 0
+        ? 'Missing: ' + missingFields.join(', ')
+        : 'Missing required fields';
+
+      const fullDateLine = dateRangeStr + ' · ' + missingStr;
 
       items.push({
         id: a.id,
         code,
-        dateStr,
+        dateStr: fullDateLine,
         isInternal,
         onClick: () => {
           closeSidebar();
