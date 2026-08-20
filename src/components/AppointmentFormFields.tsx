@@ -552,28 +552,32 @@ function AutocompleteInput({
   );
 }
 
-/** Multi-select auditor field — checkboxes + free-text add, serialized as comma-separated string. */
+/** Multi-select auditor field — combobox with inline tags, search filter, free-text add & option removal. */
 function MultiAuditorSelect({
   id,
   value,
   onChange,
   suggestions,
   onAddNew,
+  onRemoveOption,
 }: {
   id: string;
   value: string;
   onChange: (val: string) => void;
   suggestions: string[];
   onAddNew?: (val: string) => void;
+  onRemoveOption?: (val: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [inputVal, setInputVal] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const selectedAuditors = value
-    ? value.split(',').map((s) => s.trim()).filter(Boolean)
-    : [];
+  const selectedAuditors = useMemo(() => {
+    return value
+      ? value.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+  }, [value]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -593,6 +597,11 @@ function MultiAuditorSelect({
     onChange(next.join(', '));
   };
 
+  const removeAuditor = (name: string) => {
+    const next = selectedAuditors.filter((a) => a !== name);
+    onChange(next.join(', '));
+  };
+
   const addCustom = () => {
     const clean = inputVal.trim();
     if (!clean) return;
@@ -603,7 +612,7 @@ function MultiAuditorSelect({
       }
     }
     setInputVal('');
-    inputRef.current?.focus();
+    setOpen(false);
   };
 
   const filteredSuggestions = useMemo(() => {
@@ -612,127 +621,250 @@ function MultiAuditorSelect({
     return q ? unique.filter((s) => s.toLowerCase().includes(q)) : unique;
   }, [suggestions, inputVal]);
 
-  const displayText = selectedAuditors.length > 0
-    ? selectedAuditors.join(', ')
-    : 'Select auditor(s)...';
-
   return (
     <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
-      {/* Trigger button */}
-      <button
-        id={id}
-        type="button"
-        onClick={() => { setOpen(!open); setTimeout(() => inputRef.current?.focus(), 60); }}
+      {/* Combobox Input Box with Tags */}
+      <div
+        onClick={() => {
+          inputRef.current?.focus();
+          setOpen(true);
+        }}
         style={{
-          border: '1px solid #dde0d9', borderRadius: '8px', padding: '8px 10px',
-          fontSize: '12.5px', fontFamily: "'Archivo',sans-serif",
-          color: selectedAuditors.length > 0 ? '#23282a' : '#8a9088',
-          outline: 'none', background: '#fff', width: '100%',
-          boxSizing: 'border-box', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', textAlign: 'left',
-        } as React.CSSProperties}
+          border: '1px solid #dde0d9',
+          borderRadius: '8px',
+          padding: '4px 8px',
+          minHeight: '38px',
+          fontSize: '12.5px',
+          fontFamily: "'Archivo',sans-serif",
+          background: '#fff',
+          width: '100%',
+          boxSizing: 'border-box',
+          cursor: 'text',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: '5px',
+        }}
       >
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-          {displayText}
-        </span>
-        <span style={{ fontSize: '9px', color: '#8a9088', marginLeft: '6px', flexShrink: 0 }}>
+        {selectedAuditors.map((name) => (
+          <span
+            key={name}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '2px 7px',
+              borderRadius: '5px',
+              background: '#eef2fd',
+              border: '1px solid #d4def0',
+              fontSize: '11.5px',
+              fontFamily: "'Archivo',sans-serif",
+              fontWeight: 600,
+              color: '#2756d6',
+            }}
+          >
+            {name}
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                removeAuditor(name);
+              }}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                color: '#2756d6',
+                cursor: 'pointer',
+                padding: 0,
+                fontSize: '10px',
+                lineHeight: 1,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              ✕
+            </button>
+          </span>
+        ))}
+
+        <input
+          ref={inputRef}
+          id={id}
+          type="text"
+          value={inputVal}
+          onChange={(e) => {
+            setInputVal(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              addCustom();
+            } else if (e.key === 'Backspace' && !inputVal && selectedAuditors.length > 0) {
+              removeAuditor(selectedAuditors[selectedAuditors.length - 1]);
+            }
+          }}
+          placeholder={selectedAuditors.length === 0 ? "Type or select auditor(s)..." : "Add auditor..."}
+          style={{
+            border: 'none',
+            outline: 'none',
+            background: 'transparent',
+            fontSize: '12.5px',
+            fontFamily: "'Archivo',sans-serif",
+            color: '#23282a',
+            flex: 1,
+            minWidth: '100px',
+            padding: '2px 0',
+          }}
+          autoComplete="off"
+        />
+
+        <span
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(!open);
+          }}
+          style={{
+            fontSize: '9px',
+            color: '#8a9088',
+            marginLeft: 'auto',
+            flexShrink: 0,
+            cursor: 'pointer',
+            padding: '2px',
+          }}
+        >
           {open ? '▲' : '▼'}
         </span>
-      </button>
+      </div>
 
-      {/* Selected chips shown below when >1 selected */}
-      {selectedAuditors.length > 1 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '5px' }}>
-          {selectedAuditors.map((name) => (
-            <span key={name} style={{
-              display: 'inline-flex', alignItems: 'center', gap: '4px',
-              padding: '2px 7px', borderRadius: '5px',
-              background: '#eef2fd', border: '1px solid #d4def0',
-              fontSize: '11px', fontFamily: "'Archivo',sans-serif",
-              fontWeight: 600, color: '#2756d6',
-            }}>
-              {name}
-              <button
-                type="button"
-                onMouseDown={(e) => { e.preventDefault(); toggleAuditor(name); }}
-                style={{ border: 'none', background: 'transparent', color: '#2756d6', cursor: 'pointer', padding: 0, fontSize: '10px', lineHeight: 1, display: 'flex', alignItems: 'center' }}
-              >✕</button>
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Dropdown */}
+      {/* Dropdown Menu */}
       {open && (
-        <div style={{
-          position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px',
-          background: '#fff', border: '1px solid #dde0d9', borderRadius: '8px',
-          boxShadow: '0 6px 20px rgba(0,0,0,0.12)', zIndex: 100, padding: '6px',
-        }}>
-          {/* Search/add input */}
-          <div style={{ display: 'flex', gap: '5px', marginBottom: '6px' }}>
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder="Search or type new name…"
-              value={inputVal}
-              onChange={(e) => setInputVal(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } }}
-              style={{
-                flex: 1, border: '1px solid #dde0d9', borderRadius: '6px',
-                padding: '6px 8px', fontSize: '12px',
-                fontFamily: "'Archivo',sans-serif", outline: 'none', color: '#23282a',
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            marginTop: '4px',
+            background: '#fff',
+            border: '1px solid #dde0d9',
+            borderRadius: '8px',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+            zIndex: 100,
+            padding: '4px',
+            maxHeight: '210px',
+            overflowY: 'auto',
+          }}
+        >
+          {inputVal.trim() && !filteredSuggestions.some((s) => s.toLowerCase() === inputVal.trim().toLowerCase()) && (
+            <div
+              onMouseDown={(e) => {
+                e.preventDefault();
+                addCustom();
               }}
-              autoComplete="off"
-            />
-            {inputVal.trim() && (
-              <button
-                type="button"
-                onMouseDown={(e) => { e.preventDefault(); addCustom(); }}
-                style={{
-                  border: '1px solid #d4def0', background: '#eef2fd', color: '#2756d6',
-                  borderRadius: '6px', padding: '5px 9px', fontSize: '11px', fontWeight: 700,
-                  fontFamily: "'Archivo',sans-serif", cursor: 'pointer', flexShrink: 0,
-                } as React.CSSProperties}
-              >＋ Add</button>
-            )}
-          </div>
+              style={{
+                padding: '7px 10px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#2756d6',
+                background: '#eef2fd',
+                border: '1px solid #d4def0',
+                marginBottom: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <span>＋ Add "{inputVal.trim()}"</span>
+            </div>
+          )}
 
-          {/* Checkbox list */}
-          <div style={{ maxHeight: '190px', overflowY: 'auto' }}>
-            {filteredSuggestions.length === 0 && (
-              <div style={{ padding: '8px 10px', fontSize: '12px', color: '#8a9088', fontFamily: "'Archivo',sans-serif" }}>
-                {inputVal.trim() ? `Press Enter or "＋ Add" to save "${inputVal.trim()}"` : 'No auditors found'}
-              </div>
-            )}
-            {filteredSuggestions.map((name) => {
-              const isSel = selectedAuditors.includes(name);
-              return (
-                <div
-                  key={name}
-                  onClick={() => toggleAuditor(name)}
-                  style={{
-                    padding: '7px 10px', borderRadius: '6px', cursor: 'pointer',
-                    fontSize: '12.5px', fontFamily: "'Archivo',sans-serif",
-                    fontWeight: isSel ? 600 : 400,
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    background: isSel ? '#eef2fd' : '#fff',
-                    color: isSel ? '#2756d6' : '#23282a',
-                    transition: 'background .1s ease',
-                  }}
-                >
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{name}</span>
-                  <span style={{
-                    width: '14px', height: '14px', borderRadius: '3px', flexShrink: 0,
-                    border: '1px solid ' + (isSel ? '#2756d6' : '#cdd2c9'),
-                    background: isSel ? '#2756d6' : '#fff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '9px', color: '#fff',
-                  }}>{isSel ? '✓' : ''}</span>
+          {filteredSuggestions.length === 0 && !inputVal.trim() && (
+            <div style={{ padding: '8px 10px', fontSize: '12px', color: '#8a9088', fontFamily: "'Archivo',sans-serif" }}>
+              No auditors found
+            </div>
+          )}
+
+          {filteredSuggestions.map((name) => {
+            const isSel = selectedAuditors.includes(name);
+            return (
+              <div
+                key={name}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  toggleAuditor(name);
+                  setInputVal('');
+                }}
+                style={{
+                  padding: '7px 10px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '12.5px',
+                  fontFamily: "'Archivo',sans-serif",
+                  fontWeight: isSel ? 600 : 400,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: isSel ? '#eef2fd' : '#fff',
+                  color: isSel ? '#2756d6' : '#23282a',
+                  transition: 'background .1s ease',
+                  marginBottom: '2px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                  <span
+                    style={{
+                      width: '14px',
+                      height: '14px',
+                      borderRadius: '3px',
+                      flexShrink: 0,
+                      border: '1px solid ' + (isSel ? '#2756d6' : '#cdd2c9'),
+                      background: isSel ? '#2756d6' : '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '9px',
+                      color: '#fff',
+                    }}
+                  >
+                    {isSel ? '✓' : ''}
+                  </span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {name}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
+
+                {onRemoveOption && (
+                  <button
+                    type="button"
+                    title={`Delete option "${name}"`}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onRemoveOption(name);
+                    }}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      color: '#dc2626',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      padding: '2px 5px',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -934,6 +1066,7 @@ export function AppointmentFormFields({
                 onChange={(auditor1) => onChange({ auditor1 })}
                 suggestions={auditorSuggestions}
                 onAddNew={(_name) => { if (removeAuditorOption) { /* addAuditor handled by save */ } }}
+                onRemoveOption={removeAuditorOption}
               />
             </div>
 
@@ -1022,6 +1155,7 @@ export function AppointmentFormFields({
                 onChange={(auditor2) => onChange({ auditor2 })}
                 suggestions={auditorSuggestions}
                 onAddNew={(_name) => { if (removeAuditorOption) { /* addAuditor handled by save */ } }}
+                onRemoveOption={removeAuditorOption}
               />
             </div>
 
