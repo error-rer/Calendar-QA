@@ -170,15 +170,15 @@ function ApptCard({ chip }: { chip: any }) {
               type="button"
               onClick={(e) => { e.stopPropagation(); toggleExpand(); }}
               title={isExpanded ? 'Hide embedded details' : 'Show embedded details'}
-              style={css('width:30px;height:30px;border:1px solid ' + (isExpanded ? (isInc ? '#fff' : '#9bb0e8') : (isInc ? '#fca5a5' : '#dde0d9')) + ';background:' + (isExpanded ? (isInc ? '#dc2626' : '#eef2fd') : (isInc ? '#ef4444' : '#f4f6f1')) + ';border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')}
+              style={css('width:30px;height:30px;border:1px solid ' + (isExpanded ? '#9bb0e8' : '#dde0d9') + ';background:' + (isExpanded ? '#eef2fd' : '#f4f6f1') + ';border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')}
             >
-              {isExpanded ? <EyeOnIcon size={15} color={isInc ? '#ffffff' : '#2756d6'} /> : <EyeOffIcon size={15} color={isInc ? '#ffffff' : '#5c625c'} />}
+              {isExpanded ? <EyeOnIcon size={15} color="#2756d6" /> : <EyeOffIcon size={15} color="#5c625c" />}
             </button>
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); chip.onEdit(); }}
               title="Edit appointment details"
-              style={css('width:30px;height:30px;border:1px solid ' + (isInc ? '#fca5a5' : '#dde0d9') + ';background:' + (isInc ? '#ef4444' : '#f4f6f1') + ';border-radius:7px;cursor:pointer;color:' + (isInc ? '#ffffff' : '#3c423d') + ';font-size:13px;display:flex;align-items:center;justify-content:center')}
+              style={css('width:30px;height:30px;border:1px solid #dde0d9;background:#f4f6f1;border-radius:7px;cursor:pointer;color:#3c423d;font-size:13px;display:flex;align-items:center;justify-content:center')}
             >
               ✏️
             </button>
@@ -186,7 +186,7 @@ function ApptCard({ chip }: { chip: any }) {
               type="button"
               onClick={(e) => { e.stopPropagation(); requestDelete(); }}
               title="Delete appointment"
-              style={css('width:30px;height:30px;border:1px solid ' + (isInc ? '#fff' : '#fecaca') + ';background:' + (isInc ? '#b91c1c' : '#fef2f2') + ';border-radius:7px;cursor:pointer;color:' + (isInc ? '#ffffff' : '#dc2626') + ';font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center')}
+              style={css('width:30px;height:30px;border:1px solid #fecaca;background:#fef2f2;border-radius:7px;cursor:pointer;color:#dc2626;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center')}
             >
               ✕
             </button>
