@@ -66,17 +66,16 @@ export function isIncompleteAssignment(a: Assignment): boolean {
     (typeof a.order === 'string' && a.order.startsWith('IA'));
 
   if (isInternal) {
-    // Required fields for Internal Audit (IA): Site, Department, Area, Auditor, Purpose
-    // Customer and End Customer are NOT required for IA
+    // Required fields for Internal Audit (IA): Site (site2), Department (department2), Area (area), Auditor (auditor2)
+    // Purpose, Customer, and End Customer are NOT fields/required for IA
     return (
       !hasValue(a.site2) ||
       !hasValue(a.department2) ||
       !hasValue(a.area) ||
-      !hasValue(a.auditor2) ||
-      !hasValue(a.purpose)
+      !hasValue(a.auditor2)
     );
   } else {
-    // Required fields for Customer Audit (CS): Site, Customer, Purpose, Auditor, Department
+    // Required fields for Customer Audit (CS): Site (site1), Customer (customer), Purpose (purpose), Auditor (auditor1), Department (department1)
     // End Customer is optional
     return (
       !hasValue(a.site1) ||
