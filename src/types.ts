@@ -57,13 +57,19 @@ function hasValue(val: any): boolean {
   return val !== undefined && val !== null && String(val).trim() !== '';
 }
 
-export function isIncompleteAssignment(a: Assignment): boolean {
+export function isInternalAssignment(a: Assignment): boolean {
   if (!a) return false;
-  const isInternal =
+  return (
     a.sectionType === 'internal' ||
     !!(a.site2 || a.auditor2 || a.department2 || a.area) ||
     (typeof a.id === 'string' && a.id.startsWith('IA')) ||
-    (typeof a.order === 'string' && a.order.startsWith('IA'));
+    (typeof a.order === 'string' && a.order.startsWith('IA'))
+  );
+}
+
+export function isIncompleteAssignment(a: Assignment): boolean {
+  if (!a) return false;
+  const isInternal = isInternalAssignment(a);
 
   if (isInternal) {
     // Required fields for Internal Audit (IA): Site (site2), Department (department2), Area (area), Auditor (auditor2)

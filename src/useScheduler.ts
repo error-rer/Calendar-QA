@@ -9,7 +9,7 @@ import type {
   State,
   SubDepartment,
 } from './types';
-import { isIncompleteAssignment } from './types';
+import { isIncompleteAssignment, isInternalAssignment } from './types';
 import {
   dayLabels,
   dayNames,
@@ -734,7 +734,7 @@ export function useScheduler() {
   const openEdit = (aid: string) => {
     const a = S.assignments.find((x) => x.id === aid);
     if (!a) return;
-    const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
+    const isInternal = isInternalAssignment(a);
     // find all sibling assignments (same order + eng) for the full date range
     const siblings = S.assignments.filter((x) => x.eng === a.eng && x.order === a.order);
     const minWeek = Math.min(...siblings.map((x) => x.week));
