@@ -186,7 +186,7 @@ function ApptCard({ chip }: { chip: any }) {
               type="button"
               onClick={(e) => { e.stopPropagation(); requestDelete(); }}
               title="Delete appointment"
-              style={css('width:30px;height:30px;border:1px solid ' + (isInc ? '#fff' : '#fecaca') + ';background:' + (isInc ? '#b91c1c' : '#fef2f2') + ';border-radius:7px;cursor:pointer;color:#ffffff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center')}
+              style={css('width:30px;height:30px;border:1px solid ' + (isInc ? '#fff' : '#fecaca') + ';background:' + (isInc ? '#b91c1c' : '#fef2f2') + ';border-radius:7px;cursor:pointer;color:' + (isInc ? '#ffffff' : '#dc2626') + ';font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center')}
             >
               ✕
             </button>
