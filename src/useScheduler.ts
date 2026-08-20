@@ -665,11 +665,12 @@ export function useScheduler() {
         newAssignments.push({
           id: 'a' + ids.current.id++,
           eng: engId, order: orderId, day: slot.wd, week: slot.weekOffset,
+          sectionType: d.sectionType,
           site1: d.sectionType === 'customer' ? d.site1 : '',
           customer: d.sectionType === 'customer' ? d.customer : '',
           endCustomer: d.sectionType === 'customer' ? d.endCustomer : '',
           auditor1: d.sectionType === 'customer' ? d.auditor1 : '',
-          purpose: d.sectionType === 'customer' ? d.purpose : '',
+          purpose: d.purpose || '',
           site2: d.sectionType === 'internal' ? d.site2 : '',
           area: d.sectionType === 'internal' ? d.area : '',
           auditor2: d.sectionType === 'internal' ? d.auditor2 : '',
@@ -818,11 +819,12 @@ export function useScheduler() {
     }
 
     const fields = {
+      sectionType: d.sectionType,
       site1: d.sectionType === 'customer' ? d.site1 : '',
       customer: d.sectionType === 'customer' ? d.customer : '',
       endCustomer: d.sectionType === 'customer' ? d.endCustomer : '',
       auditor1: d.sectionType === 'customer' ? d.auditor1 : '',
-      purpose: d.sectionType === 'customer' ? d.purpose : '',
+      purpose: d.purpose || '',
       site2: d.sectionType === 'internal' ? d.site2 : '',
       area: d.sectionType === 'internal' ? d.area : '',
       auditor2: d.sectionType === 'internal' ? d.auditor2 : '',

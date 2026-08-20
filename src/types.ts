@@ -33,6 +33,7 @@ export interface Assignment {
   order: string;
   day: number;
   week: number;
+  sectionType?: 'customer' | 'internal';
   site1?: string;
   customer?: string;
   endCustomer?: string;
@@ -52,22 +53,38 @@ export interface Assignment {
   utl3?: number;
 }
 
+function hasValue(val: any): boolean {
+  return val !== undefined && val !== null && String(val).trim() !== '';
+}
+
 export function isIncompleteAssignment(a: Assignment): boolean {
-  const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
+  if (!a) return false;
+  const isInternal =
+    a.sectionType === 'internal' ||
+    !!(a.site2 || a.auditor2 || a.department2 || a.area) ||
+    (typeof a.id === 'string' && a.id.startsWith('IA')) ||
+    (typeof a.order === 'string' && a.order.startsWith('IA'));
+
   if (isInternal) {
-    const site = (a.site2 || '').trim();
-    const dept = (a.department2 || '').trim();
-    const area = (a.area || '').trim();
-    const auditor = (a.auditor2 || '').trim();
-    const purpose = (a.purpose || '').trim();
-    return !site || !dept || !area || !auditor || !purpose;
+    // Required fields for Internal Audit (IA): Site, Department, Area, Auditor, Purpose
+    // Customer and End Customer are NOT required for IA
+    return (
+      !hasValue(a.site2) ||
+      !hasValue(a.department2) ||
+      !hasValue(a.area) ||
+      !hasValue(a.auditor2) ||
+      !hasValue(a.purpose)
+    );
   } else {
-    const site = (a.site1 || '').trim();
-    const cust = (a.customer || '').trim();
-    const purpose = (a.purpose || '').trim();
-    const auditor = (a.auditor1 || '').trim();
-    const dept = (a.department1 || '').trim();
-    return !site || !cust || !purpose || !auditor || !dept;
+    // Required fields for Customer Audit (CS): Site, Customer, Purpose, Auditor, Department
+    // End Customer is optional
+    return (
+      !hasValue(a.site1) ||
+      !hasValue(a.customer) ||
+      !hasValue(a.purpose) ||
+      !hasValue(a.auditor1) ||
+      !hasValue(a.department1)
+    );
   }
 }
 
