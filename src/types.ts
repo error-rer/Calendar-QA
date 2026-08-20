@@ -67,7 +67,7 @@ export function isInternalAssignment(a: Assignment): boolean {
   );
 }
 
-export function isIncompleteAssignment(a: Assignment): boolean {
+export function isAppointmentIncomplete(a: Assignment): boolean {
   if (!a) return false;
   const isInternal = isInternalAssignment(a);
 
@@ -92,6 +92,8 @@ export function isIncompleteAssignment(a: Assignment): boolean {
     );
   }
 }
+
+export const isIncompleteAssignment = isAppointmentIncomplete;
 
 export interface Comment {
   id: string;

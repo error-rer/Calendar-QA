@@ -9,7 +9,7 @@ import type {
   State,
   SubDepartment,
 } from './types';
-import { isIncompleteAssignment, isInternalAssignment } from './types';
+import { isAppointmentIncomplete, isIncompleteAssignment, isInternalAssignment } from './types';
 import {
   dayLabels,
   dayNames,
@@ -2131,29 +2131,43 @@ export function useScheduler() {
 
   // ---- incomplete appointments VM ----
   const incompleteAppointments = useMemo(() => {
-    return S.assignments
-      .filter((a) => isIncompleteAssignment(a))
-      .map((a) => {
-        const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
-        const mainName = isInternal ? (a.area || 'Internal Audit') : (a.customer || 'Customer Audit');
-        const site = (isInternal ? a.site2 : a.site1) || '';
-        const nameWithSite = site ? `${mainName} - ${site}` : mainName;
-        const code = apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : '');
-        const base = new Date(2026, 5, 29 + a.week * 7);
-        base.setDate(base.getDate() + a.day);
-        const dateStr = fmtDate(base);
+    const seen = new Set<string>();
+    const items: {
+      id: string;
+      code: string;
+      dateStr: string;
+      isInternal: boolean;
+      onClick: () => void;
+    }[] = [];
 
-        return {
-          id: a.id,
-          code,
-          dateStr,
-          isInternal,
-          onClick: () => {
-            closeSidebar();
-            openEdit(a.id);
-          },
-        };
+    for (const a of S.assignments) {
+      if (!isAppointmentIncomplete(a)) continue;
+      const groupKey = (a.order || a.id) + '_' + (a.eng || '');
+      if (seen.has(groupKey)) continue;
+      seen.add(groupKey);
+
+      const isInternal = isInternalAssignment(a);
+      const mainName = isInternal ? (a.area || 'Internal Audit') : (a.customer || 'Customer Audit');
+      const site = (isInternal ? a.site2 : a.site1) || '';
+      const nameWithSite = site ? `${mainName} - ${site}` : mainName;
+      const code = apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : '');
+      const base = new Date(2026, 5, 29 + a.week * 7);
+      base.setDate(base.getDate() + a.day);
+      const dateStr = fmtDate(base);
+
+      items.push({
+        id: a.id,
+        code,
+        dateStr,
+        isInternal,
+        onClick: () => {
+          closeSidebar();
+          openEdit(a.id);
+        },
       });
+    }
+
+    return items;
   }, [S.assignments, S.siteColors, S.orders, S.engineers]);
 
   // ---- responsive styles ----
