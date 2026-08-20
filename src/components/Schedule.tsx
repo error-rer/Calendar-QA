@@ -403,7 +403,7 @@ function Sidebar({ vm }: { vm: VM }) {
         </div>
       </div>
 
-      <div style={css('padding:13px 15px 6px;border-top:1px solid #e7eae3;margin-top:auto;flex-shrink:0')}>
+      <div style={css('padding:13px 15px 12px;border-bottom:1px solid #e7eae3')}>
         <div style={css('display:flex;align-items:center;justify-content:space-between;margin-bottom:8px')}>
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.6px")}>INCOMPLETE APPOINTMENTS</div>
           <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;${
@@ -414,36 +414,37 @@ function Sidebar({ vm }: { vm: VM }) {
             {(vm.incompleteAppointments || []).length}
           </span>
         </div>
-      </div>
-      <div className="scrl" style={css('padding:0 15px 14px;overflow-y:auto;max-height:220px;min-height:54px')}>
-        {(!vm.incompleteAppointments || vm.incompleteAppointments.length === 0) ? (
-          <div style={css('font-size:11px;color:#9aa097;font-style:italic;padding:4px 0')}>All appointments complete ✨</div>
-        ) : (
-          <div style={css('display:flex;flex-direction:column;gap:8px')}>
-            {vm.incompleteAppointments.map((item: any) => (
-              <div
-                key={item.id}
-                onClick={item.onClick}
-                style={css('display:flex;align-items:center;gap:8px;padding:7px 9px;background:#fef2f2;border:1px solid #fca5a5;border-radius:7px;cursor:pointer;transition:all .15s ease')}
-                title="Click to edit and complete required appointment details"
-              >
-                <span style={css('width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0')} />
-                <div style={css('flex:1;min-width:0;line-height:1.2')}>
-                  <div style={css('font-size:11px;font-weight:700;color:#991b1b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>
-                    {renderApptCode(item.code, '#991b1b')}
+
+        <div className="scrl" style={css('overflow-y:auto;max-height:220px')}>
+          {(!vm.incompleteAppointments || vm.incompleteAppointments.length === 0) ? (
+            <div style={css('font-size:11px;color:#9aa097;font-style:italic;padding:2px 0')}>All appointments complete ✨</div>
+          ) : (
+            <div style={css('display:flex;flex-direction:column;gap:8px')}>
+              {vm.incompleteAppointments.map((item: any) => (
+                <div
+                  key={item.id}
+                  onClick={item.onClick}
+                  style={css('display:flex;align-items:center;gap:8px;padding:7px 9px;background:#fef2f2;border:1px solid #fca5a5;border-radius:7px;cursor:pointer;transition:all .15s ease')}
+                  title="Click to edit and complete required appointment details"
+                >
+                  <span style={css('width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0')} />
+                  <div style={css('flex:1;min-width:0;line-height:1.2')}>
+                    <div style={css('font-size:11px;font-weight:700;color:#991b1b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>
+                      {renderApptCode(item.code, '#991b1b')}
+                    </div>
+                    <div style={css("font-size:9.5px;color:#b91c1c;margin-top:2px;font-family:'IBM Plex Mono',monospace")}>
+                      {item.dateStr} · Missing required fields
+                    </div>
                   </div>
-                  <div style={css("font-size:9.5px;color:#b91c1c;margin-top:2px;font-family:'IBM Plex Mono',monospace")}>
-                    {item.dateStr} · Missing required fields
-                  </div>
+                  <span style={css('font-size:11px;color:#ef4444;flex-shrink:0')}>✏️</span>
                 </div>
-                <span style={css('font-size:11px;color:#ef4444;flex-shrink:0')}>✏️</span>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      <div style={css('padding:13px 15px 14px;border-top:1px solid #e7eae3;flex-shrink:0')}>
+      <div style={css('padding:13px 15px 14px')}>
         <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.6px;margin-bottom:8px")}>COLOR CODE SITE</div>
         <div style={css('display:flex;flex-direction:column;gap:7px')}>
           {vm.siteColorList.map((s) => (
