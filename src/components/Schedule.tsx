@@ -1458,14 +1458,58 @@ function WeekCalendar({ vm }: { vm: VM }) {
 function DayHeaders({ vm }: { vm: VM }) {
   return (
     <>
-      {vm.days.map((d, i) => (
-        <div key={i} style={css('position:sticky;top:0;z-index:3;background:#f3f5ef;border-bottom:1px solid #d8dcd4;border-right:1px solid #e2e5de;padding:12px 12px 10px')}>
-          <div>
-            <div style={css('font-size:13px;font-weight:700;color:#23282a;letter-spacing:.2px')}>{d.label}</div>
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8a9088;margin-top:2px")}>{d.date}</div>
+      {vm.days.map((d: any, i: number) => {
+        const isHol = Boolean(d.holiday);
+        const bg = isHol ? '#F3E8FF' : '#f3f5ef';
+        const borderB = isHol ? '1px solid #D8B4FE' : '1px solid #d8dcd4';
+        const borderR = isHol ? '1px solid #E9D5FF' : '1px solid #e2e5de';
+        const labelColor = isHol ? '#6D28D9' : '#23282a';
+        const dateColor = isHol ? '#7C3AED' : '#8a9088';
+
+        return (
+          <div
+            key={i}
+            style={css(
+              `position:sticky;top:0;z-index:3;background:${bg};border-bottom:${borderB};border-right:${borderR};padding:10px 12px 9px;transition:background .15s ease;`
+            )}
+            onMouseEnter={(e) => {
+              if (isHol) e.currentTarget.style.background = '#E9D5FF';
+            }}
+            onMouseLeave={(e) => {
+              if (isHol) e.currentTarget.style.background = '#F3E8FF';
+            }}
+          >
+            <div>
+              <div style={css(`font-size:13px;font-weight:700;color:${labelColor};letter-spacing:.2px`)}>{d.label}</div>
+              <div style={css(`font-family:'IBM Plex Mono',monospace;font-size:11px;color:${dateColor};margin-top:2px`)}>{d.date}</div>
+              {d.holiday && (
+                <div
+                  style={{
+                    fontSize: '9.5px',
+                    fontWeight: 700,
+                    color: '#6D28D9',
+                    background: '#EDE9FE',
+                    border: '1px solid #D8B4FE',
+                    borderRadius: '4px',
+                    padding: '2px 5px',
+                    marginTop: '4px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                  title={d.holiday.name}
+                >
+                  <span>🎉</span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.holiday.name}</span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </>
   );
 }
@@ -1568,8 +1612,40 @@ function MonthGrid({ vm }: { vm: VM }) {
           c.blank ? (
             <div key={i} style={c.style} />
           ) : (
-            <div key={i} onClick={c.onClick} style={c.style}>
-              <span style={c.numStyle}>{c.dateNum}</span>
+            <div
+              key={i}
+              onClick={c.onClick}
+              style={c.style}
+              onMouseEnter={(e) => {
+                if (c.holiday) e.currentTarget.style.background = '#E9D5FF';
+              }}
+              onMouseLeave={(e) => {
+                if (c.holiday) e.currentTarget.style.background = '#F3E8FF';
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <span style={c.numStyle}>{c.dateNum}</span>
+                {c.holiday && (
+                  <span
+                    style={{
+                      fontSize: '9px',
+                      fontWeight: 700,
+                      color: '#6D28D9',
+                      background: '#EDE9FE',
+                      border: '1px solid #D8B4FE',
+                      borderRadius: '4px',
+                      padding: '1px 5px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: 'calc(100% - 28px)',
+                    }}
+                    title={c.holiday.name}
+                  >
+                    🎉 {c.holiday.name}
+                  </span>
+                )}
+              </div>
               <div style={css('display:flex;flex-direction:column;gap:3px;margin-top:2px')}>
                 {(c.chips ?? []).map((ch, ci) => {
                   const isInc = ch.isIncomplete;
@@ -1626,8 +1702,40 @@ function MonthMobile({ vm }: { vm: VM }) {
           c.blank ? (
             <div key={i} style={c.style} />
           ) : (
-            <div key={i} onClick={c.onClick} style={c.style}>
-              <span style={c.numStyle}>{c.dateNum}</span>
+            <div
+              key={i}
+              onClick={c.onClick}
+              style={c.style}
+              onMouseEnter={(e) => {
+                if (c.holiday) e.currentTarget.style.background = '#E9D5FF';
+              }}
+              onMouseLeave={(e) => {
+                if (c.holiday) e.currentTarget.style.background = '#F3E8FF';
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <span style={c.numStyle}>{c.dateNum}</span>
+                {c.holiday && (
+                  <span
+                    style={{
+                      fontSize: '8px',
+                      fontWeight: 700,
+                      color: '#6D28D9',
+                      background: '#EDE9FE',
+                      border: '1px solid #D8B4FE',
+                      borderRadius: '3px',
+                      padding: '0 3px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: 'calc(100% - 22px)',
+                    }}
+                    title={c.holiday.name}
+                  >
+                    🎉 {c.holiday.name}
+                  </span>
+                )}
+              </div>
               <div style={css('display:flex;flex-direction:column;gap:2px;margin-top:1px')}>
                 {(c.chips ?? []).map((ch, ci) => {
                   const isInc = ch.isIncomplete;
@@ -1764,7 +1872,11 @@ function YearGrid({ vm }: { vm: VM }) {
                   let border = '1px solid #eef1ea';
                   let textColor = '#3c423d';
 
-                  if (d.isWeekend) {
+                  if (d.holiday) {
+                    bg = '#F3E8FF';
+                    border = '1px solid #D8B4FE';
+                    textColor = '#6D28D9';
+                  } else if (d.isWeekend) {
                     bg = '#f4f6f1';
                     textColor = '#a6aca2';
                     border = '1px solid #e8ebe4';
@@ -1786,7 +1898,9 @@ function YearGrid({ vm }: { vm: VM }) {
                     <div
                       key={d.dateISO}
                       title={
-                        d.hasAppts
+                        d.holiday
+                          ? `${d.dayNum} ${m.monthName}: 🎉 ${d.holiday.name}${d.hasAppts ? ` (${d.totalApptsCount} appts)` : ''}`
+                          : d.hasAppts
                           ? `${d.dayNum} ${m.monthName}: ${d.totalApptsCount} appointments (${d.customerApptsCount} CS, ${d.internalApptsCount} IA)`
                           : `${d.dayNum} ${m.monthName}`
                       }

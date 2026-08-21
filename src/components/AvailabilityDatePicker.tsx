@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import type { Assignment, Engineer } from '../types';
 import { css, HButton } from '../ui';
+import { getHolidayForDate } from '../holidays';
 
 export interface AvailabilityDatePickerProps {
   sectionType: 'customer' | 'internal';
@@ -382,6 +383,7 @@ export function AvailabilityDatePicker({
           const wkend = isWeekend(day);
           const isBooked = bookedDatesSet.has(iso);
           const blocking = bookedDetailsMap.get(iso);
+          const holiday = getHolidayForDate(day);
 
           // Check if day is part of current selected range
           const inSelected = selectedRange
@@ -393,6 +395,8 @@ export function AvailabilityDatePicker({
           let cellStyle = 'background:#fafbf9;color:#23282a;border:1px solid #eef1ea;cursor:pointer;';
           let tooltip = inSelected
             ? `Selected: ${fmtDisplay(day)} (Click again to deselect)`
+            : holiday
+            ? `🎉 ${holiday.name}: ${fmtDisplay(day)}`
             : `Click to select date: ${fmtDisplay(day)}`;
 
           if (businessDaysOnly && wkend) {
@@ -407,6 +411,8 @@ export function AvailabilityDatePicker({
           } else if (isBooked) {
             cellStyle = 'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;font-weight:600;border-radius:6px;';
             tooltip = blocking ? `⚠️ Booked: ${blocking.site} — ${blocking.auditor} (${blocking.title})` : 'Booked date';
+          } else if (holiday) {
+            cellStyle = 'background:#F3E8FF;color:#6D28D9;border:1px solid #D8B4FE;font-weight:600;border-radius:6px;cursor:pointer;';
           } else {
             cellStyle = 'background:#eefbf4;color:#15803d;border:1px solid #bbf7d0;font-weight:600;border-radius:6px;cursor:pointer;';
           }

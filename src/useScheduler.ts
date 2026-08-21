@@ -10,6 +10,7 @@ import type {
   SubDepartment,
 } from './types';
 import { getMissingFields, isAppointmentIncomplete, isIncompleteAssignment, isInternalAssignment } from './types';
+import { getHolidayForDate, type HolidayInfo } from './holidays';
 import {
   dayLabels,
   dayNames,
@@ -94,6 +95,8 @@ interface MonthCell {
   blank: boolean;
   style: CSSProperties;
   dateNum?: string;
+  dateISO?: string;
+  holiday?: HolidayInfo | null;
   countTxt?: string;
   numStyle?: CSSProperties;
   countDotStyle?: CSSProperties;
@@ -1204,8 +1207,12 @@ export function useScheduler() {
   const days = weekDayLabels.map((lbl, i) => {
     const d = new Date(baseDate);
     d.setDate(baseDate.getDate() + S.weekOffset * 7 + i);
+    const holiday = getHolidayForDate(d);
     return {
-      label: lbl, date: fmtDate(d),
+      label: lbl,
+      date: fmtDate(d),
+      dateISO: fmtISO(d),
+      holiday,
     };
   });
   const weekLabel = days[0].date + ' – ' + days[4].date;
@@ -1279,12 +1286,50 @@ export function useScheduler() {
     const more = appointments.length - chips.length;
     const isToday = mYear + '-' + mMon + '-' + dn === todayStr;
     const isSelected = !weekend && !!S.dayDialog && S.dayDialog.weekOffset === slot.weekOffset && S.dayDialog.day === slot.wd;
+    const holiday = getHolidayForDate(date);
     monthCells.push({
-      blank: false, dateNum: String(dn), countTxt: appointments.length ? String(appointments.length) : '',
-      chips, more, moreTxt: more > 0 ? '+' + more + ' more' : '',
+      blank: false,
+      dateNum: String(dn),
+      dateISO: fmtISO(date),
+      holiday,
+      countTxt: appointments.length ? String(appointments.length) : '',
+      chips,
+      more,
+      moreTxt: more > 0 ? '+' + more + ' more' : '',
       onClick: weekend ? () => {} : () => openDayDialog(slot.weekOffset, slot.wd),
-      style: sx({ position: 'relative', background: isSelected ? '#D1E3FF' : weekend ? '#f8f9f6' : '#fff', borderRight: '1px solid #e6e9e2', borderTop: '1px solid #e6e9e2', minHeight: isMobile ? '52px' : '112px', padding: isMobile ? '5px' : '6px 8px', cursor: weekend ? 'default' : 'pointer', display: 'flex', flexDirection: 'column', gap: isMobile ? '2px' : '4px', overflow: 'hidden' }),
-      numStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: isMobile ? '11px' : '12px', fontWeight: isToday ? 700 : 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: isMobile ? '20px' : '24px', height: isMobile ? '20px' : '24px', borderRadius: '50%', background: isToday ? '#15191e' : 'transparent', color: isToday ? '#fff' : '#9aa097' }),
+      style: sx({
+        position: 'relative',
+        background: isSelected
+          ? '#D1E3FF'
+          : holiday
+          ? '#F3E8FF'
+          : weekend
+          ? '#f8f9f6'
+          : '#fff',
+        borderRight: '1px solid ' + (holiday ? '#E9D5FF' : '#e6e9e2'),
+        borderTop: '1px solid ' + (holiday ? '#E9D5FF' : '#e6e9e2'),
+        minHeight: isMobile ? '52px' : '112px',
+        padding: isMobile ? '5px' : '6px 8px',
+        cursor: weekend ? 'default' : 'pointer',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: isMobile ? '2px' : '4px',
+        overflow: 'hidden',
+        transition: 'background .15s ease',
+      }),
+      numStyle: sx({
+        fontFamily: "'IBM Plex Mono',monospace",
+        fontSize: isMobile ? '11px' : '12px',
+        fontWeight: isToday || holiday ? 700 : 600,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: isMobile ? '20px' : '24px',
+        height: isMobile ? '20px' : '24px',
+        borderRadius: '50%',
+        background: isToday ? '#15191e' : holiday ? '#EDE9FE' : 'transparent',
+        color: isToday ? '#fff' : holiday ? '#6D28D9' : '#9aa097',
+      }),
       countDotStyle: sx({ display: 'none' }),
     });
   }
@@ -1371,10 +1416,13 @@ export function useScheduler() {
 
         const isToday = year + '-' + m + '-' + dn === todayStr;
 
+        const holiday = getHolidayForDate(date);
+
         days.push({
           blank: false,
           dayNum: dn,
           dateISO: fmtISO(date),
+          holiday,
           isToday,
           isWeekend: weekend,
           hasAppts: matchingAppts.length > 0,
