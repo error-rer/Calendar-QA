@@ -10,7 +10,7 @@ import type {
   SubDepartment,
 } from './types';
 import { getMissingFields, isAppointmentIncomplete, isIncompleteAssignment, isInternalAssignment } from './types';
-import { getHolidayForDate, type HolidayInfo } from './holidays';
+import { getHolidayForDate, getHolidayStyle, type HolidayInfo } from './holidays';
 import {
   dayLabels,
   dayNames,
@@ -518,7 +518,13 @@ export function useScheduler() {
   const closeTimetable = () => setState({ timetableOpenEng: null });
   const clearFilters = () =>
     setState({ filterEmp: [], filterSite: [], filterCompany: [], filterAuditType: [], filterAuditTopic: [], filterApptType: [], activePlants: Object.fromEntries(S.plants.map((p) => [p.id, true])) });
-  const openDayDialog = (weekOffset: number, day: number) => setState({ dayDialog: { weekOffset, day }, monthSelectedDate: { weekOffset, day } });
+  const openDayDialog = (weekOffset: number, day: number) => {
+    const baseDate = new Date(2026, 5, 29);
+    const targetDate = new Date(baseDate);
+    targetDate.setDate(baseDate.getDate() + weekOffset * 7 + day);
+    if (getHolidayForDate(targetDate)) return;
+    setState({ dayDialog: { weekOffset, day }, monthSelectedDate: { weekOffset, day } });
+  };
   const closeDayDialog = () => setState({ dayDialog: null });
 
   const copyWeek = () => {
@@ -629,10 +635,18 @@ export function useScheduler() {
     });
   };
   const openCreateAt = (engId: string, day: number) => {
+    const baseDate = new Date(2026, 5, 29);
+    const targetDate = new Date(baseDate);
+    targetDate.setDate(baseDate.getDate() + S.weekOffset * 7 + day);
+    if (getHolidayForDate(targetDate)) return;
     setState({ createOpen: true, userMenuOpen: false, createDraft: { order: '', eng: engId, day, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' } });
   };
   const openCreateWithDate = (dateIso?: string) => {
     const d = dateIso || '';
+    if (d) {
+      const parsed = new Date(d + 'T00:00:00');
+      if (getHolidayForDate(parsed)) return;
+    }
     setState({
       createOpen: true,
       userMenuOpen: false,
@@ -1642,21 +1656,50 @@ export function useScheduler() {
 
   const personRows = S.engineers.map((e) => {
     const cells = [0, 1, 2, 3, 4].map((day) => {
+      const cellDate = new Date(baseDate);
+      cellDate.setDate(baseDate.getDate() + S.weekOffset * 7 + day);
+      const holiday = getHolidayForDate(cellDate);
+      const holStyle = holiday ? getHolidayStyle(holiday) : null;
+      const isHol = Boolean(holiday);
+
       const cellId = e.id + '-' + day;
       const chips = wk.filter((a) => {
         if (a.eng !== e.id || a.day !== day) return false;
         const o = orderById(a.order);
         return !!o && matchesFilters(a, o);
       }).map((a) => buildChip(a));
-      const over = S.overCell === cellId;
+      const over = !isHol && S.overCell === cellId;
       return {
         cellId, chips, empty: chips.length === 0,
-        style: sx({ borderBottom: '1px solid #e2e5de', borderRight: '1px solid #e2e5de', padding: '7px', minHeight: '78px', display: 'flex', flexDirection: 'column', gap: '5px', background: over ? '#e7efff' : '#fbfcfa', boxShadow: over ? 'inset 0 0 0 2px #9bb0e8' : 'none', transition: 'background .1s' }),
-        hintStyle: sx({ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: over ? '#5b7fd6' : '#cdd2c9', fontSize: '15px', border: '1px dashed ' + (over ? '#9bb0e8' : '#e2e5de'), borderRadius: '6px', minHeight: '40px', cursor: 'pointer', transition: 'all .12s' }),
-        onHintClick: () => openCreateAt(e.id, day),
-        onDragOver: (ev: React.DragEvent) => { ev.preventDefault(); if (S.overCell !== cellId) setState({ overCell: cellId }); },
+        holiday, isHoliday: isHol,
+        style: sx({
+          borderBottom: '1px solid ' + (holStyle ? holStyle.borderColor : '#e2e5de'),
+          borderRight: '1px solid ' + (holStyle ? holStyle.borderColor : '#e2e5de'),
+          padding: '7px', minHeight: '78px', display: 'flex', flexDirection: 'column', gap: '5px',
+          background: over ? '#e7efff' : holStyle ? holStyle.bg : '#fbfcfa',
+          boxShadow: over ? 'inset 0 0 0 2px #9bb0e8' : 'none',
+          transition: 'background .1s',
+          cursor: isHol ? 'not-allowed' : 'pointer',
+        }),
+        hintStyle: sx({
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: isHol ? holStyle?.textColor : over ? '#5b7fd6' : '#cdd2c9',
+          fontSize: isHol ? '11px' : '15px', fontWeight: isHol ? 600 : 400,
+          border: '1px dashed ' + (holStyle ? holStyle.badgeBorder : over ? '#9bb0e8' : '#e2e5de'),
+          borderRadius: '6px', minHeight: '40px',
+          cursor: isHol ? 'not-allowed' : 'pointer', transition: 'all .12s',
+          background: holStyle ? holStyle.badgeBg : 'transparent',
+          opacity: isHol ? 0.85 : 1,
+        }),
+        onHintClick: isHol ? () => {} : () => openCreateAt(e.id, day),
+        onDragOver: (ev: React.DragEvent) => {
+          if (isHol) return;
+          ev.preventDefault();
+          if (S.overCell !== cellId) setState({ overCell: cellId });
+        },
         onDragLeave: () => { if (state.overCell === cellId) setState({ overCell: null }); },
         onDrop: (ev: React.DragEvent) => {
+          if (isHol) return;
           ev.preventDefault();
           const d = state.drag;
           if (d) {
@@ -1677,28 +1720,50 @@ export function useScheduler() {
   });
 
   const cellShell = sx({ borderBottom: '1px solid #e2e5de', borderRight: '1px solid #e2e5de', padding: '8px', minHeight: '78px', display: 'flex', flexDirection: 'column', gap: '5px', background: '#fbfcfa' });
+  const getGridCellProps = (day: number) => {
+    const cellDate = new Date(baseDate);
+    cellDate.setDate(baseDate.getDate() + S.weekOffset * 7 + day);
+    const holiday = getHolidayForDate(cellDate);
+    const holStyle = holiday ? getHolidayStyle(holiday) : null;
+    if (holStyle) {
+      return {
+        holiday,
+        isHoliday: true,
+        style: sx({
+          borderBottom: '1px solid ' + holStyle.borderColor,
+          borderRight: '1px solid ' + holStyle.borderColor,
+          padding: '8px', minHeight: '78px', display: 'flex', flexDirection: 'column', gap: '5px',
+          background: holStyle.bg, cursor: 'not-allowed',
+        }),
+      };
+    }
+    return { holiday: null, isHoliday: false, style: cellShell };
+  };
+
   const customerAuditTopics = ['ESD Audit', 'QS Audit'] as const;
   const customerAuditRows = customerAuditTopics.map((topic) => {
     const cells = [0, 1, 2, 3, 4].map((day) => {
+      const extraProps = getGridCellProps(day);
       const chips = wk
         .filter((a) => {
           const o = orderById(a.order);
           return !!o && o.customer === topic && a.day === day && matchesFilters(a, o);
         })
         .map((a) => buildPersonChip(a));
-      return { chips, empty: chips.length === 0, style: cellShell };
+      return { chips, empty: chips.length === 0, ...extraProps };
     });
     return { name: topic, loc: '', cells };
   });
   const plantRows = [...S.plants.map((p) => {
     const cells = [0, 1, 2, 3, 4].map((day) => {
+      const extraProps = getGridCellProps(day);
       const chips = wk
         .filter((a) => {
           const o = orderById(a.order);
           return !!o && o.plant === p.id && a.day === day && matchesFilters(a, o);
         })
         .map((a) => buildPersonChip(a, p.color));
-      return { chips, empty: chips.length === 0, style: cellShell };
+      return { chips, empty: chips.length === 0, ...extraProps };
     });
     return { name: p.name, loc: p.loc, cells };
   }), ...customerAuditRows];
@@ -1707,12 +1772,13 @@ export function useScheduler() {
   const siteRows = siteNames.map((dn) => {
     const engs = S.engineers.filter((e) => e.department === dn);
     const cells = [0, 1, 2, 3, 4].map((day) => {
+      const extraProps = getGridCellProps(day);
       const chips = wk.filter((a) => {
         if (!engs.some((e) => e.id === a.eng) || a.day !== day) return false;
         const o = orderById(a.order);
         return !!o && matchesFilters(a, o);
       }).map((a) => buildPersonChip(a, S.siteColors[dn]));
-      return { chips, empty: chips.length === 0, style: cellShell };
+      return { chips, empty: chips.length === 0, ...extraProps };
     });
     return {
       name: dn, engCount: engs.length, engNames: engs.map((e) => e.name.split(' ')[0]),
@@ -1811,6 +1877,7 @@ export function useScheduler() {
   const showTimetable = !!timetableOpenEngId && !!timetableEng;
   const timetableRows = timeSlots.map((sl) => {
     const cells = [0, 1, 2, 3, 4].map((day) => {
+      const extraProps = getGridCellProps(day);
       const chips = timetableOpenEngId ? wk
         .filter((a) => {
           if (a.eng !== timetableOpenEngId || a.day !== day) return false;
@@ -1818,7 +1885,7 @@ export function useScheduler() {
           return !!o && matchesFilters(a, o);
         })
         .map((a) => buildChip(a)) : [];
-      return { chips, empty: chips.length === 0, style: cellShell };
+      return { chips, empty: chips.length === 0, ...extraProps };
     });
     return { slotId: sl.id, label: sl.label, hours: sl.hours, cells };
   });

@@ -1385,44 +1385,74 @@ function Toolbar({ vm }: { vm: VM }) {
 function WeekCalendar({ vm }: { vm: VM }) {
   return (
     <div style={css('display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:0;min-width:100%;background:#fff;border-top:1px solid #e6e9e2')}>
-      {vm.days.map((d, i) => (
-        <div key={i} style={css('gridRow:1/-1;border-right:1px solid #e6e9e2;border-bottom:1px solid #e6e9e2;vertical-align:top;background:#fbfcfa;padding:6px 8px')}>
-          <div style={css('text-align:center;margin-bottom:6px')}>
-            <div style={css('font-size:12px;font-weight:700;color:#9aa097;letter-spacing:.5px')}>{d.label}</div>
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:#23282a;margin-top:2px")}>{d.date.split(' ').pop()}</div>
-          </div>
-          <div style={css('display:flex;flex-direction:column;gap:2px')}>
-            {vm.weekCalendarDays[i].chips.map((chip) => {
-              const isInc = chip.isIncomplete;
-              const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
-              const barBg = isInc ? '#FF0000' : '#f0f2ec';
-              const titleColor = isInc ? '#FFFFFF' : (chip.isInternal ? '#10b981' : '#2756d6');
-              const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
-              const accentBg = isInc ? '#B91C1C' : getAccentBackground(chColors);
+      {vm.days.map((d: any, i: number) => {
+        const holiday = d.holiday;
+        const holStyle = holiday ? getHolidayStyle(holiday) : null;
+        const bg = holStyle ? holStyle.bg : '#fbfcfa';
+        const borderR = holStyle ? `1px solid ${holStyle.borderColor}` : '1px solid #e6e9e2';
+        const borderB = holStyle ? `1px solid ${holStyle.borderColor}` : '1px solid #e6e9e2';
 
-              return (
-                <div key={chip.id} onClick={chip.onClick} title={[chip.customer, chip.auditor2 || chip.purpose, chip.auditor2 ? '' : chip.auditor1].filter(Boolean).join(' - ')} style={{
-                  display: 'flex', alignItems: 'stretch',
-                  background: barBg, borderRadius: '6px',
-                  boxShadow: '0 1px 2px rgba(0,0,0,.06)',
-                  cursor: 'pointer', overflow: 'hidden',
-                }}>
-                  <div style={{ width: '3px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
-                  <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: '11.5px', fontWeight: 600, color: titleColor }}>{renderApptCode(chip.customer, isInc ? '#FFFFFF' : undefined)}</div>
-                    {chip.purpose ? (
-                      <div style={{ fontSize: '10px', color: purposeColor, marginTop: '1px' }}>{chip.purpose}</div>
-                    ) : null}
-                  </div>
+        return (
+          <div key={i} style={css(`gridRow:1/-1;border-right:${borderR};border-bottom:${borderB};vertical-align:top;background:${bg};padding:6px 8px;${holiday ? 'cursor:not-allowed;' : ''}`)}>
+            <div style={css('text-align:center;margin-bottom:6px')}>
+              <div style={css(`font-size:12px;font-weight:700;color:${holStyle ? holStyle.textColor : '#9aa097'};letter-spacing:.5px`)}>{d.label}</div>
+              <div style={css(`font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:${holStyle ? holStyle.textColor : '#23282a'};margin-top:2px`)}>{d.date.split(' ').pop()}</div>
+              {holiday && holStyle && (
+                <div
+                  style={{
+                    fontSize: '9px',
+                    fontWeight: 700,
+                    color: holStyle.badgeText,
+                    background: holStyle.badgeBg,
+                    border: `1px solid ${holStyle.badgeBorder}`,
+                    borderRadius: '4px',
+                    padding: '2px 4px',
+                    marginTop: '3px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                  title={holiday.name}
+                >
+                  🎉 {holiday.name}
                 </div>
-              );
-            })}
-            {vm.weekCalendarDays[i].chips.length === 0 && vm.weekMergedSpans.every((s) => s.startDay > i || s.startDay + s.span <= i) && (
-              <div style={css('font-size:10px;color:#bcc1b8;font-style:italic;padding:4px 0')}>–</div>
-            )}
+              )}
+            </div>
+            <div style={css('display:flex;flex-direction:column;gap:2px')}>
+              {vm.weekCalendarDays[i].chips.map((chip) => {
+                const isInc = chip.isIncomplete;
+                const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
+                const barBg = isInc ? '#FF0000' : '#f0f2ec';
+                const titleColor = isInc ? '#FFFFFF' : (chip.isInternal ? '#10b981' : '#2756d6');
+                const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
+                const accentBg = isInc ? '#B91C1C' : getAccentBackground(chColors);
+
+                return (
+                  <div key={chip.id} onClick={chip.onClick} title={[chip.customer, chip.auditor2 || chip.purpose, chip.auditor2 ? '' : chip.auditor1].filter(Boolean).join(' - ')} style={{
+                    display: 'flex', alignItems: 'stretch',
+                    background: barBg, borderRadius: '6px',
+                    boxShadow: '0 1px 2px rgba(0,0,0,.06)',
+                    cursor: 'pointer', overflow: 'hidden',
+                  }}>
+                    <div style={{ width: '3px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
+                    <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: '11.5px', fontWeight: 600, color: titleColor }}>{renderApptCode(chip.customer, isInc ? '#FFFFFF' : undefined)}</div>
+                      {chip.purpose ? (
+                        <div style={{ fontSize: '10px', color: purposeColor, marginTop: '1px' }}>{chip.purpose}</div>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+              {vm.weekCalendarDays[i].chips.length === 0 && vm.weekMergedSpans.every((s) => s.startDay > i || s.startDay + s.span <= i) && (
+                <div style={css(`font-size:10px;color:${holStyle ? holStyle.textColor : '#bcc1b8'};font-style:italic;padding:4px 0;text-align:center`)}>
+                  {holiday ? 'Holiday' : '–'}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
       {vm.weekMergedSpans.map((sp) => {
         const isInc = sp.isIncomplete;
         const spColors = sp.colors && sp.colors.length > 0 ? sp.colors : [sp.color];
@@ -1569,7 +1599,13 @@ function MobilePerson({ vm }: { vm: VM }) {
               </div>
             ))}
             {r.cell.chips.length === 0 && (
-               <button onClick={r.cell.onHintClick} style={css("width:100%;padding:10px;border:1px dashed #cdd2c9;background:#fbfcfa;border-radius:9px;color:#7a807a;font-size:12px;font-weight:600;font-family:'Archivo',sans-serif;cursor:pointer")}>＋ Assign appointment</button>
+              r.cell.isHoliday && r.cell.holiday ? (
+                <div style={{ width: '100%', padding: '10px', border: '1px solid ' + (getHolidayStyle(r.cell.holiday).borderColor), background: getHolidayStyle(r.cell.holiday).bg, borderRadius: '9px', color: getHolidayStyle(r.cell.holiday).textColor, fontSize: '12px', fontWeight: 600, textAlign: 'center', cursor: 'not-allowed' }}>
+                  🎉 {r.cell.holiday.name} (Holiday - Non-selectable)
+                </div>
+              ) : (
+                <button onClick={r.cell.onHintClick} style={css("width:100%;padding:10px;border:1px dashed #cdd2c9;background:#fbfcfa;border-radius:9px;color:#7a807a;font-size:12px;font-weight:600;font-family:'Archivo',sans-serif;cursor:pointer")}>＋ Assign appointment</button>
+              )
             )}
           </div>
         </div>
