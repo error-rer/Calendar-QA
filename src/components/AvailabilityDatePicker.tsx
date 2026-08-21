@@ -115,7 +115,7 @@ export function AvailabilityDatePicker({
   // Compute busy dates for the currently selected Site + Auditor
   const { bookedDatesSet, bookedDetailsMap } = useMemo(() => {
     const set = new Set<string>();
-    const details = new Map<string, BookedDetail>();
+    const details = new Map<string, BookedDetail[]>();
 
     const siteTokens = site.split('/').flatMap((s) => s.split(',')).map((s) => s.trim().toLowerCase()).filter(Boolean);
     const auditorTokens = auditor.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
@@ -196,7 +196,7 @@ export function AvailabilityDatePicker({
           tooltipText = parts.length > 0 ? `⚠️ Booked: ${parts.join(' - ')}` : '⚠️ Booked date';
         }
 
-        details.set(iso, {
+        const detailItem: BookedDetail = {
           site: displaySite,
           customer: displayCustomer,
           endCustomer: displayEndCustomer,
@@ -205,7 +205,13 @@ export function AvailabilityDatePicker({
           auditor: displayAuditor,
           isInternal: isIA,
           tooltipText,
-        });
+        };
+
+        const existingList = details.get(iso) || [];
+        if (!existingList.some((item) => item.tooltipText === tooltipText)) {
+          existingList.push(detailItem);
+        }
+        details.set(iso, existingList);
       }
     }
 
@@ -423,7 +429,7 @@ export function AvailabilityDatePicker({
           const holiday = getHolidayForDate(day);
           const holStyle = holiday ? getHolidayStyle(holiday) : null;
           const isBooked = bookedDatesSet.has(iso);
-          const blocking = bookedDetailsMap.get(iso);
+          const blockingItems = bookedDetailsMap.get(iso) || [];
 
           // Check if day is part of current selected range
           const inSelected = selectedRange
@@ -447,12 +453,12 @@ export function AvailabilityDatePicker({
           } else if (inSelected) {
             const borderRadius = isStart && isEnd ? '7px' : isStart ? '7px 0 0 7px' : isEnd ? '0 7px 7px 0' : '0';
             cellStyle = `background:#15191e;color:#fff;border:1px solid #15191e;font-weight:700;border-radius:${borderRadius};cursor:pointer;`;
-            if (isBooked && blocking) {
-              tooltip = `Selected (${blocking.tooltipText})`;
+            if (isBooked && blockingItems.length > 0) {
+              tooltip = `Selected (${blockingItems.map((item) => item.tooltipText).join('\n')})`;
             }
           } else if (isBooked) {
             cellStyle = 'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;font-weight:600;border-radius:6px;';
-            tooltip = blocking ? blocking.tooltipText : '⚠️ Booked date';
+            tooltip = blockingItems.length > 0 ? blockingItems.map((item) => item.tooltipText).join('\n') : '⚠️ Booked date';
           } else {
             cellStyle = 'background:#eefbf4;color:#15803d;border:1px solid #bbf7d0;font-weight:600;border-radius:6px;cursor:pointer;';
           }
@@ -481,7 +487,7 @@ export function AvailabilityDatePicker({
                     top: '3px',
                     right: '3px',
                   }}
-                  title={blocking ? blocking.tooltipText : '⚠️ Booked date'}
+                  title={blockingItems.length > 0 ? blockingItems.map((item) => item.tooltipText).join('\n') : 'Booked date'}
                 />
               )}
             </div>
@@ -489,30 +495,58 @@ export function AvailabilityDatePicker({
         })}
       </div>
 
-      {/* Custom Booked Date Tooltip / Detail Card */}
-      {hoveredBookedIso && bookedDetailsMap.has(hoveredBookedIso) && (
+      {/* Custom Multi-Item Booked Tooltip Container */}
+      {hoveredBookedIso && (bookedDetailsMap.get(hoveredBookedIso)?.length ?? 0) > 0 && (
         <div
           style={{
             background: '#1E293B',
             border: '1px solid #334155',
             borderLeft: '4px solid #F59E0B',
-            borderRadius: '8px',
-            padding: '10px 14px',
+            borderRadius: '10px',
+            padding: '12px 14px',
             boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.35)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
+            flexDirection: 'column',
+            gap: '8px',
+            maxHeight: '280px',
+            overflowY: 'auto',
             animation: 'fadeIn .15s ease',
           }}
         >
-          <span style={{ fontSize: '16px', color: '#F59E0B', flexShrink: 0 }}>⚠️</span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: '#F59E0B', letterSpacing: '.5px', fontFamily: "'IBM Plex Mono',monospace" }}>
-              BOOKED DATE DETAILS
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #334155', paddingBottom: '8px' }}>
+            <span style={{ fontSize: '15px', color: '#F59E0B', flexShrink: 0 }}>⚠️</span>
+            <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#F59E0B', letterSpacing: '.5px', fontFamily: "'IBM Plex Mono',monospace" }}>
+              BOOKED DATE DETAILS ({(bookedDetailsMap.get(hoveredBookedIso) || []).length} {(bookedDetailsMap.get(hoveredBookedIso) || []).length === 1 ? 'EVENT' : 'EVENTS'})
             </div>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: '#F8FAFC', marginTop: '2px', wordBreak: 'break-word', fontFamily: "'Archivo',sans-serif" }}>
-              {bookedDetailsMap.get(hoveredBookedIso)?.tooltipText}
-            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {bookedDetailsMap.get(hoveredBookedIso)?.map((item, i) => (
+              <div
+                key={i}
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: '#F8FAFC',
+                  lineHeight: '1.4',
+                  wordBreak: 'break-word',
+                  fontFamily: "'Archivo',sans-serif",
+                  paddingBottom: i < (bookedDetailsMap.get(hoveredBookedIso)?.length || 0) - 1 ? '8px' : '0',
+                  borderBottom: i < (bookedDetailsMap.get(hoveredBookedIso)?.length || 0) - 1 ? '1px solid #334155' : 'none',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '6px',
+                }}
+              >
+                <span style={{ color: '#F59E0B', fontSize: '11px', marginTop: '2px', flexShrink: 0 }}>•</span>
+                <div style={{ flex: 1 }}>
+                  <span style={{ color: item.isInternal ? '#34D399' : '#60A5FA', fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', marginRight: '6px', padding: '1px 5px', borderRadius: '4px', background: 'rgba(255,255,255,0.07)' }}>
+                    {item.isInternal ? 'IA' : 'CS'}
+                  </span>
+                  {item.tooltipText.replace(/^⚠️\s*Booked:\s*/, '')}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
