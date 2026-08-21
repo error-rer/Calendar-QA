@@ -11,3 +11,129 @@ body{font-family:'Archivo',system-ui,sans-serif;color:#15191e;background:#e9ebe6
 .scrl::-webkit-scrollbar-thumb:hover{background:#aeb3a9;background-clip:content-box}
 /* native form controls inherit the app font */
 input,button,select,textarea{font-family:inherit}
+
+/* Dark Mode System Variables & Overrides */
+html {
+  color-scheme: light;
+  --bg-app: #e9ebe6;
+  --bg-header: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f4f6f1;
+  --bg-subtle: #f1f3ee;
+  --bg-modal: #ffffff;
+  --border-color: #d8dcd4;
+  --text-main: #15191e;
+  --text-muted: #8a9088;
+  --text-subtle: #5c625c;
+}
+
+html.dark {
+  color-scheme: dark;
+  --bg-app: #0f172a;
+  --bg-header: #1e293b;
+  --bg-card: #1e293b;
+  --bg-card-hover: #334155;
+  --bg-subtle: #1e293b;
+  --bg-modal: #1e293b;
+  --border-color: #334155;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-subtle: #cbd5e1;
+}
+
+html.dark body {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+html.dark #root {
+  background-color: #0f172a;
+}
+
+/* Dark mode generic component style overrides */
+html.dark header {
+  background: #1e293b !important;
+  border-bottom-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+html.dark header button {
+  color: #f8fafc !important;
+}
+
+html.dark main {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* Calendar View & Schedule Grids in Dark Mode */
+html.dark [style*="background:#e9ebe6"],
+html.dark [style*="background: #e9ebe6"],
+html.dark [style*="background:#eef0ea"],
+html.dark [style*="background: #eef0ea"],
+html.dark [style*="background:#f4f6f1"],
+html.dark [style*="background: #f4f6f1"],
+html.dark [style*="background:#fafbf9"],
+html.dark [style*="background: #fafbf9"],
+html.dark [style*="background:#f1f3ee"],
+html.dark [style*="background: #f1f3ee"],
+html.dark [style*="background:#ffffff"],
+html.dark [style*="background: #ffffff"],
+html.dark [style*="background:#fff"],
+html.dark [style*="background: #fff"] {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+html.dark [style*="color:#23282a"],
+html.dark [style*="color: #23282a"],
+html.dark [style*="color:#15191e"],
+html.dark [style*="color: #15191e"],
+html.dark [style*="color:#2a2f28"],
+html.dark [style*="color: #2a2f28"],
+html.dark [style*="color:#3c423d"],
+html.dark [style*="color: #3c423d"] {
+  color: #f8fafc !important;
+}
+
+html.dark [style*="color:#8a9088"],
+html.dark [style*="color: #8a9088"],
+html.dark [style*="color:#9aa097"],
+html.dark [style*="color: #9aa097"],
+html.dark [style*="color:#7a807a"],
+html.dark [style*="color: #7a807a"],
+html.dark [style*="color:#5c625c"],
+html.dark [style*="color: #5c625c"] {
+  color: #94a3b8 !important;
+}
+
+html.dark [style*="border:1px solid #d8dcd4"],
+html.dark [style*="border:1px solid #e0e3dc"],
+html.dark [style*="border:1px solid #e2e5de"],
+html.dark [style*="border:1px solid #eef1ea"],
+html.dark [style*="border:1px solid #e3e6df"] {
+  border-color: #334155 !important;
+}
+
+html.dark .scrl::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+html.dark .scrl::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+

@@ -10,13 +10,15 @@ import { CreateModal } from './components/CreateModal';
 import { EditModal } from './components/EditModal';
 import { EngineerModal } from './components/EngineerModal';
 
+import { SettingsModal } from './components/SettingsModal';
+
 export default function App() {
   const vm = useScheduler();
 
   return (
-    <div style={css('height:100vh;width:100%;display:flex;flex-direction:column;overflow:hidden;background:#e9ebe6')}>
+    <div style={css('height:100vh;width:100%;display:flex;flex-direction:column;overflow:hidden;background:var(--bg-app, #e9ebe6)')}>
       {vm.loading && (
-        <div style={css('flex:1;display:flex;align-items:center;justify-content:center;color:#8a9088;font-size:14px')}>Loading…</div>
+        <div style={css('flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-muted, #8a9088);font-size:14px')}>Loading…</div>
       )}
 
       {!vm.loading && vm.showLogin && <Login vm={vm} />}
@@ -31,6 +33,7 @@ export default function App() {
           <CreateModal vm={vm} />
           <EditModal vm={vm} />
           <EngineerModal vm={vm} />
+          <SettingsModal vm={vm} />
         </div>
       )}
     </div>
