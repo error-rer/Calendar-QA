@@ -1393,7 +1393,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
         const borderB = holStyle ? `1px solid ${holStyle.borderColor}` : '1px solid #e6e9e2';
 
         return (
-          <div key={i} style={css(`gridRow:1/-1;border-right:${borderR};border-bottom:${borderB};vertical-align:top;background:${bg};padding:6px 8px;${holiday ? 'cursor:not-allowed;' : ''}`)}>
+          <div key={i} style={css(`gridRow:1/-1;border-right:${borderR};border-bottom:${borderB};vertical-align:top;background:${bg};padding:6px 8px;${holiday ? 'cursor:default;' : ''}`)}>
             <div style={css('text-align:center;margin-bottom:6px')}>
               <div style={css(`font-size:12px;font-weight:700;color:${holStyle ? holStyle.textColor : '#9aa097'};letter-spacing:.5px`)}>{d.label}</div>
               <div style={css(`font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:${holStyle ? holStyle.textColor : '#23282a'};margin-top:2px`)}>{d.date.split(' ').pop()}</div>
@@ -1401,20 +1401,16 @@ function WeekCalendar({ vm }: { vm: VM }) {
                 <div
                   style={{
                     fontSize: '9px',
-                    fontWeight: 700,
-                    color: holStyle.badgeText,
-                    background: holStyle.badgeBg,
-                    border: `1px solid ${holStyle.badgeBorder}`,
-                    borderRadius: '4px',
-                    padding: '2px 4px',
+                    fontWeight: 600,
+                    color: holStyle.textColor,
                     marginTop: '3px',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
+                    lineHeight: '1.2',
+                    textAlign: 'center',
+                    wordBreak: 'break-word',
                   }}
                   title={holiday.name}
                 >
-                  🎉 {holiday.name}
+                  {holiday.name}
                 </div>
               )}
             </div>
