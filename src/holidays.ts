@@ -5,6 +5,16 @@ export interface HolidayInfo {
   isTraditional: boolean;
 }
 
+export interface HolidayStyle {
+  bg: string;
+  hoverBg: string;
+  textColor: string;
+  borderColor: string;
+  badgeBg: string;
+  badgeBorder: string;
+  badgeText: string;
+}
+
 /**
  * Traditional / Company Assigned Holidays (Standard Annual Holidays)
  */
@@ -76,4 +86,33 @@ export function getHolidayForDate(date: Date): HolidayInfo | null {
   }
 
   return null;
+}
+
+/**
+ * Returns distinct styling properties for Traditional vs Shift E & E1 Compensatory Holidays.
+ */
+export function getHolidayStyle(holiday: HolidayInfo): HolidayStyle {
+  if (holiday.isTraditional) {
+    // Company Assigned Holidays (Traditional / Square) - Standard Light Purple
+    return {
+      bg: '#EDE9FE',
+      hoverBg: '#DDD6FE',
+      textColor: '#7C3AED',
+      borderColor: '#C4B5FD',
+      badgeBg: '#EDE9FE',
+      badgeBorder: '#C4B5FD',
+      badgeText: '#7C3AED',
+    };
+  } else {
+    // Shift E/E1 Holidays (Compensatory / Hexagon) - Softer Pastel Purple
+    return {
+      bg: '#FAF5FF',
+      hoverBg: '#F3E8FF',
+      textColor: '#9333EA',
+      borderColor: '#E9D5FF',
+      badgeBg: '#FAF5FF',
+      badgeBorder: '#E9D5FF',
+      badgeText: '#9333EA',
+    };
+  }
 }

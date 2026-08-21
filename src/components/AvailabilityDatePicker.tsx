@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import type { Assignment, Engineer } from '../types';
 import { css, HButton } from '../ui';
-import { getHolidayForDate } from '../holidays';
+import { getHolidayForDate, getHolidayStyle } from '../holidays';
 
 export interface AvailabilityDatePickerProps {
   sectionType: 'customer' | 'internal';
@@ -188,7 +188,7 @@ export function AvailabilityDatePicker({
     const final = new Date(end.getFullYear(), end.getMonth(), end.getDate());
 
     while (curr <= final) {
-      if (!isWeekend(curr)) {
+      if (!isWeekend(curr) && !getHolidayForDate(curr)) {
         dates.push(new Date(curr.getTime()));
       }
       curr.setDate(curr.getDate() + 1);
@@ -210,7 +210,7 @@ export function AvailabilityDatePicker({
 
   // Handle Date Click reading directly from props
   const handleSelectDate = (d: Date) => {
-    if (isWeekend(d)) return;
+    if (isWeekend(d) || getHolidayForDate(d)) return;
     const clickedISO = fmtISO(d);
 
     const currentFrom = dateFrom || '';
@@ -381,9 +381,10 @@ export function AvailabilityDatePicker({
 
           const iso = fmtISO(day);
           const wkend = isWeekend(day);
+          const holiday = getHolidayForDate(day);
+          const holStyle = holiday ? getHolidayStyle(holiday) : null;
           const isBooked = bookedDatesSet.has(iso);
           const blocking = bookedDetailsMap.get(iso);
-          const holiday = getHolidayForDate(day);
 
           // Check if day is part of current selected range
           const inSelected = selectedRange
@@ -396,12 +397,14 @@ export function AvailabilityDatePicker({
           let tooltip = inSelected
             ? `Selected: ${fmtDisplay(day)} (Click again to deselect)`
             : holiday
-            ? `🎉 ${holiday.name}: ${fmtDisplay(day)}`
+            ? `🎉 ${holiday.name}: ${fmtDisplay(day)} (Holiday - Non-selectable)`
             : `Click to select date: ${fmtDisplay(day)}`;
 
           if (businessDaysOnly && wkend) {
             cellStyle = 'background:#f4f6f1;color:#a6aca2;border:1px solid #e8ebe4;cursor:not-allowed;';
             tooltip = 'Weekend (business days only)';
+          } else if (holiday && holStyle) {
+            cellStyle = `background:${holStyle.bg};color:${holStyle.textColor};border:1px solid ${holStyle.borderColor};font-weight:600;border-radius:6px;cursor:not-allowed;opacity:0.85;`;
           } else if (inSelected) {
             const borderRadius = isStart && isEnd ? '7px' : isStart ? '7px 0 0 7px' : isEnd ? '0 7px 7px 0' : '0';
             cellStyle = `background:#15191e;color:#fff;border:1px solid #15191e;font-weight:700;border-radius:${borderRadius};cursor:pointer;`;
@@ -411,8 +414,6 @@ export function AvailabilityDatePicker({
           } else if (isBooked) {
             cellStyle = 'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;font-weight:600;border-radius:6px;';
             tooltip = blocking ? `⚠️ Booked: ${blocking.site} — ${blocking.auditor} (${blocking.title})` : 'Booked date';
-          } else if (holiday) {
-            cellStyle = 'background:#F3E8FF;color:#6D28D9;border:1px solid #D8B4FE;font-weight:600;border-radius:6px;cursor:pointer;';
           } else {
             cellStyle = 'background:#eefbf4;color:#15803d;border:1px solid #bbf7d0;font-weight:600;border-radius:6px;cursor:pointer;';
           }

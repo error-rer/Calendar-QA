@@ -664,7 +664,7 @@ export function useScheduler() {
     const end = new Date(dateTo + 'T00:00:00');
     for (let cur = new Date(start); cur <= end; cur.setDate(cur.getDate() + 1)) {
       const slot = dateSlot(cur);
-      if (slot.wd < 5) {
+      if (slot.wd < 5 && !getHolidayForDate(cur)) {
         newAssignments.push({
           id: 'a' + ids.current.id++,
           eng: engId, order: orderId, day: slot.wd, week: slot.weekOffset,
@@ -780,7 +780,7 @@ export function useScheduler() {
     const slots: { weekOffset: number; wd: number }[] = [];
     for (let cur = new Date(start); cur <= end; cur.setDate(cur.getDate() + 1)) {
       const slot = dateSlot(cur);
-      if (slot.wd < 5) slots.push(slot);
+      if (slot.wd < 5 && !getHolidayForDate(cur)) slots.push(slot);
     }
     if (slots.length === 0) return;
     const oldAuditorName = (target.auditor1 || target.auditor2 || S.engineers.find((e) => e.id === target.eng)?.name || '').trim();
