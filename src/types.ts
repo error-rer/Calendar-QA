@@ -72,19 +72,20 @@ export function getMissingFields(a: Assignment): string[] {
   const isInternal = isInternalAssignment(a);
   const missing: string[] = [];
 
+  const siteVal = (isInternal ? a.site2 || a.site1 : a.site1 || a.site2) || '';
+  const auditorVal = (isInternal ? a.auditor2 || a.auditor1 || a.eng : a.auditor1 || a.auditor2 || a.eng) || '';
+
   if (isInternal) {
-    // Required fields for Internal Audit (IA): Site (site2), Department (department2), Area (area), Auditor (auditor2)
-    if (!hasValue(a.site2)) missing.push('Site');
-    if (!hasValue(a.department2)) missing.push('Department');
+    // Required fields for Internal Audit (IA): Site, Area, Auditor (No Purpose check)
+    if (!hasValue(siteVal)) missing.push('Site');
     if (!hasValue(a.area)) missing.push('Area');
-    if (!hasValue(a.auditor2)) missing.push('Auditor');
+    if (!hasValue(auditorVal)) missing.push('Auditor');
   } else {
-    // Required fields for Customer Audit (CS): Site (site1), Customer (customer), Purpose (purpose), Auditor (auditor1), Department (department1)
-    if (!hasValue(a.site1)) missing.push('Site');
+    // Required fields for Customer Audit (CS): Site, Customer, Purpose, Auditor
+    if (!hasValue(siteVal)) missing.push('Site');
     if (!hasValue(a.customer)) missing.push('Customer');
     if (!hasValue(a.purpose)) missing.push('Purpose');
-    if (!hasValue(a.auditor1)) missing.push('Auditor');
-    if (!hasValue(a.department1)) missing.push('Department');
+    if (!hasValue(auditorVal)) missing.push('Auditor');
   }
 
   return missing;

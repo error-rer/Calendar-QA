@@ -531,6 +531,8 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
   const cancelDelete = () => setConfirmDelete(null);
 
   const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
+  const isInc = !!chip.isIncomplete;
+  const barBgColor = isInc ? '#ef4444' : getAccentBackground(chColors);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', borderBottom: isLast ? 'none' : '1px solid #e8ebe4', background: '#fff' }}>
@@ -557,14 +559,21 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
           </span>
         </div>
 
-        {/* Color accent bar */}
-        <div style={{ width: '4px', background: getAccentBackground(chColors), flexShrink: 0, alignSelf: 'stretch' }} />
+        {/* Color accent bar: Red (#EF4444) for incomplete data, otherwise standard blue / plant accent */}
+        <div style={{ width: '4px', background: barBgColor, flexShrink: 0, alignSelf: 'stretch' }} />
 
         {/* Main Appointment Content Strip */}
         <div style={{ flex: 1, minWidth: 0, padding: '9px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
           <div onClick={toggleExpand} style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} title="Click to expand embedded details">
-            <div style={css(`font-size:12.5px;font-weight:600;color:${chip.isInternal ? '#10b981' : '#2756d6'}`)}>
-              {renderApptCode(chip.code)}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' }}>
+              <div style={css(`font-size:12.5px;font-weight:600;color:${chip.isInternal ? '#10b981' : '#2756d6'}`)}>
+                {renderApptCode(chip.code)}
+              </div>
+              {isInc && (
+                <span style={{ fontSize: '10px', fontWeight: 700, color: '#ef4444', background: '#fef2f2', border: '1px solid #fca5a5', padding: '1px 5px', borderRadius: '4px', textTransform: 'uppercase', lineHeight: 1 }}>
+                  Incomplete
+                </span>
+              )}
             </div>
             {chip.purpose ? (
               <div style={css('font-size:11px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
