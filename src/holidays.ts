@@ -16,55 +16,75 @@ export interface HolidayStyle {
 }
 
 /**
- * Traditional / Company Assigned Holidays (Standard Annual Holidays)
+ * Fixed-Date Company Assigned Holidays (Traditional - Recurring every year)
+ * Key format: 'M/D'
  */
-export const TRADITIONAL_HOLIDAYS_2026: Record<string, string> = {
+export const FIXED_ANNUAL_HOLIDAYS: Record<string, string> = {
   '1/1': "New Year's Day",
-  '3/3': 'Makha Bucha Day',
   '4/13': 'Songkran Festival',
   '4/14': 'Songkran Festival',
   '4/15': 'Songkran Festival',
   '5/1': 'National Labour Day',
-  '5/31': 'Visakha Bucha Day',
   '6/3': "H.M. Queen Suthida's Birthday",
   '7/28': "H.M. King Maha Vajiralongkorn's Birthday",
   '8/12': "National Mother's Day",
   '10/13': 'King Bhumibol Adulyadej Memorial Day (Navamindra Maharaj Day)',
-  '12/5': "National Father's Day / King Bhumibol's Birthday",
+  '12/5': "National Father's Day / National Day",
   '12/31': "New Year's Eve",
 };
 
 /**
- * Checks if a given Date is a holiday.
- * Supports:
- * 1. Traditional / Company Assigned Holidays (fixed dates and annual lunar dates).
- * 2. Shift-Specific Compensatory Holidays (Shift E & E1 Only) assigned on the following Monday when holidays fall on weekends (Sat/Sun).
+ * Dynamic / Lunar Buddhist Holidays (Corrected by Thai Lunar Calendar Rules for 2026, 2027, 2028+)
+ * Key format: 'YYYY/M/D'
+ */
+export const LUNAR_BUDDHIST_HOLIDAYS: Record<string, string> = {
+  // 2026
+  '2026/3/3': 'Makha Bucha Day',
+  '2026/5/31': 'Visakha Bucha Day',
+  // 2027
+  '2027/2/21': 'Makha Bucha Day',
+  '2027/5/20': 'Visakha Bucha Day',
+  // 2028
+  '2028/2/9': 'Makha Bucha Day',
+  '2028/5/8': 'Visakha Bucha Day',
+};
+
+/**
+ * Checks if a given Date is a holiday (Traditional Annual, Lunar Buddhist, or Shift E/E1 Substitute).
  */
 export function getHolidayForDate(date: Date): HolidayInfo | null {
   if (!date || isNaN(date.getTime())) return null;
 
+  const year = date.getFullYear();
   const month = date.getMonth() + 1; // 1-12
   const day = date.getDate();
-  const key = `${month}/${day}`;
 
-  // 1. Check Traditional / Company Assigned Annual Holidays
-  if (TRADITIONAL_HOLIDAYS_2026[key]) {
+  // Helper to check if a specific date was a traditional/company holiday
+  const checkTraditional = (y: number, m: number, d: number): string | null => {
+    const ymdKey = `${y}/${m}/${d}`;
+    const mdKey = `${m}/${d}`;
+    return LUNAR_BUDDHIST_HOLIDAYS[ymdKey] || FIXED_ANNUAL_HOLIDAYS[mdKey] || null;
+  };
+
+  // 1. Check direct Traditional / Company Assigned Annual Holidays or Lunar Buddhist Holidays
+  const directName = checkTraditional(year, month, day);
+  if (directName) {
     return {
-      name: TRADITIONAL_HOLIDAYS_2026[key],
+      name: directName,
       isTraditional: true,
     };
   }
 
   // 2. Check Shift-Specific Compensatory Holidays (Shift E & E1 Only)
-  // If today is Monday (getDay() === 1), check if preceding Sunday or Saturday was a traditional holiday.
+  // When a holiday falls on a weekend (Saturday or Sunday), assign substitute on following Monday (getDay() === 1).
   if (date.getDay() === 1) {
     // Check Sunday (yesterday)
     const sunday = new Date(date);
     sunday.setDate(date.getDate() - 1);
-    const sunKey = `${sunday.getMonth() + 1}/${sunday.getDate()}`;
-    if (TRADITIONAL_HOLIDAYS_2026[sunKey]) {
+    const sunName = checkTraditional(sunday.getFullYear(), sunday.getMonth() + 1, sunday.getDate());
+    if (sunName) {
       return {
-        name: `Substitute ${TRADITIONAL_HOLIDAYS_2026[sunKey]} (Shift E & E1)`,
+        name: `Substitute ${sunName} (Shift E & E1)`,
         isSubstitute: true,
         shifts: ['Shift E', 'Shift E1'],
         isTraditional: false,
@@ -74,10 +94,10 @@ export function getHolidayForDate(date: Date): HolidayInfo | null {
     // Check Saturday (2 days ago)
     const saturday = new Date(date);
     saturday.setDate(date.getDate() - 2);
-    const satKey = `${saturday.getMonth() + 1}/${saturday.getDate()}`;
-    if (TRADITIONAL_HOLIDAYS_2026[satKey]) {
+    const satName = checkTraditional(saturday.getFullYear(), saturday.getMonth() + 1, saturday.getDate());
+    if (satName) {
       return {
-        name: `Substitute ${TRADITIONAL_HOLIDAYS_2026[satKey]} (Shift E & E1)`,
+        name: `Substitute ${satName} (Shift E & E1)`,
         isSubstitute: true,
         shifts: ['Shift E', 'Shift E1'],
         isTraditional: false,
