@@ -109,8 +109,9 @@ export function AvailabilityDatePicker({
     }
   }, [dateFrom]);
 
-  // State for hovered booked date cell to render rich custom tooltip card
+  // State for hovered booked date cell to render rich custom floating tooltip popover
   const [hoveredBookedIso, setHoveredBookedIso] = useState<string | null>(null);
+  const [hoveredCellRect, setHoveredCellRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
 
   // Compute busy dates for the currently selected Site + Auditor
   const { bookedDatesSet, bookedDetailsMap } = useMemo(() => {
@@ -463,8 +464,19 @@ export function AvailabilityDatePicker({
               key={iso}
               title={tooltip}
               onClick={() => handleSelectDate(day)}
-              onMouseEnter={() => { if (isBooked) setHoveredBookedIso(iso); }}
-              onMouseLeave={() => { if (hoveredBookedIso === iso) setHoveredBookedIso(null); }}
+              onMouseEnter={(e) => {
+                if (isBooked) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setHoveredCellRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height });
+                  setHoveredBookedIso(iso);
+                }
+              }}
+              onMouseLeave={() => {
+                if (hoveredBookedIso === iso) {
+                  setHoveredBookedIso(null);
+                  setHoveredCellRect(null);
+                }
+              }}
               style={css(
                 `height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;font-size:12px;font-family:'Archivo',sans-serif;user-select:none;transition:all .12s ease;${cellStyle}`
               )}
@@ -489,61 +501,115 @@ export function AvailabilityDatePicker({
         })}
       </div>
 
-      {/* Custom Multi-Item Booked Tooltip Container */}
-      {hoveredBookedIso && (bookedDetailsMap.get(hoveredBookedIso)?.length ?? 0) > 0 && (
-        <div
-          style={{
-            background: '#1E293B',
-            border: '1px solid #334155',
-            borderLeft: '4px solid #F59E0B',
-            borderRadius: '10px',
-            padding: '12px 14px',
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.35)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            maxHeight: '280px',
-            overflowY: 'auto',
-            animation: 'fadeIn .15s ease',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #334155', paddingBottom: '8px' }}>
-            <span style={{ fontSize: '15px', color: '#F59E0B', flexShrink: 0 }}>⚠️</span>
-            <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#F59E0B', letterSpacing: '.5px', fontFamily: "'IBM Plex Mono',monospace" }}>
-              BOOKED DATE DETAILS ({(bookedDetailsMap.get(hoveredBookedIso) || []).length} {(bookedDetailsMap.get(hoveredBookedIso) || []).length === 1 ? 'EVENT' : 'EVENTS'})
-            </div>
-          </div>
+      {/* Floating Hover Tooltip Anchored directly to Hovered Cell */}
+      {hoveredBookedIso && hoveredCellRect && (bookedDetailsMap.get(hoveredBookedIso)?.length ?? 0) > 0 && (() => {
+        const items = bookedDetailsMap.get(hoveredBookedIso) || [];
+        const isNearTop = hoveredCellRect.top < 140;
+        const tooltipTop = isNearTop ? hoveredCellRect.top + hoveredCellRect.height + 8 : hoveredCellRect.top - 8;
+        const tooltipLeft = hoveredCellRect.left + hoveredCellRect.width / 2;
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {bookedDetailsMap.get(hoveredBookedIso)?.map((item, i) => (
-              <div
-                key={i}
-                style={{
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: '#F8FAFC',
-                  lineHeight: '1.4',
-                  wordBreak: 'break-word',
-                  fontFamily: "'Archivo',sans-serif",
-                  paddingBottom: i < (bookedDetailsMap.get(hoveredBookedIso)?.length || 0) - 1 ? '8px' : '0',
-                  borderBottom: i < (bookedDetailsMap.get(hoveredBookedIso)?.length || 0) - 1 ? '1px solid #334155' : 'none',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '6px',
-                }}
-              >
-                <span style={{ color: '#F59E0B', fontSize: '11px', marginTop: '2px', flexShrink: 0 }}>•</span>
-                <div style={{ flex: 1 }}>
-                  <span style={{ color: item.isInternal ? '#34D399' : '#60A5FA', fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', marginRight: '6px', padding: '1px 5px', borderRadius: '4px', background: 'rgba(255,255,255,0.07)' }}>
+        return (
+          <div
+            style={{
+              position: 'fixed',
+              top: `${tooltipTop}px`,
+              left: `${tooltipLeft}px`,
+              transform: isNearTop ? 'translate(-50%, 0)' : 'translate(-50%, -100%)',
+              zIndex: 9999,
+              pointerEvents: 'none',
+              background: '#1E222D',
+              border: '1px solid #2A3040',
+              borderLeft: '4px solid #F59E0B',
+              borderRadius: '8px',
+              padding: '10px 14px',
+              boxShadow: '0 12px 28px rgba(0, 0, 0, 0.45)',
+              display: 'flex',
+              flexDirection: 'column',
+              minWidth: '280px',
+              maxWidth: '380px',
+              maxHeight: '280px',
+              overflowY: 'auto',
+              animation: 'fadeIn .12s ease',
+            }}
+          >
+            {/* Header with warning icon and amber uppercase title */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '7px', marginBottom: '7px' }}>
+              <span style={{ fontSize: '15px', color: '#F59E0B', flexShrink: 0 }}>⚠️</span>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#F59E0B', letterSpacing: '.5px', fontFamily: "'IBM Plex Mono',monospace" }}>
+                BOOKED DATE DETAILS ({items.length} {items.length === 1 ? 'EVENT' : 'EVENTS'})
+              </div>
+            </div>
+
+            {/* Stacked list of items */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
+              {items.map((item, i) => (
+                <div
+                  key={i}
+                  style={{
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    color: '#F8FAFC',
+                    lineHeight: '1.4',
+                    wordBreak: 'break-word',
+                    fontFamily: "'Archivo',sans-serif",
+                    paddingBottom: i < items.length - 1 ? '7px' : '0',
+                    borderBottom: i < items.length - 1 ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <span
+                    style={{
+                      background: item.isInternal ? 'rgba(16, 185, 129, 0.25)' : 'rgba(37, 99, 235, 0.25)',
+                      color: item.isInternal ? '#34D399' : '#60A5FA',
+                      fontWeight: 700,
+                      fontSize: '10px',
+                      textTransform: 'uppercase',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      flexShrink: 0,
+                      lineHeight: 1,
+                    }}
+                  >
                     {item.isInternal ? 'IA' : 'CS'}
                   </span>
-                  {item.tooltipText.replace(/^⚠️\s*Booked:\s*/, '')}
+                  <span>{item.tooltipText.replace(/^⚠️\s*Booked:\s*/, '')}</span>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* Bottom/Top Pointing Arrow / Caret */}
+            <div
+              style={
+                isNearTop
+                  ? {
+                      position: 'absolute',
+                      top: '-7px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: 0,
+                      height: 0,
+                      borderLeft: '7px solid transparent',
+                      borderRight: '7px solid transparent',
+                      borderBottom: '7px solid #1E222D',
+                    }
+                  : {
+                      position: 'absolute',
+                      bottom: '-7px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: 0,
+                      height: 0,
+                      borderLeft: '7px solid transparent',
+                      borderRight: '7px solid transparent',
+                      borderTop: '7px solid #1E222D',
+                    }
+              }
+            />
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Range Display & Confirm Bar */}
       <div style={css('display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fafbf9;border:1px solid #eef1ea;border-radius:8px;padding:9px 12px')}>
