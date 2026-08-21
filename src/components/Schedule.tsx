@@ -1400,11 +1400,11 @@ function WeekCalendar({ vm }: { vm: VM }) {
               {holiday && holStyle && (
                 <div
                   style={{
-                    fontSize: '9px',
-                    fontWeight: 600,
+                    fontSize: '13px',
+                    fontWeight: 700,
                     color: holStyle.textColor,
-                    marginTop: '3px',
-                    lineHeight: '1.2',
+                    marginTop: '4px',
+                    lineHeight: '1.25',
                     textAlign: 'center',
                     wordBreak: 'break-word',
                   }}
@@ -1515,11 +1515,11 @@ function DayHeaders({ vm }: { vm: VM }) {
               {holiday && holStyle && (
                 <div
                   style={{
-                    fontSize: '9.5px',
-                    fontWeight: 600,
+                    fontSize: '13.5px',
+                    fontWeight: 700,
                     color: holStyle.textColor,
-                    marginTop: '3px',
-                    lineHeight: '1.2',
+                    marginTop: '4px',
+                    lineHeight: '1.25',
                     wordBreak: 'break-word',
                   }}
                   title={holiday.name}
@@ -1587,7 +1587,7 @@ function MobilePerson({ vm }: { vm: VM }) {
             ))}
             {r.cell.chips.length === 0 && (
               r.cell.isHoliday && r.cell.holiday ? (
-                <div style={{ width: '100%', padding: '10px', border: '1px solid ' + (getHolidayStyle(r.cell.holiday).borderColor), background: getHolidayStyle(r.cell.holiday).bg, borderRadius: '9px', color: getHolidayStyle(r.cell.holiday).textColor, fontSize: '12px', fontWeight: 600, textAlign: 'center', cursor: 'default' }}>
+                <div style={{ width: '100%', padding: '10px', border: '1px solid ' + (getHolidayStyle(r.cell.holiday).borderColor), background: getHolidayStyle(r.cell.holiday).bg, borderRadius: '9px', color: getHolidayStyle(r.cell.holiday).textColor, fontSize: '13.5px', fontWeight: 700, textAlign: 'center', cursor: 'default' }}>
                   {r.cell.holiday.name} (Holiday)
                 </div>
               ) : (
@@ -1655,10 +1655,10 @@ function MonthGrid({ vm }: { vm: VM }) {
                 {c.holiday && (
                   <span
                     style={{
-                      fontSize: '9.5px',
-                      fontWeight: 600,
+                      fontSize: '13px',
+                      fontWeight: 700,
                       color: getHolidayStyle(c.holiday).textColor,
-                      lineHeight: '1.2',
+                      lineHeight: '1.25',
                       textAlign: 'right',
                       wordBreak: 'break-word',
                     }}
@@ -1740,10 +1740,10 @@ function MonthMobile({ vm }: { vm: VM }) {
                 {c.holiday && (
                   <span
                     style={{
-                      fontSize: '8px',
-                      fontWeight: 600,
+                      fontSize: '11px',
+                      fontWeight: 700,
                       color: getHolidayStyle(c.holiday).textColor,
-                      lineHeight: '1.1',
+                      lineHeight: '1.2',
                       textAlign: 'right',
                       wordBreak: 'break-word',
                     }}
