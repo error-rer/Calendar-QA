@@ -429,7 +429,6 @@ export function AvailabilityDatePicker({
           const holiday = getHolidayForDate(day);
           const holStyle = holiday ? getHolidayStyle(holiday) : null;
           const isBooked = bookedDatesSet.has(iso);
-          const blockingItems = bookedDetailsMap.get(iso) || [];
 
           // Check if day is part of current selected range
           const inSelected = selectedRange
@@ -439,28 +438,24 @@ export function AvailabilityDatePicker({
           const isEnd = _dateTo ? iso === _dateTo : isStart;
 
           let cellStyle = 'background:#fafbf9;color:#23282a;border:1px solid #eef1ea;cursor:pointer;';
-          let tooltip = inSelected
-            ? `Selected: ${fmtDisplay(day)} (Click again to deselect)`
-            : holiday
-            ? `${holiday.name}: ${fmtDisplay(day)} (Holiday)`
-            : `Click to select date: ${fmtDisplay(day)}`;
+          let tooltip: string | undefined = undefined;
 
           if (businessDaysOnly && wkend) {
             cellStyle = 'background:#f4f6f1;color:#a6aca2;border:1px solid #e8ebe4;cursor:default;';
             tooltip = 'Weekend (business days only)';
           } else if (holiday && holStyle) {
             cellStyle = `background:${holStyle.bg};color:${holStyle.textColor};border:1px solid ${holStyle.borderColor};font-weight:600;border-radius:6px;cursor:default;opacity:0.9;`;
+            tooltip = `${holiday.name}: ${fmtDisplay(day)} (Holiday)`;
           } else if (inSelected) {
             const borderRadius = isStart && isEnd ? '7px' : isStart ? '7px 0 0 7px' : isEnd ? '0 7px 7px 0' : '0';
             cellStyle = `background:#15191e;color:#fff;border:1px solid #15191e;font-weight:700;border-radius:${borderRadius};cursor:pointer;`;
-            if (isBooked && blockingItems.length > 0) {
-              tooltip = `Selected (${blockingItems.map((item) => item.tooltipText).join('\n')})`;
-            }
+            tooltip = undefined;
           } else if (isBooked) {
             cellStyle = 'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;font-weight:600;border-radius:6px;';
-            tooltip = blockingItems.length > 0 ? blockingItems.map((item) => item.tooltipText).join('\n') : '⚠️ Booked date';
+            tooltip = undefined;
           } else {
             cellStyle = 'background:#eefbf4;color:#15803d;border:1px solid #bbf7d0;font-weight:600;border-radius:6px;cursor:pointer;';
+            tooltip = `Click to select date: ${fmtDisplay(day)}`;
           }
 
           return (
@@ -487,7 +482,6 @@ export function AvailabilityDatePicker({
                     top: '3px',
                     right: '3px',
                   }}
-                  title={blockingItems.length > 0 ? blockingItems.map((item) => item.tooltipText).join('\n') : 'Booked date'}
                 />
               )}
             </div>
