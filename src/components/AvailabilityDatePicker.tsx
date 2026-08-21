@@ -397,14 +397,14 @@ export function AvailabilityDatePicker({
           let tooltip = inSelected
             ? `Selected: ${fmtDisplay(day)} (Click again to deselect)`
             : holiday
-            ? `🎉 ${holiday.name}: ${fmtDisplay(day)} (Holiday - Non-selectable)`
+            ? `${holiday.name}: ${fmtDisplay(day)} (Holiday)`
             : `Click to select date: ${fmtDisplay(day)}`;
 
           if (businessDaysOnly && wkend) {
-            cellStyle = 'background:#f4f6f1;color:#a6aca2;border:1px solid #e8ebe4;cursor:not-allowed;';
+            cellStyle = 'background:#f4f6f1;color:#a6aca2;border:1px solid #e8ebe4;cursor:default;';
             tooltip = 'Weekend (business days only)';
           } else if (holiday && holStyle) {
-            cellStyle = `background:${holStyle.bg};color:${holStyle.textColor};border:1px solid ${holStyle.borderColor};font-weight:600;border-radius:6px;cursor:not-allowed;opacity:0.85;`;
+            cellStyle = `background:${holStyle.bg};color:${holStyle.textColor};border:1px solid ${holStyle.borderColor};font-weight:600;border-radius:6px;cursor:default;opacity:0.9;`;
           } else if (inSelected) {
             const borderRadius = isStart && isEnd ? '7px' : isStart ? '7px 0 0 7px' : isEnd ? '0 7px 7px 0' : '0';
             cellStyle = `background:#15191e;color:#fff;border:1px solid #15191e;font-weight:700;border-radius:${borderRadius};cursor:pointer;`;

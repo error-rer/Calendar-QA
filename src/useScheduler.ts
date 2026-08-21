@@ -1301,6 +1301,8 @@ export function useScheduler() {
     const isToday = mYear + '-' + mMon + '-' + dn === todayStr;
     const isSelected = !weekend && !!S.dayDialog && S.dayDialog.weekOffset === slot.weekOffset && S.dayDialog.day === slot.wd;
     const holiday = getHolidayForDate(date);
+    const holStyle = holiday ? getHolidayStyle(holiday) : null;
+    const isHolidayOrWeekend = weekend || !!holiday;
     monthCells.push({
       blank: false,
       dateNum: String(dn),
@@ -1310,21 +1312,21 @@ export function useScheduler() {
       chips,
       more,
       moreTxt: more > 0 ? '+' + more + ' more' : '',
-      onClick: weekend ? () => {} : () => openDayDialog(slot.weekOffset, slot.wd),
+      onClick: isHolidayOrWeekend ? () => {} : () => openDayDialog(slot.weekOffset, slot.wd),
       style: sx({
         position: 'relative',
         background: isSelected
           ? '#D1E3FF'
-          : holiday
-          ? '#F3E8FF'
+          : holStyle
+          ? holStyle.bg
           : weekend
           ? '#f8f9f6'
           : '#fff',
-        borderRight: '1px solid ' + (holiday ? '#E9D5FF' : '#e6e9e2'),
-        borderTop: '1px solid ' + (holiday ? '#E9D5FF' : '#e6e9e2'),
+        borderRight: '1px solid ' + (holStyle ? holStyle.borderColor : '#e6e9e2'),
+        borderTop: '1px solid ' + (holStyle ? holStyle.borderColor : '#e6e9e2'),
         minHeight: isMobile ? '52px' : '112px',
         padding: isMobile ? '5px' : '6px 8px',
-        cursor: weekend ? 'default' : 'pointer',
+        cursor: isHolidayOrWeekend ? 'default' : 'pointer',
         display: 'flex',
         flexDirection: 'column',
         gap: isMobile ? '2px' : '4px',
@@ -1341,8 +1343,8 @@ export function useScheduler() {
         width: isMobile ? '20px' : '24px',
         height: isMobile ? '20px' : '24px',
         borderRadius: '50%',
-        background: isToday ? '#15191e' : holiday ? '#EDE9FE' : 'transparent',
-        color: isToday ? '#fff' : holiday ? '#6D28D9' : '#9aa097',
+        background: isToday ? '#15191e' : 'transparent',
+        color: isToday ? '#fff' : holStyle ? holStyle.textColor : '#9aa097',
       }),
       countDotStyle: sx({ display: 'none' }),
     });
@@ -1679,16 +1681,16 @@ export function useScheduler() {
           background: over ? '#e7efff' : holStyle ? holStyle.bg : '#fbfcfa',
           boxShadow: over ? 'inset 0 0 0 2px #9bb0e8' : 'none',
           transition: 'background .1s',
-          cursor: isHol ? 'not-allowed' : 'pointer',
+          cursor: isHol ? 'default' : 'pointer',
         }),
         hintStyle: sx({
           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: isHol ? holStyle?.textColor : over ? '#5b7fd6' : '#cdd2c9',
           fontSize: isHol ? '11px' : '15px', fontWeight: isHol ? 600 : 400,
-          border: '1px dashed ' + (holStyle ? holStyle.badgeBorder : over ? '#9bb0e8' : '#e2e5de'),
+          border: '1px dashed ' + (holStyle ? holStyle.borderColor : over ? '#9bb0e8' : '#e2e5de'),
           borderRadius: '6px', minHeight: '40px',
-          cursor: isHol ? 'not-allowed' : 'pointer', transition: 'all .12s',
-          background: holStyle ? holStyle.badgeBg : 'transparent',
+          cursor: isHol ? 'default' : 'pointer', transition: 'all .12s',
+          background: holStyle ? holStyle.bg : 'transparent',
           opacity: isHol ? 0.85 : 1,
         }),
         onHintClick: isHol ? () => {} : () => openCreateAt(e.id, day),
@@ -1733,7 +1735,7 @@ export function useScheduler() {
           borderBottom: '1px solid ' + holStyle.borderColor,
           borderRight: '1px solid ' + holStyle.borderColor,
           padding: '8px', minHeight: '78px', display: 'flex', flexDirection: 'column', gap: '5px',
-          background: holStyle.bg, cursor: 'not-allowed',
+          background: holStyle.bg, cursor: 'default',
         }),
       };
     }
