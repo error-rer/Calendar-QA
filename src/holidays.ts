@@ -89,30 +89,30 @@ export function getHolidayForDate(date: Date): HolidayInfo | null {
 }
 
 /**
- * Returns distinct styling properties for Traditional vs Shift E & E1 Compensatory Holidays.
+ * Returns distinct gray theme styling properties for Traditional vs Shift E & E1 Compensatory Holidays.
  */
 export function getHolidayStyle(holiday: HolidayInfo): HolidayStyle {
   if (holiday.isTraditional) {
-    // Company Assigned Holidays (Traditional / Square) - Standard Light Purple
+    // Company Assigned Holidays (Traditional / Square) - Standard Light Slate Gray
     return {
-      bg: '#EDE9FE',
-      hoverBg: '#DDD6FE',
-      textColor: '#7C3AED',
-      borderColor: '#C4B5FD',
-      badgeBg: '#EDE9FE',
-      badgeBorder: '#C4B5FD',
-      badgeText: '#7C3AED',
+      bg: '#F1F5F9',
+      hoverBg: '#E2E8F0',
+      textColor: '#334155',
+      borderColor: '#CBD5E1',
+      badgeBg: '#F1F5F9',
+      badgeBorder: '#CBD5E1',
+      badgeText: '#334155',
     };
   } else {
-    // Shift E/E1 Holidays (Compensatory / Hexagon) - Softer Pastel Purple
+    // Shift E/E1 Holidays (Compensatory / Hexagon) - Softer Pastel Slate Gray
     return {
-      bg: '#FAF5FF',
-      hoverBg: '#F3E8FF',
-      textColor: '#9333EA',
-      borderColor: '#E9D5FF',
-      badgeBg: '#FAF5FF',
-      badgeBorder: '#E9D5FF',
-      badgeText: '#9333EA',
+      bg: '#F8FAFC',
+      hoverBg: '#F1F5F9',
+      textColor: '#64748B',
+      borderColor: '#E2E8F0',
+      badgeBg: '#F8FAFC',
+      badgeBorder: '#E2E8F0',
+      badgeText: '#64748B',
     };
   }
 }
