@@ -17,7 +17,6 @@ import {
   initialState,
 } from './data';
 import { api } from './api';
-import { applyTheme, getStoredTheme, getSystemTheme, type ThemeMode } from './theme';
 
 /** Identity tag that supplies a contextual CSSProperties type to a style literal. */
 const sx = (o: CSSProperties): CSSProperties => o;
@@ -116,43 +115,6 @@ export function useScheduler() {
   const [state, setRaw] = useState<State>(initialState);
   const [loading, setLoading] = useState(true);
   const ids = useRef({ id: 100 });
-
-  const [theme, setThemeState] = useState<ThemeMode>(() => {
-    const init = getStoredTheme();
-    applyTheme(init);
-    return init;
-  });
-  const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
-
-  const setTheme = (mode: ThemeMode) => {
-    applyTheme(mode);
-    setThemeState(mode);
-  };
-
-  const toggleTheme = () => {
-    const effective = theme === 'system' ? getSystemTheme() : theme;
-    const next: ThemeMode = effective === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-  };
-
-  const openSettings = () => {
-    setRaw((prev) => ({ ...prev, userMenuOpen: false }));
-    setSettingsOpen(true);
-  };
-  const closeSettings = () => setSettingsOpen(false);
-
-  useEffect(() => {
-    applyTheme(theme);
-    if (typeof window === 'undefined') return;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => {
-      if (theme === 'system') {
-        applyTheme('system');
-      }
-    };
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
 
   const updateMaxId = useCallback((stateObj: State) => {
     const allIds: string[] = [
@@ -2499,13 +2461,6 @@ export function useScheduler() {
     addCustomerOption: (v: string) => addOption('customerOptions', v),
     removeCustomerOption: (v: string) => removeOption('customerOptions', v),
     removedOptions: S.removedOptions || [], removeGenericOption,
-    theme,
-    effectiveTheme: theme === 'system' ? getSystemTheme() : theme,
-    setTheme,
-    toggleTheme,
-    settingsOpen,
-    openSettings,
-    closeSettings,
   };
 }
 
