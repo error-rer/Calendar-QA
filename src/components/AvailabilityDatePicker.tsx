@@ -15,6 +15,17 @@ export interface AvailabilityDatePickerProps {
   editingTargetId?: string;
 }
 
+export interface BookedDetail {
+  site: string;
+  customer: string;
+  endCustomer: string;
+  purpose: string;
+  area: string;
+  auditor: string;
+  isInternal: boolean;
+  tooltipText: string;
+}
+
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -98,10 +109,13 @@ export function AvailabilityDatePicker({
     }
   }, [dateFrom]);
 
+  // State for hovered booked date cell to render rich custom tooltip card
+  const [hoveredBookedIso, setHoveredBookedIso] = useState<string | null>(null);
+
   // Compute busy dates for the currently selected Site + Auditor
   const { bookedDatesSet, bookedDetailsMap } = useMemo(() => {
     const set = new Set<string>();
-    const details = new Map<string, { site: string; auditor: string; title: string }>();
+    const details = new Map<string, BookedDetail>();
 
     const siteTokens = site.split('/').flatMap((s) => s.split(',')).map((s) => s.trim().toLowerCase()).filter(Boolean);
     const auditorTokens = auditor.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
@@ -110,10 +124,10 @@ export function AvailabilityDatePicker({
       return { bookedDatesSet: set, bookedDetailsMap: details };
     }
 
-    // Map engineer IDs to names
+    // Map engineer IDs to names (preserving original casing)
     const engMap = new Map<string, string>();
     for (const e of engineers) {
-      engMap.set(e.id, e.name.toLowerCase());
+      engMap.set(e.id, e.name);
     }
 
     // Exclude current editing appointment and its multi-day siblings
@@ -162,11 +176,36 @@ export function AvailabilityDatePicker({
         const iso = fmtISO(assignDate);
         set.add(iso);
 
-        const title = a.area || a.customer || a.purpose || 'Existing appointment';
-        const displayAuditor = a.auditor1 || a.auditor2 || engMap.get(a.eng) || auditor;
-        const displaySite = a.site1 || a.site2 || site;
+        const isIA = a.sectionType === 'internal' || (!a.sectionType && (!!a.area || !!a.site2));
+        const displaySite = (a.site1 || a.site2 || site || '').trim();
+        const displayCustomer = (a.customer || '').trim();
+        const displayEndCustomer = (a.endCustomer || '').trim();
+        const displayPurpose = (a.purpose || '').trim();
+        const displayArea = (a.area || '').trim();
+        const rawEngName = engMap.get(a.eng) || '';
+        const displayAuditor = (a.auditor1 || a.auditor2 || rawEngName || auditor || '').trim();
 
-        details.set(iso, { site: displaySite, auditor: displayAuditor, title });
+        let tooltipText = '';
+        if (isIA) {
+          // IA (Internal Audit): ⚠️ Booked: [Site] - [Area] - [Auditor] (Strictly NO Purpose)
+          const parts = [displaySite, displayArea, displayAuditor].filter((v) => v && String(v).trim() !== '');
+          tooltipText = parts.length > 0 ? `⚠️ Booked: ${parts.join(' - ')}` : '⚠️ Booked date';
+        } else {
+          // CS (Customer Audit): ⚠️ Booked: [Site] - [Customer] - [Purpose] - [Auditor]
+          const parts = [displaySite, displayCustomer, displayPurpose, displayAuditor].filter((v) => v && String(v).trim() !== '');
+          tooltipText = parts.length > 0 ? `⚠️ Booked: ${parts.join(' - ')}` : '⚠️ Booked date';
+        }
+
+        details.set(iso, {
+          site: displaySite,
+          customer: displayCustomer,
+          endCustomer: displayEndCustomer,
+          purpose: displayPurpose,
+          area: displayArea,
+          auditor: displayAuditor,
+          isInternal: isIA,
+          tooltipText,
+        });
       }
     }
 
@@ -409,11 +448,11 @@ export function AvailabilityDatePicker({
             const borderRadius = isStart && isEnd ? '7px' : isStart ? '7px 0 0 7px' : isEnd ? '0 7px 7px 0' : '0';
             cellStyle = `background:#15191e;color:#fff;border:1px solid #15191e;font-weight:700;border-radius:${borderRadius};cursor:pointer;`;
             if (isBooked && blocking) {
-              tooltip = `Selected (Booked): ${fmtDisplay(day)} — ${blocking.site} / ${blocking.auditor} (${blocking.title})`;
+              tooltip = `Selected (${blocking.tooltipText})`;
             }
           } else if (isBooked) {
             cellStyle = 'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;font-weight:600;border-radius:6px;';
-            tooltip = blocking ? `⚠️ Booked: ${blocking.site} — ${blocking.auditor} (${blocking.title})` : 'Booked date';
+            tooltip = blocking ? blocking.tooltipText : '⚠️ Booked date';
           } else {
             cellStyle = 'background:#eefbf4;color:#15803d;border:1px solid #bbf7d0;font-weight:600;border-radius:6px;cursor:pointer;';
           }
@@ -423,6 +462,8 @@ export function AvailabilityDatePicker({
               key={iso}
               title={tooltip}
               onClick={() => handleSelectDate(day)}
+              onMouseEnter={() => { if (isBooked) setHoveredBookedIso(iso); }}
+              onMouseLeave={() => { if (hoveredBookedIso === iso) setHoveredBookedIso(null); }}
               style={css(
                 `height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;font-size:12px;font-family:'Archivo',sans-serif;user-select:none;transition:all .12s ease;${cellStyle}`
               )}
@@ -440,13 +481,41 @@ export function AvailabilityDatePicker({
                     top: '3px',
                     right: '3px',
                   }}
-                  title={blocking ? `Booked: ${blocking.site} — ${blocking.auditor}` : 'Booked date'}
+                  title={blocking ? blocking.tooltipText : '⚠️ Booked date'}
                 />
               )}
             </div>
           );
         })}
       </div>
+
+      {/* Custom Booked Date Tooltip / Detail Card */}
+      {hoveredBookedIso && bookedDetailsMap.has(hoveredBookedIso) && (
+        <div
+          style={{
+            background: '#1E293B',
+            border: '1px solid #334155',
+            borderLeft: '4px solid #F59E0B',
+            borderRadius: '8px',
+            padding: '10px 14px',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.35)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            animation: 'fadeIn .15s ease',
+          }}
+        >
+          <span style={{ fontSize: '16px', color: '#F59E0B', flexShrink: 0 }}>⚠️</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '10px', fontWeight: 700, color: '#F59E0B', letterSpacing: '.5px', fontFamily: "'IBM Plex Mono',monospace" }}>
+              BOOKED DATE DETAILS
+            </div>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: '#F8FAFC', marginTop: '2px', wordBreak: 'break-word', fontFamily: "'Archivo',sans-serif" }}>
+              {bookedDetailsMap.get(hoveredBookedIso)?.tooltipText}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Range Display & Confirm Bar */}
       <div style={css('display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fafbf9;border:1px solid #eef1ea;border-radius:8px;padding:9px 12px')}>
