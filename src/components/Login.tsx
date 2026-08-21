@@ -6,9 +6,11 @@ export function Login({ vm }: { vm: VM }) {
     <div style={vm.loginWrapStyle}>
       <div style={vm.loginBrandStyle}>
         <div style={css('display:flex;align-items:center;gap:11px;position:relative;z-index:2')}>
-          <div style={css('width:32px;height:32px;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center')}>
-            <div style={css('width:14px;height:14px;border:2px solid #15191e;border-radius:2px')} />
-          </div>
+          <img
+            src="/utac-logo.jpg"
+            alt="UTAC Logo"
+            style={{ width: '34px', height: '34px', borderRadius: '6px', objectFit: 'contain', background: '#fff', padding: '2px' }}
+          />
           <div style={css('font-size:15px;font-weight:700;letter-spacing:-.2px')}>UTAC</div>
         </div>
 
