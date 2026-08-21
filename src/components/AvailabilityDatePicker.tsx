@@ -526,9 +526,9 @@ export function AvailabilityDatePicker({
               display: 'flex',
               flexDirection: 'column',
               minWidth: '280px',
-              maxWidth: '380px',
-              maxHeight: '280px',
-              overflowY: 'auto',
+              maxWidth: '420px',
+              overflow: 'hidden',
+              scrollbarWidth: 'none',
               animation: 'fadeIn .12s ease',
             }}
           >
