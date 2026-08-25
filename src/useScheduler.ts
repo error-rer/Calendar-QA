@@ -568,18 +568,93 @@ export function useScheduler() {
   const removeAssign = (aid: string) => {
     const a = S.assignments.find((x) => x.id === aid);
     if (!a) return;
-    // a multi-day appointment is several sibling assignments (same order + eng,
-    // one per day) — remove the whole span, not just the one day that was clicked.
-    const siblingIds = S.assignments.filter((x) => x.eng === a.eng && x.order === a.order).map((x) => x.id);
+
+    // A multi-day appointment is several sibling assignments (same order + eng,
+    // one per day) — remove the whole span, not just the single day clicked.
+    const siblings = S.assignments.filter((x) => (x.eng === a.eng && x.order === a.order) || x.id === aid);
+    const siblingIds = siblings.map((x) => x.id);
+
+    // Delete assignments from database via API
     siblingIds.forEach((id) => api.deleteAssignment(id).catch(() => {}));
+
+    const deletedCustomers = Array.from(new Set(siblings.map((x) => (x.customer || '').trim()).filter(Boolean)));
+    const deletedPurposes = Array.from(new Set(siblings.map((x) => (x.purpose || '').trim()).filter(Boolean)));
+
     setState((s) => {
       const siblingSet = new Set(siblingIds);
+      const remainingAssignments = s.assignments.filter((x) => !siblingSet.has(x.id));
       const comments = Object.fromEntries(Object.entries(s.comments).filter(([cid]) => !siblingSet.has(cid)));
+
+      let nextCustomerOptions = s.customerOptions || [];
+      let nextRemovedOptions = s.removedOptions || [];
+      let nextFilterCompany = s.filterCompany || [];
+
+      // Manage Options Cleanup: If deleted customer was the only reference in active dataset, remove it from Manage Options & filters
+      for (const cust of deletedCustomers) {
+        const isCustStillUsed = remainingAssignments.some(
+          (x) => (x.customer || '').trim().toLowerCase() === cust.toLowerCase()
+        );
+        if (!isCustStillUsed) {
+          nextCustomerOptions = nextCustomerOptions.filter((c) => c.trim().toLowerCase() !== cust.toLowerCase());
+          if (!nextRemovedOptions.some((r) => r.toLowerCase() === cust.toLowerCase())) {
+            nextRemovedOptions = [...nextRemovedOptions, cust];
+          }
+          nextFilterCompany = nextFilterCompany.filter((f) => f.trim().toLowerCase() !== cust.toLowerCase());
+          api.deleteOption('customer_name', cust).catch(() => {});
+        }
+      }
+
+      let nextPurposeOptions = s.purposeOptions || [];
+      let nextFilterAuditType = s.filterAuditType || [];
+
+      for (const purp of deletedPurposes) {
+        const isPurpStillUsed = remainingAssignments.some(
+          (x) => (x.purpose || '').trim().toLowerCase() === purp.toLowerCase()
+        );
+        if (!isPurpStillUsed) {
+          nextPurposeOptions = nextPurposeOptions.filter((p) => p.trim().toLowerCase() !== purp.toLowerCase());
+          nextFilterAuditType = nextFilterAuditType.filter((f) => f.trim().toLowerCase() !== purp.toLowerCase());
+          api.deleteOption('purpose', purp).catch(() => {});
+        }
+      }
+
+      // Sync local storage snapshots so fresh reloads reflect state changes immediately
       try {
         localStorage.setItem('calendar_qa_comments', JSON.stringify(comments));
-      } catch {}
-      return { assignments: s.assignments.filter((x) => !siblingSet.has(x.id)), comments, selected: null };
+        const snapshot = {
+          engineers: s.engineers,
+          orders: s.orders,
+          assignments: remainingAssignments,
+          comments,
+          activity: s.activity,
+          purposeOptions: nextPurposeOptions,
+          customerDepartmentOptions: s.customerDepartmentOptions,
+          internalDepartmentOptions: s.internalDepartmentOptions,
+          siteCodeOptions: s.siteCodeOptions,
+          siteColors: s.siteColors,
+          customerOptions: nextCustomerOptions,
+          removedOptions: nextRemovedOptions,
+          activePlants: s.activePlants,
+          plants: s.plants,
+        };
+        localStorage.setItem('calendar_qa_snapshot', JSON.stringify(snapshot));
+      } catch (e) {
+        console.warn('Failed to update local storage snapshot on deletion:', e);
+      }
+
+      return {
+        assignments: remainingAssignments,
+        comments,
+        customerOptions: nextCustomerOptions,
+        purposeOptions: nextPurposeOptions,
+        removedOptions: nextRemovedOptions,
+        filterCompany: nextFilterCompany,
+        filterAuditType: nextFilterAuditType,
+        selected: s.selected && siblingSet.has(s.selected) ? null : s.selected,
+        editOpen: s.editOpen && s.editDraft?.targetId && siblingSet.has(s.editDraft.targetId) ? false : s.editOpen,
+      };
     });
+
     log('You', `removed ${apptTitle(a)} appointment`, '#2756d6');
   };
   const duplicate = (aid: string) => {
