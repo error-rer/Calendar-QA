@@ -9,7 +9,7 @@ import type {
   State,
   SubDepartment,
 } from './types';
-import { getMissingFields, isAppointmentIncomplete, isIncompleteAssignment, isInternalAssignment } from './types';
+import { formatApptDisplayTitle, getMissingFields, isAppointmentIncomplete, isIncompleteAssignment, isInternalAssignment } from './types';
 import { getHolidayForDate, getHolidayStyle, type HolidayInfo } from './holidays';
 import {
   dayLabels,
@@ -314,13 +314,7 @@ export function useScheduler() {
   /** "CS" for Customer appointments, "IA" for Internal Audit. */
   const apptAbbr = (a: Assignment) => (a.site2 || a.auditor2 || a.department2 || a.area ? 'IA' : 'CS');
   /** Returns Customer name with CS prefix for Customer Audit or Area/topic with IA prefix for Internal Audit. */
-  const apptTitle = (a: Assignment) => {
-    const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
-    const prefix = isInternal ? 'IA' : 'CS';
-    if (isInternal) return prefix + ' · ' + (a.area || 'Internal Audit');
-    const o = orderById(a.order);
-    return prefix + ' · ' + (a.customer || (o ? o.customer : '') || 'Customer Audit');
-  };
+  const apptTitle = (a: Assignment) => formatApptDisplayTitle(a, orderById(a.order));
   const fmtDate = (d: Date) => {
     const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()];
     return m + ' ' + d.getDate();
@@ -1352,18 +1346,15 @@ export function useScheduler() {
     const chips: MonthChip[] = appointments.slice(0, 3).map((a) => {
       const o = orderById(a.order)!;
       const pl = plantById(o.plant);
-      const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
+      const isInternal = isInternalAssignment(a);
       const isIncomplete = isIncompleteAssignment(a);
-      const mainName = isInternal ? (a.area || '') : (a.customer || '');
-      const site = (isInternal ? a.site2 : a.site1) || '';
-      const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
       const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
       const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
       const colors = siteColorsOfAssignment(a, S.siteColors);
       const color = colors[0] || (pl ? pl.color : '#999');
       return {
         id: a.id,
-        code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, engName: auditorName, color, colors,
+        code: formatApptDisplayTitle(a, o), purpose: chipPurpose, engName: auditorName, color, colors,
         isInternal,
         isIncomplete,
         countTxt: '',
@@ -1581,10 +1572,8 @@ export function useScheduler() {
     const o = orderById(a.order)!;
     const e = engById(a.eng);
     const pl = plantById(o.plant);
-    const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
-    const mainName = isInternal ? (a.area || 'Internal Audit') : (a.customer || o.customer || 'Customer Audit');
+    const isInternal = isInternalAssignment(a);
     const site = (isInternal ? a.site2 : a.site1) || '';
-    const nameWithSite = site ? `${mainName} - ${site}` : mainName;
     const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1, e?.name);
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
     const colors = siteColorsOfAssignment(a, S.siteColors);
@@ -1615,7 +1604,7 @@ export function useScheduler() {
     const isIncomplete = isIncompleteAssignment(a);
     return {
       id: a.id,
-      code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''),
+      code: formatApptDisplayTitle(a, o),
       purpose: chipPurpose,
       engName: auditorName,
       color, colors, isInternal, isIncomplete,
@@ -1881,12 +1870,9 @@ export function useScheduler() {
     const color = colors[0] || (pl ? pl.color : '#999');
     const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
     const isIncomplete = isIncompleteAssignment(a);
-    const mainName = isInternal ? (a.area || '') : (a.customer || (ord ? ord.customer : ''));
-    const site = (isInternal ? a.site2 : a.site1) || '';
-    const nameWithSite = site ? `${mainName} - ${site}` : mainName;
     const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1, eng?.name);
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
-    return { ...a, _customer: apptAbbr(a) + ' · ' + (nameWithSite || 'Audit'), _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _colors: colors, _sel: sel, _onClick: () => openDayDialog(a.week, a.day), _ord: ord, _eng: eng, _isInternal: isInternal, _isIncomplete: isIncomplete };
+    return { ...a, _customer: formatApptDisplayTitle(a, ord), _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _colors: colors, _sel: sel, _onClick: () => openDayDialog(a.week, a.day), _ord: ord, _eng: eng, _isInternal: isInternal, _isIncomplete: isIncomplete };
   });
   // group consecutive same-order same-eng assignments into merged spans
   const sorted = [...weekCalendarChips].sort((a, b) => {
@@ -2339,10 +2325,7 @@ export function useScheduler() {
       seen.add(groupKey);
 
       const isInternal = isInternalAssignment(a);
-      const mainName = isInternal ? (a.area || 'Internal Audit') : (a.customer || 'Customer Audit');
-      const site = (isInternal ? a.site2 : a.site1) || '';
-      const nameWithSite = site ? `${mainName} - ${site}` : mainName;
-      const code = apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : '');
+      const code = formatApptDisplayTitle(a, orderById(a.order));
 
       // Compute multi-date range across all sibling slots for this appointment
       const siblings = S.assignments.filter((x) => x.order === a.order && x.eng === a.eng);

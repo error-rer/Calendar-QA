@@ -98,6 +98,44 @@ export function isAppointmentIncomplete(a: Assignment): boolean {
 
 export const isIncompleteAssignment = isAppointmentIncomplete;
 
+export function formatApptDisplayTitle(a: Assignment, defaultOrder?: { customer?: string; plant?: string } | null): string {
+  if (!a) return '';
+
+  const isInternal = isInternalAssignment(a);
+
+  if (isInternal) {
+    // Label Formatting for "IA" (Internal Audit) Type:
+    // Sequence: IA · {Department} · {Area} - {Site}
+    const dept = (a.department2 || a.department1 || '').trim();
+    const area = (a.area || '').trim();
+    const site = (a.site2 || a.site1 || '').trim();
+
+    const mainSegments: string[] = ['IA'];
+    if (dept) mainSegments.push(dept);
+    if (area) mainSegments.push(area);
+
+    let title = mainSegments.join(' · ');
+    if (site) {
+      title += ` - ${site}`;
+    }
+    return title;
+  } else {
+    // Label Formatting for "CS" (Customer Audit) Type:
+    // Sequence: CS · {Customer} - {Site}
+    const cust = (a.customer || (defaultOrder ? defaultOrder.customer : '') || 'Customer Audit').trim();
+    const site = (a.site1 || a.site2 || (defaultOrder ? defaultOrder.plant : '') || '').trim();
+
+    let title = 'CS';
+    if (cust) {
+      title += ` · ${cust}`;
+    }
+    if (site) {
+      title += ` - ${site}`;
+    }
+    return title;
+  }
+}
+
 export interface Comment {
   id: string;
   who: string;
