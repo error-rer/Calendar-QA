@@ -63,6 +63,36 @@ export function isLastDayOfMonth(date: Date): boolean {
 }
 
 /**
+ * Automatically checks if a given Date is the last WORKING WEEKDAY (Monday–Friday) of its month.
+ * If the actual last day of the month falls on a Saturday or Sunday, rolls back to the preceding Friday.
+ */
+export function isLastWorkingWeekdayOfMonth(date: Date): boolean {
+  if (!date || isNaN(date.getTime())) return false;
+  const dayOfWeek = date.getDay();
+  // Must be a weekday (Monday = 1 through Friday = 5)
+  if (dayOfWeek < 1 || dayOfWeek > 5) return false;
+
+  const year = date.getFullYear();
+  const month = date.getMonth(); // 0-indexed
+  const lastCalendarDate = new Date(year, month + 1, 0); // Last calendar day of month
+  const lastDayOfWeek = lastCalendarDate.getDay(); // 0 = Sun, 6 = Sat
+
+  let targetDay: number;
+  if (lastDayOfWeek === 6) {
+    // Saturday -> Preceding Friday
+    targetDay = lastCalendarDate.getDate() - 1;
+  } else if (lastDayOfWeek === 0) {
+    // Sunday -> Preceding Friday
+    targetDay = lastCalendarDate.getDate() - 2;
+  } else {
+    // Mon–Fri -> Exact last day
+    targetDay = lastCalendarDate.getDate();
+  }
+
+  return date.getDate() === targetDay;
+}
+
+/**
  * Checks if a given Date is a holiday (Traditional Annual, Lunar Buddhist, Shift E/E1 Substitute, Month-End Lock, Dec/Jan Calendar Week Row Blockout).
  */
 export function getHolidayForDate(date: Date): HolidayInfo | null {
@@ -173,8 +203,8 @@ export function getHolidayForDate(date: Date): HolidayInfo | null {
     }
   }
 
-  // 5. Automatic Month-End Lock (Last day of every month, Monday–Friday only: "No customer audit", "Support production ship out")
-  if (isLastDayOfMonth(date)) {
+  // 5. Automatic Month-End Lock (Last WORKING WEEKDAY of every month, Monday–Friday only: "No customer audit", "Support production ship out")
+  if (isLastWorkingWeekdayOfMonth(date)) {
     return {
       name: 'No customer audit',
       subtitle: 'Support production ship out',
