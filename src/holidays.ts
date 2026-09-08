@@ -1,8 +1,10 @@
 export interface HolidayInfo {
   name: string;
+  subtitle?: string;
   isSubstitute?: boolean;
   shifts?: string[];
   isTraditional: boolean;
+  isMonthEndLock?: boolean;
 }
 
 export interface HolidayStyle {
@@ -50,7 +52,16 @@ export const LUNAR_BUDDHIST_HOLIDAYS: Record<string, string> = {
 };
 
 /**
- * Checks if a given Date is a holiday (Traditional Annual, Lunar Buddhist, or Shift E/E1 Substitute).
+ * Automatically checks if a given Date is the last day of its month.
+ */
+export function isLastDayOfMonth(date: Date): boolean {
+  if (!date || isNaN(date.getTime())) return false;
+  const testDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  return date.getDate() === testDate.getDate();
+}
+
+/**
+ * Checks if a given Date is a holiday (Traditional Annual, Lunar Buddhist, Shift E/E1 Substitute, or Month-End Lock).
  */
 export function getHolidayForDate(date: Date): HolidayInfo | null {
   if (!date || isNaN(date.getTime())) return null;
@@ -105,14 +116,35 @@ export function getHolidayForDate(date: Date): HolidayInfo | null {
     }
   }
 
+  // 3. Automatic Month-End Lock (Last day of every month: "No customer audit", "Support production ship out")
+  if (isLastDayOfMonth(date)) {
+    return {
+      name: 'No customer audit',
+      subtitle: 'Support production ship out',
+      isTraditional: true,
+      isMonthEndLock: true,
+    };
+  }
+
   return null;
 }
 
 /**
- * Returns distinct grayscale styling properties for Traditional vs Shift E & E1 Compensatory Holidays.
+ * Returns distinct styling properties for Traditional, Month-End Lock, and Shift E & E1 Compensatory Holidays.
  */
 export function getHolidayStyle(holiday: HolidayInfo): HolidayStyle {
-  if (holiday.isTraditional) {
+  if (holiday.isMonthEndLock) {
+    // Month-End Locked State - Soft Gray/Blue Tinted Background
+    return {
+      bg: '#F0F4FA',
+      hoverBg: '#E4ECF7',
+      textColor: '#2563EB',
+      borderColor: '#D4DEF0',
+      badgeBg: 'transparent',
+      badgeBorder: 'transparent',
+      badgeText: '#2563EB',
+    };
+  } else if (holiday.isTraditional) {
     // Company Assigned Holidays (Standard Traditional) - Light Gray
     return {
       bg: '#F3F4F6',

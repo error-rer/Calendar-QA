@@ -1409,17 +1409,24 @@ function WeekCalendar({ vm }: { vm: VM }) {
               {holiday && holStyle && (
                 <div
                   style={{
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    color: holStyle.textColor,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
                     marginTop: '4px',
                     lineHeight: '1.25',
                     textAlign: 'center',
                     wordBreak: 'break-word',
                   }}
-                  title={holiday.name}
+                  title={holiday.subtitle ? `${holiday.name}\n${holiday.subtitle}` : holiday.name}
                 >
-                  {holiday.name}
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: holStyle.textColor }}>
+                    {holiday.name}
+                  </div>
+                  {holiday.subtitle && (
+                    <div style={{ fontSize: '10.5px', fontWeight: 600, color: holStyle.textColor, marginTop: '2px', opacity: 0.9 }}>
+                      {holiday.subtitle}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1662,19 +1669,41 @@ function MonthGrid({ vm }: { vm: VM }) {
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%', gap: '4px' }}>
                 <span style={c.numStyle}>{c.dateNum}</span>
                 {c.holiday && (
-                  <span
+                  <div
                     style={{
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      color: getHolidayStyle(c.holiday).textColor,
-                      lineHeight: '1.25',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-end',
                       textAlign: 'right',
                       wordBreak: 'break-word',
                     }}
-                    title={c.holiday.name}
+                    title={c.holiday.subtitle ? `${c.holiday.name}\n${c.holiday.subtitle}` : c.holiday.name}
                   >
-                    {c.holiday.name}
-                  </span>
+                    <span
+                      style={{
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        color: getHolidayStyle(c.holiday).textColor,
+                        lineHeight: '1.2',
+                      }}
+                    >
+                      {c.holiday.name}
+                    </span>
+                    {c.holiday.subtitle && (
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          color: getHolidayStyle(c.holiday).textColor,
+                          lineHeight: '1.2',
+                          marginTop: '1px',
+                          opacity: 0.9,
+                        }}
+                      >
+                        {c.holiday.subtitle}
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
               <div style={css('display:flex;flex-direction:column;gap:3px;margin-top:2px')}>
@@ -1747,19 +1776,41 @@ function MonthMobile({ vm }: { vm: VM }) {
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%', gap: '2px' }}>
                 <span style={c.numStyle}>{c.dateNum}</span>
                 {c.holiday && (
-                  <span
+                  <div
                     style={{
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      color: getHolidayStyle(c.holiday).textColor,
-                      lineHeight: '1.2',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-end',
                       textAlign: 'right',
                       wordBreak: 'break-word',
                     }}
-                    title={c.holiday.name}
+                    title={c.holiday.subtitle ? `${c.holiday.name}\n${c.holiday.subtitle}` : c.holiday.name}
                   >
-                    {c.holiday.name}
-                  </span>
+                    <span
+                      style={{
+                        fontSize: '9.5px',
+                        fontWeight: 700,
+                        color: getHolidayStyle(c.holiday).textColor,
+                        lineHeight: '1.15',
+                      }}
+                    >
+                      {c.holiday.name}
+                    </span>
+                    {c.holiday.subtitle && (
+                      <span
+                        style={{
+                          fontSize: '8px',
+                          fontWeight: 600,
+                          color: getHolidayStyle(c.holiday).textColor,
+                          lineHeight: '1.15',
+                          marginTop: '1px',
+                          opacity: 0.9,
+                        }}
+                      >
+                        {c.holiday.subtitle}
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
               <div style={css('display:flex;flex-direction:column;gap:2px;margin-top:1px')}>

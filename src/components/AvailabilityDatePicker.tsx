@@ -446,7 +446,7 @@ export function AvailabilityDatePicker({
             tooltip = 'Weekend (business days only)';
           } else if (holiday && holStyle) {
             cellStyle = `background:${holStyle.bg};color:${holStyle.textColor};border:1px solid ${holStyle.borderColor};font-weight:600;border-radius:6px;cursor:default;opacity:0.9;`;
-            tooltip = `${holiday.name}: ${fmtDisplay(day)} (Holiday)`;
+            tooltip = `${holiday.name}${holiday.subtitle ? ` (${holiday.subtitle})` : ''}: ${fmtDisplay(day)} (Holiday)`;
           } else if (inSelected) {
             const borderRadius = isStart && isEnd ? '7px' : isStart ? '7px 0 0 7px' : isEnd ? '0 7px 7px 0' : '0';
             cellStyle = `background:#15191e;color:#fff;border:1px solid #15191e;font-weight:700;border-radius:${borderRadius};cursor:pointer;`;
