@@ -5,6 +5,8 @@ export interface HolidayInfo {
   shifts?: string[];
   isTraditional: boolean;
   isMonthEndLock?: boolean;
+  isDecBlockout?: boolean;
+  isJanBlockout?: boolean;
 }
 
 export interface HolidayStyle {
@@ -61,7 +63,7 @@ export function isLastDayOfMonth(date: Date): boolean {
 }
 
 /**
- * Checks if a given Date is a holiday (Traditional Annual, Lunar Buddhist, Shift E/E1 Substitute, or Month-End Lock).
+ * Checks if a given Date is a holiday (Traditional Annual, Lunar Buddhist, Shift E/E1 Substitute, Month-End Lock, Dec/Jan Blockout).
  */
 export function getHolidayForDate(date: Date): HolidayInfo | null {
   if (!date || isNaN(date.getTime())) return null;
@@ -69,6 +71,8 @@ export function getHolidayForDate(date: Date): HolidayInfo | null {
   const year = date.getFullYear();
   const month = date.getMonth() + 1; // 1-12
   const day = date.getDate();
+  const dayOfWeek = date.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+  const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
 
   // Helper to check if a specific date was a traditional/company holiday
   const checkTraditional = (y: number, m: number, d: number): string | null => {
@@ -88,7 +92,7 @@ export function getHolidayForDate(date: Date): HolidayInfo | null {
 
   // 2. Check Shift-Specific Compensatory Holidays (Shift E & E1 Only)
   // When a holiday falls on a weekend (Saturday or Sunday), assign substitute on following Monday (getDay() === 1).
-  if (date.getDay() === 1) {
+  if (dayOfWeek === 1) {
     // Check Sunday (yesterday)
     const sunday = new Date(date);
     sunday.setDate(date.getDate() - 1);
@@ -116,7 +120,44 @@ export function getHolidayForDate(date: Date): HolidayInfo | null {
     }
   }
 
-  // 3. Automatic Month-End Lock (Last day of every month: "No customer audit", "Support production ship out")
+  // All subsequent blockout and month-end rules apply STRICTLY to Monday-Friday weekdays
+  if (!isWeekday) return null;
+
+  // 3. December Year-End Rules (Last 2 weeks of December: Dec 18–31, Monday–Friday only)
+  if (month === 12 && day >= 18 && day <= 31) {
+    if (day === 30) {
+      return {
+        name: 'No customer audit',
+        subtitle: 'Support production ship out',
+        isTraditional: true,
+        isDecBlockout: true,
+      };
+    }
+    return {
+      name: 'No customer audit',
+      isTraditional: true,
+      isDecBlockout: true,
+    };
+  }
+
+  // 4. January New-Year Rules (First 2 weeks of January: Jan 1–14, Monday–Friday only)
+  if (month === 1 && day >= 1 && day <= 14) {
+    if (day >= 1 && day <= 5) {
+      return {
+        name: 'FAC shut down all sites',
+        isTraditional: true,
+        isJanBlockout: true,
+      };
+    }
+    // Remaining weekdays within the first 2 weeks (Jan 6–14): disable appointment creation
+    return {
+      name: '',
+      isTraditional: true,
+      isJanBlockout: true,
+    };
+  }
+
+  // 5. Automatic Month-End Lock (Last day of every month, Monday–Friday only: "No customer audit", "Support production ship out")
   if (isLastDayOfMonth(date)) {
     return {
       name: 'No customer audit',
@@ -130,11 +171,11 @@ export function getHolidayForDate(date: Date): HolidayInfo | null {
 }
 
 /**
- * Returns distinct styling properties for Traditional, Month-End Lock, and Shift E & E1 Compensatory Holidays.
+ * Returns distinct styling properties for Traditional, Month-End Lock, Dec/Jan Blockout, and Shift E & E1 Compensatory Holidays.
  */
 export function getHolidayStyle(holiday: HolidayInfo): HolidayStyle {
-  if (holiday.isMonthEndLock) {
-    // Month-End Locked State - Soft Gray/Blue Tinted Background
+  if (holiday.isMonthEndLock || holiday.isDecBlockout || holiday.isJanBlockout) {
+    // Soft Blue-Gray Tinted Background for Blockout / Month-End / Dec / Jan rules
     return {
       bg: '#F0F4FA',
       hoverBg: '#E4ECF7',

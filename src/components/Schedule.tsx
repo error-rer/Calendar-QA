@@ -1406,7 +1406,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
             <div style={css('text-align:center;margin-bottom:6px')}>
               <div style={css(`font-size:12px;font-weight:700;color:${holStyle ? holStyle.textColor : '#9aa097'};letter-spacing:.5px`)}>{d.label}</div>
               <div style={css(`font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:${holStyle ? holStyle.textColor : '#23282a'};margin-top:2px`)}>{d.date.split(' ').pop()}</div>
-              {holiday && holStyle && (
+              {holiday && holStyle && holiday.name && (
                 <div
                   style={{
                     display: 'flex',
@@ -1528,19 +1528,26 @@ function DayHeaders({ vm }: { vm: VM }) {
             <div>
               <div style={css(`font-size:13px;font-weight:700;color:${labelColor};letter-spacing:.2px`)}>{d.label}</div>
               <div style={css(`font-family:'IBM Plex Mono',monospace;font-size:11px;color:${dateColor};margin-top:2px`)}>{d.date}</div>
-              {holiday && holStyle && (
+              {holiday && holStyle && holiday.name && (
                 <div
                   style={{
-                    fontSize: '13.5px',
-                    fontWeight: 700,
-                    color: holStyle.textColor,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
                     marginTop: '4px',
                     lineHeight: '1.25',
                     wordBreak: 'break-word',
                   }}
-                  title={holiday.name}
+                  title={holiday.subtitle ? `${holiday.name}\n${holiday.subtitle}` : holiday.name}
                 >
-                  {holiday.name}
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: holStyle.textColor }}>
+                    {holiday.name}
+                  </div>
+                  {holiday.subtitle && (
+                    <div style={{ fontSize: '11px', fontWeight: 600, color: holStyle.textColor, marginTop: '2px', opacity: 0.9 }}>
+                      {holiday.subtitle}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1668,7 +1675,7 @@ function MonthGrid({ vm }: { vm: VM }) {
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%', gap: '4px' }}>
                 <span style={c.numStyle}>{c.dateNum}</span>
-                {c.holiday && (
+                {c.holiday && c.holiday.name && (
                   <div
                     style={{
                       display: 'flex',
@@ -1775,7 +1782,7 @@ function MonthMobile({ vm }: { vm: VM }) {
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%', gap: '2px' }}>
                 <span style={c.numStyle}>{c.dateNum}</span>
-                {c.holiday && (
+                {c.holiday && c.holiday.name && (
                   <div
                     style={{
                       display: 'flex',
