@@ -63,13 +63,13 @@ export function isLastDayOfMonth(date: Date): boolean {
 }
 
 /**
- * Checks if a given Date is a holiday (Traditional Annual, Lunar Buddhist, Shift E/E1 Substitute, Month-End Lock, Dec/Jan Blockout).
+ * Checks if a given Date is a holiday (Traditional Annual, Lunar Buddhist, Shift E/E1 Substitute, Month-End Lock, Dec/Jan Calendar Week Row Blockout).
  */
 export function getHolidayForDate(date: Date): HolidayInfo | null {
   if (!date || isNaN(date.getTime())) return null;
 
   const year = date.getFullYear();
-  const month = date.getMonth() + 1; // 1-12
+  const month = date.getMonth() + 1; // 1-12 (1 = Jan, 12 = Dec)
   const day = date.getDate();
   const dayOfWeek = date.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
   const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
@@ -123,38 +123,54 @@ export function getHolidayForDate(date: Date): HolidayInfo | null {
   // All subsequent blockout and month-end rules apply STRICTLY to Monday-Friday weekdays
   if (!isWeekday) return null;
 
-  // 3. December Year-End Rules (Last 2 weeks of December: Dec 18–31, Monday–Friday only)
-  if (month === 12 && day >= 18 && day <= 31) {
-    if (day === 30) {
+  // Compute 0-indexed calendar week row index for the date within its month grid (Monday-starting weeks)
+  const firstDayOfMonth = new Date(year, month - 1, 1);
+  const firstWdMon = (firstDayOfMonth.getDay() + 6) % 7; // Mon = 0, Tue = 1, ..., Sun = 6
+  const rowIndex = Math.floor((day - 1 + firstWdMon) / 7);
+
+  // 3. December Year-End Rules (Target the last 2 calendar week rows displayed in December, Monday–Friday only)
+  if (month === 12) {
+    const lastDayOfMonth = new Date(year, 12, 0).getDate(); // 31
+    const totalRows = Math.floor((lastDayOfMonth - 1 + firstWdMon) / 7) + 1;
+    const isLastTwoWeekRows = rowIndex >= totalRows - 2;
+
+    if (isLastTwoWeekRows) {
+      if (day === 30) {
+        return {
+          name: 'No customer audit',
+          subtitle: 'Support production ship out',
+          isTraditional: true,
+          isDecBlockout: true,
+        };
+      }
       return {
         name: 'No customer audit',
-        subtitle: 'Support production ship out',
         isTraditional: true,
         isDecBlockout: true,
       };
     }
-    return {
-      name: 'No customer audit',
-      isTraditional: true,
-      isDecBlockout: true,
-    };
   }
 
-  // 4. January New-Year Rules (First 2 weeks of January: Jan 1–14, Monday–Friday only)
-  if (month === 1 && day >= 1 && day <= 14) {
-    if (day >= 1 && day <= 5) {
+  // 4. January New-Year Rules (Target the first 2 calendar week rows starting from beginning of January, Monday–Friday only)
+  if (month === 1) {
+    const isFirstTwoWeekRows = rowIndex < 2;
+
+    if (isFirstTwoWeekRows) {
+      // Days Jan 1–5 that fall on Mon–Fri display label: "FAC shut down all sites"
+      if (day >= 1 && day <= 5) {
+        return {
+          name: 'FAC shut down all sites',
+          isTraditional: true,
+          isJanBlockout: true,
+        };
+      }
+      // Remaining weekdays within the first 2 week rows remain blocked without weekend spillover
       return {
-        name: 'FAC shut down all sites',
+        name: '',
         isTraditional: true,
         isJanBlockout: true,
       };
     }
-    // Remaining weekdays within the first 2 weeks (Jan 6–14): disable appointment creation
-    return {
-      name: '',
-      isTraditional: true,
-      isJanBlockout: true,
-    };
   }
 
   // 5. Automatic Month-End Lock (Last day of every month, Monday–Friday only: "No customer audit", "Support production ship out")
