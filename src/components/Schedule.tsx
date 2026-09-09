@@ -2,7 +2,7 @@ import { Fragment, useEffect, useRef, useState, useMemo } from 'react';
 import type { VM } from '../useScheduler';
 import { getAccentBackground } from '../useScheduler';
 import { css, HButton, HInput } from '../ui';
-import { getHolidayStyle } from '../holidays';
+import { getHolidayStyle, isOfficialHoliday } from '../holidays';
 
 function renderApptCode(code: string, overrideColor?: string) {
   if (typeof code === 'string' && (code.startsWith('CS') || code.startsWith('IA'))) {
@@ -1457,9 +1457,15 @@ function WeekCalendar({ vm }: { vm: VM }) {
                 );
               })}
               {vm.weekCalendarDays[i].chips.length === 0 && vm.weekMergedSpans.every((s) => s.startDay > i || s.startDay + s.span <= i) && (
-                <div style={css(`font-size:10px;color:${holStyle ? holStyle.textColor : '#bcc1b8'};font-style:italic;padding:4px 0;text-align:center`)}>
-                  {holiday ? 'Holiday' : '–'}
-                </div>
+                isOfficialHoliday(holiday) ? (
+                  <div style={css(`font-size:10px;color:${holStyle ? holStyle.textColor : '#bcc1b8'};font-style:italic;padding:4px 0;text-align:center`)}>
+                    Holiday
+                  </div>
+                ) : !holiday ? (
+                  <div style={css('font-size:10px;color:#bcc1b8;font-style:italic;padding:4px 0;text-align:center')}>
+                    –
+                  </div>
+                ) : null
               )}
             </div>
           </div>
@@ -1611,7 +1617,7 @@ function MobilePerson({ vm }: { vm: VM }) {
             {r.cell.chips.length === 0 && (
               r.cell.isHoliday && r.cell.holiday ? (
                 <div style={{ width: '100%', padding: '10px', border: '1px solid ' + (getHolidayStyle(r.cell.holiday).borderColor), background: getHolidayStyle(r.cell.holiday).bg, borderRadius: '9px', color: getHolidayStyle(r.cell.holiday).textColor, fontSize: '13.5px', fontWeight: 700, textAlign: 'center', cursor: 'default' }}>
-                  {r.cell.holiday.name} (Holiday)
+                  {r.cell.holiday.name}{isOfficialHoliday(r.cell.holiday) ? ' (Holiday)' : ''}
                 </div>
               ) : (
                 <button onClick={r.cell.onHintClick} style={css("width:100%;padding:10px;border:1px dashed #cdd2c9;background:#fbfcfa;border-radius:9px;color:#7a807a;font-size:12px;font-weight:600;font-family:'Archivo',sans-serif;cursor:pointer")}>＋ Assign appointment</button>

@@ -255,3 +255,14 @@ export function getHolidayStyle(holiday: HolidayInfo): HolidayStyle {
     };
   }
 }
+
+/**
+ * Helper to determine if a HolidayInfo represents an official public/company holiday or substitute holiday
+ * (as opposed to a custom blockout rule or month-end lock notice).
+ */
+export function isOfficialHoliday(holiday: HolidayInfo | null | undefined): boolean {
+  if (!holiday) return false;
+  if (holiday.isSubstitute) return true;
+  if (holiday.isMonthEndLock || holiday.isDecBlockout || holiday.isJanBlockout) return false;
+  return holiday.isTraditional;
+}
