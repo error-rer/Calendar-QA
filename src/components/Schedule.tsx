@@ -1175,6 +1175,8 @@ function SearchAutoComplete({ vm, inputRef }: { vm: VM; inputRef?: React.RefObje
   const [open, setOpen] = useState(false);
   const [inputVal, setInputVal] = useState(vm.searchQuery);
   const containerRef = useRef<HTMLDivElement>(null);
+  const localInputRef = useRef<HTMLInputElement>(null);
+  const actualInputRef = inputRef || localInputRef;
 
   useEffect(() => {
     setInputVal(vm.searchQuery);
@@ -1234,10 +1236,16 @@ function SearchAutoComplete({ vm, inputRef }: { vm: VM; inputRef?: React.RefObje
 
   return (
     <div ref={containerRef} style={{ position: 'relative', width: '240px', minWidth: '160px' }}>
-      <div style={css('display:flex;align-items:center;gap:8px;height:36px;padding:0 10px;border:1px solid #15191e;background:#fff;border-radius:8px')}>
+      <label
+        onClick={() => actualInputRef.current?.focus()}
+        style={{
+          ...css('display:flex;align-items:center;gap:8px;height:36px;padding:0 10px;border:1px solid #15191e;background:#fff;border-radius:8px'),
+          cursor: 'text',
+        }}
+      >
         <span style={{ display: 'flex', alignItems: 'center' }}><SearchIcon size={15} color="#15191e" /></span>
         <input
-          ref={inputRef}
+          ref={actualInputRef}
           type="text"
           placeholder="Search appointments…"
           value={inputVal}
@@ -1255,16 +1263,18 @@ function SearchAutoComplete({ vm, inputRef }: { vm: VM; inputRef?: React.RefObje
         {inputVal && (
           <button
             type="button"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               setInputVal('');
               vm.setSearchQuery('');
+              actualInputRef.current?.focus();
             }}
             style={css('border:none;background:transparent;color:#8a9088;cursor:pointer;font-size:12px;padding:0;display:flex;align-items:center')}
           >
             ✕
           </button>
         )}
-      </div>
+      </label>
 
       {open && matches.length > 0 && (
         <div
