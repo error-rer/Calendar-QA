@@ -145,11 +145,11 @@ function ApptCard({ chip }: { chip: any }) {
 
   const isInc = chip.isIncomplete;
   const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
-  const barBg = isInc ? '#FF0000' : '#fff';
-  const accentBg = isInc ? '#B91C1C' : getAccentBackground(chColors);
+  const barBg = isInc ? '#7f1d1d' : '#fff';
+  const accentBg = isInc ? '#ef4444' : getAccentBackground(chColors);
   const titleColor = isInc ? '#FFFFFF' : (chip.isInternal ? '#10b981' : '#2756d6');
   const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
-  const cardBorder = isInc ? '1px solid #dc2626' : '1px solid #e4e7e0';
+  const cardBorder = isInc ? '1px solid #ef4444' : '1px solid #e4e7e0';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', background: barBg, border: cardBorder, borderRadius: '8px', overflow: 'hidden' }}>
@@ -474,15 +474,18 @@ function TimetableGrid({ vm }: { vm: VM }) {
           </div>
           {r.cells.map((cell, ci) => (
             <div key={ci} style={cell.style}>
-              {cell.chips.map((chip) => (
-                <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
-                  <div style={css('display:flex;align-items:center;gap:6px')}>
-                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#15191e")}>{renderApptCode(chip.code)}</span>
-                    <span style={css('flex:1')} />
+              {cell.chips.map((chip) => {
+                const isInc = chip.isIncomplete;
+                return (
+                  <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
+                    <div style={css('display:flex;align-items:center;gap:6px')}>
+                      <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:${isInc ? '#ffffff' : '#15191e'}`)}>{renderApptCode(chip.code, isInc ? '#ffffff' : undefined)}</span>
+                      <span style={css('flex:1')} />
+                    </div>
+                    <div style={css(`font-size:10.5px;color:${isInc ? '#ffffff' : '#5c625c'};margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis`)}>{chip.purpose}</div>
                   </div>
-                  <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{chip.purpose}</div>
-                </div>
-              ))}
+                );
+              })}
               {cell.empty && <div style={css('font-size:10.5px;color:#bcc1b8;text-align:center;padding:8px 0')}>-</div>}
             </div>
           ))}
@@ -500,15 +503,18 @@ function MobileTimetable({ vm }: { vm: VM }) {
           <div key={r.slotId}>
             <div style={css('font-size:11px;font-weight:700;color:#9aa097;margin-bottom:5px;padding-left:2px')}>{r.label}</div>
             <div style={css('display:flex;flex-direction:column;gap:6px')}>
-              {r.cell.chips.map((chip) => (
-                <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
-                  <div style={css('display:flex;align-items:center;gap:6px')}>
-                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:#15191e")}>{renderApptCode(chip.code)}</span>
-                    <span style={css('flex:1')} />
+              {r.cell.chips.map((chip) => {
+                const isInc = chip.isIncomplete;
+                return (
+                  <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
+                    <div style={css('display:flex;align-items:center;gap:6px')}>
+                      <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:${isInc ? '#ffffff' : '#15191e'}`)}>{renderApptCode(chip.code, isInc ? '#ffffff' : undefined)}</span>
+                      <span style={css('flex:1')} />
+                    </div>
+                    <div style={css(`font-size:10.5px;color:${isInc ? '#ffffff' : '#5c625c'};margin-top:2px`)}>{chip.purpose}</div>
                   </div>
-                  <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
-                </div>
-              ))}
+                );
+              })}
               {r.cell.empty && <div style={css('font-size:11px;color:#a6aca2;text-align:center;padding:8px 0;font-style:italic')}>No appointments</div>}
             </div>
           </div>
@@ -1434,10 +1440,10 @@ function WeekCalendar({ vm }: { vm: VM }) {
               {vm.weekCalendarDays[i].chips.map((chip) => {
                 const isInc = chip.isIncomplete;
                 const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
-                const barBg = isInc ? '#FF0000' : '#f0f2ec';
+                const barBg = isInc ? '#7f1d1d' : '#f0f2ec';
                 const titleColor = isInc ? '#FFFFFF' : (chip.isInternal ? '#10b981' : '#2756d6');
                 const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
-                const accentBg = isInc ? '#B91C1C' : getAccentBackground(chColors);
+                const accentBg = isInc ? '#ef4444' : getAccentBackground(chColors);
 
                 return (
                   <div key={chip.id} onClick={chip.onClick} title={[chip.customer, chip.auditor2 || chip.purpose, chip.auditor2 ? '' : chip.auditor1].filter(Boolean).join(' - ')} style={{
@@ -1577,12 +1583,19 @@ function MobileSiteDept({ vm }: { vm: VM }) {
             </div>
           </div>
           <div style={css('display:flex;flex-direction:column;gap:6px')}>
-            {r.cell.chips.map((chip) => (
-              <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
-                <div style={chip.avatarStyle}>{chip.initials}</div>
-                <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div><div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div></div>
-              </div>
-            ))}
+            {r.cell.chips.map((chip) => {
+              const isInc = chip.isIncomplete;
+              return (
+                <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
+                  <div style={chip.avatarStyle}>{chip.initials}</div>
+                  <div style={css('min-width:0;flex:1')}>
+                    <div style={css(`font-size:11.5px;font-weight:600;color:${isInc ? '#ffffff' : '#23282a'}`)}>{chip.name}</div>
+                    <div style={css(`font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:${isInc ? '#ffffff' : '#7a807a'}`)}>{renderApptCode(chip.code, isInc ? '#ffffff' : undefined)}</div>
+                    <div style={css(`font-size:9.5px;color:${isInc ? '#ffffff' : '#a6aca2'}`)}>{chip.purpose}</div>
+                  </div>
+                </div>
+              );
+            })}
             {r.cell.chips.length === 0 && <div style={css('font-size:11px;color:#a6aca2;text-align:center;padding:8px 0;font-style:italic')}>No appointments</div>}
           </div>
         </div>
@@ -1605,15 +1618,18 @@ function MobilePerson({ vm }: { vm: VM }) {
             </div>
           </div>
           <div style={css('display:flex;flex-direction:column;gap:6px')}>
-            {r.cell.chips.map((chip) => (
-              <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
-                <div style={css('display:flex;align-items:center;gap:6px')}>
-                  <span style={css("font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:#15191e")}>{chip.code}</span>
-                  <span style={css('flex:1')} />
+            {r.cell.chips.map((chip) => {
+              const isInc = chip.isIncomplete;
+              return (
+                <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
+                  <div style={css('display:flex;align-items:center;gap:6px')}>
+                    <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:${isInc ? '#ffffff' : '#15191e'}`)}>{renderApptCode(chip.code, isInc ? '#ffffff' : undefined)}</span>
+                    <span style={css('flex:1')} />
+                  </div>
+                  <div style={css(`font-size:10.5px;color:${isInc ? '#ffffff' : '#5c625c'};margin-top:2px`)}>{chip.purpose}</div>
                 </div>
-                <div style={css('font-size:10.5px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
-              </div>
-            ))}
+              );
+            })}
             {r.cell.chips.length === 0 && (
               r.cell.isHoliday && r.cell.holiday ? (
                 <div style={{ width: '100%', padding: '10px', border: '1px solid ' + (getHolidayStyle(r.cell.holiday).borderColor), background: getHolidayStyle(r.cell.holiday).bg, borderRadius: '9px', color: getHolidayStyle(r.cell.holiday).textColor, fontSize: '13.5px', fontWeight: 700, textAlign: 'center', cursor: 'default' }}>
@@ -1639,12 +1655,19 @@ function MobileSite({ vm }: { vm: VM }) {
             <div><div style={css('font-size:13px;font-weight:700;color:#23282a')}>{r.name}</div><div style={css('font-size:10.5px;color:#8a9088')}>{r.loc}</div></div>
           </div>
           <div style={css('display:flex;flex-direction:column;gap:6px')}>
-            {r.cell.chips.map((chip) => (
-              <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
-                <div style={chip.avatarStyle}>{chip.initials}</div>
-                <div style={css('min-width:0;flex:1')}><div style={css('font-size:11.5px;font-weight:600;color:#23282a')}>{chip.name}</div><div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7a807a")}>{chip.code}</div><div style={css('font-size:9.5px;color:#a6aca2')}>{chip.purpose}</div></div>
-              </div>
-            ))}
+            {r.cell.chips.map((chip) => {
+              const isInc = chip.isIncomplete;
+              return (
+                <div key={chip.aid} onClick={chip.onClick} style={chip.style}>
+                  <div style={chip.avatarStyle}>{chip.initials}</div>
+                  <div style={css('min-width:0;flex:1')}>
+                    <div style={css(`font-size:11.5px;font-weight:600;color:${isInc ? '#ffffff' : '#23282a'}`)}>{chip.name}</div>
+                    <div style={css(`font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:${isInc ? '#ffffff' : '#7a807a'}`)}>{renderApptCode(chip.code, isInc ? '#ffffff' : undefined)}</div>
+                    <div style={css(`font-size:9.5px;color:${isInc ? '#ffffff' : '#a6aca2'}`)}>{chip.purpose}</div>
+                  </div>
+                </div>
+              );
+            })}
             {r.cell.empty && <div style={css('font-size:11px;color:#a6aca2;text-align:center;padding:8px 0;font-style:italic')}>No coverage scheduled</div>}
           </div>
         </div>
@@ -1723,10 +1746,10 @@ function MonthGrid({ vm }: { vm: VM }) {
                 {(c.chips ?? []).map((ch, ci) => {
                   const isInc = ch.isIncomplete;
                   const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
-                  const barBg = isInc ? '#FF0000' : '#f0f2ec';
+                  const barBg = isInc ? '#7f1d1d' : '#f0f2ec';
                   const titleColor = isInc ? '#FFFFFF' : (ch.isInternal ? '#10b981' : '#2756d6');
                   const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
-                  const accentBg = isInc ? '#B91C1C' : getAccentBackground(chColors);
+                  const accentBg = isInc ? '#ef4444' : getAccentBackground(chColors);
 
                   return (
                     <div
@@ -1830,10 +1853,10 @@ function MonthMobile({ vm }: { vm: VM }) {
                 {(c.chips ?? []).map((ch, ci) => {
                   const isInc = ch.isIncomplete;
                   const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
-                  const barBg = isInc ? '#FF0000' : '#f0f2ec';
+                  const barBg = isInc ? '#7f1d1d' : '#f0f2ec';
                   const titleColor = isInc ? '#FFFFFF' : (ch.isInternal ? '#10b981' : '#2756d6');
                   const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
-                  const accentBg = isInc ? '#B91C1C' : getAccentBackground(chColors);
+                  const accentBg = isInc ? '#ef4444' : getAccentBackground(chColors);
 
                   return (
                     <div

@@ -20,8 +20,8 @@ import { api } from './api';
 
 /** Identity tag that supplies a contextual CSSProperties type to a style literal. */
 const sx = (o: CSSProperties): CSSProperties => o;
-const formatAuditors = (auditorStr?: string, defaultEngName?: string) => {
-  const str = (auditorStr || defaultEngName || '').trim();
+const formatAuditors = (auditorStr?: string) => {
+  const str = (auditorStr || '').trim();
   if (!str) return '';
   return str.split(',').map((s) => s.trim()).filter(Boolean).join(', ');
 };
@@ -1234,20 +1234,25 @@ export function useScheduler() {
     const sel = S.selected === a.id;
     const colors = siteColorsOfAssignment(a, S.siteColors);
     const accentStyle = getAccentStyle(colors, 3);
-    const base: CSSProperties = {
-      display: 'block', padding: '7px 9px', borderRadius: '6px', background: '#fff', cursor: 'grab', position: 'relative',
-      border: '1px solid #e3e6e0', ...accentStyle,
-      boxShadow: sel ? '0 0 0 2px ' + hexA(colors[0] || '#999', 0.55) : '0 1px 1px rgba(20,25,30,.05)',
-      opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', transition: 'box-shadow .12s',
-    };
-    const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
+    const isInternal = isInternalAssignment(a);
+    const isIncomplete = isIncompleteAssignment(a);
     const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
     const mainName = isInternal ? (a.area || '') : (a.customer || '');
     const site = (isInternal ? a.site2 : a.site1) || '';
     const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
-    const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
+    const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : (auditorName || '');
+    const barBg = isIncomplete ? '#7f1d1d' : '#fff';
+    const borderStyle = isIncomplete ? '1px solid #ef4444' : '1px solid #e3e6e0';
+    const base: CSSProperties = {
+      display: 'block', padding: '7px 9px', borderRadius: '6px', background: barBg, cursor: 'grab', position: 'relative',
+      border: borderStyle, ...accentStyle,
+      boxShadow: sel ? '0 0 0 2px ' + hexA(colors[0] || '#999', 0.55) : '0 1px 1px rgba(20,25,30,.05)',
+      opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', transition: 'box-shadow .12s',
+      color: isIncomplete ? '#ffffff' : undefined,
+    };
     return {
       aid: a.id, code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, style: base,
+      isIncomplete,
       onClick: () => select(a.id),
       onDragStart: (e: React.DragEvent) => { e.stopPropagation(); setState({ drag: { kind: 'assign', id: a.id } }); },
       onDragEnd: () => setState({ drag: null, overCell: null }),
@@ -1261,16 +1266,20 @@ export function useScheduler() {
     const dim = chipDimmed(a);
     const colors = accent ? [accent] : siteColorsOfAssignment(a, S.siteColors);
     const accentStyle = getAccentStyle(colors, 3);
-    const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
+    const isInternal = isInternalAssignment(a);
+    const isIncomplete = isIncompleteAssignment(a);
     const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
     const mainName = isInternal ? (a.area || '') : (a.customer || '');
     const site = (isInternal ? a.site2 : a.site1) || '';
     const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
-    const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
+    const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : (auditorName || '');
+    const barBg = isIncomplete ? '#7f1d1d' : '#fff';
+    const borderStyle = isIncomplete ? '1px solid #ef4444' : '1px solid #e8ebe4';
     return {
       aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, plantCode: pl ? pl.code : '?',
-      style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: '#fff', border: '1px solid #e8ebe4', ...accentStyle, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none' }),
-      avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
+      isIncomplete,
+      style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: barBg, border: borderStyle, ...accentStyle, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', color: isIncomplete ? '#ffffff' : undefined }),
+      avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: isIncomplete ? '#b91c1c' : '#f1f3ee', color: isIncomplete ? '#ffffff' : '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       onClick: () => select(a.id),
     };
   };
@@ -1570,12 +1579,11 @@ export function useScheduler() {
   // ---- shared appointment chip fields (used by Day popup and Search results) ----
   const apptChipFields = (a: Assignment) => {
     const o = orderById(a.order)!;
-    const e = engById(a.eng);
     const pl = plantById(o.plant);
     const isInternal = isInternalAssignment(a);
     const site = (isInternal ? a.site2 : a.site1) || '';
-    const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1, e?.name);
-    const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
+    const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
+    const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : (auditorName || '');
     const colors = siteColorsOfAssignment(a, S.siteColors);
     const color = colors[0] || (pl ? pl.color : '#999');
     const notesList = (S.comments[a.id] || []).map((m) => ({
@@ -1733,6 +1741,12 @@ export function useScheduler() {
         if (a.eng !== e.id || a.day !== day) return false;
         const o = orderById(a.order);
         return !!o && matchesFilters(a, o);
+      }).sort((a, b) => {
+        const aInc = isIncompleteAssignment(a);
+        const bInc = isIncompleteAssignment(b);
+        if (aInc && !bInc) return -1;
+        if (!aInc && bInc) return 1;
+        return 0;
       }).map((a) => buildChip(a));
       const over = !isHol && S.overCell === cellId;
       return {
@@ -1815,6 +1829,13 @@ export function useScheduler() {
           const o = orderById(a.order);
           return !!o && o.customer === topic && a.day === day && matchesFilters(a, o);
         })
+        .sort((a, b) => {
+          const aInc = isIncompleteAssignment(a);
+          const bInc = isIncompleteAssignment(b);
+          if (aInc && !bInc) return -1;
+          if (!aInc && bInc) return 1;
+          return 0;
+        })
         .map((a) => buildPersonChip(a));
       return { chips, empty: chips.length === 0, ...extraProps };
     });
@@ -1827,6 +1848,13 @@ export function useScheduler() {
         .filter((a) => {
           const o = orderById(a.order);
           return !!o && o.plant === p.id && a.day === day && matchesFilters(a, o);
+        })
+        .sort((a, b) => {
+          const aInc = isIncompleteAssignment(a);
+          const bInc = isIncompleteAssignment(b);
+          if (aInc && !bInc) return -1;
+          if (!aInc && bInc) return 1;
+          return 0;
         })
         .map((a) => buildPersonChip(a, p.color));
       return { chips, empty: chips.length === 0, ...extraProps };
@@ -1843,6 +1871,12 @@ export function useScheduler() {
         if (!engs.some((e) => e.id === a.eng) || a.day !== day) return false;
         const o = orderById(a.order);
         return !!o && matchesFilters(a, o);
+      }).sort((a, b) => {
+        const aInc = isIncompleteAssignment(a);
+        const bInc = isIncompleteAssignment(b);
+        if (aInc && !bInc) return -1;
+        if (!aInc && bInc) return 1;
+        return 0;
       }).map((a) => buildPersonChip(a, S.siteColors[dn]));
       return { chips, empty: chips.length === 0, ...extraProps };
     });
@@ -1870,8 +1904,8 @@ export function useScheduler() {
     const color = colors[0] || (pl ? pl.color : '#999');
     const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
     const isIncomplete = isIncompleteAssignment(a);
-    const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1, eng?.name);
-    const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
+    const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
+    const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : (auditorName || '');
     return { ...a, _customer: formatApptDisplayTitle(a, ord), _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _colors: colors, _sel: sel, _onClick: () => openDayDialog(a.week, a.day), _ord: ord, _eng: eng, _isInternal: isInternal, _isIncomplete: isIncomplete };
   });
   // group consecutive same-order same-eng assignments into merged spans

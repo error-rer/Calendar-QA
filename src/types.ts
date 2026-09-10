@@ -73,7 +73,7 @@ export function getMissingFields(a: Assignment): string[] {
   const missing: string[] = [];
 
   const siteVal = (isInternal ? a.site2 || a.site1 : a.site1 || a.site2) || '';
-  const auditorVal = (isInternal ? a.auditor2 || a.auditor1 || a.eng : a.auditor1 || a.auditor2 || a.eng) || '';
+  const auditorVal = (isInternal ? a.auditor2 || a.auditor1 : a.auditor1 || a.auditor2) || '';
 
   if (isInternal) {
     // Required fields for Internal Audit (IA): Site, Area, Auditor (No Purpose check)
