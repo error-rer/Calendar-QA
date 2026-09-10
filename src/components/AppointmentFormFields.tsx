@@ -4,8 +4,8 @@ import { css } from '../ui';
 import { AvailabilityDatePicker } from './AvailabilityDatePicker';
 
 const fld = css("display:flex;flex-direction:column;gap:4px");
-const lbl = css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#94a3b8;letter-spacing:.5px");
-const inp = css("border:1px solid #334155;border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#f8fafc;outline:none;background:#0f172a;width:100%;box-sizing:border-box");
+const lbl = css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px");
+const inp = css("border:1px solid #dde0d9;border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fff;width:100%;box-sizing:border-box");
 const sel = inp;
 
 interface DateInputFieldProps {
@@ -178,10 +178,10 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
         onBlur={handleBlur}
         onKeyDown={(e) => handleKeyDown(e, 'day')}
         style={css(
-          'width:22px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#f8fafc;padding:0'
+          'width:22px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#23282a;padding:0'
         )}
       />
-      <span style={css('color:#64748b;font-weight:600;user-select:none')}>/</span>
+      <span style={css('color:#8a9088;font-weight:600;user-select:none')}>/</span>
       <input
         ref={monthRef}
         type="text"
@@ -193,10 +193,10 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
         onBlur={handleBlur}
         onKeyDown={(e) => handleKeyDown(e, 'month')}
         style={css(
-          'width:24px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#f8fafc;padding:0'
+          'width:24px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#23282a;padding:0'
         )}
       />
-      <span style={css('color:#64748b;font-weight:600;user-select:none')}>/</span>
+      <span style={css('color:#8a9088;font-weight:600;user-select:none')}>/</span>
       <input
         ref={yearRef}
         type="text"
@@ -208,7 +208,7 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
         onBlur={handleBlur}
         onKeyDown={(e) => handleKeyDown(e, 'year')}
         style={css(
-          'width:38px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#f8fafc;padding:0'
+          'width:38px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#23282a;padding:0'
         )}
       />
     </div>
@@ -275,14 +275,14 @@ function MultiSiteSelect({
         type="button"
         onClick={() => setOpen(!open)}
         style={{
-          border: '1px solid #334155',
+          border: '1px solid #dde0d9',
           borderRadius: '8px',
           padding: '8px 10px',
           fontSize: '12.5px',
           fontFamily: "'Archivo',sans-serif",
-          color: selectedSites.length > 0 ? '#f8fafc' : '#64748b',
+          color: selectedSites.length > 0 ? '#23282a' : '#8a9088',
           outline: 'none',
-          background: '#0f172a',
+          background: '#fff',
           width: '100%',
           boxSizing: 'border-box',
           cursor: 'pointer',
@@ -295,7 +295,7 @@ function MultiSiteSelect({
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
           {displayText}
         </span>
-        <span style={{ fontSize: '9px', color: '#94a3b8', marginLeft: '6px', flexShrink: 0 }}>
+        <span style={{ fontSize: '9px', color: '#8a9088', marginLeft: '6px', flexShrink: 0 }}>
           {open ? '▲' : '▼'}
         </span>
       </button>
@@ -308,10 +308,10 @@ function MultiSiteSelect({
             left: 0,
             right: 0,
             marginTop: '4px',
-            background: '#1e293b',
-            border: '1px solid #334155',
+            background: '#fff',
+            border: '1px solid #dde0d9',
             borderRadius: '8px',
-            boxShadow: '0 6px 20px rgba(0,0,0,0.4)',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
             zIndex: 100,
             maxHeight: '200px',
             overflowY: 'auto',
@@ -334,8 +334,8 @@ function MultiSiteSelect({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  background: isSel ? '#1e3a8a' : '#1e293b',
-                  color: isSel ? '#93c5fd' : '#f8fafc',
+                  background: isSel ? '#eef2fd' : '#fff',
+                  color: isSel ? '#2756d6' : '#23282a',
                   transition: 'background .1s ease',
                 }}
               >
@@ -345,8 +345,8 @@ function MultiSiteSelect({
                     width: '14px',
                     height: '14px',
                     borderRadius: '3px',
-                    border: '1px solid ' + (isSel ? '#3b82f6' : '#475569'),
-                    background: isSel ? '#2563eb' : '#0f172a',
+                    border: '1px solid ' + (isSel ? '#2756d6' : '#cdd2c9'),
+                    background: isSel ? '#2756d6' : '#fff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -444,10 +444,10 @@ function AutocompleteInput({
             left: 0,
             right: 0,
             marginTop: '4px',
-            background: '#1e293b',
-            border: '1px solid #334155',
+            background: '#fff',
+            border: '1px solid #dde0d9',
             borderRadius: '8px',
-            boxShadow: '0 6px 20px rgba(0,0,0,0.4)',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
             zIndex: 100,
             maxHeight: '220px',
             overflowY: 'auto',
@@ -468,14 +468,14 @@ function AutocompleteInput({
                 cursor: 'pointer',
                 fontSize: '12.5px',
                 fontFamily: "'Archivo',sans-serif",
-                color: '#f8fafc',
+                color: '#23282a',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: '8px',
                 transition: 'background .1s ease',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#334155')}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#f0f2ec')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
@@ -494,7 +494,7 @@ function AutocompleteInput({
                   style={{
                     border: 'none',
                     background: 'transparent',
-                    color: '#94a3b8',
+                    color: '#8a9088',
                     cursor: 'pointer',
                     padding: '2px 5px',
                     borderRadius: '4px',
@@ -505,12 +505,12 @@ function AutocompleteInput({
                     justifyContent: 'center',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#7f1d1d';
-                    e.currentTarget.style.color = '#fca5a5';
+                    e.currentTarget.style.background = '#fee2e2';
+                    e.currentTarget.style.color = '#dc2626';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = '#94a3b8';
+                    e.currentTarget.style.color = '#8a9088';
                   }}
                 >
                   ✕
@@ -532,16 +532,16 @@ function AutocompleteInput({
                 fontSize: '12.5px',
                 fontFamily: "'Archivo',sans-serif",
                 fontWeight: 600,
-                color: '#60a5fa',
-                background: '#1e3a8a',
-                border: '1px solid #2563eb',
+                color: '#2756d6',
+                background: '#eef2fd',
+                border: '1px solid #d8e2fa',
                 marginTop: matches.length > 0 ? '4px' : '0',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#1d4ed8')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = '#1e3a8a')}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#e0e8fc')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = '#eef2fd')}
             >
               <span>＋ Add "{rawVal.trim()}"</span>
             </div>
@@ -630,13 +630,13 @@ function MultiAuditorSelect({
           setOpen(true);
         }}
         style={{
-          border: '1px solid #334155',
+          border: '1px solid #dde0d9',
           borderRadius: '8px',
           padding: '4px 8px',
           minHeight: '38px',
           fontSize: '12.5px',
           fontFamily: "'Archivo',sans-serif",
-          background: '#0f172a',
+          background: '#fff',
           width: '100%',
           boxSizing: 'border-box',
           cursor: 'text',
@@ -655,12 +655,12 @@ function MultiAuditorSelect({
               gap: '4px',
               padding: '2px 7px',
               borderRadius: '5px',
-              background: '#1e3a8a',
-              border: '1px solid #2563eb',
+              background: '#eef2fd',
+              border: '1px solid #d4def0',
               fontSize: '11.5px',
               fontFamily: "'Archivo',sans-serif",
               fontWeight: 600,
-              color: '#93c5fd',
+              color: '#2756d6',
             }}
           >
             {name}
@@ -674,7 +674,7 @@ function MultiAuditorSelect({
               style={{
                 border: 'none',
                 background: 'transparent',
-                color: '#93c5fd',
+                color: '#2756d6',
                 cursor: 'pointer',
                 padding: 0,
                 fontSize: '10px',
@@ -713,7 +713,7 @@ function MultiAuditorSelect({
             background: 'transparent',
             fontSize: '12.5px',
             fontFamily: "'Archivo',sans-serif",
-            color: '#f8fafc',
+            color: '#23282a',
             flex: 1,
             minWidth: '100px',
             padding: '2px 0',
@@ -728,7 +728,7 @@ function MultiAuditorSelect({
           }}
           style={{
             fontSize: '9px',
-            color: '#94a3b8',
+            color: '#8a9088',
             marginLeft: 'auto',
             flexShrink: 0,
             cursor: 'pointer',
@@ -748,10 +748,10 @@ function MultiAuditorSelect({
             left: 0,
             right: 0,
             marginTop: '4px',
-            background: '#1e293b',
-            border: '1px solid #334155',
+            background: '#fff',
+            border: '1px solid #dde0d9',
             borderRadius: '8px',
-            boxShadow: '0 6px 20px rgba(0,0,0,0.4)',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
             zIndex: 100,
             padding: '4px',
             maxHeight: '210px',
@@ -770,9 +770,9 @@ function MultiAuditorSelect({
                 cursor: 'pointer',
                 fontSize: '12px',
                 fontWeight: 600,
-                color: '#60a5fa',
-                background: '#1e3a8a',
-                border: '1px solid #2563eb',
+                color: '#2756d6',
+                background: '#eef2fd',
+                border: '1px solid #d4def0',
                 marginBottom: '4px',
                 display: 'flex',
                 alignItems: 'center',
@@ -784,7 +784,7 @@ function MultiAuditorSelect({
           )}
 
           {filteredSuggestions.length === 0 && !inputVal.trim() && (
-            <div style={{ padding: '8px 10px', fontSize: '12px', color: '#94a3b8', fontFamily: "'Archivo',sans-serif" }}>
+            <div style={{ padding: '8px 10px', fontSize: '12px', color: '#8a9088', fontFamily: "'Archivo',sans-serif" }}>
               No auditors found
             </div>
           )}
@@ -809,8 +809,8 @@ function MultiAuditorSelect({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  background: isSel ? '#1e3a8a' : '#1e293b',
-                  color: isSel ? '#93c5fd' : '#f8fafc',
+                  background: isSel ? '#eef2fd' : '#fff',
+                  color: isSel ? '#2756d6' : '#23282a',
                   transition: 'background .1s ease',
                   marginBottom: '2px',
                 }}
@@ -822,8 +822,8 @@ function MultiAuditorSelect({
                       height: '14px',
                       borderRadius: '3px',
                       flexShrink: 0,
-                      border: '1px solid ' + (isSel ? '#3b82f6' : '#475569'),
-                      background: isSel ? '#2563eb' : '#0f172a',
+                      border: '1px solid ' + (isSel ? '#2756d6' : '#cdd2c9'),
+                      background: isSel ? '#2756d6' : '#fff',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -850,7 +850,7 @@ function MultiAuditorSelect({
                     style={{
                       border: 'none',
                       background: 'transparent',
-                      color: '#f87171',
+                      color: '#dc2626',
                       cursor: 'pointer',
                       fontSize: '11px',
                       padding: '2px 5px',
@@ -970,22 +970,22 @@ export function AppointmentFormFields({
     <>
       <div style={css('display:flex;gap:8px;margin-bottom:4px')}>
         <div onClick={() => onChange({ sectionType: 'customer' })} style={{
-          flex: 1, padding: '9px 0', borderRadius: '8px', border: '1px solid ' + (v.sectionType === 'customer' ? '#3b82f6' : '#334155'),
+          flex: 1, padding: '9px 0', borderRadius: '8px', border: '1px solid ' + (v.sectionType === 'customer' ? '#15191e' : '#dde0d9'),
           cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", textAlign: 'center',
-          background: v.sectionType === 'customer' ? '#2563eb' : '#1e293b',
-          color: v.sectionType === 'customer' ? '#fff' : '#94a3b8',
+          background: v.sectionType === 'customer' ? '#15191e' : '#fff',
+          color: v.sectionType === 'customer' ? '#fff' : '#5c625c',
         }}>Customer</div>
         <div onClick={() => onChange({ sectionType: 'internal' })} style={{
-          flex: 1, padding: '9px 0', borderRadius: '8px', border: '1px solid ' + (v.sectionType === 'internal' ? '#3b82f6' : '#334155'),
+          flex: 1, padding: '9px 0', borderRadius: '8px', border: '1px solid ' + (v.sectionType === 'internal' ? '#15191e' : '#dde0d9'),
           cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", textAlign: 'center',
-          background: v.sectionType === 'internal' ? '#2563eb' : '#1e293b',
-          color: v.sectionType === 'internal' ? '#fff' : '#94a3b8',
+          background: v.sectionType === 'internal' ? '#15191e' : '#fff',
+          color: v.sectionType === 'internal' ? '#fff' : '#5c625c',
         }}>Internal Audit</div>
       </div>
 
       {v.sectionType === 'customer' && (
-        <div style={css('padding:14px;border:1px solid #334155;border-radius:10px;background:#1e293b')}>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#94a3b8;letter-spacing:.5px;margin-bottom:12px")}>CUSTOMER</div>
+        <div style={css('padding:14px;border:1px solid #e8ebe4;border-radius:10px;background:#fafbf9')}>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#6a706a;letter-spacing:.5px;margin-bottom:12px")}>CUSTOMER</div>
           <div style={css('display:grid;grid-template-columns:1fr 1fr;gap:14px')}>
             {/* 1. DEPARTMENT */}
             <div style={fld}>
@@ -1100,8 +1100,8 @@ export function AppointmentFormFields({
       )}
 
       {v.sectionType === 'internal' && (
-        <div style={css('padding:14px;border:1px solid #334155;border-radius:10px;background:#1e293b')}>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#94a3b8;letter-spacing:.5px;margin-bottom:12px")}>INTERNAL AUDIT</div>
+        <div style={css('padding:14px;border:1px solid #e8ebe4;border-radius:10px;background:#fafbf9')}>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#6a706a;letter-spacing:.5px;margin-bottom:12px")}>INTERNAL AUDIT</div>
           <div style={css('display:grid;grid-template-columns:1fr 1fr;gap:14px')}>
             {/* 1. DEPARTMENT */}
             <div style={fld}>

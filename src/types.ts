@@ -209,7 +209,6 @@ export interface EngineerForm {
 }
 
 export interface State {
-  theme: 'light' | 'dark';
   authed: boolean;
   page: Page;
   view: View;

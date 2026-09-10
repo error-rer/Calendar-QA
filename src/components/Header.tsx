@@ -1,169 +1,76 @@
 import type { VM } from '../useScheduler';
-import { HButton, HDiv } from '../ui';
+import { css, HButton, HDiv } from '../ui';
 
 export function Header({ vm }: { vm: VM }) {
-  const isDark = vm.isDark;
-
   return (
-    <header
-      style={{
-        height: '58px',
-        flexShrink: 0,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '14px',
-        padding: '0 14px 0 16px',
-        background: isDark ? '#1e293b' : '#ffffff',
-        borderBottom: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-        zIndex: 30,
-        position: 'relative',
-        transition: 'background 0.2s ease, border-color 0.2s ease',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+    <header style={css('height:58px;flex-shrink:0;display:flex;align-items:center;gap:14px;padding:0 14px 0 16px;background:#fff;border-bottom:1px solid #d8dcd4;z-index:30;position:relative')}>
+      <div style={css('display:flex;align-items:center;gap:11px')}>
         <img
           src="/utac-logo.jpg"
           alt="UTAC Logo"
           style={{ width: '32px', height: '32px', borderRadius: '6px', objectFit: 'contain', flexShrink: 0 }}
         />
-        <div style={{ lineHeight: 1.05 }}>
-          <div style={{ fontSize: '14.5px', fontWeight: 700, color: isDark ? '#f8fafc' : '#0f172a', letterSpacing: '-.2px' }}>
-            Calendar Auditor
-          </div>
+        <div style={css('line-height:1.05')}>
+          <div style={css('font-size:14.5px;font-weight:700;letter-spacing:-.2px')}>Calendar Auditor</div>
           {vm.showPresence && (
-            <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: '10px', color: isDark ? '#94a3b8' : '#64748b', letterSpacing: '.3px', marginTop: '1px' }}>
-              UTAC
-            </div>
+            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8a9088;letter-spacing:.3px;margin-top:1px")}>UTAC</div>
           )}
         </div>
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          background: isDark ? '#0f172a' : '#f1f5f9',
-          border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-          borderRadius: '8px',
-          padding: '2px',
-          gap: '2px',
-          marginLeft: '2px',
-        }}
-      >
-        <button onClick={vm.goSchedule} style={vm.navSchedStyle}>
-          Schedule
-        </button>
-        <button onClick={vm.goSummary} style={vm.navSummaryStyle}>
-          Summary
-        </button>
-        <button onClick={vm.goAdmin} style={vm.navAdminStyle}>
-          Manage
-        </button>
+      <div style={css('display:flex;background:#f1f3ee;border:1px solid #e0e3dc;border-radius:8px;padding:2px;gap:2px;margin-left:2px')}>
+        <button onClick={vm.goSchedule} style={vm.navSchedStyle}>Schedule</button>
+        <button onClick={vm.goSummary} style={vm.navSummaryStyle}>Summary</button>
+        <button onClick={vm.goAdmin} style={vm.navAdminStyle}>Manage</button>
       </div>
 
-      <div style={{ flex: 1 }} />
-
-      {/* Theme Toggle Button */}
-      <button
-        onClick={vm.toggleTheme}
-        title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-        style={{
-          background: isDark ? '#334155' : '#f1f5f9',
-          border: `1px solid ${isDark ? '#475569' : '#cbd5e1'}`,
-          borderRadius: '8px',
-          padding: '5px 10px',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          fontSize: '12px',
-          fontWeight: 600,
-          fontFamily: "'Archivo', sans-serif",
-          color: isDark ? '#f8fafc' : '#0f172a',
-          transition: 'all 0.15s ease',
-        }}
-      >
-        <span style={{ fontSize: '13px', lineHeight: 1 }}>{isDark ? '☀️' : '🌙'}</span>
-        <span>{isDark ? 'Light' : 'Dark'}</span>
-      </button>
+      <div style={css('flex:1')} />
 
       {vm.showPresence && (
         <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-            <div style={{ display: 'flex' }}>
+          <div style={css('display:flex;align-items:center;gap:9px')}>
+            <div style={css('display:flex')}>
               {vm.presence.map((p, i) => (
-                <div key={i} title={p.name} style={p.avatarStyle}>
-                  {p.initials}
-                </div>
+                <div key={i} title={p.name} style={p.avatarStyle}>{p.initials}</div>
               ))}
             </div>
-            <div style={{ lineHeight: 1.1, marginRight: '4px' }}>
-              <div style={{ fontSize: '11.5px', fontWeight: 600, color: isDark ? '#f1f5f9' : '#1e293b' }}>
-                3 teammates
-              </div>
-              <div style={{ fontSize: '10px', color: '#22c55e', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', animation: 'pulse 2s infinite' }} />
-                editing now
+            <div style={css('line-height:1.1;margin-right:4px')}>
+              <div style={css('font-size:11.5px;font-weight:600;color:#2a2f28')}>3 teammates</div>
+              <div style={css('font-size:10px;color:#1f9d57;display:flex;align-items:center;gap:4px')}>
+                <span style={css('width:6px;height:6px;border-radius:50%;background:#1f9d57;animation:pulse 2s infinite')} />editing now
               </div>
             </div>
           </div>
-          <div style={{ width: '1px', height: '26px', background: isDark ? '#334155' : '#e2e8f0' }} />
+          <div style={css('width:1px;height:26px;background:#e3e6df')} />
         </>
       )}
 
-      <div style={{ position: 'relative' }}>
+      <div style={css('position:relative')}>
         <HDiv
           onClick={vm.toggleUserMenu}
-          style={{ display: 'flex', alignItems: 'center', gap: '9px', cursor: 'pointer', padding: '4px 8px 4px 4px', borderRadius: '9px' }}
-          hover={{ background: isDark ? '#334155' : '#f1f5f9' }}
+          style={css('display:flex;align-items:center;gap:9px;cursor:pointer;padding:4px 8px 4px 4px;border-radius:9px')}
+          hover={{ background: '#f4f6f1' }}
         >
-          <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '11px', fontWeight: 600, flexShrink: 0 }}>
-            JL
-          </div>
+          <div style={css("width:30px;height:30px;border-radius:8px;background:#15191e;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;flex-shrink:0")}>JL</div>
           {vm.showPresence && (
             <>
-              <div style={{ lineHeight: 1.1 }}>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: isDark ? '#f8fafc' : '#0f172a' }}>Jordan Lee</div>
-                <div style={{ fontSize: '10px', color: isDark ? '#94a3b8' : '#64748b' }}>QA Planner</div>
+              <div style={css('line-height:1.1')}>
+                <div style={css('font-size:12px;font-weight:600;color:#23282a')}>Jordan Lee</div>
+                <div style={css('font-size:10px;color:#8a9088')}>QA Planner</div>
               </div>
-              <span style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: '10px' }}>▾</span>
+              <span style={css('color:#a6aca2;font-size:10px')}>▾</span>
             </>
           )}
         </HDiv>
         {vm.userMenuOpen && (
-          <div
-            style={{
-              position: 'absolute',
-              right: 0,
-              top: '48px',
-              width: '212px',
-              background: isDark ? '#1e293b' : '#ffffff',
-              border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
-              borderRadius: '11px',
-              boxShadow: isDark ? '0 10px 30px rgba(0,0,0,.4)' : '0 10px 30px rgba(0,0,0,.1)',
-              padding: '7px',
-              zIndex: 40,
-              animation: 'fadeUp .14s ease',
-            }}
-          >
-            <div style={{ padding: '8px 10px 9px' }}>
-              <div style={{ fontSize: '12.5px', fontWeight: 600, color: isDark ? '#f8fafc' : '#0f172a' }}>Jordan Lee</div>
-              <div style={{ fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b' }}>jordan.lee@nexsil.com</div>
+          <div style={css('position:absolute;right:0;top:48px;width:212px;background:#fff;border:1px solid #e2e5de;border-radius:11px;box-shadow:0 10px 30px rgba(20,25,30,.13);padding:7px;z-index:40;animation:fadeUp .14s ease')}>
+            <div style={css('padding:8px 10px 9px')}>
+              <div style={css('font-size:12.5px;font-weight:600;color:#23282a')}>Jordan Lee</div>
+              <div style={css('font-size:11px;color:#8a9088')}>jordan.lee@nexsil.com</div>
             </div>
-            <div style={{ height: '1px', background: isDark ? '#334155' : '#e2e8f0', margin: '2px 0' }} />
-            <HButton
-              onClick={vm.goProfile}
-              style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: '7px', fontSize: '12.5px', color: isDark ? '#f1f5f9' : '#0f172a', fontFamily: "'Archivo',sans-serif" }}
-              hover={{ background: isDark ? '#334155' : '#f1f5f9' }}
-            >
-              Your profile
-            </HButton>
-            <HButton
-              onClick={vm.signOut}
-              style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: '7px', fontSize: '12.5px', color: isDark ? '#f87171' : '#dc2626', fontFamily: "'Archivo',sans-serif" }}
-              hover={{ background: isDark ? '#451a1a' : '#fef2f2' }}
-            >
-              Sign out
-            </HButton>
+            <div style={css('height:1px;background:#eef1ea;margin:2px 0')} />
+            <HButton onClick={vm.goProfile} style={css("width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:12.5px;color:#3c423d;font-family:'Archivo',sans-serif")} hover={{ background: '#f4f6f1' }}>Your profile</HButton>
+            <HButton onClick={vm.signOut} style={css("width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:12.5px;color:#b32f2f;font-family:'Archivo',sans-serif")} hover={{ background: '#fdeeee' }}>Sign out</HButton>
           </div>
         )}
       </div>

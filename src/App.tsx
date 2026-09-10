@@ -14,9 +14,9 @@ export default function App() {
   const vm = useScheduler();
 
   return (
-    <div style={css('height:100vh;width:100%;display:flex;flex-direction:column;overflow:hidden;background:#0f172a')}>
+    <div style={css('height:100vh;width:100%;display:flex;flex-direction:column;overflow:hidden;background:#e9ebe6')}>
       {vm.loading && (
-        <div style={css('flex:1;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:14px')}>Loading…</div>
+        <div style={css('flex:1;display:flex;align-items:center;justify-content:center;color:#8a9088;font-size:14px')}>Loading…</div>
       )}
 
       {!vm.loading && vm.showLogin && <Login vm={vm} />}

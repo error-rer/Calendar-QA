@@ -219,75 +219,40 @@ export function getHolidayForDate(date: Date): HolidayInfo | null {
 /**
  * Returns distinct styling properties for Traditional, Month-End Lock, Dec/Jan Blockout, and Shift E & E1 Compensatory Holidays.
  */
-export function getHolidayStyle(holiday: HolidayInfo, isDark = false): HolidayStyle {
-  if (isDark) {
-    if (holiday.isMonthEndLock || holiday.isDecBlockout || holiday.isJanBlockout) {
-      // Soft Dark Blue Tinted Background for Blockout / Month-End / Dec / Jan rules in Dark Mode
-      return {
-        bg: '#1e293b',
-        hoverBg: '#1e3a8a',
-        textColor: '#93c5fd',
-        borderColor: '#3b82f6',
-        badgeBg: 'transparent',
-        badgeBorder: 'transparent',
-        badgeText: '#93c5fd',
-      };
-    } else if (holiday.isTraditional) {
-      // Company Assigned Holidays (Standard Traditional) - Dark Charcoal
-      return {
-        bg: '#1e293b',
-        hoverBg: '#334155',
-        textColor: '#cbd5e1',
-        borderColor: '#475569',
-        badgeBg: 'transparent',
-        badgeBorder: 'transparent',
-        badgeText: '#cbd5e1',
-      };
-    } else {
-      // Company Compensatory / Shift Substitute Holidays (Shift E & E1) - Slightly Darker Slate
-      return {
-        bg: '#334155',
-        hoverBg: '#475569',
-        textColor: '#f1f5f9',
-        borderColor: '#64748b',
-        badgeBg: 'transparent',
-        badgeBorder: 'transparent',
-        badgeText: '#f1f5f9',
-      };
-    }
+export function getHolidayStyle(holiday: HolidayInfo): HolidayStyle {
+  if (holiday.isMonthEndLock || holiday.isDecBlockout || holiday.isJanBlockout) {
+    // Soft Blue-Gray Tinted Background for Blockout / Month-End / Dec / Jan rules
+    return {
+      bg: '#F0F4FA',
+      hoverBg: '#E4ECF7',
+      textColor: '#2563EB',
+      borderColor: '#D4DEF0',
+      badgeBg: 'transparent',
+      badgeBorder: 'transparent',
+      badgeText: '#2563EB',
+    };
+  } else if (holiday.isTraditional) {
+    // Company Assigned Holidays (Standard Traditional) - Light Gray
+    return {
+      bg: '#F3F4F6',
+      hoverBg: '#E5E7EB',
+      textColor: '#374151',
+      borderColor: '#D1D5DB',
+      badgeBg: 'transparent',
+      badgeBorder: 'transparent',
+      badgeText: '#374151',
+    };
   } else {
-    // Light Mode Styling
-    if (holiday.isMonthEndLock || holiday.isDecBlockout || holiday.isJanBlockout) {
-      return {
-        bg: '#eff6ff',
-        hoverBg: '#dbeafe',
-        textColor: '#1e40af',
-        borderColor: '#bfdbfe',
-        badgeBg: 'transparent',
-        badgeBorder: 'transparent',
-        badgeText: '#1e40af',
-      };
-    } else if (holiday.isTraditional) {
-      return {
-        bg: '#f8fafc',
-        hoverBg: '#f1f5f9',
-        textColor: '#334155',
-        borderColor: '#cbd5e1',
-        badgeBg: 'transparent',
-        badgeBorder: 'transparent',
-        badgeText: '#334155',
-      };
-    } else {
-      return {
-        bg: '#f1f5f9',
-        hoverBg: '#e2e8f0',
-        textColor: '#1e293b',
-        borderColor: '#94a3b8',
-        badgeBg: 'transparent',
-        badgeBorder: 'transparent',
-        badgeText: '#1e293b',
-      };
-    }
+    // Company Compensatory / Shift Substitute Holidays (Shift E & E1) - Noticeably Darker Gray
+    return {
+      bg: '#D1D5DB',
+      hoverBg: '#9CA3AF',
+      textColor: '#1F2937',
+      borderColor: '#9CA3AF',
+      badgeBg: 'transparent',
+      badgeBorder: 'transparent',
+      badgeText: '#1F2937',
+    };
   }
 }
 
