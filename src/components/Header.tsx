@@ -3,7 +3,7 @@ import { css, HButton, HDiv } from '../ui';
 
 export function Header({ vm }: { vm: VM }) {
   return (
-    <header style={css('height:58px;flex-shrink:0;display:flex;align-items:center;gap:14px;padding:0 14px 0 16px;background:#fff;border-bottom:1px solid #d8dcd4;z-index:30;position:relative')}>
+    <header style={css('height:58px;flex-shrink:0;display:flex;align-items:center;gap:14px;padding:0 14px 0 16px;background:#1e293b;border-bottom:1px solid #334155;z-index:30;position:relative')}>
       <div style={css('display:flex;align-items:center;gap:11px')}>
         <img
           src="/utac-logo.jpg"
@@ -11,14 +11,14 @@ export function Header({ vm }: { vm: VM }) {
           style={{ width: '32px', height: '32px', borderRadius: '6px', objectFit: 'contain', flexShrink: 0 }}
         />
         <div style={css('line-height:1.05')}>
-          <div style={css('font-size:14.5px;font-weight:700;letter-spacing:-.2px')}>Calendar Auditor</div>
+          <div style={css('font-size:14.5px;font-weight:700;color:#f8fafc;letter-spacing:-.2px')}>Calendar Auditor</div>
           {vm.showPresence && (
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8a9088;letter-spacing:.3px;margin-top:1px")}>UTAC</div>
+            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;color:#94a3b8;letter-spacing:.3px;margin-top:1px")}>UTAC</div>
           )}
         </div>
       </div>
 
-      <div style={css('display:flex;background:#f1f3ee;border:1px solid #e0e3dc;border-radius:8px;padding:2px;gap:2px;margin-left:2px')}>
+      <div style={css('display:flex;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:2px;gap:2px;margin-left:2px')}>
         <button onClick={vm.goSchedule} style={vm.navSchedStyle}>Schedule</button>
         <button onClick={vm.goSummary} style={vm.navSummaryStyle}>Summary</button>
         <button onClick={vm.goAdmin} style={vm.navAdminStyle}>Manage</button>
@@ -35,13 +35,13 @@ export function Header({ vm }: { vm: VM }) {
               ))}
             </div>
             <div style={css('line-height:1.1;margin-right:4px')}>
-              <div style={css('font-size:11.5px;font-weight:600;color:#2a2f28')}>3 teammates</div>
-              <div style={css('font-size:10px;color:#1f9d57;display:flex;align-items:center;gap:4px')}>
-                <span style={css('width:6px;height:6px;border-radius:50%;background:#1f9d57;animation:pulse 2s infinite')} />editing now
+              <div style={css('font-size:11.5px;font-weight:600;color:#f1f5f9')}>3 teammates</div>
+              <div style={css('font-size:10px;color:#22c55e;display:flex;align-items:center;gap:4px')}>
+                <span style={css('width:6px;height:6px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite')} />editing now
               </div>
             </div>
           </div>
-          <div style={css('width:1px;height:26px;background:#e3e6df')} />
+          <div style={css('width:1px;height:26px;background:#334155')} />
         </>
       )}
 
@@ -49,28 +49,28 @@ export function Header({ vm }: { vm: VM }) {
         <HDiv
           onClick={vm.toggleUserMenu}
           style={css('display:flex;align-items:center;gap:9px;cursor:pointer;padding:4px 8px 4px 4px;border-radius:9px')}
-          hover={{ background: '#f4f6f1' }}
+          hover={{ background: '#334155' }}
         >
-          <div style={css("width:30px;height:30px;border-radius:8px;background:#15191e;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;flex-shrink:0")}>JL</div>
+          <div style={css("width:30px;height:30px;border-radius:8px;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;flex-shrink:0")}>JL</div>
           {vm.showPresence && (
             <>
               <div style={css('line-height:1.1')}>
-                <div style={css('font-size:12px;font-weight:600;color:#23282a')}>Jordan Lee</div>
-                <div style={css('font-size:10px;color:#8a9088')}>QA Planner</div>
+                <div style={css('font-size:12px;font-weight:600;color:#f8fafc')}>Jordan Lee</div>
+                <div style={css('font-size:10px;color:#94a3b8')}>QA Planner</div>
               </div>
-              <span style={css('color:#a6aca2;font-size:10px')}>▾</span>
+              <span style={css('color:#94a3b8;font-size:10px')}>▾</span>
             </>
           )}
         </HDiv>
         {vm.userMenuOpen && (
-          <div style={css('position:absolute;right:0;top:48px;width:212px;background:#fff;border:1px solid #e2e5de;border-radius:11px;box-shadow:0 10px 30px rgba(20,25,30,.13);padding:7px;z-index:40;animation:fadeUp .14s ease')}>
+          <div style={css('position:absolute;right:0;top:48px;width:212px;background:#1e293b;border:1px solid #334155;border-radius:11px;box-shadow:0 10px 30px rgba(0,0,0,.4);padding:7px;z-index:40;animation:fadeUp .14s ease')}>
             <div style={css('padding:8px 10px 9px')}>
-              <div style={css('font-size:12.5px;font-weight:600;color:#23282a')}>Jordan Lee</div>
-              <div style={css('font-size:11px;color:#8a9088')}>jordan.lee@nexsil.com</div>
+              <div style={css('font-size:12.5px;font-weight:600;color:#f8fafc')}>Jordan Lee</div>
+              <div style={css('font-size:11px;color:#94a3b8')}>jordan.lee@nexsil.com</div>
             </div>
-            <div style={css('height:1px;background:#eef1ea;margin:2px 0')} />
-            <HButton onClick={vm.goProfile} style={css("width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:12.5px;color:#3c423d;font-family:'Archivo',sans-serif")} hover={{ background: '#f4f6f1' }}>Your profile</HButton>
-            <HButton onClick={vm.signOut} style={css("width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:12.5px;color:#b32f2f;font-family:'Archivo',sans-serif")} hover={{ background: '#fdeeee' }}>Sign out</HButton>
+            <div style={css('height:1px;background:#334155;margin:2px 0')} />
+            <HButton onClick={vm.goProfile} style={css("width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:12.5px;color:#f1f5f9;font-family:'Archivo',sans-serif")} hover={{ background: '#334155' }}>Your profile</HButton>
+            <HButton onClick={vm.signOut} style={css("width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:12.5px;color:#f87171;font-family:'Archivo',sans-serif")} hover={{ background: '#451a1a' }}>Sign out</HButton>
           </div>
         )}
       </div>

@@ -354,10 +354,10 @@ export function AvailabilityDatePicker({
   }, [viewYear, viewMonth]);
 
   return (
-    <div style={css('border:1px solid #e2e5de;border-radius:12px;background:#fff;padding:14px;display:flex;flex-direction:column;gap:12px;margin-top:6px')}>
+    <div style={css('border:1px solid #334155;border-radius:12px;background:#1e293b;padding:14px;display:flex;flex-direction:column;gap:12px;margin-top:6px')}>
       {/* Top Controls Header */}
-      <div style={css('display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #eef1ea;padding-bottom:10px')}>
-        <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;color:#23282a;letter-spacing:.4px")}>
+      <div style={css('display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #334155;padding-bottom:10px')}>
+        <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;color:#f8fafc;letter-spacing:.4px")}>
           DATE SELECTION
         </div>
       </div>
@@ -368,19 +368,19 @@ export function AvailabilityDatePicker({
           <HButton
             type="button"
             onClick={handlePrevMonth}
-            style={css('width:28px;height:28px;border:1px solid #dde0d9;background:#fff;border-radius:6px;cursor:pointer;color:#3c423d;font-size:13px;display:flex;align-items:center;justify-content:center')}
-            hover={{ background: '#f1f3ee' }}
+            style={css('width:28px;height:28px;border:1px solid #334155;background:#0f172a;border-radius:6px;cursor:pointer;color:#f8fafc;font-size:13px;display:flex;align-items:center;justify-content:center')}
+            hover={{ background: '#334155' }}
           >
             ‹
           </HButton>
-          <span style={css('font-size:13.5px;font-weight:700;color:#23282a;min-width:110px')}>
+          <span style={css('font-size:13.5px;font-weight:700;color:#f8fafc;min-width:110px')}>
             {MONTH_NAMES[viewMonth]} {viewYear}
           </span>
           <HButton
             type="button"
             onClick={handleNextMonth}
-            style={css('width:28px;height:28px;border:1px solid #dde0d9;background:#fff;border-radius:6px;cursor:pointer;color:#3c423d;font-size:13px;display:flex;align-items:center;justify-content:center')}
-            hover={{ background: '#f1f3ee' }}
+            style={css('width:28px;height:28px;border:1px solid #334155;background:#0f172a;border-radius:6px;cursor:pointer;color:#f8fafc;font-size:13px;display:flex;align-items:center;justify-content:center')}
+            hover={{ background: '#334155' }}
           >
             ›
           </HButton>
@@ -389,15 +389,15 @@ export function AvailabilityDatePicker({
         <HButton
           type="button"
           onClick={handleJumpNextAvailable}
-          style={css("background:#eef2fd;border:1px solid #d8e2fa;color:#2756d6;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;display:flex;align-items:center;gap:4px")}
-          hover={{ background: '#e0e8fc' }}
+          style={css("background:#1e3a8a;border:1px solid #2563eb;color:#93c5fd;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;display:flex;align-items:center;gap:4px")}
+          hover={{ background: '#1d4ed8' }}
         >
           ⚡ Jump to next available
         </HButton>
       </div>
 
       {notice && (
-        <div style={css('font-size:11px;color:#1f8a5b;background:#eefdf4;border:1px solid #ccebe2;border-radius:6px;padding:6px 10px;animation:fadeIn .15s ease')}>
+        <div style={css('font-size:11px;color:#34d399;background:#064e3b;border:1px solid #059669;border-radius:6px;padding:6px 10px;animation:fadeIn .15s ease')}>
           {notice}
         </div>
       )}
@@ -409,7 +409,7 @@ export function AvailabilityDatePicker({
             key={w}
             style={css(
               `font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;padding:4px 0;${
-                i >= 5 ? 'color:#a6aca2;' : 'color:#8a9088;'
+                i >= 5 ? 'color:#64748b;' : 'color:#94a3b8;'
               }`
             )}
           >
@@ -438,24 +438,24 @@ export function AvailabilityDatePicker({
           const isStart = dateFrom ? iso === dateFrom : false;
           const isEnd = _dateTo ? iso === _dateTo : isStart;
 
-          let cellStyle = 'background:#fafbf9;color:#23282a;border:1px solid #eef1ea;cursor:pointer;';
+          let cellStyle = 'background:#064e3b;color:#34d399;border:1px solid #059669;font-weight:600;border-radius:6px;cursor:pointer;';
           let tooltip: string | undefined = undefined;
 
           if (businessDaysOnly && wkend) {
-            cellStyle = 'background:#f4f6f1;color:#a6aca2;border:1px solid #e8ebe4;cursor:default;';
+            cellStyle = 'background:#0f172a;color:#475569;border:1px solid #1e293b;cursor:default;';
             tooltip = 'Weekend (business days only)';
           } else if (holiday && holStyle) {
             cellStyle = `background:${holStyle.bg};color:${holStyle.textColor};border:1px solid ${holStyle.borderColor};font-weight:600;border-radius:6px;cursor:default;opacity:0.9;`;
             tooltip = `${holiday.name}${holiday.subtitle ? ` (${holiday.subtitle})` : ''}: ${fmtDisplay(day)}${isOfficialHoliday(holiday) ? ' (Holiday)' : ''}`;
           } else if (inSelected) {
             const borderRadius = isStart && isEnd ? '7px' : isStart ? '7px 0 0 7px' : isEnd ? '0 7px 7px 0' : '0';
-            cellStyle = `background:#15191e;color:#fff;border:1px solid #15191e;font-weight:700;border-radius:${borderRadius};cursor:pointer;`;
+            cellStyle = `background:#2563eb;color:#fff;border:1px solid #3b82f6;font-weight:700;border-radius:${borderRadius};cursor:pointer;`;
             tooltip = undefined;
           } else if (isBooked) {
-            cellStyle = 'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;font-weight:600;border-radius:6px;';
+            cellStyle = 'background:#450a0a;color:#f87171;border:1px solid #991b1b;cursor:pointer;font-weight:600;border-radius:6px;';
             tooltip = undefined;
           } else {
-            cellStyle = 'background:#eefbf4;color:#15803d;border:1px solid #bbf7d0;font-weight:600;border-radius:6px;cursor:pointer;';
+            cellStyle = 'background:#064e3b;color:#34d399;border:1px solid #059669;font-weight:600;border-radius:6px;cursor:pointer;';
             tooltip = `Click to select date: ${fmtDisplay(day)}`;
           }
 
@@ -488,7 +488,7 @@ export function AvailabilityDatePicker({
                     width: inSelected ? '6px' : '5px',
                     height: inSelected ? '6px' : '5px',
                     borderRadius: '50%',
-                    background: inSelected ? '#ef4444' : '#dc2626',
+                    background: inSelected ? '#ef4444' : '#f87171',
                     border: inSelected ? '1px solid #fff' : 'none',
                     position: 'absolute',
                     top: '3px',
@@ -517,12 +517,12 @@ export function AvailabilityDatePicker({
               transform: isNearTop ? 'translate(-50%, 0)' : 'translate(-50%, -100%)',
               zIndex: 9999,
               pointerEvents: 'none',
-              background: '#1E222D',
-              border: '1px solid #2A3040',
-              borderLeft: '4px solid #F59E0B',
+              background: '#1e293b',
+              border: '1px solid #334155',
+              borderLeft: '4px solid #f59e0b',
               borderRadius: '8px',
               padding: '10px 14px',
-              boxShadow: '0 12px 28px rgba(0, 0, 0, 0.45)',
+              boxShadow: '0 12px 28px rgba(0, 0, 0, 0.6)',
               display: 'flex',
               flexDirection: 'column',
               minWidth: '280px',
@@ -533,9 +533,9 @@ export function AvailabilityDatePicker({
             }}
           >
             {/* Header with warning icon and amber uppercase title */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '7px', marginBottom: '7px' }}>
-              <span style={{ fontSize: '15px', color: '#F59E0B', flexShrink: 0 }}>⚠️</span>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#F59E0B', letterSpacing: '.5px', fontFamily: "'IBM Plex Mono',monospace" }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #334155', paddingBottom: '7px', marginBottom: '7px' }}>
+              <span style={{ fontSize: '15px', color: '#f59e0b', flexShrink: 0 }}>⚠️</span>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#f59e0b', letterSpacing: '.5px', fontFamily: "'IBM Plex Mono',monospace" }}>
                 BOOKED DATE DETAILS ({items.length} {items.length === 1 ? 'EVENT' : 'EVENTS'})
               </div>
             </div>
@@ -548,12 +548,12 @@ export function AvailabilityDatePicker({
                   style={{
                     fontSize: '12.5px',
                     fontWeight: 600,
-                    color: '#F8FAFC',
+                    color: '#f8fafc',
                     lineHeight: '1.4',
                     wordBreak: 'break-word',
                     fontFamily: "'Archivo',sans-serif",
                     paddingBottom: i < items.length - 1 ? '7px' : '0',
-                    borderBottom: i < items.length - 1 ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
+                    borderBottom: i < items.length - 1 ? '1px solid #334155' : 'none',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
@@ -562,7 +562,7 @@ export function AvailabilityDatePicker({
                   <span
                     style={{
                       background: item.isInternal ? 'rgba(16, 185, 129, 0.25)' : 'rgba(37, 99, 235, 0.25)',
-                      color: item.isInternal ? '#34D399' : '#60A5FA',
+                      color: item.isInternal ? '#34d399' : '#60a5fa',
                       fontWeight: 700,
                       fontSize: '10px',
                       textTransform: 'uppercase',
@@ -592,7 +592,7 @@ export function AvailabilityDatePicker({
                       height: 0,
                       borderLeft: '7px solid transparent',
                       borderRight: '7px solid transparent',
-                      borderBottom: '7px solid #1E222D',
+                      borderBottom: '7px solid #1e293b',
                     }
                   : {
                       position: 'absolute',
@@ -603,7 +603,7 @@ export function AvailabilityDatePicker({
                       height: 0,
                       borderLeft: '7px solid transparent',
                       borderRight: '7px solid transparent',
-                      borderTop: '7px solid #1E222D',
+                      borderTop: '7px solid #1e293b',
                     }
               }
             />
@@ -612,10 +612,10 @@ export function AvailabilityDatePicker({
       })()}
 
       {/* Range Display & Confirm Bar */}
-      <div style={css('display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fafbf9;border:1px solid #eef1ea;border-radius:8px;padding:9px 12px')}>
+      <div style={css('display:flex;align-items:center;justify-content:space-between;gap:10px;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:9px 12px')}>
         <div style={css('line-height:1.2')}>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#8a9088;letter-spacing:.4px")}>SELECTED RANGE</div>
-          <div style={css('font-size:12px;font-weight:700;color:#23282a;margin-top:2px')}>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#94a3b8;letter-spacing:.4px")}>SELECTED RANGE</div>
+          <div style={css('font-size:12px;font-weight:700;color:#f8fafc;margin-top:2px')}>
             {selectedRange
               ? `${fmtDisplay(selectedRange.start)}${isSameDay(selectedRange.start, selectedRange.end) ? '' : ' – ' + fmtDisplay(selectedRange.end)} (${selectedRange.dates.length} ${businessDaysOnly ? 'business ' : ''}${selectedRange.dates.length === 1 ? 'day' : 'days'})`
               : 'No date selected'}
@@ -624,7 +624,7 @@ export function AvailabilityDatePicker({
       </div>
 
       {hasConflict && (
-        <div style={css('display:flex;align-items:center;gap:7px;font-size:11.5px;color:#dc2626;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:8px 12px')}>
+        <div style={css('display:flex;align-items:center;gap:7px;font-size:11.5px;color:#f87171;background:#450a0a;border:1px solid #991b1b;border-radius:8px;padding:8px 12px')}>
           <span style={{ fontSize: '13px' }}>⚠️</span>
           <span>
             <strong>Booking Notice:</strong> Selected date range includes existing booking(s) for the selected Site/Auditor. You can still proceed if intended.
@@ -633,22 +633,22 @@ export function AvailabilityDatePicker({
       )}
 
       {/* Legend Key */}
-      <div style={css('display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-top:1px solid #eef1ea;padding-top:8px')}>
+      <div style={css('display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-top:1px solid #334155;padding-top:8px')}>
         <div style={css('display:flex;align-items:center;gap:5px')}>
-          <span style={css('width:10px;height:10px;border-radius:3px;background:#eefbf4;border:1px solid #bbf7d0')} />
-          <span style={css('font-size:10.5px;color:#5c625c')}>Available</span>
+          <span style={css('width:10px;height:10px;border-radius:3px;background:#064e3b;border:1px solid #059669')} />
+          <span style={css('font-size:10.5px;color:#94a3b8')}>Available</span>
         </div>
         <div style={css('display:flex;align-items:center;gap:5px')}>
-          <span style={css('width:10px;height:10px;border-radius:3px;background:#15191e')} />
-          <span style={css('font-size:10.5px;color:#5c625c')}>Selected</span>
+          <span style={css('width:10px;height:10px;border-radius:3px;background:#2563eb')} />
+          <span style={css('font-size:10.5px;color:#94a3b8')}>Selected</span>
         </div>
         <div style={css('display:flex;align-items:center;gap:5px')}>
-          <span style={css('width:10px;height:10px;border-radius:3px;background:#fef2f2;border:1px solid #fca5a5')} />
-          <span style={css('font-size:10.5px;color:#dc2626;font-weight:600')}>Booked</span>
+          <span style={css('width:10px;height:10px;border-radius:3px;background:#450a0a;border:1px solid #991b1b')} />
+          <span style={css('font-size:10.5px;color:#f87171;font-weight:600')}>Booked</span>
         </div>
         <div style={css('display:flex;align-items:center;gap:5px')}>
-          <span style={css('width:10px;height:10px;border-radius:3px;background:#f4f6f1;border:1px solid #e8ebe4')} />
-          <span style={css('font-size:10.5px;color:#5c625c')}>Weekend</span>
+          <span style={css('width:10px;height:10px;border-radius:3px;background:#0f172a;border:1px solid #1e293b')} />
+          <span style={css('font-size:10.5px;color:#94a3b8')}>Weekend</span>
         </div>
       </div>
     </div>

@@ -45,48 +45,48 @@ export function Login({ vm }: { vm: VM }) {
 
       <div style={vm.loginFormWrapStyle}>
         <div style={css('width:100%;max-width:360px;animation:fadeUp .35s ease')}>
-          <div style={css('font-size:21px;font-weight:700;letter-spacing:-.3px;margin-bottom:5px')}>Sign in</div>
-          <div style={css('font-size:13px;color:#7a807a;margin-bottom:26px')}>Use your Nexsil work account.</div>
-          <label htmlFor="login-email" style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>Work email</label>
+          <div style={css('font-size:21px;font-weight:700;letter-spacing:-.3px;margin-bottom:5px;color:#f8fafc')}>Sign in</div>
+          <div style={css('font-size:13px;color:#94a3b8;margin-bottom:26px')}>Use your Nexsil work account.</div>
+          <label htmlFor="login-email" style={css('font-size:11px;font-weight:600;color:#94a3b8;display:block;margin-bottom:6px')}>Work email</label>
           <HInput
             id="login-email"
             value={vm.loginEmail}
             onChange={vm.onEmail}
             onKeyDown={vm.onLoginKey}
-            style={css("width:100%;border:1px solid #dde0d9;border-radius:9px;padding:11px 13px;font-size:13.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;margin-bottom:15px;background:#fff")}
-            focus={{ borderColor: '#9bb0e8' }}
+            style={css("width:100%;border:1px solid #334155;border-radius:9px;padding:11px 13px;font-size:13.5px;font-family:'Archivo',sans-serif;color:#f8fafc;outline:none;margin-bottom:15px;background:#0f172a")}
+            focus={{ borderColor: '#2563eb' }}
           />
-          <label htmlFor="login-pass" style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>Password</label>
+          <label htmlFor="login-pass" style={css('font-size:11px;font-weight:600;color:#94a3b8;display:block;margin-bottom:6px')}>Password</label>
           <HInput
             id="login-pass"
             type="password"
             value={vm.loginPass}
             onChange={vm.onPass}
             onKeyDown={vm.onLoginKey}
-            style={css("width:100%;border:1px solid #dde0d9;border-radius:9px;padding:11px 13px;font-size:13.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;margin-bottom:20px;background:#fff")}
-            focus={{ borderColor: '#9bb0e8' }}
+            style={css("width:100%;border:1px solid #334155;border-radius:9px;padding:11px 13px;font-size:13.5px;font-family:'Archivo',sans-serif;color:#f8fafc;outline:none;margin-bottom:20px;background:#0f172a")}
+            focus={{ borderColor: '#2563eb' }}
           />
           <HButton
             onClick={vm.signIn}
-            style={css("width:100%;background:#15191e;color:#fff;border:none;border-radius:9px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
-            hover={{ background: '#23282e' }}
+            style={css("width:100%;background:#2563eb;color:#fff;border:none;border-radius:9px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
+            hover={{ background: '#1d4ed8' }}
           >
             Sign in
           </HButton>
           <div style={css('display:flex;align-items:center;gap:12px;margin:18px 0')}>
-            <div style={css('flex:1;height:1px;background:#e2e5de')} />
-            <span style={css('font-size:11px;color:#a6aca2')}>or</span>
-            <div style={css('flex:1;height:1px;background:#e2e5de')} />
+            <div style={css('flex:1;height:1px;background:#334155')} />
+            <span style={css('font-size:11px;color:#64748b')}>or</span>
+            <div style={css('flex:1;height:1px;background:#334155')} />
           </div>
           <HButton
             onClick={vm.signIn}
-            style={css("width:100%;background:#fff;color:#3c423d;border:1px solid #dde0d9;border-radius:9px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;display:flex;align-items:center;justify-content:center;gap:9px")}
-            hover={{ background: '#f1f3ee' }}
+            style={css("width:100%;background:#0f172a;color:#f8fafc;border:1px solid #334155;border-radius:9px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;display:flex;align-items:center;justify-content:center;gap:9px")}
+            hover={{ background: '#1e293b' }}
           >
-            <span style={css('width:16px;height:16px;border-radius:4px;background:#fff;border:1px solid #dde0d9;color:#4285f4;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700')}>G</span>
+            <span style={css('width:16px;height:16px;border-radius:4px;background:#1e293b;border:1px solid #334155;color:#60a5fa;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700')}>G</span>
             Continue with Google
           </HButton>
-          <div style={css('font-size:11px;color:#a6aca2;text-align:center;margin-top:24px;line-height:1.5')}>
+          <div style={css('font-size:11px;color:#64748b;text-align:center;margin-top:24px;line-height:1.5')}>
             QA Operations - UTAC<br />Protected internal system - authorized staff only
           </div>
         </div>
