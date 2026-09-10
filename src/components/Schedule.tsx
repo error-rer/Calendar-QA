@@ -145,11 +145,11 @@ function ApptCard({ chip }: { chip: any }) {
 
   const isInc = chip.isIncomplete;
   const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
-  const barBg = isInc ? '#7f1d1d' : '#fff';
-  const accentBg = isInc ? '#ef4444' : getAccentBackground(chColors);
+  const barBg = isInc ? '#FC0000' : '#fff';
+  const accentBg = isInc ? '#b91c1c' : getAccentBackground(chColors);
   const titleColor = isInc ? '#FFFFFF' : (chip.isInternal ? '#10b981' : '#2756d6');
   const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
-  const cardBorder = isInc ? '1px solid #ef4444' : '1px solid #e4e7e0';
+  const cardBorder = isInc ? '1px solid #b91c1c' : '1px solid #e4e7e0';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', background: barBg, border: cardBorder, borderRadius: '8px', overflow: 'hidden' }}>
@@ -538,7 +538,7 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
 
   const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
   const isInc = !!chip.isIncomplete;
-  const barBgColor = isInc ? '#ef4444' : getAccentBackground(chColors);
+  const barBgColor = isInc ? '#FC0000' : getAccentBackground(chColors);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', borderBottom: isLast ? 'none' : '1px solid #e8ebe4', background: '#fff' }}>
@@ -565,7 +565,7 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
           </span>
         </div>
 
-        {/* Color accent bar: Red (#EF4444) for incomplete data, otherwise standard blue / plant accent */}
+        {/* Color accent bar: Red (#FC0000) for incomplete data, otherwise standard blue / plant accent */}
         <div style={{ width: '4px', background: barBgColor, flexShrink: 0, alignSelf: 'stretch' }} />
 
         {/* Main Appointment Content Strip */}
@@ -576,7 +576,7 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
                 {renderApptCode(chip.code)}
               </div>
               {isInc && (
-                <span style={{ fontSize: '10px', fontWeight: 700, color: '#ef4444', background: '#fef2f2', border: '1px solid #fca5a5', padding: '1px 5px', borderRadius: '4px', textTransform: 'uppercase', lineHeight: 1 }}>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: '#FC0000', background: '#fef2f2', border: '1px solid #fca5a5', padding: '1px 5px', borderRadius: '4px', textTransform: 'uppercase', lineHeight: 1 }}>
                   Incomplete
                 </span>
               )}
@@ -1440,10 +1440,10 @@ function WeekCalendar({ vm }: { vm: VM }) {
               {vm.weekCalendarDays[i].chips.map((chip) => {
                 const isInc = chip.isIncomplete;
                 const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
-                const barBg = isInc ? '#7f1d1d' : '#f0f2ec';
+                const barBg = isInc ? '#FC0000' : '#f0f2ec';
                 const titleColor = isInc ? '#FFFFFF' : (chip.isInternal ? '#10b981' : '#2756d6');
                 const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
-                const accentBg = isInc ? '#ef4444' : getAccentBackground(chColors);
+                const accentBg = isInc ? '#b91c1c' : getAccentBackground(chColors);
 
                 return (
                   <div key={chip.id} onClick={chip.onClick} title={[chip.customer, chip.auditor2 || chip.purpose, chip.auditor2 ? '' : chip.auditor1].filter(Boolean).join(' - ')} style={{
@@ -1480,10 +1480,10 @@ function WeekCalendar({ vm }: { vm: VM }) {
       {vm.weekMergedSpans.map((sp) => {
         const isInc = sp.isIncomplete;
         const spColors = sp.colors && sp.colors.length > 0 ? sp.colors : [sp.color];
-        const barBg = isInc ? '#FF0000' : '#f0f2ec';
+        const barBg = isInc ? '#FC0000' : '#f0f2ec';
         const titleColor = isInc ? '#FFFFFF' : (sp.isInternal ? '#10b981' : '#2756d6');
         const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
-        const accentBg = isInc ? '#B91C1C' : getAccentBackground(spColors);
+        const accentBg = isInc ? '#b91c1c' : getAccentBackground(spColors);
 
         return (
           <div onClick={sp.onClick} title={[sp.customer, sp.auditor2 || sp.purpose, sp.auditor2 ? '' : sp.auditor1].filter(Boolean).join(' - ')} style={{
@@ -1746,10 +1746,10 @@ function MonthGrid({ vm }: { vm: VM }) {
                 {(c.chips ?? []).map((ch, ci) => {
                   const isInc = ch.isIncomplete;
                   const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
-                  const barBg = isInc ? '#7f1d1d' : '#f0f2ec';
+                  const barBg = isInc ? '#FC0000' : '#f0f2ec';
                   const titleColor = isInc ? '#FFFFFF' : (ch.isInternal ? '#10b981' : '#2756d6');
                   const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
-                  const accentBg = isInc ? '#ef4444' : getAccentBackground(chColors);
+                  const accentBg = isInc ? '#b91c1c' : getAccentBackground(chColors);
 
                   return (
                     <div
@@ -1853,10 +1853,10 @@ function MonthMobile({ vm }: { vm: VM }) {
                 {(c.chips ?? []).map((ch, ci) => {
                   const isInc = ch.isIncomplete;
                   const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
-                  const barBg = isInc ? '#7f1d1d' : '#f0f2ec';
+                  const barBg = isInc ? '#FC0000' : '#f0f2ec';
                   const titleColor = isInc ? '#FFFFFF' : (ch.isInternal ? '#10b981' : '#2756d6');
                   const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
-                  const accentBg = isInc ? '#ef4444' : getAccentBackground(chColors);
+                  const accentBg = isInc ? '#b91c1c' : getAccentBackground(chColors);
 
                   return (
                     <div

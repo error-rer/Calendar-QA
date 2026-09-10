@@ -1241,8 +1241,8 @@ export function useScheduler() {
     const site = (isInternal ? a.site2 : a.site1) || '';
     const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : (auditorName || '');
-    const barBg = isIncomplete ? '#7f1d1d' : '#fff';
-    const borderStyle = isIncomplete ? '1px solid #ef4444' : '1px solid #e3e6e0';
+    const barBg = isIncomplete ? '#FC0000' : '#fff';
+    const borderStyle = isIncomplete ? '1px solid #b91c1c' : '1px solid #e3e6e0';
     const base: CSSProperties = {
       display: 'block', padding: '7px 9px', borderRadius: '6px', background: barBg, cursor: 'grab', position: 'relative',
       border: borderStyle, ...accentStyle,
@@ -1273,8 +1273,8 @@ export function useScheduler() {
     const site = (isInternal ? a.site2 : a.site1) || '';
     const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : (auditorName || '');
-    const barBg = isIncomplete ? '#7f1d1d' : '#fff';
-    const borderStyle = isIncomplete ? '1px solid #ef4444' : '1px solid #e8ebe4';
+    const barBg = isIncomplete ? '#FC0000' : '#fff';
+    const borderStyle = isIncomplete ? '1px solid #b91c1c' : '1px solid #e8ebe4';
     return {
       aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, plantCode: pl ? pl.code : '?',
       isIncomplete,
@@ -1367,7 +1367,7 @@ export function useScheduler() {
         isInternal,
         isIncomplete,
         countTxt: '',
-        dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: isIncomplete ? '#FF0000' : color, flexShrink: 0 }),
+        dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: isIncomplete ? '#FC0000' : color, flexShrink: 0 }),
         style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: isIncomplete ? '#FFFFFF' : '#23282a', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
         onClick: () => openDayDialog(slot.weekOffset, slot.wd),
       };
