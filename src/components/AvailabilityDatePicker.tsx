@@ -428,7 +428,8 @@ export function AvailabilityDatePicker({
           const iso = fmtISO(day);
           const wkend = isWeekend(day);
           const holiday = getHolidayForDate(day);
-          const holStyle = holiday ? getHolidayStyle(holiday) : null;
+          const isDark = typeof document !== 'undefined' && document.body.classList.contains('dark-mode');
+          const holStyle = holiday ? getHolidayStyle(holiday, isDark) : null;
           const isBooked = bookedDatesSet.has(iso);
 
           // Check if day is part of current selected range

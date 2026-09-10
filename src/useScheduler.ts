@@ -299,6 +299,27 @@ export function useScheduler() {
   ]);
 
   const S = state;
+  const isDark = S.theme === 'dark';
+
+  const toggleTheme = useCallback(() => {
+    setRaw((prev) => {
+      const nextTheme = prev.theme === 'dark' ? 'light' : 'dark';
+      try {
+        localStorage.setItem('calendar_qa_theme', nextTheme);
+      } catch {}
+      return { ...prev, theme: nextTheme };
+    });
+  }, []);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (S.theme === 'dark') {
+        document.body.classList.add('dark-mode');
+      } else {
+        document.body.classList.remove('dark-mode');
+      }
+    }
+  }, [S.theme]);
 
   // ---- pure-ish helpers ----
   const hexA = (h: string, a: number) => {
@@ -1283,7 +1304,7 @@ export function useScheduler() {
   const selDay = S.selectedDay || 0;
 
   const tabOn = sx({ padding: '6px 13px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", background: '#2563eb', color: '#ffffff', whiteSpace: 'nowrap' });
-  const tabOff = sx({ padding: '6px 13px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", background: 'transparent', color: '#94a3b8', whiteSpace: 'nowrap' });
+  const tabOff = sx({ padding: '6px 13px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", background: 'transparent', color: isDark ? '#94a3b8' : '#64748b', whiteSpace: 'nowrap' });
 
   const wk = weekAssignments();
   const poolOrders = S.orders.filter((o) => !wk.some((a) => a.order === o.id));
@@ -1314,7 +1335,7 @@ export function useScheduler() {
   const firstWd = mb.getDay();
   const daysInMonth = new Date(mYear, mMon + 1, 0).getDate();
   const monthWeekdayHeads = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-  const blankCellStyle = (): CSSProperties => ({ background: '#0b1120', borderRight: '1px solid #334155', borderTop: '1px solid #334155', minHeight: isMobile ? '52px' : '112px' });
+  const blankCellStyle = (): CSSProperties => ({ background: isDark ? '#0b1120' : '#f8fafc', borderRight: '1px solid ' + (isDark ? '#334155' : '#e2e8f0'), borderTop: '1px solid ' + (isDark ? '#334155' : '#e2e8f0'), minHeight: isMobile ? '52px' : '112px' });
   const monthCells: MonthCell[] = [];
   for (let i = 0; i < firstWd; i++) monthCells.push({ blank: true, style: blankCellStyle() });
   const monthOrderAgg: Record<string, { appointments: number; days: Record<number, 1>; engs: Record<string, 1> }> = {};
@@ -1360,7 +1381,7 @@ export function useScheduler() {
         isIncomplete,
         countTxt: '',
         dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: isIncomplete ? '#FF0000' : color, flexShrink: 0 }),
-        style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: isIncomplete ? '#FFFFFF' : '#f8fafc', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
+        style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: isIncomplete ? '#FFFFFF' : isDark ? '#f8fafc' : '#0f172a', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
         onClick: () => openDayDialog(slot.weekOffset, slot.wd),
       };
     });
@@ -1368,7 +1389,7 @@ export function useScheduler() {
     const isToday = mYear + '-' + mMon + '-' + dn === todayStr;
     const isSelected = !weekend && !!S.dayDialog && S.dayDialog.weekOffset === slot.weekOffset && S.dayDialog.day === slot.wd;
     const holiday = getHolidayForDate(date);
-    const holStyle = holiday ? getHolidayStyle(holiday) : null;
+    const holStyle = holiday ? getHolidayStyle(holiday, isDark) : null;
     const isHolidayOrWeekend = weekend || !!holiday;
     monthCells.push({
       blank: false,
@@ -1383,14 +1404,14 @@ export function useScheduler() {
       style: sx({
         position: 'relative',
         background: isSelected
-          ? '#1e3a8a'
+          ? (isDark ? '#1e3a8a' : '#dbeafe')
           : holStyle
           ? holStyle.bg
           : weekend
-          ? '#0b1120'
-          : '#1e293b',
-        borderRight: '1px solid ' + (holStyle ? holStyle.borderColor : '#334155'),
-        borderTop: '1px solid ' + (holStyle ? holStyle.borderColor : '#334155'),
+          ? (isDark ? '#0b1120' : '#f1f5f9')
+          : (isDark ? '#1e293b' : '#ffffff'),
+        borderRight: '1px solid ' + (holStyle ? holStyle.borderColor : isDark ? '#334155' : '#e2e8f0'),
+        borderTop: '1px solid ' + (holStyle ? holStyle.borderColor : isDark ? '#334155' : '#e2e8f0'),
         minHeight: isMobile ? '52px' : '112px',
         padding: isMobile ? '5px' : '6px 8px',
         cursor: isHolidayOrWeekend ? 'default' : 'pointer',
@@ -1411,7 +1432,7 @@ export function useScheduler() {
         height: isMobile ? '20px' : '24px',
         borderRadius: '50%',
         background: isToday ? '#2563eb' : 'transparent',
-        color: isToday ? '#ffffff' : holStyle ? holStyle.textColor : '#94a3b8',
+        color: isToday ? '#ffffff' : holStyle ? holStyle.textColor : isDark ? '#94a3b8' : '#475569',
       }),
       countDotStyle: sx({ display: 'none' }),
     });
@@ -1726,7 +1747,7 @@ export function useScheduler() {
       const cellDate = new Date(baseDate);
       cellDate.setDate(baseDate.getDate() + S.weekOffset * 7 + day);
       const holiday = getHolidayForDate(cellDate);
-      const holStyle = holiday ? getHolidayStyle(holiday) : null;
+      const holStyle = holiday ? getHolidayStyle(holiday, isDark) : null;
       const isHol = Boolean(holiday);
 
       const cellId = e.id + '-' + day;
@@ -1791,7 +1812,7 @@ export function useScheduler() {
     const cellDate = new Date(baseDate);
     cellDate.setDate(baseDate.getDate() + S.weekOffset * 7 + day);
     const holiday = getHolidayForDate(cellDate);
-    const holStyle = holiday ? getHolidayStyle(holiday) : null;
+    const holStyle = holiday ? getHolidayStyle(holiday, isDark) : null;
     if (holStyle) {
       return {
         holiday,
@@ -2374,28 +2395,28 @@ export function useScheduler() {
 
   // ---- responsive styles ----
   const sidebarStyle: CSSProperties = isMobile
-    ? { position: 'fixed', top: 0, left: 0, bottom: 0, width: '86%', maxWidth: '320px', zIndex: 80, background: '#1e293b', borderRight: '1px solid #334155', display: 'flex', flexDirection: 'column', boxShadow: '0 0 44px rgba(0,0,0,.5)', transform: S.sidebarOpen ? 'translateX(0)' : 'translateX(-104%)', transition: 'transform .22s ease', overflowY: 'auto' }
-    : { width: '280px', flexShrink: 0, background: '#1e293b', borderRight: '1px solid #334155', display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' };
+    ? { position: 'fixed', top: 0, left: 0, bottom: 0, width: '86%', maxWidth: '320px', zIndex: 80, background: isDark ? '#1e293b' : '#ffffff', borderRight: isDark ? '1px solid #334155' : '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', boxShadow: '0 0 44px rgba(0,0,0,.5)', transform: S.sidebarOpen ? 'translateX(0)' : 'translateX(-104%)', transition: 'transform .22s ease', overflowY: 'auto' }
+    : { width: '280px', flexShrink: 0, background: isDark ? '#1e293b' : '#ffffff', borderRight: isDark ? '1px solid #334155' : '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' };
   const toolbarStyle: CSSProperties = isMobile
-    ? { flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', background: '#1e293b', borderBottom: '1px solid #334155', flexWrap: 'wrap' }
-    : { height: '46px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '12px', padding: '0 16px', background: '#1e293b', borderBottom: '1px solid #334155' };
+    ? { flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 11px', background: isDark ? '#1e293b' : '#ffffff', borderBottom: isDark ? '1px solid #334155' : '1px solid #e2e8f0', flexWrap: 'wrap' }
+    : { height: '46px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '12px', padding: '0 16px', background: isDark ? '#1e293b' : '#ffffff', borderBottom: isDark ? '1px solid #334155' : '1px solid #e2e8f0' };
   const detailAsideStyle: CSSProperties = isMobile
-    ? { position: 'fixed', inset: 0, zIndex: 90, background: '#1e293b', display: 'flex', flexDirection: 'column', animation: 'fadeIn .18s ease' }
-    : { width: '344px', flexShrink: 0, background: '#1e293b', borderLeft: '1px solid #334155', display: 'flex', flexDirection: 'column', minHeight: 0, animation: 'slideIn .18s ease' };
+    ? { position: 'fixed', inset: 0, zIndex: 90, background: isDark ? '#1e293b' : '#ffffff', display: 'flex', flexDirection: 'column', animation: 'fadeIn .18s ease' }
+    : { width: '344px', flexShrink: 0, background: isDark ? '#1e293b' : '#ffffff', borderLeft: isDark ? '1px solid #334155' : '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', minHeight: 0, animation: 'slideIn .18s ease' };
   const modalOverlayStyle: CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', zIndex: 60, display: 'flex', alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'center', padding: isMobile ? '0' : '30px', animation: 'fadeIn .14s ease' };
   const modalCardStyle: CSSProperties = isMobile
-    ? { width: '100%', height: '100%', maxHeight: '100%', background: '#1e293b', borderRadius: '0', display: 'flex', flexDirection: 'column', overflow: 'hidden' }
-    : { width: '680px', maxWidth: '100%', maxHeight: '90vh', background: '#1e293b', borderRadius: '15px', boxShadow: '0 24px 60px rgba(0,0,0,.6)', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'fadeUp .2s ease' };
+    ? { width: '100%', height: '100%', maxHeight: '100%', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '0', display: 'flex', flexDirection: 'column', overflow: 'hidden' }
+    : { width: '680px', maxWidth: '100%', maxHeight: '90vh', background: isDark ? '#1e293b' : '#ffffff', borderRadius: '15px', boxShadow: '0 24px 60px rgba(0,0,0,.6)', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'fadeUp .2s ease' };
   const modalColsStyle: CSSProperties = isMobile
     ? { display: 'flex', flexDirection: 'column', overflowY: 'auto', flex: 1, minHeight: 0 }
     : { display: 'flex', gap: 0, overflow: 'hidden', flex: 1, minHeight: 0 };
   const modalColLeftStyle: CSSProperties = isMobile
-    ? { borderBottom: '1px solid #334155', display: 'flex', flexDirection: 'column' }
-    : { flex: 1, borderRight: '1px solid #334155', display: 'flex', flexDirection: 'column', minHeight: 0 };
+    ? { borderBottom: isDark ? '1px solid #334155' : '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }
+    : { flex: 1, borderRight: isDark ? '1px solid #334155' : '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', minHeight: 0 };
   const modalColRightStyle: CSSProperties = isMobile
     ? { display: 'flex', flexDirection: 'column' }
     : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 };
-  const adminMainStyle = sx({ flex: 1, overflow: 'auto', background: '#0f172a', minHeight: 0 });
+  const adminMainStyle = sx({ flex: 1, overflow: 'auto', background: isDark ? '#0f172a' : '#f8fafc', minHeight: 0 });
   const adminWrapStyle = sx({ maxWidth: '1080px', margin: '0 auto', padding: isMobile ? '18px 14px 50px' : '26px 28px 60px', minWidth: isMobile ? '700px' : 'auto' });
   const adminStatGridStyle = sx({ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '12px', marginBottom: '22px' });
   const loginWrapStyle: CSSProperties = isMobile
@@ -2405,11 +2426,14 @@ export function useScheduler() {
     ? { background: '#0f172a', color: '#f8fafc', padding: '22px 22px', position: 'relative', overflow: 'hidden', flexShrink: 0 }
     : { width: '46%', background: '#0f172a', color: '#f8fafc', padding: '46px 48px', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' };
   const loginFormWrapStyle: CSSProperties = isMobile
-    ? { flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '28px 22px 40px', background: '#1e293b' }
-    : { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', background: '#1e293b' };
+    ? { flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '28px 22px 40px', background: isDark ? '#1e293b' : '#ffffff' }
+    : { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', background: isDark ? '#1e293b' : '#ffffff' };
 
   return {
     loading,
+    theme: S.theme,
+    isDark,
+    toggleTheme,
     isMobile, showLogin: !S.authed, showApp: S.authed, showPresence: !isMobile, showStats: !isMobile, showLoginExtras: !isMobile,
     loginEmail: S.loginEmail, loginPass: S.loginPass,
     onEmail: (e: React.ChangeEvent<HTMLInputElement>) => setState({ loginEmail: e.target.value }),

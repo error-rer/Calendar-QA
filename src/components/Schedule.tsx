@@ -1394,10 +1394,10 @@ function WeekCalendar({ vm }: { vm: VM }) {
     <div style={css('display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:0;min-width:100%;background:#0f172a;border-top:1px solid #334155')}>
       {vm.days.map((d: any, i: number) => {
         const holiday = d.holiday;
-        const holStyle = holiday ? getHolidayStyle(holiday) : null;
-        const bg = holStyle ? holStyle.bg : '#1e293b';
-        const borderR = holStyle ? `1px solid ${holStyle.borderColor}` : '1px solid #334155';
-        const borderB = holStyle ? `1px solid ${holStyle.borderColor}` : '1px solid #334155';
+        const holStyle = holiday ? getHolidayStyle(holiday, vm.isDark) : null;
+        const bg = holStyle ? holStyle.bg : (vm.isDark ? '#1e293b' : '#ffffff');
+        const borderR = holStyle ? `1px solid ${holStyle.borderColor}` : (`1px solid ${vm.isDark ? '#334155' : '#e2e8f0'}`);
+        const borderB = holStyle ? `1px solid ${holStyle.borderColor}` : (`1px solid ${vm.isDark ? '#334155' : '#e2e8f0'}`);
 
         return (
           <div key={i} style={css(`gridRow:1/-1;border-right:${borderR};border-bottom:${borderB};vertical-align:top;background:${bg};padding:6px 8px;${holiday ? 'cursor:default;' : ''}`)}>
@@ -1509,12 +1509,12 @@ function DayHeaders({ vm }: { vm: VM }) {
     <>
       {vm.days.map((d: any, i: number) => {
         const holiday = d.holiday;
-        const holStyle = holiday ? getHolidayStyle(holiday) : null;
-        const bg = holStyle ? holStyle.bg : '#1e293b';
-        const borderB = holStyle ? `1px solid ${holStyle.borderColor}` : '1px solid #334155';
-        const borderR = holStyle ? `1px solid ${holStyle.borderColor}` : '1px solid #334155';
-        const labelColor = holStyle ? holStyle.textColor : '#f8fafc';
-        const dateColor = holStyle ? holStyle.textColor : '#94a3b8';
+        const holStyle = holiday ? getHolidayStyle(holiday, vm.isDark) : null;
+        const bg = holStyle ? holStyle.bg : (vm.isDark ? '#1e293b' : '#ffffff');
+        const borderB = holStyle ? `1px solid ${holStyle.borderColor}` : (`1px solid ${vm.isDark ? '#334155' : '#e2e8f0'}`);
+        const borderR = holStyle ? `1px solid ${holStyle.borderColor}` : (`1px solid ${vm.isDark ? '#334155' : '#e2e8f0'}`);
+        const labelColor = holStyle ? holStyle.textColor : (vm.isDark ? '#f8fafc' : '#0f172a');
+        const dateColor = holStyle ? holStyle.textColor : (vm.isDark ? '#94a3b8' : '#64748b');
 
         return (
           <div
@@ -1670,10 +1670,10 @@ function MonthGrid({ vm }: { vm: VM }) {
               onClick={c.onClick}
               style={c.style}
               onMouseEnter={(e) => {
-                if (c.holiday) e.currentTarget.style.background = getHolidayStyle(c.holiday).hoverBg;
+                if (c.holiday) e.currentTarget.style.background = getHolidayStyle(c.holiday, vm.isDark).hoverBg;
               }}
               onMouseLeave={(e) => {
-                if (c.holiday) e.currentTarget.style.background = getHolidayStyle(c.holiday).bg;
+                if (c.holiday) e.currentTarget.style.background = getHolidayStyle(c.holiday, vm.isDark).bg;
               }}
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%', gap: '4px' }}>
@@ -1693,7 +1693,7 @@ function MonthGrid({ vm }: { vm: VM }) {
                       style={{
                         fontSize: '11.5px',
                         fontWeight: 700,
-                        color: getHolidayStyle(c.holiday).textColor,
+                        color: getHolidayStyle(c.holiday, vm.isDark).textColor,
                         lineHeight: '1.2',
                       }}
                     >
@@ -1704,7 +1704,7 @@ function MonthGrid({ vm }: { vm: VM }) {
                         style={{
                           fontSize: '10px',
                           fontWeight: 600,
-                          color: getHolidayStyle(c.holiday).textColor,
+                          color: getHolidayStyle(c.holiday, vm.isDark).textColor,
                           lineHeight: '1.2',
                           marginTop: '1px',
                           opacity: 0.9,
@@ -1778,10 +1778,10 @@ function MonthMobile({ vm }: { vm: VM }) {
               onClick={c.onClick}
               style={c.style}
               onMouseEnter={(e) => {
-                if (c.holiday) e.currentTarget.style.background = getHolidayStyle(c.holiday).hoverBg;
+                if (c.holiday) e.currentTarget.style.background = getHolidayStyle(c.holiday, vm.isDark).hoverBg;
               }}
               onMouseLeave={(e) => {
-                if (c.holiday) e.currentTarget.style.background = getHolidayStyle(c.holiday).bg;
+                if (c.holiday) e.currentTarget.style.background = getHolidayStyle(c.holiday, vm.isDark).bg;
               }}
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%', gap: '2px' }}>
@@ -1801,7 +1801,7 @@ function MonthMobile({ vm }: { vm: VM }) {
                       style={{
                         fontSize: '9.5px',
                         fontWeight: 700,
-                        color: getHolidayStyle(c.holiday).textColor,
+                        color: getHolidayStyle(c.holiday, vm.isDark).textColor,
                         lineHeight: '1.15',
                       }}
                     >
@@ -1812,7 +1812,7 @@ function MonthMobile({ vm }: { vm: VM }) {
                         style={{
                           fontSize: '8px',
                           fontWeight: 600,
-                          color: getHolidayStyle(c.holiday).textColor,
+                          color: getHolidayStyle(c.holiday, vm.isDark).textColor,
                           lineHeight: '1.15',
                           marginTop: '1px',
                           opacity: 0.9,
@@ -1957,19 +1957,19 @@ function YearGrid({ vm }: { vm: VM }) {
                     return <div key={`blank-${m.monthIndex}-${dIdx}`} style={css('height:22px')} />;
                   }
 
-                  let bg = '#0f172a';
-                  let border = '1px solid #334155';
-                  let textColor = '#cbd5e1';
+                  let bg = vm.isDark ? '#0f172a' : '#f8fafc';
+                  let border = `1px solid ${vm.isDark ? '#334155' : '#e2e8f0'}`;
+                  let textColor = vm.isDark ? '#cbd5e1' : '#334155';
 
                   if (d.holiday) {
-                    const hs = getHolidayStyle(d.holiday);
+                    const hs = getHolidayStyle(d.holiday, vm.isDark);
                     bg = hs.bg;
                     border = `1px solid ${hs.borderColor}`;
                     textColor = hs.textColor;
                   } else if (d.isWeekend) {
-                    bg = '#0f172a';
-                    textColor = '#64748b';
-                    border = '1px solid #1e293b';
+                    bg = vm.isDark ? '#0f172a' : '#f1f5f9';
+                    textColor = vm.isDark ? '#64748b' : '#94a3b8';
+                    border = `1px solid ${vm.isDark ? '#1e293b' : '#e2e8f0'}`;
                   } else if (d.hasAppts) {
                     textColor = '#ffffff';
                     if (d.customerApptsCount > 0 && d.internalApptsCount > 0) {

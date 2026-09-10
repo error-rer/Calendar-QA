@@ -25,12 +25,16 @@ export const initialSiteColors: Record<string, string> = { U1: '#c0392b', U2: '#
 
 export function initialState(): State {
   let snapshot: any = {};
+  let savedTheme: 'light' | 'dark' = 'light';
   try {
     const raw = typeof window !== 'undefined' ? localStorage.getItem('calendar_qa_snapshot') : null;
     if (raw) snapshot = JSON.parse(raw);
+    const st = typeof window !== 'undefined' ? localStorage.getItem('calendar_qa_theme') : null;
+    if (st === 'dark' || st === 'light') savedTheme = st;
   } catch {}
 
   return {
+    theme: savedTheme,
     authed: false,
     page: 'schedule',
     view: 'person',
