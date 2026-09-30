@@ -224,13 +224,13 @@ function ApptCard({ chip }: { chip: any }) {
                 {chip.endCustomer && <div>End customer: <span style={css('color:#3c423d')}>{chip.endCustomer}</span></div>}
                 {chip.apptPurpose && <div>Purpose: <span style={css('color:#3c423d')}>{chip.apptPurpose}</span></div>}
                 {chip.auditor && <div>Auditor: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
-                {chip.department && <div>Department: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
+                {chip.department && <div>Standard: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
               </>
             ) : (
               <>
                 {chip.area && <div>Area: <span style={css('color:#15191e;font-weight:600')}>{chip.area}</span></div>}
                 {chip.auditor && <div>Auditor: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
-                {chip.department && <div>Department: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
+                {chip.department && <div>Standard: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
               </>
             )}
           </div>
@@ -395,9 +395,9 @@ function Sidebar({ vm }: { vm: VM }) {
           )}
         </div>
         <div style={css('display:flex;flex-direction:column;gap:6px')}>
-          <MultiSelect label="Type" items={vm.apptTypeOptions} selected={vm.filterApptType} onToggle={vm.toggleFilterApptType} />
+          <MultiSelect label="Audit Type" items={vm.apptTypeOptions} selected={vm.filterApptType} onToggle={vm.toggleFilterApptType} />
           <MultiSelect label="Auditor" items={vm.employeeOptions.filter((o) => o.value).map((o) => ({ value: o.value, label: o.label }))} selected={vm.filterEmp} onToggle={vm.toggleFilterEmp} />
-          <MultiSelect label="Department" items={[...vm.customerTopicOptions, ...vm.internalTopicOptions].map((o) => ({ value: o, label: o }))} selected={vm.filterAuditTopic} onToggle={vm.toggleFilterAuditTopic} />
+          <MultiSelect label="Standard" items={[...vm.customerTopicOptions, ...vm.internalTopicOptions].map((o) => ({ value: o, label: o }))} selected={vm.filterAuditTopic} onToggle={vm.toggleFilterAuditTopic} />
           <MultiSelect label="Site" items={vm.siteOptions.filter((o) => o.value).map((o) => ({ value: o.value, label: o.label }))} selected={vm.filterSite} onToggle={vm.toggleFilterSite} />
           <MultiSelect label="Customer" items={vm.companyNames.map((o) => ({ value: o, label: o }))} selected={vm.filterCompany} onToggle={vm.toggleFilterCompany} />
           <MultiSelect label="Purpose" items={vm.auditTypes.map((o) => ({ value: o, label: o }))} selected={vm.filterAuditType} onToggle={vm.toggleFilterAuditType} />
@@ -641,13 +641,13 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
                 {chip.endCustomer && <div>End customer: <span style={css('color:#3c423d')}>{chip.endCustomer}</span></div>}
                 {chip.apptPurpose && <div>Purpose: <span style={css('color:#3c423d')}>{chip.apptPurpose}</span></div>}
                 {chip.auditor && <div>Auditor: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
-                {chip.department && <div>Department: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
+                {chip.department && <div>Standard: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
               </>
             ) : (
               <>
                 {chip.area && <div>Area: <span style={css('color:#15191e;font-weight:600')}>{chip.area}</span></div>}
                 {chip.auditor && <div>Auditor: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
-                {chip.department && <div>Department: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
+                {chip.department && <div>Standard: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
               </>
             )}
           </div>

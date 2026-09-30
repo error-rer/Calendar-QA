@@ -39,7 +39,7 @@ export function DetailPanel({ vm: _vm }: { vm: VM }) {
                 ) : null}
                 {detail.department1 ? (
                   <div style={css('font-size:11.5px;color:#5c625c')}>
-                    Department: <span style={css('color:#3c423d')}>{detail.department1}</span>
+                    Standard: <span style={css('color:#3c423d')}>{detail.department1}</span>
                   </div>
                 ) : null}
               </>
@@ -57,7 +57,7 @@ export function DetailPanel({ vm: _vm }: { vm: VM }) {
                 ) : null}
                 {detail.department2 ? (
                   <div style={css('font-size:11.5px;color:#5c625c')}>
-                    Department: <span style={css('color:#3c423d')}>{detail.department2}</span>
+                    Standard: <span style={css('color:#3c423d')}>{detail.department2}</span>
                   </div>
                 ) : null}
               </>

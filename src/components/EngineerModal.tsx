@@ -12,7 +12,7 @@ export function EngineerModal({ vm }: { vm: VM }) {
         <div style={css('padding:16px 20px;border-bottom:1px solid #eef1ea;display:flex;align-items:center;justify-content:space-between')}>
           <div>
             <div style={css('font-size:15px;font-weight:700;letter-spacing:-.2px')}>{vm.engEditingId ? 'Edit Auditor' : 'New Auditor'}</div>
-            <div style={css('font-size:11.5px;color:#8a9088;margin-top:1px')}>{vm.engEditingId ? 'Edit auditor roster details and department assignments.' : 'Adds an auditor to the roster and schedule.'}</div>
+            <div style={css('font-size:11.5px;color:#8a9088;margin-top:1px')}>{vm.engEditingId ? 'Edit auditor roster details and standard assignments.' : 'Adds an auditor to the roster and schedule.'}</div>
           </div>
           <HButton onClick={vm.closeEngForm} style={css('width:28px;height:28px;border:1px solid #e2e5de;background:#fff;border-radius:7px;cursor:pointer;color:#6a706a;font-size:14px')} hover={{ background: '#f1f3ee' }}>✕</HButton>
         </div>
@@ -33,7 +33,7 @@ export function EngineerModal({ vm }: { vm: VM }) {
           </div>
 
           <div>
-            <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:8px')}>Department</label>
+            <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:8px')}>Standard</label>
             <div style={css('display:flex;flex-direction:column;gap:12px')}>
               <div>
                 <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:5px")}>INTERNAL AUDIT</div>

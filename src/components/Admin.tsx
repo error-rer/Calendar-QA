@@ -115,7 +115,7 @@ function EngineersTable({ vm }: { vm: VM }) {
             onToggle={vm.toggleAdminFilterSite}
           />
           <AdminFilterDropdown
-            label="Department"
+            label="Standard"
             count={vm.adminFilterDept.length}
             selected={vm.adminFilterDept}
             items={vm.adminDeptOptions.map((d) => ({ value: d, label: d }))}
@@ -141,7 +141,7 @@ function EngineersTable({ vm }: { vm: VM }) {
       ))}
       {vm.adminEngineers.length === 0 && (
         <div style={css('padding:24px;text-align:center;font-size:12.5px;color:#8a9088;font-style:italic')}>
-          No auditors match the selected site/department filters.
+          No auditors match the selected site/standard filters.
         </div>
       )}
     </div>
@@ -210,7 +210,7 @@ function DepartmentEditor({ vm }: { vm: VM }) {
     <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;overflow:hidden')}>
       <div style={css('display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #eef1ea')}>
         <div style={css('font-size:13px;font-weight:700')}>
-          Department <span style={css('color:#9aa097;font-weight:500')}>· {totalCount}</span>
+          Standard <span style={css('color:#9aa097;font-weight:500')}>· {totalCount}</span>
         </div>
       </div>
 
@@ -227,7 +227,7 @@ function DepartmentEditor({ vm }: { vm: VM }) {
                 <button onClick={() => vm.removeInternalDepartmentOption(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1')}>✕</button>
               </div>
             ))}
-            {vm.internalDepartmentOptions.length === 0 && <span style={css('font-size:12px;color:#a6aca2;font-style:italic')}>No internal audit departments yet.</span>}
+            {vm.internalDepartmentOptions.length === 0 && <span style={css('font-size:12px;color:#a6aca2;font-style:italic')}>No internal audit standards yet.</span>}
           </div>
           <div style={css('display:flex;gap:8px')}>
             <input
@@ -255,7 +255,7 @@ function DepartmentEditor({ vm }: { vm: VM }) {
                 <button onClick={() => vm.removeCustomerDepartmentOption(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1')}>✕</button>
               </div>
             ))}
-            {vm.customerDepartmentOptions.length === 0 && <span style={css('font-size:12px;color:#a6aca2;font-style:italic')}>No customer departments yet.</span>}
+            {vm.customerDepartmentOptions.length === 0 && <span style={css('font-size:12px;color:#a6aca2;font-style:italic')}>No customer standards yet.</span>}
           </div>
           <div style={css('display:flex;gap:8px')}>
             <input

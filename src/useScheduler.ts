@@ -2221,16 +2221,16 @@ export function useScheduler() {
     };
 
     // 1. Classification Types
-    addSuggestion('CS', 'Type');
-    addSuggestion('IA', 'Type');
+    addSuggestion('CS', 'Audit Type');
+    addSuggestion('IA', 'Audit Type');
 
     // 2. Filter Criteria options
     computedAuditorOptions.forEach((name) => addSuggestion(name, 'Auditor'));
     computedCustomerOptions.forEach((c) => addSuggestion(c, 'Customer'));
     computedPurposeOptions.forEach((p) => addSuggestion(p, 'Purpose'));
     S.siteCodeOptions.forEach((s) => addSuggestion(s, 'Site'));
-    S.customerDepartmentOptions.forEach((d) => addSuggestion(d, 'Department'));
-    S.internalDepartmentOptions.forEach((d) => addSuggestion(d, 'Department'));
+    S.customerDepartmentOptions.forEach((d) => addSuggestion(d, 'Standard'));
+    S.internalDepartmentOptions.forEach((d) => addSuggestion(d, 'Standard'));
 
     // 3. Appointment Card attributes
     for (const a of activeAssignments) {
@@ -2249,8 +2249,8 @@ export function useScheduler() {
       if (a.purpose) addSuggestion(a.purpose, 'Purpose');
       if (o.purpose) addSuggestion(o.purpose, 'Purpose');
 
-      if (a.department1) addSuggestion(a.department1, 'Department');
-      if (a.department2) addSuggestion(a.department2, 'Department');
+      if (a.department1) addSuggestion(a.department1, 'Standard');
+      if (a.department2) addSuggestion(a.department2, 'Standard');
 
       if (e && e.name) addSuggestion(e.name, 'Auditor');
       if (a.auditor1) a.auditor1.split(',').forEach((s) => addSuggestion(s, 'Auditor'));

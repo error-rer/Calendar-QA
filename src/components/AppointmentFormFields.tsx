@@ -987,9 +987,9 @@ export function AppointmentFormFields({
         <div style={css('padding:14px;border:1px solid #e8ebe4;border-radius:10px;background:#fafbf9')}>
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#6a706a;letter-spacing:.5px;margin-bottom:12px")}>CUSTOMER</div>
           <div style={css('display:grid;grid-template-columns:1fr 1fr;gap:14px')}>
-            {/* 1. DEPARTMENT */}
+            {/* 1. STANDARD */}
             <div style={fld}>
-              <label htmlFor={id('department1')} style={lbl}>DEPARTMENT</label>
+              <label htmlFor={id('department1')} style={lbl}>STANDARD</label>
               <select
                 id={id('department1')}
                 value={v.department1}
@@ -1002,7 +1002,7 @@ export function AppointmentFormFields({
                 }}
                 style={sel}
               >
-                <option value="">Select department...</option>
+                <option value="">Select standard...</option>
                 {customerDepartmentOptions.map((d) => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
@@ -1103,9 +1103,9 @@ export function AppointmentFormFields({
         <div style={css('padding:14px;border:1px solid #e8ebe4;border-radius:10px;background:#fafbf9')}>
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#6a706a;letter-spacing:.5px;margin-bottom:12px")}>INTERNAL AUDIT</div>
           <div style={css('display:grid;grid-template-columns:1fr 1fr;gap:14px')}>
-            {/* 1. DEPARTMENT */}
+            {/* 1. STANDARD */}
             <div style={fld}>
-              <label htmlFor={id('department2')} style={lbl}>DEPARTMENT</label>
+              <label htmlFor={id('department2')} style={lbl}>STANDARD</label>
               <select
                 id={id('department2')}
                 value={v.department2}
@@ -1117,7 +1117,7 @@ export function AppointmentFormFields({
                 }}
                 style={sel}
               >
-                <option value="">Select department...</option>
+                <option value="">Select standard...</option>
                 {internalDepartmentOptions.map((d) => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
