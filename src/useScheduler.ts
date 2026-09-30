@@ -1156,6 +1156,14 @@ export function useScheduler() {
     setState((s) => (s[field].includes(v) ? {} : { [field]: [...s[field], v] }));
   };
 
+  const reorderOptions = (field: OptionListField, list: string[]) => {
+    setState({ [field]: list });
+  };
+
+  const reorderEngineers = (list: any[]) => {
+    setState({ engineers: list });
+  };
+
   const removeOption = (field: OptionListField, value: string, force = false) => {
     const v = value.trim();
     if (!v) return;
@@ -2181,25 +2189,25 @@ export function useScheduler() {
 
   const computedCustomerOptions = useMemo(() => {
     const active = S.assignments.map((a) => a.customer).filter((c): c is string => Boolean(c) && !removedSet.has(c as string));
-    return Array.from(new Set([...(S.customerOptions || []), ...active]))
-      .filter((c) => !removedSet.has(c))
-      .sort();
+    const baseList = S.customerOptions || [];
+    const activeExtra = Array.from(new Set(active)).filter((c) => !baseList.includes(c));
+    return Array.from(new Set([...baseList, ...activeExtra])).filter((c) => !removedSet.has(c));
   }, [S.assignments, S.customerOptions, removedSet]);
 
   const computedPurposeOptions = useMemo(() => {
     const active = S.assignments.map((a) => a.purpose).filter((p): p is string => Boolean(p) && !removedSet.has(p as string));
-    return Array.from(new Set([...(S.purposeOptions || []), ...active]))
-      .filter((p) => !removedSet.has(p))
-      .sort();
+    const baseList = S.purposeOptions || [];
+    const activeExtra = Array.from(new Set(active)).filter((p) => !baseList.includes(p));
+    return Array.from(new Set([...baseList, ...activeExtra])).filter((p) => !removedSet.has(p));
   }, [S.assignments, S.purposeOptions, removedSet]);
 
   const computedAuditorOptions = useMemo(() => {
     const fromEng = S.engineers.map((e) => e.name).filter((s): s is string => Boolean(s) && !removedSet.has(s as string));
     const fromAssign1 = S.assignments.flatMap((a) => (a.auditor1 || '').split(',').map((s) => s.trim())).filter((s): s is string => Boolean(s) && !removedSet.has(s as string));
     const fromAssign2 = S.assignments.flatMap((a) => (a.auditor2 || '').split(',').map((s) => s.trim())).filter((s): s is string => Boolean(s) && !removedSet.has(s as string));
-    return Array.from(new Set([...(S.auditorOptions || []), ...fromEng, ...fromAssign1, ...fromAssign2]))
-      .filter((s) => !removedSet.has(s))
-      .sort();
+    const baseList = S.auditorOptions || [];
+    const activeExtra = Array.from(new Set([...fromEng, ...fromAssign1, ...fromAssign2])).filter((s) => !baseList.includes(s));
+    return Array.from(new Set([...baseList, ...activeExtra])).filter((s) => !removedSet.has(s));
   }, [S.engineers, S.assignments, S.auditorOptions, removedSet]);
 
   // ---- search autocomplete suggestions (filter-driven & appointment card data connected) ----
@@ -2552,6 +2560,12 @@ export function useScheduler() {
     removeSiteCodeOption,
     addCustomerOption: (v: string) => addOption('customerOptions', v),
     removeCustomerOption: (v: string) => removeOption('customerOptions', v),
+    reorderSiteCodeOptions: (list: string[]) => reorderOptions('siteCodeOptions', list),
+    reorderCustomerDepartmentOptions: (list: string[]) => reorderOptions('customerDepartmentOptions', list),
+    reorderInternalDepartmentOptions: (list: string[]) => reorderOptions('internalDepartmentOptions', list),
+    reorderCustomerOptions: (list: string[]) => reorderOptions('customerOptions', list),
+    reorderPurposeOptions: (list: string[]) => reorderOptions('purposeOptions', list),
+    reorderEngineers,
     removedOptions: S.removedOptions || [], removeGenericOption,
   };
 }

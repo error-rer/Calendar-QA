@@ -102,6 +102,9 @@ function AdminFilterDropdown({ label, count, selected, items, onToggle }: { labe
 }
 
 function EngineersTable({ vm }: { vm: VM }) {
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  const [dropTargetIdx, setDropTargetIdx] = useState<number | null>(null);
+
   return (
     <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;position:relative;z-index:10')}>
       <div style={css('display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #eef1ea;flex-wrap:wrap;gap:10px;position:relative;z-index:20')}>
@@ -124,15 +127,56 @@ function EngineersTable({ vm }: { vm: VM }) {
           <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New Auditor</HButton>
         </div>
       </div>
-      {vm.adminEngineers.map((e) => (
-        <div key={e.id} style={css(engGrid + ';padding:12px 18px;border-bottom:1px solid #f2f4ee;align-items:center')}>
-          <div onClick={() => vm.openEditEngineer(e.id)} style={css('display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer')}>
-            <div style={e.avatarStyle}>{e.initials}</div>
-            <div style={css('min-width:0')}>
-              <div style={css('font-size:12.5px;font-weight:600;color:#23282a;text-decoration:none')}>
-                {e.name}
+      {vm.adminEngineers.map((e, idx) => (
+        <div
+          key={e.id}
+          draggable
+          onDragStart={(evt) => {
+            setDraggedIdx(idx);
+            evt.dataTransfer.effectAllowed = 'move';
+            evt.dataTransfer.setData('text/plain', String(idx));
+          }}
+          onDragOver={(evt) => {
+            evt.preventDefault();
+            evt.dataTransfer.dropEffect = 'move';
+            if (dropTargetIdx !== idx) setDropTargetIdx(idx);
+          }}
+          onDrop={(evt) => {
+            evt.preventDefault();
+            if (draggedIdx !== null && dropTargetIdx !== null && draggedIdx !== dropTargetIdx) {
+              const next = [...vm.adminEngineers];
+              const [moved] = next.splice(draggedIdx, 1);
+              next.splice(dropTargetIdx, 0, moved);
+              vm.reorderEngineers(next);
+            }
+            setDraggedIdx(null);
+            setDropTargetIdx(null);
+          }}
+          onDragEnd={() => {
+            setDraggedIdx(null);
+            setDropTargetIdx(null);
+          }}
+          style={css(
+            engGrid +
+              ';padding:12px 18px;border-bottom:1px solid #f2f4ee;align-items:center;transition:background 0.15s ease, transform 0.15s ease;background:' +
+              (dropTargetIdx === idx && draggedIdx !== idx ? '#eef2fd' : '#fff') +
+              ';opacity:' +
+              (draggedIdx === idx ? '0.4' : '1') +
+              ';box-shadow:' +
+              (draggedIdx === idx ? '0 4px 12px rgba(0,0,0,0.12)' : 'none') +
+              ';cursor:grab'
+          )}
+        >
+          <div style={css('display:flex;align-items:center;gap:8px;min-width:0')}>
+            <span style={css('color:#a6aca2;font-size:12px;cursor:grab;user-select:none;line-height:1;padding:2px')}>⋮⋮</span>
+            <div onClick={() => vm.openEditEngineer(e.id)} style={css('display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer')}>
+              <div style={e.avatarStyle}>{e.initials}</div>
+              <div style={css('min-width:0')}>
+                <div style={css('font-size:12.5px;font-weight:600;color:#23282a;text-decoration:none')}>
+                  {e.name}
+                </div>
+                <div style={css('font-size:10.5px;color:#8a9088')}>{e.department}{e.subDepartments.length > 0 ? ' - ' + e.subDepartments.join(', ') : ''}</div>
               </div>
-              <div style={css('font-size:10.5px;color:#8a9088')}>{e.department}{e.subDepartments.length > 0 ? ' - ' + e.subDepartments.join(', ') : ''}</div>
             </div>
           </div>
           <div style={css("text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#3c423d")}>{e.appointments}</div>
@@ -148,17 +192,70 @@ function EngineersTable({ vm }: { vm: VM }) {
   );
 }
 
-function TagListEditor({ title, count, values, onAdd, onRemove, placeholder, colorFor, onColorChange }: { title: string; count: number; values: string[]; onAdd: (v: string) => void; onRemove: (v: string) => void; placeholder: string; colorFor?: (v: string) => string; onColorChange?: (v: string, color: string) => void }) {
+function TagListEditor({ title, count, values, onAdd, onRemove, onReorder, placeholder, colorFor, onColorChange }: { title: string; count: number; values: string[]; onAdd: (v: string) => void; onRemove: (v: string) => void; onReorder?: (list: string[]) => void; placeholder: string; colorFor?: (v: string) => string; onColorChange?: (v: string, color: string) => void }) {
   const [draft, setDraft] = useState('');
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  const [dropTargetIdx, setDropTargetIdx] = useState<number | null>(null);
+
   const submit = () => { onAdd(draft); setDraft(''); };
+
   return (
     <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;overflow:hidden')}>
       <div style={css('display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #eef1ea')}>
         <div style={css('font-size:13px;font-weight:700')}>{title} <span style={css('color:#9aa097;font-weight:500')}>· {count}</span></div>
       </div>
       <div style={css('padding:14px 18px;display:flex;flex-wrap:wrap;gap:8px')}>
-        {values.map((v) => (
-          <div key={v} style={css('display:flex;align-items:center;gap:6px;background:#f4f6f1;border:1px solid #e0e3dc;border-radius:20px;padding:5px 6px 5px ' + (colorFor ? '8px' : '12px') + ';font-size:12px;color:#3c423d')}>
+        {values.map((v, idx) => (
+          <div
+            key={v}
+            draggable={!!onReorder}
+            onDragStart={(evt) => {
+              if (!onReorder) return;
+              setDraggedIdx(idx);
+              evt.dataTransfer.effectAllowed = 'move';
+              evt.dataTransfer.setData('text/plain', String(idx));
+            }}
+            onDragOver={(evt) => {
+              if (!onReorder) return;
+              evt.preventDefault();
+              evt.dataTransfer.dropEffect = 'move';
+              if (dropTargetIdx !== idx) setDropTargetIdx(idx);
+            }}
+            onDrop={(evt) => {
+              if (!onReorder) return;
+              evt.preventDefault();
+              if (draggedIdx !== null && dropTargetIdx !== null && draggedIdx !== dropTargetIdx) {
+                const next = [...values];
+                const [moved] = next.splice(draggedIdx, 1);
+                next.splice(dropTargetIdx, 0, moved);
+                onReorder(next);
+              }
+              setDraggedIdx(null);
+              setDropTargetIdx(null);
+            }}
+            onDragEnd={() => {
+              setDraggedIdx(null);
+              setDropTargetIdx(null);
+            }}
+            style={css(
+              'display:flex;align-items:center;gap:6px;background:#f4f6f1;border:1px solid ' +
+                (dropTargetIdx === idx && draggedIdx !== idx ? '#2756d6' : '#e0e3dc') +
+                ';border-radius:20px;padding:5px ' +
+                (onReorder ? '8px' : '12px') +
+                ' 5px ' +
+                (colorFor ? '8px' : '10px') +
+                ';font-size:12px;color:#3c423d;user-select:none;cursor:' +
+                (onReorder ? (draggedIdx === idx ? 'grabbing' : 'grab') : 'default') +
+                ';opacity:' +
+                (draggedIdx === idx ? '0.4' : '1') +
+                ';box-shadow:' +
+                (draggedIdx === idx ? '0 4px 12px rgba(0,0,0,0.15)' : 'none') +
+                ';transform:' +
+                (dropTargetIdx === idx && draggedIdx !== idx ? 'scale(1.04)' : 'scale(1)') +
+                ';transition:transform 0.15s ease, border-color 0.15s ease'
+            )}
+          >
+            {onReorder && <span style={css('color:#9aa097;font-size:11px;cursor:grab;line-height:1')}>⋮⋮</span>}
             {colorFor && onColorChange && (
               <input
                 type="color"
@@ -188,9 +285,15 @@ function TagListEditor({ title, count, values, onAdd, onRemove, placeholder, col
   );
 }
 
-function DepartmentEditor({ vm }: { vm: VM }) {
+function DepartmentEditor({ vm, onReorderInternal, onReorderCustomer }: { vm: VM; onReorderInternal?: (list: string[]) => void; onReorderCustomer?: (list: string[]) => void }) {
   const [internalDraft, setInternalDraft] = useState('');
   const [customerDraft, setCustomerDraft] = useState('');
+
+  const [draggedInternalIdx, setDraggedInternalIdx] = useState<number | null>(null);
+  const [dropTargetInternalIdx, setDropTargetInternalIdx] = useState<number | null>(null);
+
+  const [draggedCustomerIdx, setDraggedCustomerIdx] = useState<number | null>(null);
+  const [dropTargetCustomerIdx, setDropTargetCustomerIdx] = useState<number | null>(null);
 
   const submitInternal = () => {
     if (!internalDraft.trim()) return;
@@ -221,8 +324,55 @@ function DepartmentEditor({ vm }: { vm: VM }) {
             INTERNAL AUDIT <span style={css('color:#9aa097;font-weight:500')}>· {vm.internalDepartmentOptions.length}</span>
           </div>
           <div style={css('display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px')}>
-            {vm.internalDepartmentOptions.map((v) => (
-              <div key={v} style={css('display:flex;align-items:center;gap:6px;background:#f4f6f1;border:1px solid #e0e3dc;border-radius:20px;padding:5px 12px;font-size:12px;color:#3c423d')}>
+            {vm.internalDepartmentOptions.map((v, idx) => (
+              <div
+                key={v}
+                draggable={!!onReorderInternal}
+                onDragStart={(evt) => {
+                  if (!onReorderInternal) return;
+                  setDraggedInternalIdx(idx);
+                  evt.dataTransfer.effectAllowed = 'move';
+                  evt.dataTransfer.setData('text/plain', String(idx));
+                }}
+                onDragOver={(evt) => {
+                  if (!onReorderInternal) return;
+                  evt.preventDefault();
+                  evt.dataTransfer.dropEffect = 'move';
+                  if (dropTargetInternalIdx !== idx) setDropTargetInternalIdx(idx);
+                }}
+                onDrop={(evt) => {
+                  if (!onReorderInternal) return;
+                  evt.preventDefault();
+                  if (draggedInternalIdx !== null && dropTargetInternalIdx !== null && draggedInternalIdx !== dropTargetInternalIdx) {
+                    const next = [...vm.internalDepartmentOptions];
+                    const [moved] = next.splice(draggedInternalIdx, 1);
+                    next.splice(dropTargetInternalIdx, 0, moved);
+                    onReorderInternal(next);
+                  }
+                  setDraggedInternalIdx(null);
+                  setDropTargetInternalIdx(null);
+                }}
+                onDragEnd={() => {
+                  setDraggedInternalIdx(null);
+                  setDropTargetInternalIdx(null);
+                }}
+                style={css(
+                  'display:flex;align-items:center;gap:6px;background:#f4f6f1;border:1px solid ' +
+                    (dropTargetInternalIdx === idx && draggedInternalIdx !== idx ? '#2756d6' : '#e0e3dc') +
+                    ';border-radius:20px;padding:5px ' +
+                    (onReorderInternal ? '8px' : '12px') +
+                    ';font-size:12px;color:#3c423d;user-select:none;cursor:' +
+                    (onReorderInternal ? (draggedInternalIdx === idx ? 'grabbing' : 'grab') : 'default') +
+                    ';opacity:' +
+                    (draggedInternalIdx === idx ? '0.4' : '1') +
+                    ';box-shadow:' +
+                    (draggedInternalIdx === idx ? '0 4px 12px rgba(0,0,0,0.15)' : 'none') +
+                    ';transform:' +
+                    (dropTargetInternalIdx === idx && draggedInternalIdx !== idx ? 'scale(1.04)' : 'scale(1)') +
+                    ';transition:transform 0.15s ease, border-color 0.15s ease'
+                )}
+              >
+                {onReorderInternal && <span style={css('color:#9aa097;font-size:11px;cursor:grab;line-height:1')}>⋮⋮</span>}
                 {v}
                 <button onClick={() => vm.removeInternalDepartmentOption(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1')}>✕</button>
               </div>
@@ -249,8 +399,55 @@ function DepartmentEditor({ vm }: { vm: VM }) {
             CUSTOMER <span style={css('color:#9aa097;font-weight:500')}>· {vm.customerDepartmentOptions.length}</span>
           </div>
           <div style={css('display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px')}>
-            {vm.customerDepartmentOptions.map((v) => (
-              <div key={v} style={css('display:flex;align-items:center;gap:6px;background:#f4f6f1;border:1px solid #e0e3dc;border-radius:20px;padding:5px 12px;font-size:12px;color:#3c423d')}>
+            {vm.customerDepartmentOptions.map((v, idx) => (
+              <div
+                key={v}
+                draggable={!!onReorderCustomer}
+                onDragStart={(evt) => {
+                  if (!onReorderCustomer) return;
+                  setDraggedCustomerIdx(idx);
+                  evt.dataTransfer.effectAllowed = 'move';
+                  evt.dataTransfer.setData('text/plain', String(idx));
+                }}
+                onDragOver={(evt) => {
+                  if (!onReorderCustomer) return;
+                  evt.preventDefault();
+                  evt.dataTransfer.dropEffect = 'move';
+                  if (dropTargetCustomerIdx !== idx) setDropTargetCustomerIdx(idx);
+                }}
+                onDrop={(evt) => {
+                  if (!onReorderCustomer) return;
+                  evt.preventDefault();
+                  if (draggedCustomerIdx !== null && dropTargetCustomerIdx !== null && draggedCustomerIdx !== dropTargetCustomerIdx) {
+                    const next = [...vm.customerDepartmentOptions];
+                    const [moved] = next.splice(draggedCustomerIdx, 1);
+                    next.splice(dropTargetCustomerIdx, 0, moved);
+                    onReorderCustomer(next);
+                  }
+                  setDraggedCustomerIdx(null);
+                  setDropTargetCustomerIdx(null);
+                }}
+                onDragEnd={() => {
+                  setDraggedCustomerIdx(null);
+                  setDropTargetCustomerIdx(null);
+                }}
+                style={css(
+                  'display:flex;align-items:center;gap:6px;background:#f4f6f1;border:1px solid ' +
+                    (dropTargetCustomerIdx === idx && draggedCustomerIdx !== idx ? '#2756d6' : '#e0e3dc') +
+                    ';border-radius:20px;padding:5px ' +
+                    (onReorderCustomer ? '8px' : '12px') +
+                    ';font-size:12px;color:#3c423d;user-select:none;cursor:' +
+                    (onReorderCustomer ? (draggedCustomerIdx === idx ? 'grabbing' : 'grab') : 'default') +
+                    ';opacity:' +
+                    (draggedCustomerIdx === idx ? '0.4' : '1') +
+                    ';box-shadow:' +
+                    (draggedCustomerIdx === idx ? '0 4px 12px rgba(0,0,0,0.15)' : 'none') +
+                    ';transform:' +
+                    (dropTargetCustomerIdx === idx && draggedCustomerIdx !== idx ? 'scale(1.04)' : 'scale(1)') +
+                    ';transition:transform 0.15s ease, border-color 0.15s ease'
+                )}
+              >
+                {onReorderCustomer && <span style={css('color:#9aa097;font-size:11px;cursor:grab;line-height:1')}>⋮⋮</span>}
                 {v}
                 <button onClick={() => vm.removeCustomerDepartmentOption(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1')}>✕</button>
               </div>
@@ -282,17 +479,23 @@ function OptionsPanel({ vm }: { vm: VM }) {
         values={vm.siteCodeOptions}
         onAdd={vm.addSiteCodeOption}
         onRemove={vm.removeSiteCodeOption}
+        onReorder={vm.reorderSiteCodeOptions}
         placeholder="e.g. U4"
         colorFor={(v) => vm.siteColors[v] || '#999999'}
         onColorChange={vm.setSiteColor}
       />
-      <DepartmentEditor vm={vm} />
+      <DepartmentEditor
+        vm={vm}
+        onReorderInternal={vm.reorderInternalDepartmentOptions}
+        onReorderCustomer={vm.reorderCustomerDepartmentOptions}
+      />
       <TagListEditor
         title="Customer"
         count={vm.customerOptions.length}
         values={vm.customerOptions}
         onAdd={vm.addCustomerOption}
         onRemove={vm.removeCustomerOption}
+        onReorder={vm.reorderCustomerOptions}
         placeholder="e.g. Company F"
       />
       <TagListEditor
@@ -301,6 +504,7 @@ function OptionsPanel({ vm }: { vm: VM }) {
         values={vm.purposeOptions}
         onAdd={vm.addPurposeOption}
         onRemove={vm.removePurposeOption}
+        onReorder={vm.reorderPurposeOptions}
         placeholder="e.g. supplier audit"
       />
     </div>
