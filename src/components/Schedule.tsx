@@ -425,19 +425,23 @@ function Sidebar({ vm }: { vm: VM }) {
                 <div
                   key={item.id}
                   onClick={item.onClick}
-                  style={css('display:flex;align-items:center;gap:8px;padding:7px 9px;background:#fef2f2;border:1px solid #fca5a5;border-radius:7px;cursor:pointer;transition:all .15s ease')}
+                  style={css('display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:7px;cursor:pointer;transition:all .15s ease')}
                   title="Click to edit and complete required appointment details"
                 >
                   <span style={css('width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0')} />
-                  <div style={css('flex:1;min-width:0;line-height:1.2')}>
+                  <div style={css('flex:1;min-width:0;display:flex;flex-direction:column;gap:1.5px;line-height:1.2')}>
+                    <div style={css('font-size:10px;font-weight:700;color:#991b1b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:3px')}>
+                      <span style={css('font-size:9px;color:#b91c1c')}>👤</span>
+                      <span>{item.creatorName || vm.profile?.name || 'Jordan Lee'}</span>
+                    </div>
                     <div style={css('font-size:11px;font-weight:700;color:#991b1b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>
                       {renderApptCode(item.code, '#991b1b')}
                     </div>
-                    <div style={css("font-size:9.5px;color:#b91c1c;margin-top:2px;font-family:'IBM Plex Mono',monospace")}>
+                    <div style={css("font-size:9.5px;color:#b91c1c;font-family:'IBM Plex Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>
                       {item.dateStr}
                     </div>
                   </div>
-                  <span style={css('font-size:11px;color:#ef4444;flex-shrink:0')}>✏️</span>
+                  <span style={css('font-size:11px;color:#ef4444;flex-shrink:0;align-self:center')}>✏️</span>
                 </div>
               ))}
             </div>

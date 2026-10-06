@@ -762,6 +762,7 @@ export function useScheduler() {
           auditor2: d.sectionType === 'internal' ? d.auditor2 : '',
           department1: d.sectionType === 'customer' ? d.department1 : '',
           department2: d.sectionType === 'internal' ? d.department2 : '',
+          createdBy: profile.name || 'Jordan Lee',
         });
       }
     }
@@ -2356,6 +2357,7 @@ export function useScheduler() {
       id: string;
       code: string;
       dateStr: string;
+      creatorName: string;
       isInternal: boolean;
       onClick: () => void;
     }[] = [];
@@ -2368,6 +2370,7 @@ export function useScheduler() {
 
       const isInternal = isInternalAssignment(a);
       const code = formatApptDisplayTitle(a, orderById(a.order));
+      const creatorName = a.createdBy || profile.name || 'Jordan Lee';
 
       // Compute multi-date range across all sibling slots for this appointment
       const siblings = S.assignments.filter((x) => x.order === a.order && x.eng === a.eng);
@@ -2402,6 +2405,7 @@ export function useScheduler() {
         id: a.id,
         code,
         dateStr: fullDateLine,
+        creatorName,
         isInternal,
         onClick: () => {
           closeSidebar();
@@ -2411,7 +2415,7 @@ export function useScheduler() {
     }
 
     return items;
-  }, [S.assignments, S.siteColors, S.orders, S.engineers]);
+  }, [S.assignments, S.siteColors, S.orders, S.engineers, profile.name]);
 
   // ---- responsive styles ----
   const sidebarStyle: CSSProperties = isMobile

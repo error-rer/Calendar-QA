@@ -51,6 +51,7 @@ export interface Assignment {
   utl1?: number;
   utl2?: number;
   utl3?: number;
+  createdBy?: string;
 }
 
 function hasValue(val: any): boolean {
