@@ -16,6 +16,7 @@ export interface ApiState {
   siteCodeOptions?: string[];
   siteColors?: Record<string, string>;
   customerOptions?: string[];
+  endCustomerOptions?: string[];
 }
 
 async function req<T>(url: string, opts?: RequestInit): Promise<T> {

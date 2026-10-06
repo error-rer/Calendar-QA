@@ -499,6 +499,15 @@ function OptionsPanel({ vm }: { vm: VM }) {
         placeholder="e.g. Company F"
       />
       <TagListEditor
+        title="End Customer"
+        count={(vm.endCustomerOptions || []).length}
+        values={vm.endCustomerOptions || []}
+        onAdd={vm.addEndCustomerOption}
+        onRemove={vm.removeEndCustomerOption}
+        onReorder={vm.reorderEndCustomerOptions}
+        placeholder="e.g. End Customer A"
+      />
+      <TagListEditor
         title="Purpose"
         count={vm.purposeOptions.length}
         values={vm.purposeOptions}

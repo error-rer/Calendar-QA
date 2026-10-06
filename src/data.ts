@@ -78,6 +78,7 @@ export function initialState(): State {
     siteCodeOptions: snapshot.siteCodeOptions || initialSiteCodeOptions.slice(),
     siteColors: snapshot.siteColors || { ...initialSiteColors },
     customerOptions: snapshot.customerOptions || [],
+    endCustomerOptions: snapshot.endCustomerOptions || [],
     auditorOptions: snapshot.auditorOptions || [],
     removedOptions: snapshot.removedOptions || [],
     plants: snapshot.plants || initialPlants.map((p) => ({ ...p })),

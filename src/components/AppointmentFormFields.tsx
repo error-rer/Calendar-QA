@@ -879,12 +879,14 @@ export function AppointmentFormFields({
   purposeOptions,
   removePurposeOption,
   removeCustomerOption,
+  removeEndCustomerOption,
   removeAuditorOption,
   removeGenericOption,
   customerDepartmentOptions,
   internalDepartmentOptions,
   siteOptions,
   customerOptions,
+  endCustomerOptions = [],
   auditorOptions = [],
   removedOptions = [],
   assignments = [],
@@ -897,12 +899,14 @@ export function AppointmentFormFields({
   purposeOptions: string[];
   removePurposeOption?: (val: string) => void;
   removeCustomerOption?: (val: string) => void;
+  removeEndCustomerOption?: (val: string) => void;
   removeAuditorOption?: (val: string) => void;
   removeGenericOption?: (val: string) => void;
   customerDepartmentOptions: string[];
   internalDepartmentOptions: string[];
   siteOptions: string[];
   customerOptions: string[];
+  endCustomerOptions?: string[];
   auditorOptions?: string[];
   removedOptions?: string[];
   assignments?: Assignment[];
@@ -934,11 +938,14 @@ export function AppointmentFormFields({
   }, [assignments, customerOptions, editingTargetId, removedSet]);
 
   const endCustomerSuggestions = useMemo(() => {
-    const fromAssign = assignments.map((a) => a.endCustomer).filter((s): s is string => Boolean(s));
-    return Array.from(new Set(fromAssign))
+    const activeAssignments = editingTargetId
+      ? assignments.filter((a) => a.id !== editingTargetId)
+      : assignments;
+    const fromAssign = activeAssignments.map((a) => a.endCustomer).filter((s): s is string => Boolean(s));
+    return Array.from(new Set([...endCustomerOptions, ...fromAssign]))
       .filter((s) => !removedSet.has(s))
       .sort();
-  }, [assignments, removedSet]);
+  }, [assignments, endCustomerOptions, editingTargetId, removedSet]);
 
   const purposeSuggestions = useMemo(() => {
     const activeAssignments = editingTargetId
@@ -1040,7 +1047,7 @@ export function AppointmentFormFields({
                 onChange={(endCustomer) => onChange({ endCustomer })}
                 placeholder="Type end customer..."
                 suggestions={endCustomerSuggestions}
-                onRemoveOption={removeGenericOption}
+                onRemoveOption={removeEndCustomerOption || removeGenericOption}
               />
             </div>
 

@@ -161,6 +161,7 @@ export function useScheduler() {
         setRaw((s) => {
           const removedSet = new Set(s.removedOptions || []);
           const customerOptions = (s.customerOptions && s.customerOptions.length ? s.customerOptions : (data.customerOptions || [])).filter((c) => !removedSet.has(c));
+          const endCustomerOptions = (s.endCustomerOptions && s.endCustomerOptions.length ? s.endCustomerOptions : (data.endCustomerOptions || [])).filter((c) => !removedSet.has(c));
 
           const serverAssignments = data.assignments || [];
           const serverOrders = data.orders || [];
@@ -218,6 +219,7 @@ export function useScheduler() {
             siteCodeOptions,
             siteColors,
             customerOptions,
+            endCustomerOptions,
             removedOptions: s.removedOptions || [],
           };
 
@@ -234,6 +236,7 @@ export function useScheduler() {
               siteCodeOptions: mergedState.siteCodeOptions,
               siteColors: mergedState.siteColors,
               customerOptions: mergedState.customerOptions,
+              endCustomerOptions: mergedState.endCustomerOptions,
               removedOptions: mergedState.removedOptions,
               activePlants: mergedState.activePlants,
               plants: mergedState.plants,
@@ -785,6 +788,7 @@ export function useScheduler() {
     api.createOrder(newOrder).catch(() => {});
     if (!existingEng) api.createEngineer(newEngineer).catch(() => {});
     const newCustomer = d.sectionType === 'customer' && d.customer ? d.customer.trim() : '';
+    const newEndCustomer = d.sectionType === 'customer' && d.endCustomer ? d.endCustomer.trim() : '';
     const newPurpose = d.purpose ? d.purpose.trim() : '';
     const existingMasterSet = new Set(
       (S.auditorOptions || [])
@@ -800,6 +804,9 @@ export function useScheduler() {
     if (newCustomer) {
       api.saveOption('customer_name', newCustomer).catch(() => {});
     }
+    if (newEndCustomer) {
+      api.saveOption('end_customer', newEndCustomer).catch(() => {});
+    }
     if (newPurpose) {
       api.saveOption('purpose', newPurpose).catch(() => {});
     }
@@ -810,6 +817,7 @@ export function useScheduler() {
       engineers: existingEng ? s.engineers : s.engineers.concat([newEngineer]),
       assignments: s.assignments.concat(newAssignments),
       customerOptions: newCustomer && !s.customerOptions.includes(newCustomer) ? [...s.customerOptions, newCustomer] : s.customerOptions,
+      endCustomerOptions: newEndCustomer && !(s.endCustomerOptions || []).includes(newEndCustomer) ? [...(s.endCustomerOptions || []), newEndCustomer] : (s.endCustomerOptions || []),
       purposeOptions: newPurpose && !s.purposeOptions.includes(newPurpose) ? [...s.purposeOptions, newPurpose] : s.purposeOptions,
       auditorOptions: (() => {
         let opts = s.auditorOptions || [];
@@ -952,11 +960,16 @@ export function useScheduler() {
 
     const oldCustomer = target.customer || '';
     const newCustomer = d.sectionType === 'customer' && d.customer ? d.customer.trim() : '';
+    const oldEndCustomer = target.endCustomer || '';
+    const newEndCustomer = d.sectionType === 'customer' && d.endCustomer ? d.endCustomer.trim() : '';
     const oldPurpose = target.purpose || '';
     const newPurpose = d.purpose ? d.purpose.trim() : '';
 
     if (newCustomer) {
       api.saveOption('customer_name', newCustomer).catch(() => {});
+    }
+    if (newEndCustomer) {
+      api.saveOption('end_customer', newEndCustomer).catch(() => {});
     }
     if (newPurpose) {
       api.saveOption('purpose', newPurpose).catch(() => {});
@@ -979,6 +992,18 @@ export function useScheduler() {
         if (!isOldCustomerStillUsed) {
           nextCustomerOptions = nextCustomerOptions.filter((c) => c !== oldCustomer);
           api.deleteOption('customer_name', oldCustomer).catch(() => {});
+        }
+      }
+
+      let nextEndCustomerOptions = s.endCustomerOptions || [];
+      if (newEndCustomer && !nextEndCustomerOptions.includes(newEndCustomer)) {
+        nextEndCustomerOptions = [...nextEndCustomerOptions, newEndCustomer];
+      }
+      if (oldEndCustomer && oldEndCustomer !== newEndCustomer) {
+        const isOldEndCustomerStillUsed = nextAssignments.some((a) => a.endCustomer === oldEndCustomer);
+        if (!isOldEndCustomerStillUsed) {
+          nextEndCustomerOptions = nextEndCustomerOptions.filter((c) => c !== oldEndCustomer);
+          api.deleteOption('end_customer', oldEndCustomer).catch(() => {});
         }
       }
 
@@ -1039,6 +1064,7 @@ export function useScheduler() {
         comments,
         engineers: updatedEngineers,
         customerOptions: nextCustomerOptions,
+        endCustomerOptions: nextEndCustomerOptions,
         purposeOptions: nextPurposeOptions,
         auditorOptions: nextAuditorOptions,
       };
@@ -1148,13 +1174,14 @@ export function useScheduler() {
   };
 
   // ---- appointment option lists (Purpose / Department / Site) ----
-  type OptionListField = 'purposeOptions' | 'customerDepartmentOptions' | 'internalDepartmentOptions' | 'siteCodeOptions' | 'customerOptions' | 'auditorOptions';
+  type OptionListField = 'purposeOptions' | 'customerDepartmentOptions' | 'internalDepartmentOptions' | 'siteCodeOptions' | 'customerOptions' | 'endCustomerOptions' | 'auditorOptions';
   const fieldToCategory: Record<OptionListField, string> = {
     purposeOptions: 'purpose',
     customerDepartmentOptions: 'customer_department',
     internalDepartmentOptions: 'internal_department',
     siteCodeOptions: 'site_code',
     customerOptions: 'customer_name',
+    endCustomerOptions: 'end_customer',
     auditorOptions: 'auditor',
   };
 
@@ -1182,6 +1209,8 @@ export function useScheduler() {
       let linkedCount = 0;
       if (field === 'customerOptions') {
         linkedCount = S.assignments.filter((a) => a.customer === v).length;
+      } else if (field === 'endCustomerOptions') {
+        linkedCount = S.assignments.filter((a) => a.endCustomer === v).length;
       } else if (field === 'purposeOptions') {
         linkedCount = S.assignments.filter((a) => a.purpose === v).length;
       } else if (field === 'auditorOptions') {
@@ -1216,12 +1245,14 @@ export function useScheduler() {
     const v = value.trim();
     if (!v) return;
     api.deleteOption('customer_name', v).catch(() => {});
+    api.deleteOption('end_customer', v).catch(() => {});
     api.deleteOption('purpose', v).catch(() => {});
     api.deleteOption('auditor', v).catch(() => {});
     setState((s) => {
       const removedOptions = (s.removedOptions || []).includes(v) ? (s.removedOptions || []) : [...(s.removedOptions || []), v];
       return {
         customerOptions: (s.customerOptions || []).filter((x) => x !== v),
+        endCustomerOptions: (s.endCustomerOptions || []).filter((x) => x !== v),
         purposeOptions: (s.purposeOptions || []).filter((x) => x !== v),
         auditorOptions: (s.auditorOptions || []).filter((x) => x !== v),
         customerDepartmentOptions: (s.customerDepartmentOptions || []).filter((x) => x !== v),
@@ -2207,6 +2238,13 @@ export function useScheduler() {
     return Array.from(new Set([...baseList, ...activeExtra])).filter((c) => !removedSet.has(c));
   }, [S.assignments, S.customerOptions, removedSet]);
 
+  const computedEndCustomerOptions = useMemo(() => {
+    const active = S.assignments.map((a) => a.endCustomer).filter((c): c is string => Boolean(c) && !removedSet.has(c as string));
+    const baseList = S.endCustomerOptions || [];
+    const activeExtra = Array.from(new Set(active)).filter((c) => !baseList.includes(c));
+    return Array.from(new Set([...baseList, ...activeExtra])).filter((c) => !removedSet.has(c));
+  }, [S.assignments, S.endCustomerOptions, removedSet]);
+
   const computedPurposeOptions = useMemo(() => {
     const active = S.assignments.map((a) => a.purpose).filter((p): p is string => Boolean(p) && !removedSet.has(p as string));
     const baseList = S.purposeOptions || [];
@@ -2567,6 +2605,8 @@ export function useScheduler() {
     siteCodeOptions: S.siteCodeOptions,
     customerOptions: computedCustomerOptions,
     masterCustomerOptions: S.customerOptions,
+    endCustomerOptions: computedEndCustomerOptions,
+    masterEndCustomerOptions: S.endCustomerOptions || [],
     auditorOptions: computedAuditorOptions,
     masterAuditorOptions: S.auditorOptions,
     addAuditorOption: (v: string) => addOption('auditorOptions', v),
@@ -2576,10 +2616,13 @@ export function useScheduler() {
     removeSiteCodeOption,
     addCustomerOption: (v: string) => addOption('customerOptions', v),
     removeCustomerOption: (v: string) => removeOption('customerOptions', v),
+    addEndCustomerOption: (v: string) => addOption('endCustomerOptions', v),
+    removeEndCustomerOption: (v: string) => removeOption('endCustomerOptions', v),
     reorderSiteCodeOptions: (list: string[]) => reorderOptions('siteCodeOptions', list),
     reorderCustomerDepartmentOptions: (list: string[]) => reorderOptions('customerDepartmentOptions', list),
     reorderInternalDepartmentOptions: (list: string[]) => reorderOptions('internalDepartmentOptions', list),
     reorderCustomerOptions: (list: string[]) => reorderOptions('customerOptions', list),
+    reorderEndCustomerOptions: (list: string[]) => reorderOptions('endCustomerOptions', list),
     reorderPurposeOptions: (list: string[]) => reorderOptions('purposeOptions', list),
     reorderEngineers,
     removedOptions: S.removedOptions || [], removeGenericOption,
