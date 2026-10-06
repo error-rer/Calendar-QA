@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState, useMemo } from 'react';
 import type { VM } from '../useScheduler';
-import { getAccentBackground } from '../useScheduler';
+import { getAccentBackground, isNewlyCreated } from '../useScheduler';
 import { css, HButton, HInput } from '../ui';
 import { getHolidayStyle, isOfficialHoliday } from '../holidays';
 
@@ -57,6 +57,15 @@ function MultiSelect({ label, items, selected, onToggle }: { label: string; item
 const gridBase = css('display:inline-grid;min-width:100%');
 
 export function Schedule({ vm }: { vm: VM }) {
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTick((t) => t + 1);
+    }, 2000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div style={css('flex:1;display:flex;min-height:0;overflow:hidden;position:relative')}>
       {vm.showSidebarBackdrop && (
@@ -1453,8 +1462,9 @@ function WeekCalendar({ vm }: { vm: VM }) {
             <div style={css('display:flex;flex-direction:column;gap:2px')}>
               {vm.weekCalendarDays[i].chips.map((chip) => {
                 const isInc = chip.isIncomplete;
+                const isNew = isNewlyCreated(chip);
                 const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
-                const barBg = isInc ? '#FC0000' : '#f0f2ec';
+                const barBg = isInc ? '#FC0000' : (isNew ? '#374151' : '#f0f2ec');
                 const titleColor = isInc ? '#FFFFFF' : (chip.isInternal ? '#10b981' : '#2756d6');
                 const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
                 const accentBg = isInc ? '#b91c1c' : getAccentBackground(chColors);
@@ -1493,8 +1503,9 @@ function WeekCalendar({ vm }: { vm: VM }) {
       })}
       {vm.weekMergedSpans.map((sp) => {
         const isInc = sp.isIncomplete;
+        const isNew = isNewlyCreated(sp);
         const spColors = sp.colors && sp.colors.length > 0 ? sp.colors : [sp.color];
-        const barBg = isInc ? '#FC0000' : '#f0f2ec';
+        const barBg = isInc ? '#FC0000' : (isNew ? '#374151' : '#f0f2ec');
         const titleColor = isInc ? '#FFFFFF' : (sp.isInternal ? '#10b981' : '#2756d6');
         const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
         const accentBg = isInc ? '#b91c1c' : getAccentBackground(spColors);
@@ -1759,8 +1770,9 @@ function MonthGrid({ vm }: { vm: VM }) {
               <div style={css('display:flex;flex-direction:column;gap:3px;margin-top:2px')}>
                 {(c.chips ?? []).map((ch, ci) => {
                   const isInc = ch.isIncomplete;
+                  const isNew = isNewlyCreated(ch);
                   const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
-                  const barBg = isInc ? '#FC0000' : '#f0f2ec';
+                  const barBg = isInc ? '#FC0000' : (isNew ? '#374151' : '#f0f2ec');
                   const titleColor = isInc ? '#FFFFFF' : (ch.isInternal ? '#10b981' : '#2756d6');
                   const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
                   const accentBg = isInc ? '#b91c1c' : getAccentBackground(chColors);

@@ -77,6 +77,11 @@ export const getAccentStyle = (colors: string[], borderPx = 3): CSSProperties =>
   };
 };
 
+export function isNewlyCreated(item?: { createdAt?: number }): boolean {
+  if (!item || !item.createdAt) return false;
+  return Date.now() - item.createdAt < 3 * 60 * 1000;
+}
+
 interface MonthChip {
   id?: string;
   code: string;
@@ -89,6 +94,7 @@ interface MonthChip {
   style: CSSProperties;
   isInternal: boolean;
   isIncomplete?: boolean;
+  createdAt?: number;
   onClick?: () => void;
 }
 interface MonthCell {
@@ -536,9 +542,10 @@ export function useScheduler() {
   const createAssign = (orderId: string, engId: string, day: number) => {
     const id = 'a' + ids.current.id++;
     const week = S.weekOffset;
-    api.createAssignment({ id, eng: engId, order: orderId, day, week }).catch(() => {});
+    const now = Date.now();
+    api.createAssignment({ id, eng: engId, order: orderId, day, week, createdAt: now }).catch(() => {});
     setState((s) => ({
-      assignments: s.assignments.concat([{ id, eng: engId, order: orderId, day, week: s.weekOffset }]),
+      assignments: s.assignments.concat([{ id, eng: engId, order: orderId, day, week: s.weekOffset, createdAt: now }]),
       selected: id,
     }));
     const ord = orderById(orderId);
@@ -745,6 +752,7 @@ export function useScheduler() {
     const orderId = 'o' + ids.current.id++;
     const start = new Date(dateFrom + 'T00:00:00');
     const end = new Date(dateTo + 'T00:00:00');
+    const now = Date.now();
     for (let cur = new Date(start); cur <= end; cur.setDate(cur.getDate() + 1)) {
       const slot = dateSlot(cur);
       if (slot.wd < 5 && !getHolidayForDate(cur)) {
@@ -763,6 +771,7 @@ export function useScheduler() {
           department1: d.sectionType === 'customer' ? d.department1 : '',
           department2: d.sectionType === 'internal' ? d.department2 : '',
           createdBy: profile.name || 'Jordan Lee',
+          createdAt: now,
         });
       }
     }
@@ -1375,6 +1384,7 @@ export function useScheduler() {
         code: formatApptDisplayTitle(a, o), purpose: chipPurpose, engName: auditorName, color, colors,
         isInternal,
         isIncomplete,
+        createdAt: a.createdAt,
         countTxt: '',
         dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: isIncomplete ? '#FC0000' : color, flexShrink: 0 }),
         style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: isIncomplete ? '#FFFFFF' : '#23282a', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
@@ -1951,6 +1961,7 @@ export function useScheduler() {
       auditor1: c._auditor, color: c._color, colors: c._colors, selected: sel,
       area: c.area || '', auditor2: c.auditor2 || '', isInternal: c._isInternal,
       isIncomplete: c._isIncomplete,
+      createdAt: c.createdAt,
       onClick: () => openDayDialog(c.week, c.day),
     };
   });
@@ -1961,6 +1972,7 @@ export function useScheduler() {
       auditor1: c._auditor, qa: c._qa, color: c._color, colors: c._colors, onClick: c._onClick, selected: c._sel,
       area: c.area || '', auditor2: c.auditor2 || '', isInternal: c._isInternal,
       isIncomplete: c._isIncomplete,
+      createdAt: c.createdAt,
     }));
     chips.sort((a, b) => {
       if (a.isIncomplete && !b.isIncomplete) return -1;
