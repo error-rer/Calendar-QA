@@ -6,6 +6,7 @@ import { Schedule } from './components/Schedule';
 import { Admin } from './components/Admin';
 import { Profile } from './components/Profile';
 import { SummaryDashboard } from './components/SummaryDashboard';
+import { HistoryView } from './components/HistoryView';
 import { CreateModal } from './components/CreateModal';
 import { EditModal } from './components/EditModal';
 import { EngineerModal } from './components/EngineerModal';
@@ -28,6 +29,7 @@ export default function App() {
           {vm.isAdmin && <Admin vm={vm} />}
           {vm.isProfile && <Profile vm={vm} />}
           {vm.isSummary && <SummaryDashboard vm={vm} />}
+          {vm.isHistory && <HistoryView vm={vm} />}
           <CreateModal vm={vm} />
           <EditModal vm={vm} />
           <EngineerModal vm={vm} />

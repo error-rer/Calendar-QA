@@ -198,7 +198,26 @@ export interface EditDraft {
   warnText?: string;
 }
 
-export type Page = 'schedule' | 'admin' | 'profile' | 'summary';
+export type ActionType = 'CREATE' | 'UPDATE' | 'DELETE' | 'REORDER' | 'MANAGE_ITEM' | 'OTHER';
+export type EntityType = 'APPOINTMENT' | 'CUSTOMER' | 'END_CUSTOMER' | 'AUDITOR' | 'SITE' | 'STANDARD';
+
+export interface ActivityUser {
+  name: string;
+  email?: string;
+  avatarInitials?: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  timestamp: string;
+  user: ActivityUser;
+  actionType: ActionType;
+  entityType: EntityType;
+  description: string;
+  metadata?: Record<string, any>;
+}
+
+export type Page = 'schedule' | 'admin' | 'profile' | 'summary' | 'history';
 export type View = 'person' | 'plant' | 'site' | 'timetable';
 export type TimeScale = 'week' | 'month' | 'year' | 'search';
 export type AdminTab = 'engineers' | 'options';
@@ -268,4 +287,5 @@ export interface State {
   assignments: Assignment[];
   comments: Record<string, Comment[]>;
   activity: Activity[];
+  activityLogs: ActivityLog[];
 }

@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type {
+  ActionType,
+  ActivityLog,
   Assignment,
   CreateDraft,
   Department,
   EditDraft,
   EngineerForm,
+  EntityType,
   Order,
   State,
   SubDepartment,
@@ -146,6 +149,47 @@ export function useScheduler() {
     [],
   );
 
+  const logActivity = useCallback((
+    actionType: ActionType,
+    entityType: EntityType,
+    description: string,
+    metadata?: Record<string, any>
+  ) => {
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = now.getFullYear();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    const timestamp = `${dd}/${mm}/${yyyy} ${hh}:${min}:${ss}`;
+
+    const newLog: ActivityLog = {
+      id: 'log_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+      timestamp,
+      user: {
+        name: 'Jordan Lee',
+        email: 'jordan.lee@nexsil.com',
+        avatarInitials: 'JL',
+      },
+      actionType,
+      entityType,
+      description,
+      metadata,
+    };
+
+    setRaw((prev) => {
+      const updatedLogs = [newLog, ...(prev.activityLogs || [])];
+      try {
+        const snap = localStorage.getItem('calendar_qa_snapshot');
+        const parsed = snap ? JSON.parse(snap) : {};
+        parsed.activityLogs = updatedLogs;
+        localStorage.setItem('calendar_qa_snapshot', JSON.stringify(parsed));
+      } catch {}
+      return { ...prev, activityLogs: updatedLogs };
+    });
+  }, []);
+
   useEffect(() => {
     const onResize = () => setRaw((s) => ({ ...s, vw: window.innerWidth }));
     window.addEventListener('resize', onResize);
@@ -213,6 +257,7 @@ export function useScheduler() {
             assignments: mergedAssignments,
             comments: mergedComments,
             activity: s.activity && s.activity.length ? s.activity : (data.activity || []),
+            activityLogs: s.activityLogs && s.activityLogs.length ? s.activityLogs : (data.activityLogs || []),
             purposeOptions,
             customerDepartmentOptions,
             internalDepartmentOptions,
@@ -230,6 +275,7 @@ export function useScheduler() {
               assignments: mergedState.assignments,
               comments: mergedState.comments,
               activity: mergedState.activity,
+              activityLogs: mergedState.activityLogs,
               purposeOptions: mergedState.purposeOptions,
               customerDepartmentOptions: mergedState.customerDepartmentOptions,
               internalDepartmentOptions: mergedState.internalDepartmentOptions,
@@ -275,12 +321,14 @@ export function useScheduler() {
         assignments: state.assignments,
         comments: state.comments,
         activity: state.activity,
+        activityLogs: state.activityLogs,
         purposeOptions: state.purposeOptions,
         customerDepartmentOptions: state.customerDepartmentOptions,
         internalDepartmentOptions: state.internalDepartmentOptions,
         siteCodeOptions: state.siteCodeOptions,
         siteColors: state.siteColors,
         customerOptions: state.customerOptions,
+        endCustomerOptions: state.endCustomerOptions,
         removedOptions: state.removedOptions,
         activePlants: state.activePlants,
         plants: state.plants,
@@ -296,12 +344,14 @@ export function useScheduler() {
     state.assignments,
     state.comments,
     state.activity,
+    state.activityLogs,
     state.purposeOptions,
     state.customerDepartmentOptions,
     state.internalDepartmentOptions,
     state.siteCodeOptions,
     state.siteColors,
     state.customerOptions,
+    state.endCustomerOptions,
     state.removedOptions,
     state.activePlants,
     state.plants,
@@ -459,6 +509,7 @@ export function useScheduler() {
   const goAdmin = () => setState({ page: 'admin', userMenuOpen: false, selected: null });
   const goProfile = () => setState({ page: 'profile', userMenuOpen: false, selected: null, sidebarOpen: false });
   const goSummary = () => setState({ page: 'summary', userMenuOpen: false, selected: null, sidebarOpen: false });
+  const goHistory = () => setState({ page: 'history', userMenuOpen: false, selected: null, sidebarOpen: false });
   const setScale = (sc: State['timeScale']) =>
     setState((s) => {
       const patch: Partial<State> = { timeScale: sc, selected: null, sidebarOpen: false };
@@ -660,6 +711,7 @@ export function useScheduler() {
     });
 
     log('You', `removed ${apptTitle(a)} appointment`, '#2756d6');
+    logActivity('DELETE', 'APPOINTMENT', `Deleted appointment for "${apptTitle(a)}"`, { assignmentId: aid });
   };
   const duplicate = (aid: string) => {
     const a = S.assignments.find((x) => x.id === aid);
@@ -832,6 +884,7 @@ export function useScheduler() {
     const prefix = d.sectionType === 'internal' ? 'IA' : 'CS';
     const name = d.sectionType === 'internal' ? (d.area || 'Internal Audit') : (d.customer || 'Customer Audit');
     log('You', `created ${prefix} · ${name}`, '#2756d6');
+    logActivity('CREATE', 'APPOINTMENT', `Created appointment for "${prefix} · ${name}"`, { customer: d.customer, site: d.sectionType === 'internal' ? d.site2 : d.site1 });
   };
 
   // ---- edit modal ----
@@ -1072,6 +1125,7 @@ export function useScheduler() {
     const prefix = d.sectionType === 'internal' ? 'IA' : 'CS';
     const name = d.sectionType === 'internal' ? (d.area || 'Internal Audit') : (d.customer || 'Customer Audit');
     log('You', `edited ${prefix} · ${name}`, '#2756d6');
+    logActivity('UPDATE', 'APPOINTMENT', `Updated appointment details for "${prefix} · ${name}"`, { targetId: d.targetId });
     setState({ editOpen: false });
   };
 
@@ -1185,15 +1239,37 @@ export function useScheduler() {
     auditorOptions: 'auditor',
   };
 
+  const entityTypeMap: Record<OptionListField, EntityType> = {
+    siteCodeOptions: 'SITE',
+    customerOptions: 'CUSTOMER',
+    endCustomerOptions: 'END_CUSTOMER',
+    auditorOptions: 'AUDITOR',
+    customerDepartmentOptions: 'STANDARD',
+    internalDepartmentOptions: 'STANDARD',
+    purposeOptions: 'STANDARD',
+  };
+
+  const entityNameMap: Record<OptionListField, string> = {
+    siteCodeOptions: 'Site',
+    customerOptions: 'Customer',
+    endCustomerOptions: 'End Customer',
+    auditorOptions: 'Auditor',
+    customerDepartmentOptions: 'Customer Standard',
+    internalDepartmentOptions: 'Internal Standard',
+    purposeOptions: 'Purpose',
+  };
+
   const addOption = (field: OptionListField, value: string, meta = '') => {
     const v = value.trim();
     if (!v) return;
     const category = fieldToCategory[field];
     if (category) api.saveOption(category, v, meta).catch(() => {});
+    logActivity('CREATE', entityTypeMap[field] || 'OTHER', `Added ${entityNameMap[field] || 'option'} tag "${v}"`);
     setState((s) => (s[field].includes(v) ? {} : { [field]: [...s[field], v] }));
   };
 
   const reorderOptions = (field: OptionListField, list: string[]) => {
+    logActivity('REORDER', entityTypeMap[field] || 'OTHER', `Reordered ${entityNameMap[field] || 'option'} tags`);
     setState({ [field]: list });
   };
 
@@ -1231,6 +1307,7 @@ export function useScheduler() {
 
     const category = fieldToCategory[field];
     if (category) api.deleteOption(category, v).catch(() => {});
+    logActivity('DELETE', entityTypeMap[field] || 'OTHER', `Deleted ${entityNameMap[field] || 'option'} tag "${v}"`);
     setState((s) => {
       const fieldList = (s[field] || []).filter((x) => x !== v);
       const removedOptions = (s.removedOptions || []).includes(v) ? (s.removedOptions || []) : [...(s.removedOptions || []), v];
@@ -2511,9 +2588,10 @@ export function useScheduler() {
     onPass: (e: React.ChangeEvent<HTMLInputElement>) => setState({ loginPass: e.target.value }),
     onLoginKey: (e: React.KeyboardEvent) => { if (e.key === 'Enter') signIn(); },
     signIn, signOut,
-    isSchedule: S.page === 'schedule', isAdmin: S.page === 'admin', isProfile: S.page === 'profile', isSummary: S.page === 'summary',
-    goSchedule, goAdmin, goProfile, goSummary,
-    navSchedStyle: S.page === 'schedule' ? tabOn : tabOff, navAdminStyle: S.page === 'admin' ? tabOn : tabOff, navSummaryStyle: S.page === 'summary' ? tabOn : tabOff,
+    isSchedule: S.page === 'schedule', isAdmin: S.page === 'admin', isProfile: S.page === 'profile', isSummary: S.page === 'summary', isHistory: S.page === 'history',
+    goSchedule, goAdmin, goProfile, goSummary, goHistory,
+    navSchedStyle: S.page === 'schedule' ? tabOn : tabOff, navAdminStyle: S.page === 'admin' ? tabOn : tabOff, navSummaryStyle: S.page === 'summary' ? tabOn : tabOff, navHistoryStyle: S.page === 'history' ? tabOn : tabOff,
+    activityLogs: S.activityLogs || [],
     userMenuOpen: S.userMenuOpen, toggleUserMenu,
     isPerson: S.view === 'person', isPlant: S.view === 'plant', isSiteDept: S.view === 'site',
     isMonth, isYear,

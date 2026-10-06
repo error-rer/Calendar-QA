@@ -22,6 +22,7 @@ export function Header({ vm }: { vm: VM }) {
         <button onClick={vm.goSchedule} style={vm.navSchedStyle}>Schedule</button>
         <button onClick={vm.goSummary} style={vm.navSummaryStyle}>Summary</button>
         <button onClick={vm.goAdmin} style={vm.navAdminStyle}>Manage</button>
+        <button onClick={vm.goHistory} style={vm.navHistoryStyle}>History</button>
       </div>
 
       <div style={css('flex:1')} />

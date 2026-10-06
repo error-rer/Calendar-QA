@@ -1,4 +1,4 @@
-import type { Activity, Assignment, Comment, Engineer, Order, Plant } from './types';
+import type { Activity, ActivityLog, Assignment, Comment, Engineer, Order, Plant } from './types';
 
 const BASE = '/api';
 
@@ -10,6 +10,7 @@ export interface ApiState {
   assignments: Assignment[];
   comments: Record<string, Comment[]>;
   activity: Activity[];
+  activityLogs?: ActivityLog[];
   purposeOptions?: string[];
   customerDepartmentOptions?: string[];
   internalDepartmentOptions?: string[];
