@@ -153,11 +153,12 @@ function ApptCard({ chip }: { chip: any }) {
   const cancelDelete = () => setConfirmDelete(null);
 
   const isInc = chip.isIncomplete;
+  const isNew = isNewlyCreated(chip);
   const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
-  const barBg = isInc ? '#FC0000' : '#fff';
+  const barBg = isInc ? '#FC0000' : (isNew ? '#374151' : '#fff');
   const accentBg = isInc ? '#b91c1c' : getAccentBackground(chColors);
   const titleColor = isInc ? '#FFFFFF' : (chip.isInternal ? '#10b981' : '#2756d6');
-  const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
+  const purposeColor = isInc ? '#FFFFFF' : (isNew ? '#FFFFFF' : '#5c625c');
   const cardBorder = isInc ? '1px solid #b91c1c' : '1px solid #e4e7e0';
 
   return (
@@ -1466,7 +1467,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
                 const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
                 const barBg = isInc ? '#FC0000' : (isNew ? '#374151' : '#f0f2ec');
                 const titleColor = isInc ? '#FFFFFF' : (chip.isInternal ? '#10b981' : '#2756d6');
-                const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
+                const purposeColor = isInc ? '#FFFFFF' : (isNew ? '#FFFFFF' : '#5c625c');
                 const accentBg = isInc ? '#b91c1c' : getAccentBackground(chColors);
 
                 return (
@@ -1507,7 +1508,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
         const spColors = sp.colors && sp.colors.length > 0 ? sp.colors : [sp.color];
         const barBg = isInc ? '#FC0000' : (isNew ? '#374151' : '#f0f2ec');
         const titleColor = isInc ? '#FFFFFF' : (sp.isInternal ? '#10b981' : '#2756d6');
-        const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
+        const purposeColor = isInc ? '#FFFFFF' : (isNew ? '#FFFFFF' : '#5c625c');
         const accentBg = isInc ? '#b91c1c' : getAccentBackground(spColors);
 
         return (
@@ -1774,7 +1775,7 @@ function MonthGrid({ vm }: { vm: VM }) {
                   const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
                   const barBg = isInc ? '#FC0000' : (isNew ? '#374151' : '#f0f2ec');
                   const titleColor = isInc ? '#FFFFFF' : (ch.isInternal ? '#10b981' : '#2756d6');
-                  const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
+                  const purposeColor = isInc ? '#FFFFFF' : (isNew ? '#FFFFFF' : '#5c625c');
                   const accentBg = isInc ? '#b91c1c' : getAccentBackground(chColors);
 
                   return (
@@ -1878,10 +1879,11 @@ function MonthMobile({ vm }: { vm: VM }) {
               <div style={css('display:flex;flex-direction:column;gap:2px;margin-top:1px')}>
                 {(c.chips ?? []).map((ch, ci) => {
                   const isInc = ch.isIncomplete;
+                  const isNew = isNewlyCreated(ch);
                   const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
-                  const barBg = isInc ? '#FC0000' : '#f0f2ec';
+                  const barBg = isInc ? '#FC0000' : (isNew ? '#374151' : '#f0f2ec');
                   const titleColor = isInc ? '#FFFFFF' : (ch.isInternal ? '#10b981' : '#2756d6');
-                  const purposeColor = isInc ? '#FFFFFF' : '#5c625c';
+                  const purposeColor = isInc ? '#FFFFFF' : (isNew ? '#FFFFFF' : '#5c625c');
                   const accentBg = isInc ? '#b91c1c' : getAccentBackground(chColors);
 
                   return (
