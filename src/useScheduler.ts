@@ -864,23 +864,37 @@ export function useScheduler() {
     }
     newAuditorNames.forEach((n) => { api.saveOption('auditor', n).catch(() => {}); });
     newAssignments.forEach((a) => api.createAssignment(a).catch(() => {}));
-    setState((s) => ({
-      orders: s.orders.concat([newOrder]),
-      engineers: existingEng ? s.engineers : s.engineers.concat([newEngineer]),
-      assignments: s.assignments.concat(newAssignments),
-      customerOptions: newCustomer && !s.customerOptions.includes(newCustomer) ? [...s.customerOptions, newCustomer] : s.customerOptions,
-      endCustomerOptions: newEndCustomer && !(s.endCustomerOptions || []).includes(newEndCustomer) ? [...(s.endCustomerOptions || []), newEndCustomer] : (s.endCustomerOptions || []),
-      purposeOptions: newPurpose && !s.purposeOptions.includes(newPurpose) ? [...s.purposeOptions, newPurpose] : s.purposeOptions,
-      auditorOptions: (() => {
-        let opts = s.auditorOptions || [];
-        for (const n of newAuditorNames) {
-          if (!opts.includes(n)) opts = [...opts, n];
+    setState((s) => {
+      const cleanCust = newCustomer.trim();
+      let nextCustOpts = s.customerOptions || [];
+      let nextRemovedOpts = s.removedOptions || [];
+
+      if (cleanCust) {
+        if (!nextCustOpts.some((c) => c.trim().toLowerCase() === cleanCust.toLowerCase())) {
+          nextCustOpts = [...nextCustOpts, cleanCust];
         }
-        return opts;
-      })(),
-      selected: newAssignments[newAssignments.length - 1].id,
-      createOpen: false,
-    }));
+        nextRemovedOpts = nextRemovedOpts.filter((r) => r.trim().toLowerCase() !== cleanCust.toLowerCase());
+      }
+
+      return {
+        orders: s.orders.concat([newOrder]),
+        engineers: existingEng ? s.engineers : s.engineers.concat([newEngineer]),
+        assignments: s.assignments.concat(newAssignments),
+        customerOptions: nextCustOpts,
+        removedOptions: nextRemovedOpts,
+        endCustomerOptions: newEndCustomer && !(s.endCustomerOptions || []).includes(newEndCustomer) ? [...(s.endCustomerOptions || []), newEndCustomer] : (s.endCustomerOptions || []),
+        purposeOptions: newPurpose && !s.purposeOptions.includes(newPurpose) ? [...s.purposeOptions, newPurpose] : s.purposeOptions,
+        auditorOptions: (() => {
+          let opts = s.auditorOptions || [];
+          for (const n of newAuditorNames) {
+            if (!opts.includes(n)) opts = [...opts, n];
+          }
+          return opts;
+        })(),
+        selected: newAssignments[newAssignments.length - 1].id,
+        createOpen: false,
+      };
+    });
     const prefix = d.sectionType === 'internal' ? 'IA' : 'CS';
     const name = d.sectionType === 'internal' ? (d.area || 'Internal Audit') : (d.customer || 'Customer Audit');
     log('You', `created ${prefix} · ${name}`, '#2756d6');
@@ -1036,14 +1050,27 @@ export function useScheduler() {
 
       const nextAssignments = others.concat(updated);
 
-      let nextCustomerOptions = s.customerOptions;
-      if (newCustomer && !nextCustomerOptions.includes(newCustomer)) {
-        nextCustomerOptions = [...nextCustomerOptions, newCustomer];
+      let nextCustomerOptions = s.customerOptions || [];
+      let nextRemovedOptions = s.removedOptions || [];
+      let nextFilterCompany = s.filterCompany || [];
+
+      if (newCustomer) {
+        if (!nextCustomerOptions.some((c) => c.trim().toLowerCase() === newCustomer.toLowerCase())) {
+          nextCustomerOptions = [...nextCustomerOptions, newCustomer];
+        }
+        nextRemovedOptions = nextRemovedOptions.filter((r) => r.trim().toLowerCase() !== newCustomer.toLowerCase());
       }
-      if (oldCustomer && oldCustomer !== newCustomer) {
-        const isOldCustomerStillUsed = nextAssignments.some((a) => a.customer === oldCustomer);
+
+      if (oldCustomer && oldCustomer.toLowerCase() !== newCustomer.toLowerCase()) {
+        const isOldCustomerStillUsed = nextAssignments.some(
+          (a) => (a.customer || '').trim().toLowerCase() === oldCustomer.toLowerCase()
+        );
         if (!isOldCustomerStillUsed) {
-          nextCustomerOptions = nextCustomerOptions.filter((c) => c !== oldCustomer);
+          nextCustomerOptions = nextCustomerOptions.filter((c) => c.trim().toLowerCase() !== oldCustomer.toLowerCase());
+          if (!nextRemovedOptions.some((r) => r.trim().toLowerCase() === oldCustomer.toLowerCase())) {
+            nextRemovedOptions = [...nextRemovedOptions, oldCustomer];
+          }
+          nextFilterCompany = nextFilterCompany.filter((f) => f.trim().toLowerCase() !== oldCustomer.toLowerCase());
           api.deleteOption('customer_name', oldCustomer).catch(() => {});
         }
       }
@@ -1117,6 +1144,8 @@ export function useScheduler() {
         comments,
         engineers: updatedEngineers,
         customerOptions: nextCustomerOptions,
+        removedOptions: nextRemovedOptions,
+        filterCompany: nextFilterCompany,
         endCustomerOptions: nextEndCustomerOptions,
         purposeOptions: nextPurposeOptions,
         auditorOptions: nextAuditorOptions,
@@ -1265,7 +1294,16 @@ export function useScheduler() {
     const category = fieldToCategory[field];
     if (category) api.saveOption(category, v, meta).catch(() => {});
     logActivity('CREATE', entityTypeMap[field] || 'OTHER', `Added ${entityNameMap[field] || 'option'} tag "${v}"`);
-    setState((s) => (s[field].includes(v) ? {} : { [field]: [...s[field], v] }));
+    setState((s) => {
+      const fieldList = s[field] || [];
+      const exists = fieldList.some((x) => x.trim().toLowerCase() === v.toLowerCase());
+      const nextField = exists ? fieldList : [...fieldList, v];
+      const nextRemoved = (s.removedOptions || []).filter((r) => r.trim().toLowerCase() !== v.toLowerCase());
+      return {
+        [field]: nextField,
+        removedOptions: nextRemoved,
+      };
+    });
   };
 
   const reorderOptions = (field: OptionListField, list: string[]) => {
@@ -2309,10 +2347,22 @@ export function useScheduler() {
   const removedSet = useMemo(() => new Set(S.removedOptions || []), [S.removedOptions]);
 
   const computedCustomerOptions = useMemo(() => {
-    const active = S.assignments.map((a) => a.customer).filter((c): c is string => Boolean(c) && !removedSet.has(c as string));
-    const baseList = S.customerOptions || [];
-    const activeExtra = Array.from(new Set(active)).filter((c) => !baseList.includes(c));
-    return Array.from(new Set([...baseList, ...activeExtra])).filter((c) => !removedSet.has(c));
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const active = S.assignments
+      .map((a) => (a.customer || '').trim())
+      .filter((c) => Boolean(c) && !removedSetLower.has(c.toLowerCase()));
+    const baseList = (S.customerOptions || [])
+      .map((c) => c.trim())
+      .filter((c) => Boolean(c) && !removedSetLower.has(c.toLowerCase()));
+
+    const uniqueMap = new Map<string, string>();
+    for (const c of [...baseList, ...active]) {
+      const key = c.toLowerCase();
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, c);
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }, [S.assignments, S.customerOptions, removedSet]);
 
   const computedEndCustomerOptions = useMemo(() => {
