@@ -6,7 +6,7 @@ import { AvailabilityDatePicker } from './AvailabilityDatePicker';
 const fld = css("display:flex;flex-direction:column;gap:4px");
 const lbl = css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px");
 const inp = css("border:1px solid #dde0d9;border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fff;width:100%;box-sizing:border-box");
-const sel = inp;
+
 
 interface DateInputFieldProps {
   id: string;
@@ -211,6 +211,69 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
           'width:38px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#23282a;padding:0'
         )}
       />
+    </div>
+  );
+}
+
+function StandardSelect({
+  id,
+  value,
+  onChange,
+  options,
+  placeholder = 'Select standard...',
+}: {
+  id: string;
+  value: string;
+  onChange: (val: string) => void;
+  options: string[];
+  placeholder?: string;
+}) {
+  return (
+    <div style={{ position: 'relative', width: '100%' }}>
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          border: '1px solid #dde0d9',
+          borderRadius: '8px',
+          padding: '8px 24px 8px 10px',
+          fontSize: '12.5px',
+          fontFamily: "'Archivo',sans-serif",
+          color: value ? '#23282a' : '#8a9088',
+          outline: 'none',
+          background: '#fff',
+          width: '100%',
+          boxSizing: 'border-box',
+          cursor: 'pointer',
+          appearance: 'none',
+          WebkitAppearance: 'none',
+          MozAppearance: 'none',
+        }}
+      >
+        <option value="" style={{ color: '#8a9088' }}>
+          {placeholder}
+        </option>
+        {options.map((opt) => (
+          <option key={opt} value={opt} style={{ color: '#23282a' }}>
+            {opt}
+          </option>
+        ))}
+      </select>
+      <span
+        style={{
+          position: 'absolute',
+          right: '10px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          fontSize: '9px',
+          color: '#8a9088',
+          pointerEvents: 'none',
+          userSelect: 'none',
+        }}
+      >
+        ▼
+      </span>
     </div>
   );
 }
@@ -1028,7 +1091,7 @@ export function AppointmentFormFields({
           cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", textAlign: 'center',
           background: v.sectionType === 'customer' ? '#15191e' : '#fff',
           color: v.sectionType === 'customer' ? '#fff' : '#5c625c',
-        }}>Customer</div>
+        }}>Customer Audit</div>
         <div onClick={() => onChange({ sectionType: 'internal' })} style={{
           flex: 1, padding: '9px 0', borderRadius: '8px', border: '1px solid ' + (v.sectionType === 'internal' ? '#15191e' : '#dde0d9'),
           cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", textAlign: 'center',
@@ -1044,21 +1107,17 @@ export function AppointmentFormFields({
             {/* 1. STANDARD */}
             <div style={fld}>
               <label htmlFor={id('department1')} style={lbl}>STANDARD</label>
-              <select
+              <StandardSelect
                 id={id('department1')}
                 value={v.department1}
-                onChange={(e) => {
-                  const newDept = e.target.value;
+                onChange={(newDept) => {
                   const currentSites = v.site1.split('/').map((s) => s.trim()).filter(Boolean);
                   // Re-validate against the fixed customer site list
                   const validSites = currentSites.filter((s) => customerSiteOptions.includes(s));
                   onChange({ department1: newDept, site1: validSites.join('/') });
                 }}
-                style={sel}
-              >
-                <option value="">Select standard...</option>
-                {customerDepartmentOptions.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
+                options={customerDepartmentOptions}
+              />
             </div>
 
             {/* 2. SITE */}
@@ -1160,20 +1219,16 @@ export function AppointmentFormFields({
             {/* 1. STANDARD */}
             <div style={fld}>
               <label htmlFor={id('department2')} style={lbl}>STANDARD</label>
-              <select
+              <StandardSelect
                 id={id('department2')}
                 value={v.department2}
-                onChange={(e) => {
-                  const newDept = e.target.value;
+                onChange={(newDept) => {
                   const currentSites = v.site2.split('/').map((s) => s.trim()).filter(Boolean);
                   const validSites = currentSites.filter((s) => !newDept || newDept !== 'EHS' || ['U1', 'U2', 'U3'].includes(s));
                   onChange({ department2: newDept, site2: validSites.join('/') });
                 }}
-                style={sel}
-              >
-                <option value="">Select standard...</option>
-                {internalDepartmentOptions.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
+                options={internalDepartmentOptions}
+              />
             </div>
 
             {/* 2. SITE */}

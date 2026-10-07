@@ -718,7 +718,7 @@ export function useScheduler() {
     if (!a) return;
     const nd = a.day < 4 ? a.day + 1 : a.day - 1;
     const id = 'a' + ids.current.id++;
-    const clone = { ...a, id, day: nd };
+    const clone = { ...a, id, day: nd, createdAt: Date.now() };
     api.createAssignment(clone).catch(() => {});
     setState((s) => ({ assignments: s.assignments.concat([clone]), selected: id }));
     log('You', `duplicated ${apptTitle(a)} → ${dayLabels[nd]}`, '#2756d6');
@@ -1011,19 +1011,21 @@ export function useScheduler() {
     const siblingIds = new Set(siblings.map((x) => x.id));
     const others = S.assignments.filter((x) => !siblingIds.has(x.id));
     const reuseIds = [d.targetId, ...siblings.filter((x) => x.id !== d.targetId).map((x) => x.id)];
+    const originalCreatedAt = target.createdAt || siblings.find((x) => x.createdAt)?.createdAt;
     const updated: Assignment[] = slots.map((slot, i) => ({
       id: reuseIds[i] || 'a' + ids.current.id++,
       eng: finalEngId, order: target.order,
       day: slot.wd, week: slot.weekOffset,
+      createdAt: originalCreatedAt,
       ...fields,
     }));
     const droppedIds = reuseIds.slice(slots.length);
 
     updated.forEach((a, i) => {
-      if (i < siblings.length) api.updateAssignment(a.id, { eng: a.eng, day: a.day, week: a.week, ...fields }).catch(() => {});
+      if (i < siblings.length) api.updateAssignment(a.id, { eng: a.eng, day: a.day, week: a.week, createdAt: a.createdAt, ...fields }).catch(() => {});
       else api.createAssignment(a).catch(() => {});
     });
-    droppedIds.forEach((id) => api.deleteAssignment(id).catch(() => {}));
+    droppedIds.forEach((id: string) => api.deleteAssignment(id).catch(() => {}));
 
     const oldCustomer = target.customer || '';
     const newCustomer = d.sectionType === 'customer' && d.customer ? d.customer.trim() : '';
@@ -1792,6 +1794,7 @@ export function useScheduler() {
       department1: a.department1 || '',
       department2: a.department2 || '',
       apptPurpose: a.purpose || '',
+      createdAt: a.createdAt,
       major: a.major,
       minor: a.minor,
       ofi: a.ofi,
