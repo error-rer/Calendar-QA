@@ -386,6 +386,7 @@ function AutocompleteInput({
   const [open, setOpen] = useState(false);
   const [removedItems, setRemovedItems] = useState<Set<string>>(new Set());
   const ref = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -423,19 +424,65 @@ function AutocompleteInput({
 
   return (
     <div ref={ref} style={{ position: 'relative', width: '100%' }}>
-      <input
-        id={id}
-        type="text"
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
+      <div
+        onClick={() => {
+          inputRef.current?.focus();
           setOpen(true);
         }}
-        onFocus={() => setOpen(true)}
-        placeholder={placeholder}
-        style={inp}
-        autoComplete="off"
-      />
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          border: '1px solid #dde0d9',
+          borderRadius: '8px',
+          background: '#fff',
+          width: '100%',
+          boxSizing: 'border-box',
+          paddingRight: '8px',
+          cursor: 'text',
+        }}
+      >
+        <input
+          ref={inputRef}
+          id={id}
+          type="text"
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          placeholder={placeholder}
+          style={{
+            border: 'none',
+            outline: 'none',
+            background: 'transparent',
+            borderRadius: '8px',
+            padding: '8px 10px',
+            fontSize: '12.5px',
+            fontFamily: "'Archivo',sans-serif",
+            color: '#23282a',
+            width: '100%',
+            boxSizing: 'border-box',
+          }}
+          autoComplete="off"
+        />
+        <span
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen((prev) => !prev);
+          }}
+          style={{
+            fontSize: '9px',
+            color: '#8a9088',
+            cursor: 'pointer',
+            padding: '2px',
+            userSelect: 'none',
+            flexShrink: 0,
+          }}
+        >
+          {open ? '▲' : '▼'}
+        </span>
+      </div>
       {open && (matches.length > 0 || (onAddNew && rawVal.trim() && !exactMatchExists)) && (
         <div
           style={{
