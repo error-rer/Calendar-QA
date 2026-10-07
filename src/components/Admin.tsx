@@ -2,8 +2,6 @@ import { useState } from 'react';
 import type { VM } from '../useScheduler';
 import { css, HButton } from '../ui';
 
-const engGrid = 'display:grid;grid-template-columns:minmax(180px,1.4fr) 2fr 80px 50px;gap:0';
-
 export function Admin({ vm }: { vm: VM }) {
   return (
     <main className="scrl" style={vm.adminMainStyle}>
@@ -157,8 +155,7 @@ function EngineersTable({ vm }: { vm: VM }) {
             setDropTargetIdx(null);
           }}
           style={css(
-            engGrid +
-              ';padding:12px 18px;border-bottom:1px solid #f2f4ee;align-items:center;transition:background 0.15s ease, transform 0.15s ease;background:' +
+            'display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #f2f4ee;transition:background 0.15s ease, transform 0.15s ease;background:' +
               (dropTargetIdx === idx && draggedIdx !== idx ? '#eef2fd' : '#fff') +
               ';opacity:' +
               (draggedIdx === idx ? '0.4' : '1') +
@@ -167,9 +164,9 @@ function EngineersTable({ vm }: { vm: VM }) {
               ';cursor:grab'
           )}
         >
-          <div style={css('display:flex;align-items:center;gap:8px;min-width:0')}>
-            <span style={css('color:#a6aca2;font-size:12px;cursor:grab;user-select:none;line-height:1;padding:2px')}>⋮⋮</span>
-            <div onClick={() => vm.openEditEngineer(e.id)} style={css('display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer')}>
+          <div style={css('display:flex;align-items:center;gap:10px;min-width:0;flex:1')}>
+            <span style={css('color:#a6aca2;font-size:12px;cursor:grab;user-select:none;line-height:1;padding:2px;flex-shrink:0')}>⋮⋮</span>
+            <div onClick={() => vm.openEditEngineer(e.id)} style={css('display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer;flex:1')}>
               <div style={e.avatarStyle}>{e.initials}</div>
               <div style={css('min-width:0')}>
                 <div style={css('font-size:12.5px;font-weight:600;color:#23282a;text-decoration:none')}>
@@ -179,8 +176,7 @@ function EngineersTable({ vm }: { vm: VM }) {
               </div>
             </div>
           </div>
-          <div style={css("text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:#3c423d")}>{e.appointments}</div>
-          <button onClick={e.onDelete} style={css('background:none;border:none;cursor:pointer;color:#bcc1b8;font-size:13px;padding:2px')}>✕</button>
+          <button onClick={e.onDelete} style={css('background:none;border:none;cursor:pointer;color:#bcc1b8;font-size:13px;padding:4px 8px;flex-shrink:0')}>✕</button>
         </div>
       ))}
       {vm.adminEngineers.length === 0 && (
