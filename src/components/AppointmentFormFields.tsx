@@ -1085,7 +1085,7 @@ export function AppointmentFormFields({
 
   return (
     <>
-      <div style={css('display:flex;gap:8px;margin-bottom:4px')}>
+      <div style={css('display:flex;gap:8px;margin-bottom:12px')}>
         <div onClick={() => onChange({ sectionType: 'customer' })} style={{
           flex: 1, padding: '9px 0', borderRadius: '8px', border: '1px solid ' + (v.sectionType === 'customer' ? '#15191e' : '#dde0d9'),
           cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", textAlign: 'center',
@@ -1102,7 +1102,6 @@ export function AppointmentFormFields({
 
       {v.sectionType === 'customer' && (
         <div style={css('padding:14px;border:1px solid #e8ebe4;border-radius:10px;background:#fafbf9')}>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#6a706a;letter-spacing:.5px;margin-bottom:12px")}>CUSTOMER</div>
           <div style={css('display:grid;grid-template-columns:1fr 1fr;gap:14px')}>
             {/* 1. STANDARD */}
             <div style={fld}>
@@ -1214,7 +1213,6 @@ export function AppointmentFormFields({
 
       {v.sectionType === 'internal' && (
         <div style={css('padding:14px;border:1px solid #e8ebe4;border-radius:10px;background:#fafbf9')}>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#6a706a;letter-spacing:.5px;margin-bottom:12px")}>INTERNAL AUDIT</div>
           <div style={css('display:grid;grid-template-columns:1fr 1fr;gap:14px')}>
             {/* 1. STANDARD */}
             <div style={fld}>
