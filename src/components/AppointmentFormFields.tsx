@@ -1137,7 +1137,7 @@ export function AppointmentFormFields({
                 id={id('customer')}
                 value={v.customer}
                 onChange={(customer) => onChange({ customer })}
-                placeholder="Type customer name..."
+                placeholder="Type or select customer name..."
                 suggestions={customerSuggestions}
                 onRemoveOption={removeCustomerOption}
               />
@@ -1150,7 +1150,7 @@ export function AppointmentFormFields({
                 id={id('endCustomer')}
                 value={v.endCustomer}
                 onChange={(endCustomer) => onChange({ endCustomer })}
-                placeholder="Type end customer..."
+                placeholder="Type or select end customer..."
                 suggestions={endCustomerSuggestions}
                 onRemoveOption={removeEndCustomerOption || removeGenericOption}
               />
@@ -1247,7 +1247,7 @@ export function AppointmentFormFields({
                 id={id('area')}
                 value={v.area}
                 onChange={(area) => onChange({ area })}
-                placeholder="Type area..."
+                placeholder="Type or select area..."
                 suggestions={areaSuggestions}
                 onRemoveOption={removeGenericOption}
               />
