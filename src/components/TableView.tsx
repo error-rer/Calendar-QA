@@ -277,6 +277,40 @@ export function TableView({ vm }: { vm: VM }) {
     URL.revokeObjectURL(url);
   };
 
+  // Excel (.xlsx) Export with column widths and styled worksheet
+  const handleExportExcel = async () => {
+    const XLSX = await import('xlsx');
+    const headers = ['DD/MM/YYYY', 'Audit Type', 'Customer', 'Site', 'Standard', 'Purpose', 'Auditor'];
+    const rows = sortedRows.map((r) => [
+      r.dateStr,
+      r.auditType,
+      r.customer,
+      r.site,
+      r.standard,
+      r.purpose,
+      r.auditor,
+    ]);
+
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+
+    // Set column widths for optimal reading in Excel
+    worksheet['!cols'] = [
+      { wch: 14 }, // DD/MM/YYYY
+      { wch: 18 }, // Audit Type
+      { wch: 22 }, // Customer
+      { wch: 10 }, // Site
+      { wch: 18 }, // Standard
+      { wch: 28 }, // Purpose
+      { wch: 22 }, // Auditor
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Audit Schedule');
+
+    const todayISO = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `calendar-qa-audits-${todayISO}.xlsx`);
+  };
+
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     vm.removeAssign(id);
@@ -302,6 +336,22 @@ export function TableView({ vm }: { vm: VM }) {
         </div>
 
         <div style={css('display:flex;align-items:center;gap:8px')}>
+          <HButton
+            onClick={handleExportExcel}
+            title="Download formatted Microsoft Excel (.xlsx) spreadsheet"
+            style={css("background:#fff;border:1px solid #c5ebd0;color:#0f7e3e;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;display:flex;align-items:center;gap:6px")}
+            hover={{ background: '#f0fdf4' }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <polyline points="14 2 14 8 20 8" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="8" y1="13" x2="16" y2="13" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="8" y1="17" x2="16" y2="17" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <polyline points="10 9 9 9 8 9" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Export Excel
+          </HButton>
+
           <HButton
             onClick={handleExportCSV}
             title="Download CSV file matching the 7-column layout"
