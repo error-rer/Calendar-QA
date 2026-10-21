@@ -217,7 +217,7 @@ export interface ActivityLog {
   metadata?: Record<string, any>;
 }
 
-export type Page = 'schedule' | 'admin' | 'profile' | 'summary' | 'history';
+export type Page = 'schedule' | 'table' | 'admin' | 'profile' | 'summary' | 'history';
 export type View = 'person' | 'plant' | 'site' | 'timetable';
 export type TimeScale = 'week' | 'month' | 'year' | 'search';
 export interface GoogleSheetsConfig {

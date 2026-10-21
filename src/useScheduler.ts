@@ -532,6 +532,7 @@ export function useScheduler() {
   const signIn = () => setState({ authed: true, weekOffset: todayWeekOffset, monthOffset: todayMonthOffset });
   const signOut = () => setState({ authed: false, userMenuOpen: false, selected: null });
   const goSchedule = () => setState({ page: 'schedule', userMenuOpen: false });
+  const goTable = () => setState({ page: 'table', userMenuOpen: false, selected: null, sidebarOpen: false });
   const goAdmin = () => setState({ page: 'admin', userMenuOpen: false, selected: null });
   const goProfile = () => setState({ page: 'profile', userMenuOpen: false, selected: null, sidebarOpen: false });
   const goSummary = () => setState({ page: 'summary', userMenuOpen: false, selected: null, sidebarOpen: false });
@@ -2782,9 +2783,9 @@ export function useScheduler() {
     onPass: (e: React.ChangeEvent<HTMLInputElement>) => setState({ loginPass: e.target.value }),
     onLoginKey: (e: React.KeyboardEvent) => { if (e.key === 'Enter') signIn(); },
     signIn, signOut,
-    isSchedule: S.page === 'schedule', isAdmin: S.page === 'admin', isProfile: S.page === 'profile', isSummary: S.page === 'summary', isHistory: S.page === 'history',
-    goSchedule, goAdmin, goProfile, goSummary, goHistory,
-    navSchedStyle: S.page === 'schedule' ? tabOn : tabOff, navAdminStyle: S.page === 'admin' ? tabOn : tabOff, navSummaryStyle: S.page === 'summary' ? tabOn : tabOff, navHistoryStyle: S.page === 'history' ? tabOn : tabOff,
+    isSchedule: S.page === 'schedule', isTable: S.page === 'table', isAdmin: S.page === 'admin', isProfile: S.page === 'profile', isSummary: S.page === 'summary', isHistory: S.page === 'history',
+    goSchedule, goTable, goAdmin, goProfile, goSummary, goHistory,
+    navSchedStyle: S.page === 'schedule' ? tabOn : tabOff, navTableStyle: S.page === 'table' ? tabOn : tabOff, navAdminStyle: S.page === 'admin' ? tabOn : tabOff, navSummaryStyle: S.page === 'summary' ? tabOn : tabOff, navHistoryStyle: S.page === 'history' ? tabOn : tabOff,
     activityLogs: S.activityLogs || [],
     userMenuOpen: S.userMenuOpen, toggleUserMenu,
     isPerson: S.view === 'person', isPlant: S.view === 'plant', isSiteDept: S.view === 'site',
@@ -2852,7 +2853,7 @@ export function useScheduler() {
     clearFilters,
     dayDialogOpen, dayDialogDate, dayDialogDateISO, dayDialogChips, dayDialogInfo, closeDayDialog,
     openCreate, openCreateWithDate, closeCreate, createOpen: S.createOpen, create, stop: (e: React.MouseEvent) => e.stopPropagation(),
-    editOpen: S.editOpen, editDraft: S.editDraft, setEditDraft, closeEdit, submitEdit,
+    editOpen: S.editOpen, editDraft: S.editDraft, setEditDraft, closeEdit, submitEdit, openEdit: (aid: string) => openEdit(aid), removeAssign: (aid: string) => removeAssign(aid),
     adminStats,
     tabEngineers: S.adminTab === 'engineers', tabOptions: S.adminTab === 'options', tabSheets: S.adminTab === 'sheets',
     setTabEng: () => setAdminTab('engineers'), setTabOptions: () => setAdminTab('options'), setTabSheets: () => setAdminTab('sheets'),
