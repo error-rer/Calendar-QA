@@ -220,7 +220,13 @@ export interface ActivityLog {
 export type Page = 'schedule' | 'admin' | 'profile' | 'summary' | 'history';
 export type View = 'person' | 'plant' | 'site' | 'timetable';
 export type TimeScale = 'week' | 'month' | 'year' | 'search';
-export type AdminTab = 'engineers' | 'options';
+export interface GoogleSheetsConfig {
+  webhookUrl: string;
+  autoSync: boolean;
+  lastSynced?: string;
+}
+
+export type AdminTab = 'engineers' | 'options' | 'sheets';
 
 export interface EngineerForm {
   name: string;
@@ -288,4 +294,5 @@ export interface State {
   comments: Record<string, Comment[]>;
   activity: Activity[];
   activityLogs: ActivityLog[];
+  googleSheetsConfig?: GoogleSheetsConfig;
 }

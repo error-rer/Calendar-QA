@@ -1356,6 +1356,16 @@ function SearchAutoComplete({ vm, inputRef }: { vm: VM; inputRef?: React.RefObje
 
 function Toolbar({ vm }: { vm: VM }) {
   const searchRef = useRef<HTMLInputElement>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncToast, setSyncToast] = useState<string | null>(null);
+
+  const handleManualSync = async () => {
+    setSyncing(true);
+    const res = await vm.syncAllToGoogleSheets();
+    setSyncing(false);
+    setSyncToast(res.success ? `Synced ${res.count ?? 0} appts` : 'Sync failed');
+    setTimeout(() => setSyncToast(null), 3000);
+  };
   return (
     <div style={vm.toolbarStyle}>
       {vm.isMobile && (
@@ -1403,6 +1413,21 @@ function Toolbar({ vm }: { vm: VM }) {
             </span>
           </div>
         </div>
+      )}
+      {vm.googleSheetsConfig?.webhookUrl && (
+        <button
+          onClick={handleManualSync}
+          disabled={syncing}
+          title={syncToast || `Sync to Google Sheets (Last: ${vm.googleSheetsConfig.lastSynced ? new Date(vm.googleSheetsConfig.lastSynced).toLocaleTimeString() : 'Never'})`}
+          style={css("display:flex;align-items:center;gap:6px;border:1px solid #dde0d9;background:#fff;border-radius:8px;padding:7px 11px;font-size:12px;font-weight:600;cursor:pointer;color:#1e7e34;font-family:'Archivo',sans-serif;flex-shrink:0")}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3Z" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M3 9H21" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M9 21V9" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span>{syncing ? 'Syncing...' : syncToast || 'Sync Sheets'}</span>
+        </button>
       )}
       <HButton onClick={vm.openCreate} style={css("background:#15191e;color:#fff;border:none;border-radius:8px;padding:8px 13px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;display:flex;align-items:center;gap:6px;flex-shrink:0")} hover={{ background: '#23282e' }}>
         <span style={css('font-size:14px;line-height:1')}>＋</span>New appointment

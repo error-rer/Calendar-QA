@@ -1,6 +1,7 @@
 interface Env {
   DB: D1Database;
   ASSETS: Fetcher;
+  GOOGLE_SHEETS_WEBHOOK_URL?: string;
 }
 
 function json(data: unknown, status = 200): Response {
@@ -62,6 +63,11 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       const siteCodeOptions: string[] = [];
       const siteColors: Record<string, string> = {};
       const customerOptions: string[] = [];
+      let googleSheetsConfig = {
+        webhookUrl: env.GOOGLE_SHEETS_WEBHOOK_URL || '',
+        autoSync: true,
+        lastSynced: '',
+      };
 
       for (const row of (optionsRows.results as any[] || [])) {
         if (row.category === 'purpose') purposeOptions.push(row.value);
@@ -72,6 +78,13 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
           if (row.meta) siteColors[row.value] = row.meta;
         } else if (row.category === 'customer_name') {
           customerOptions.push(row.value);
+        } else if (row.category === 'google_sheets_config') {
+          try {
+            const parsed = JSON.parse(row.value);
+            googleSheetsConfig = { ...googleSheetsConfig, ...parsed };
+          } catch {}
+        } else if (row.category === 'google_sheets_last_sync') {
+          googleSheetsConfig.lastSynced = row.value;
         }
       }
 
@@ -92,6 +105,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
         siteCodeOptions,
         siteColors,
         customerOptions,
+        googleSheetsConfig,
       });
     }
 
@@ -259,6 +273,96 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
           .bind(category, value).run();
       }
       return json({ ok: true });
+    }
+
+    // --- google-sheets ---
+    if (method === 'GET' && path === 'google-sheets/config') {
+      const row = await DB.prepare("SELECT value FROM options WHERE category = 'google_sheets_config'").first<{ value: string }>();
+      const lastSyncRow = await DB.prepare("SELECT value FROM options WHERE category = 'google_sheets_last_sync'").first<{ value: string }>();
+      let config = {
+        webhookUrl: env.GOOGLE_SHEETS_WEBHOOK_URL || '',
+        autoSync: true,
+        lastSynced: lastSyncRow?.value || '',
+      };
+      if (row) {
+        try {
+          config = { ...config, ...JSON.parse(row.value) };
+        } catch {}
+      }
+      if (lastSyncRow) config.lastSynced = lastSyncRow.value;
+      return json(config);
+    }
+
+    if (method === 'POST' && path === 'google-sheets/config') {
+      const cfg = body || {};
+      await DB.prepare("INSERT OR REPLACE INTO options (category, value, meta) VALUES ('google_sheets_config', ?, '')")
+        .bind(JSON.stringify(cfg)).run();
+      return json({ ok: true });
+    }
+
+    if (method === 'POST' && path === 'google-sheets/sync') {
+      const row = await DB.prepare("SELECT value FROM options WHERE category = 'google_sheets_config'").first<{ value: string }>();
+      let webhookUrl = env.GOOGLE_SHEETS_WEBHOOK_URL || '';
+      if (row) {
+        try {
+          const cfg = JSON.parse(row.value);
+          if (cfg.webhookUrl) webhookUrl = cfg.webhookUrl;
+        } catch {}
+      }
+
+      if (!webhookUrl) {
+        return json({ ok: false, error: 'Google Sheets webhook URL is not configured' }, 400);
+      }
+
+      const syncPayload = body || {};
+
+      // If sync_all without pre-formatted rows, query all from DB
+      if (syncPayload.action === 'sync_all' && (!syncPayload.rows || syncPayload.rows.length === 0)) {
+        const [assignRes, engRes] = await Promise.all([
+          DB.prepare('SELECT * FROM assignments ORDER BY week ASC, day ASC').all(),
+          DB.prepare('SELECT id, name FROM engineers').all(),
+        ]);
+        const engMap = new Map((engRes.results as any[]).map((e) => [e.id, e.name]));
+        const rows = (assignRes.results as any[]).map((a) => {
+          const base = new Date(2026, 5, 29 + (a.week || 0) * 7);
+          base.setDate(base.getDate() + (a.day || 0));
+          const dd = String(base.getDate()).padStart(2, '0');
+          const mm = String(base.getMonth() + 1).padStart(2, '0');
+          const yyyy = base.getFullYear();
+          const dateStr = `${dd}/${mm}/${yyyy}`;
+
+          const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area) || String(a.id || '').startsWith('IA') || String(a.order_id || '').startsWith('IA');
+          const auditType = isInternal ? 'Internal Audit' : 'Customer Audit';
+          const customer = isInternal ? '' : (a.customer || '');
+          const site = (isInternal ? (a.site2 || a.site1) : (a.site1 || a.site2)) || '';
+          const standard = (isInternal ? (a.department2 || a.department1) : (a.department1 || a.department2)) || '';
+          const purpose = (isInternal ? (a.area || a.purpose) : (a.purpose || '')) || '';
+          const auditor = (isInternal ? (a.auditor2 || a.auditor1) : (a.auditor1 || a.auditor2)) || (engMap.get(a.eng) || '');
+
+          return [dateStr, auditType, customer, site, standard, purpose, auditor, a.id];
+        });
+        syncPayload.rows = rows;
+      }
+
+      const resp = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(syncPayload),
+        redirect: 'follow',
+      });
+
+      const nowIso = new Date().toISOString();
+      await DB.prepare("INSERT OR REPLACE INTO options (category, value, meta) VALUES ('google_sheets_last_sync', ?, '')")
+        .bind(nowIso).run();
+
+      let parsedResp = null;
+      try {
+        parsedResp = await resp.json();
+      } catch {
+        parsedResp = { status: resp.status, ok: resp.ok };
+      }
+
+      return json({ ok: true, timestamp: nowIso, googleResponse: parsedResp });
     }
 
     return json({ error: 'not found', path, method }, 404);

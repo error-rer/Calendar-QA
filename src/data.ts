@@ -95,6 +95,14 @@ export function initialState(): State {
     })(),
     activity: snapshot.activity || [],
     activityLogs: snapshot.activityLogs || [],
+    googleSheetsConfig: snapshot.googleSheetsConfig || (() => {
+      try {
+        const saved = typeof window !== 'undefined' ? localStorage.getItem('calendar_qa_google_sheets_config') : null;
+        return saved ? JSON.parse(saved) : { webhookUrl: '', autoSync: true, lastSynced: '' };
+      } catch {
+        return { webhookUrl: '', autoSync: true, lastSynced: '' };
+      }
+    })(),
   };
 }
 
