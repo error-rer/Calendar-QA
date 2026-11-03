@@ -139,6 +139,99 @@ export function formatApptDisplayTitle(a: Assignment, defaultOrder?: { customer?
   }
 }
 
+export function formatDMY(isoOrDate: string | Date): string {
+  if (!isoOrDate) return '';
+  if (isoOrDate instanceof Date) {
+    const d = String(isoOrDate.getDate()).padStart(2, '0');
+    const m = String(isoOrDate.getMonth() + 1).padStart(2, '0');
+    const y = isoOrDate.getFullYear();
+    return `${d}/${m}/${y}`;
+  }
+  const parts = isoOrDate.split('-');
+  if (parts.length === 3) {
+    return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+  }
+  return isoOrDate;
+}
+
+export function formatDateRange(
+  fromDate: string | Date,
+  toDate: string | Date
+): string {
+  const fromStr = formatDMY(fromDate);
+  const toStr = formatDMY(toDate);
+  if (!fromStr && !toStr) return '';
+  if (!fromStr) return toStr;
+  if (!toStr || fromStr === toStr) return fromStr;
+  return `${fromStr} - ${toStr}`;
+}
+
+export function getAssignmentDateFormatted(a: Assignment, allAssignments: Assignment[]): string {
+  if (!a) return '';
+  const siblings = allAssignments.filter((x) => (x.eng === a.eng && x.order === a.order) || x.id === a.id);
+  if (siblings.length === 0) {
+    const d = new Date(2026, 5, 29 + a.week * 7 + a.day);
+    return formatDMY(d);
+  }
+  const minWeek = Math.min(...siblings.map((x) => x.week));
+  const maxWeek = Math.max(...siblings.map((x) => x.week));
+  const minDay = Math.min(...siblings.filter((x) => x.week === minWeek).map((x) => x.day));
+  const maxDay = Math.max(...siblings.filter((x) => x.week === maxWeek).map((x) => x.day));
+  const fromDate = new Date(2026, 5, 29 + minWeek * 7 + minDay);
+  const toDate = new Date(2026, 5, 29 + maxWeek * 7 + maxDay);
+  return formatDateRange(fromDate, toDate);
+}
+
+export interface FormatApptLogRefOptions {
+  isCustomer: boolean;
+  customer?: string;
+  site?: string;
+  standard?: string;
+  area?: string;
+  dateStr: string;
+  isSiteChanged?: boolean;
+  isStandardChanged?: boolean;
+  isAreaChanged?: boolean;
+}
+
+export function formatApptLogRef(opts: FormatApptLogRefOptions): string {
+  const { isCustomer, customer, site, standard, area, dateStr, isSiteChanged, isStandardChanged, isAreaChanged } = opts;
+
+  if (isCustomer) {
+    const custName = (customer || 'Customer Audit').trim();
+    const cleanSite = (site || '').trim();
+    const cleanStd = (standard || '').trim();
+
+    // If site changed AND standard is present, omit site from prefix.
+    // Otherwise, include site in prefix if site is present.
+    const includeSiteInPrefix = cleanSite && (!isSiteChanged || !cleanStd);
+    const prefix = includeSiteInPrefix ? `${custName} - ${cleanSite}` : custName;
+
+    const details: string[] = [];
+    if (dateStr) details.push(dateStr);
+    if (cleanStd && !isStandardChanged) {
+      details.push(`Standard: ${cleanStd}`);
+    }
+
+    return details.length > 0 ? `${prefix} (${details.join(', ')})` : prefix;
+  } else {
+    const cleanStd = (standard || '').trim();
+    const cleanArea = (area || '').trim();
+    const cleanSite = (site || '').trim();
+
+    const segments: string[] = ['Internal Audit'];
+    if (cleanStd && !isStandardChanged) segments.push(cleanStd);
+    if (cleanArea && !isAreaChanged) segments.push(cleanArea);
+
+    let prefix = segments.join(' · ');
+    if (cleanSite && !isSiteChanged) {
+      prefix += ` - ${cleanSite}`;
+    }
+
+    return dateStr ? `${prefix} (${dateStr})` : prefix;
+  }
+}
+
 /**
  * Calculates total Customer Audit visits by grouping consecutive calendar days per customer.
  * - Same customer on consecutive calendar days (diffDays === 1) counts as a single audit visit (1).

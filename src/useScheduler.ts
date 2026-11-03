@@ -13,7 +13,18 @@ import type {
   State,
   SubDepartment,
 } from './types';
-import { calculateCustomerAuditsCount, formatApptDisplayTitle, getMissingFields, isAppointmentIncomplete, isIncompleteAssignment, isInternalAssignment } from './types';
+import {
+  calculateCustomerAuditsCount,
+  formatApptDisplayTitle,
+  formatApptLogRef,
+  formatDMY,
+  formatDateRange,
+  getAssignmentDateFormatted,
+  getMissingFields,
+  isAppointmentIncomplete,
+  isIncompleteAssignment,
+  isInternalAssignment,
+} from './types';
 import { getHolidayForDate, getHolidayStyle, type HolidayInfo } from './holidays';
 import {
   dayLabels,
@@ -754,16 +765,24 @@ export function useScheduler() {
         const oldEng = engById(a.eng);
         const oldDate = new Date(2026, 5, 29 + a.week * 7 + a.day);
         const newDate = new Date(2026, 5, 29 + S.weekOffset * 7 + day);
-        const fmtDMY = (d: Date) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-        const oldDateStr = fmtDMY(oldDate);
-        const newDateStr = fmtDMY(newDate);
-        const title = apptTitle(a);
+        const oldDateStr = formatDMY(oldDate);
+        const newDateStr = formatDMY(newDate);
+        const isCust = a.sectionType !== 'internal';
+        const ord = orderById(a.order);
+        const apptRef = formatApptLogRef({
+          isCustomer: isCust,
+          customer: a.customer || ord?.customer,
+          site: a.site1 || a.site2 || ord?.plant,
+          standard: isCust ? (a.department1 || a.department2) : (a.department2 || a.department1),
+          area: a.area,
+          dateStr: oldDateStr,
+        });
         if (oldDateStr !== newDateStr && oldEng?.name !== eng.name) {
-          logActivity('UPDATE', 'APPOINTMENT', `Updated appointment "${title}": changed [Date] to "${newDateStr}", [Auditor] to "${eng.name}"`, { targetId: aid });
+          logActivity('UPDATE', 'APPOINTMENT', `Updated appointment "${apptRef}": changed [Date] to "${newDateStr}", [Auditor] to "${eng.name}"`, { targetId: aid, dateRange: oldDateStr });
         } else if (oldDateStr !== newDateStr) {
-          logActivity('UPDATE', 'APPOINTMENT', `Updated [Date] from "${oldDateStr}" to "${newDateStr}" in appointment "${title}"`, { targetId: aid });
+          logActivity('UPDATE', 'APPOINTMENT', `Updated [Date] from "${oldDateStr}" to "${newDateStr}" in appointment "${apptRef}"`, { targetId: aid, dateRange: oldDateStr });
         } else if (oldEng?.name !== eng.name) {
-          logActivity('UPDATE', 'APPOINTMENT', `Updated [Auditor] from "${oldEng?.name || 'Unassigned'}" to "${eng.name}" in appointment "${title}"`, { targetId: aid });
+          logActivity('UPDATE', 'APPOINTMENT', `Updated [Auditor] from "${oldEng?.name || 'Unassigned'}" to "${eng.name}" in appointment "${apptRef}"`, { targetId: aid, dateRange: oldDateStr });
         }
       }
     }
@@ -1001,9 +1020,21 @@ export function useScheduler() {
       };
     });
     log('You', `removed ${apptTitle(a)} appointment`, '#d9534f');
-    logActivity('DELETE', 'APPOINTMENT', `Deleted appointment for "${apptTitle(a)}"`, {
+    const dateFormatted = getAssignmentDateFormatted(a, S.assignments);
+    const isCust = a.sectionType !== 'internal';
+    const ord = orderById(a.order);
+    const apptRef = formatApptLogRef({
+      isCustomer: isCust,
+      customer: a.customer || ord?.customer,
+      site: a.site1 || a.site2 || ord?.plant,
+      standard: isCust ? (a.department1 || a.department2) : (a.department2 || a.department1),
+      area: a.area,
+      dateStr: dateFormatted,
+    });
+    logActivity('DELETE', 'APPOINTMENT', `Deleted appointment "${apptRef}"`, {
       targetId: aid,
-      apptName: apptTitle(a),
+      apptName: apptRef,
+      dateRange: dateFormatted,
     });
   };
   const duplicate = (aid: string) => {
@@ -1019,6 +1050,23 @@ export function useScheduler() {
     });
     setState((s) => ({ assignments: s.assignments.concat([clone]), selected: id }));
     log('You', `duplicated ${apptTitle(a)} → ${dayLabels[nd]}`, '#2756d6');
+    const isCust = clone.sectionType !== 'internal';
+    const ord = orderById(clone.order);
+    const cloneDate = new Date(2026, 5, 29 + clone.week * 7 + clone.day);
+    const cloneDateStr = formatDMY(cloneDate);
+    const apptRef = formatApptLogRef({
+      isCustomer: isCust,
+      customer: clone.customer || ord?.customer,
+      site: clone.site1 || clone.site2 || ord?.plant,
+      standard: isCust ? (clone.department1 || clone.department2) : (clone.department2 || clone.department1),
+      area: clone.area,
+      dateStr: cloneDateStr,
+    });
+    logActivity('CREATE', 'APPOINTMENT', `Created appointment "${apptRef}" (duplicated)`, {
+      targetId: id,
+      apptName: apptRef,
+      dateRange: cloneDateStr,
+    });
   };
   const addComment = () => {
     const aid = S.selected;
@@ -1229,7 +1277,24 @@ export function useScheduler() {
     const prefix = d.sectionType === 'internal' ? 'IA' : 'CS';
     const name = d.sectionType === 'internal' ? (d.area || 'Internal Audit') : (d.customer || 'Customer Audit');
     log('You', `created ${prefix} · ${name}`, '#2756d6');
-    logActivity('CREATE', 'APPOINTMENT', `Created appointment for "${prefix} · ${name}"`, { customer: d.customer, site: d.sectionType === 'internal' ? d.site2 : d.site1 });
+    const isCust = d.sectionType === 'customer';
+    const createDateFormatted = formatDateRange(d.dateFrom, d.dateTo);
+    const createSite = isCust ? d.site1 : d.site2;
+    const createStd = isCust ? d.department1 : d.department2;
+    const apptRef = formatApptLogRef({
+      isCustomer: isCust,
+      customer: d.customer,
+      site: createSite,
+      standard: createStd,
+      area: d.area,
+      dateStr: createDateFormatted,
+    });
+    logActivity('CREATE', 'APPOINTMENT', `Created appointment "${apptRef}"`, {
+      customer: d.customer,
+      site: createSite,
+      standard: createStd,
+      dateRange: createDateFormatted,
+    });
   };
 
   // ---- edit modal ----
@@ -1437,19 +1502,27 @@ export function useScheduler() {
       changes.push({ name: 'Auditor', oldVal: oldAuditor, newVal: newAuditor });
     }
 
-    const apptName = isCustomer
-      ? [newCustomer || oldCustomer || 'Customer Audit', newSite || oldSite].filter(Boolean).join(' - ')
-      : [newArea || oldArea || newStandard || oldStandard || 'Internal Audit', newSite || oldSite].filter(Boolean).join(' - ');
+    const apptRef = formatApptLogRef({
+      isCustomer: wasCustomer,
+      customer: target.customer || (isCustomer ? d.customer : '') || oldCustomer || newCustomer,
+      site: newSite || oldSite,
+      standard: (wasCustomer ? target.department1 : target.department2) || oldStandard || newStandard,
+      area: target.area || oldArea || newArea,
+      dateStr: oldDateFormatted,
+      isSiteChanged,
+      isStandardChanged,
+      isAreaChanged,
+    });
 
-    let logDesc = `Updated appointment details for "${apptName}"`;
+    let logDesc = `Updated appointment details for "${apptRef}"`;
     if (changes.length === 1) {
       const c = changes[0];
       if (c.oldVal && c.newVal) {
-        logDesc = `Updated [${c.name}] from "${c.oldVal}" to "${c.newVal}" in appointment "${apptName}"`;
+        logDesc = `Updated [${c.name}] from "${c.oldVal}" to "${c.newVal}" in appointment "${apptRef}"`;
       } else if (!c.oldVal && c.newVal) {
-        logDesc = `Updated [${c.name}] to "${c.newVal}" in appointment "${apptName}"`;
+        logDesc = `Updated [${c.name}] to "${c.newVal}" in appointment "${apptRef}"`;
       } else {
-        logDesc = `Cleared [${c.name}] (was "${c.oldVal}") in appointment "${apptName}"`;
+        logDesc = `Cleared [${c.name}] (was "${c.oldVal}") in appointment "${apptRef}"`;
       }
     } else if (changes.length > 1) {
       const changeList = changes
@@ -1463,7 +1536,7 @@ export function useScheduler() {
           }
         })
         .join(', ');
-      logDesc = `Updated appointment "${apptName}": changed ${changeList}`;
+      logDesc = `Updated appointment "${apptRef}": changed ${changeList}`;
     }
 
     const siblingIds = new Set(siblings.map((x) => x.id));
@@ -1708,9 +1781,13 @@ export function useScheduler() {
     log('You', logDesc, '#2756d6');
     logActivity('UPDATE', 'APPOINTMENT', logDesc, {
       targetId: d.targetId,
-      apptName,
+      apptName: apptRef,
       changedFields: changes.map((c) => c.name),
       changes,
+      dateRange: oldDateFormatted,
+      customer: isCustomer ? newCustomer || oldCustomer : undefined,
+      site: newSite || oldSite,
+      standard: newStandard || oldStandard,
     });
     setState({ editOpen: false });
   };
