@@ -392,7 +392,7 @@ export function AvailabilityDatePicker({
           style={css("background:#eef2fd;border:1px solid #d8e2fa;color:#2756d6;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;display:flex;align-items:center;gap:4px")}
           hover={{ background: '#e0e8fc' }}
         >
-          ⚡ Jump to next available
+          ⚡ Jump to Today
         </HButton>
       </div>
 

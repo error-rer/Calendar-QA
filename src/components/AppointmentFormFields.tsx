@@ -3,9 +3,9 @@ import type { Assignment, Engineer } from '../types';
 import { css } from '../ui';
 import { AvailabilityDatePicker } from './AvailabilityDatePicker';
 
-const fld = css("display:flex;flex-direction:column;gap:4px");
-const lbl = css("font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:#9aa097;letter-spacing:.5px");
-const inp = css("border:1px solid #dde0d9;border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fff;width:100%;box-sizing:border-box");
+const fld = css("display:flex;flex-direction:column;width:100%;min-width:0;box-sizing:border-box");
+const lbl = css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#8a9088;letter-spacing:.5px;margin-bottom:6px;display:block;line-height:1;text-transform:uppercase");
+const inp = css("border:1px solid #dde0d9;border-radius:8px;padding:8px 14px;min-height:42px;height:42px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fff;width:100%;min-width:0;box-sizing:border-box");
 
 
 interface DateInputFieldProps {
@@ -152,12 +152,22 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
       id={id}
       ref={containerRef}
       style={{
-        ...style,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '4px',
+        border: '1px solid #dde0d9',
+        borderRadius: '8px',
+        padding: '8px 14px',
+        minHeight: '42px',
+        height: '42px',
+        fontSize: '12.5px',
+        fontFamily: "'Archivo',sans-serif",
+        background: '#fff',
+        width: '100%',
+        minWidth: 0,
         boxSizing: 'border-box',
         cursor: 'text',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        ...style,
       }}
       onClick={(e) => {
         if (e.target === containerRef.current) {
@@ -167,50 +177,60 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
         }
       }}
     >
-      <input
-        ref={dayRef}
-        type="text"
-        inputMode="numeric"
-        placeholder="DD"
-        maxLength={2}
-        value={day}
-        onChange={handleDayChange}
-        onBlur={handleBlur}
-        onKeyDown={(e) => handleKeyDown(e, 'day')}
-        style={css(
-          'width:22px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#23282a;padding:0'
-        )}
-      />
-      <span style={css('color:#8a9088;font-weight:600;user-select:none')}>/</span>
-      <input
-        ref={monthRef}
-        type="text"
-        inputMode="numeric"
-        placeholder="MM"
-        maxLength={2}
-        value={month}
-        onChange={handleMonthChange}
-        onBlur={handleBlur}
-        onKeyDown={(e) => handleKeyDown(e, 'month')}
-        style={css(
-          'width:24px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#23282a;padding:0'
-        )}
-      />
-      <span style={css('color:#8a9088;font-weight:600;user-select:none')}>/</span>
-      <input
-        ref={yearRef}
-        type="text"
-        inputMode="numeric"
-        placeholder="YYYY"
-        maxLength={4}
-        value={year}
-        onChange={handleYearChange}
-        onBlur={handleBlur}
-        onKeyDown={(e) => handleKeyDown(e, 'year')}
-        style={css(
-          'width:38px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:\'Archivo\',sans-serif;font-weight:600;color:#23282a;padding:0'
-        )}
-      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: 0 }}>
+        <input
+          ref={dayRef}
+          type="text"
+          inputMode="numeric"
+          placeholder="DD"
+          maxLength={2}
+          value={day}
+          onChange={handleDayChange}
+          onBlur={handleBlur}
+          onKeyDown={(e) => handleKeyDown(e, 'day')}
+          style={css(
+            "width:24px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:'Archivo',sans-serif;font-weight:600;color:#23282a;padding:0;height:24px;line-height:24px"
+          )}
+        />
+        <span style={css('color:#8a9088;font-weight:600;user-select:none')}>/</span>
+        <input
+          ref={monthRef}
+          type="text"
+          inputMode="numeric"
+          placeholder="MM"
+          maxLength={2}
+          value={month}
+          onChange={handleMonthChange}
+          onBlur={handleBlur}
+          onKeyDown={(e) => handleKeyDown(e, 'month')}
+          style={css(
+            "width:26px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:'Archivo',sans-serif;font-weight:600;color:#23282a;padding:0;height:24px;line-height:24px"
+          )}
+        />
+        <span style={css('color:#8a9088;font-weight:600;user-select:none')}>/</span>
+        <input
+          ref={yearRef}
+          type="text"
+          inputMode="numeric"
+          placeholder="YYYY"
+          maxLength={4}
+          value={year}
+          onChange={handleYearChange}
+          onBlur={handleBlur}
+          onKeyDown={(e) => handleKeyDown(e, 'year')}
+          style={css(
+            "width:40px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:'Archivo',sans-serif;font-weight:600;color:#23282a;padding:0;height:24px;line-height:24px"
+          )}
+        />
+      </div>
+      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a9088', pointerEvents: 'none', flexShrink: 0, marginLeft: '6px' }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      </span>
     </div>
   );
 }
@@ -272,7 +292,7 @@ function MultiSiteSelect({
   const displayText = selectedSites.length > 0 ? selectedSites.join('/') : 'Select site...';
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
+    <div ref={containerRef} style={{ position: 'relative', width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
       <button
         id={id}
         type="button"
@@ -280,13 +300,16 @@ function MultiSiteSelect({
         style={{
           border: '1px solid #dde0d9',
           borderRadius: '8px',
-          padding: '8px 10px',
+          padding: '8px 14px',
+          minHeight: '42px',
+          height: '42px',
           fontSize: '12.5px',
           fontFamily: "'Archivo',sans-serif",
           color: selectedSites.length > 0 ? '#23282a' : '#8a9088',
           outline: 'none',
           background: '#fff',
           width: '100%',
+          minWidth: 0,
           boxSizing: 'border-box',
           cursor: 'pointer',
           display: 'flex',
@@ -295,10 +318,10 @@ function MultiSiteSelect({
           textAlign: 'left',
         }}
       >
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
           {displayText}
         </span>
-        <span style={{ fontSize: '9px', color: '#8a9088', marginLeft: '6px', flexShrink: 0 }}>
+        <span style={{ fontSize: '9px', color: '#8a9088', marginLeft: '6px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {open ? '▲' : '▼'}
         </span>
       </button>
@@ -426,7 +449,7 @@ function AutocompleteInput({
   };
 
   return (
-    <div ref={ref} style={{ position: 'relative', width: '100%' }}>
+    <div ref={ref} style={{ position: 'relative', width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
       <div
         onClick={() => {
           inputRef.current?.focus();
@@ -435,13 +458,18 @@ function AutocompleteInput({
         style={{
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
           border: '1px solid #dde0d9',
           borderRadius: '8px',
           background: '#fff',
           width: '100%',
+          minWidth: 0,
+          minHeight: '42px',
+          height: '42px',
           boxSizing: 'border-box',
-          paddingRight: '6px',
+          padding: '8px 14px',
           cursor: 'text',
+          gap: '6px',
         }}
       >
         <input
@@ -469,12 +497,16 @@ function AutocompleteInput({
             border: 'none',
             outline: 'none',
             background: 'transparent',
-            borderRadius: '8px',
-            padding: '8px 10px',
+            padding: 0,
+            margin: 0,
             fontSize: '12.5px',
             fontFamily: "'Archivo',sans-serif",
             color: '#23282a',
             width: '100%',
+            flex: 1,
+            minWidth: 0,
+            height: '24px',
+            lineHeight: '24px',
             boxSizing: 'border-box',
           }}
           autoComplete="off"
@@ -523,6 +555,9 @@ function AutocompleteInput({
             padding: '2px',
             userSelect: 'none',
             flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           {open ? '▲' : '▼'}
@@ -734,7 +769,7 @@ function MultiSelectCombobox({
   }, [suggestions, inputVal, removedItems]);
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
+    <div ref={containerRef} style={{ position: 'relative', width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
       {/* Combobox Input Box with Tags */}
       <div
         onClick={() => {
@@ -744,18 +779,19 @@ function MultiSelectCombobox({
         style={{
           border: '1px solid #dde0d9',
           borderRadius: '8px',
-          padding: '4px 8px',
-          minHeight: '38px',
+          padding: '6px 14px',
+          minHeight: '42px',
           fontSize: '12.5px',
           fontFamily: "'Archivo',sans-serif",
           background: '#fff',
           width: '100%',
+          minWidth: 0,
           boxSizing: 'border-box',
           cursor: 'text',
           display: 'flex',
           flexWrap: 'wrap',
           alignItems: 'center',
-          gap: '5px',
+          gap: '6px',
         }}
       >
         {selectedItems.map((name) => (
@@ -1109,7 +1145,7 @@ function MultiStandardSelect({
   }, [suggestions, inputVal, removedItems]);
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
+    <div ref={containerRef} style={{ position: 'relative', width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
       {/* Combobox Input Box with Tags */}
       <div
         onClick={() => {
@@ -1119,18 +1155,19 @@ function MultiStandardSelect({
         style={{
           border: '1px solid #dde0d9',
           borderRadius: '8px',
-          padding: '4px 8px',
-          minHeight: '38px',
+          padding: '6px 14px',
+          minHeight: '42px',
           fontSize: '12.5px',
           fontFamily: "'Archivo',sans-serif",
           background: '#fff',
           width: '100%',
+          minWidth: 0,
           boxSizing: 'border-box',
           cursor: 'text',
           display: 'flex',
           flexWrap: 'wrap',
           alignItems: 'center',
-          gap: '5px',
+          gap: '6px',
         }}
       >
         {selectedStandards.map((name) => (
@@ -1482,7 +1519,7 @@ function MultiAuditorSelect({
   }, [suggestions, inputVal, removedItems]);
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
+    <div ref={containerRef} style={{ position: 'relative', width: '100%', minWidth: 0, boxSizing: 'border-box' }}>
       {/* Combobox Input Box with Tags */}
       <div
         onClick={() => {
@@ -1492,18 +1529,19 @@ function MultiAuditorSelect({
         style={{
           border: '1px solid #dde0d9',
           borderRadius: '8px',
-          padding: '4px 8px',
-          minHeight: '38px',
+          padding: '6px 14px',
+          minHeight: '42px',
           fontSize: '12.5px',
           fontFamily: "'Archivo',sans-serif",
           background: '#fff',
           width: '100%',
+          minWidth: 0,
           boxSizing: 'border-box',
           cursor: 'text',
           display: 'flex',
           flexWrap: 'wrap',
           alignItems: 'center',
-          gap: '5px',
+          gap: '6px',
         }}
       >
         {selectedAuditors.map((name) => (
@@ -1988,7 +2026,7 @@ export function AppointmentFormFields({
 
       {v.sectionType === 'customer' && (
         <div style={css('padding:14px;border:1px solid #e8ebe4;border-radius:10px;background:#fafbf9')}>
-          <div style={css('display:grid;grid-template-columns:1fr 1fr;gap:14px')}>
+          <div style={css('display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px;row-gap:14px;width:100%;box-sizing:border-box')}>
             {/* ROW 1: STANDARD | SITE */}
             <div style={fld}>
               <label htmlFor={id('department1')} style={lbl}>STANDARD</label>
@@ -2128,7 +2166,7 @@ export function AppointmentFormFields({
 
       {v.sectionType === 'internal' && (
         <div style={css('padding:14px;border:1px solid #e8ebe4;border-radius:10px;background:#fafbf9')}>
-          <div style={css('display:grid;grid-template-columns:1fr 1fr;gap:14px')}>
+          <div style={css('display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px;row-gap:14px;width:100%;box-sizing:border-box')}>
             {/* 1. STANDARD */}
             {/* 1. STANDARD */}
             <div style={fld}>
