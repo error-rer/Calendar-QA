@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { VM } from '../useScheduler';
 import { css } from '../ui';
+import { isInternalAssignment, calculateCustomerAuditsCount } from '../types';
 
 const rowFields: { label: string; key: 'major' | 'minor' | 'ofi' | 'total' }[] = [
   { label: 'Major', key: 'major' },
@@ -65,6 +66,28 @@ function UtlTable({ vm, periods }: { vm: VM; periods: typeof vm.summaryPeriods }
 export function SummaryDashboard({ vm }: { vm: VM }) {
   const [yearText, setYearText] = useState(String(vm.summaryYear));
   const commitYear = (v: string) => { const n = parseInt(v, 10); if (!isNaN(n)) vm.setSummaryYear(n); };
+
+  const yearAppts = useMemo(() => {
+    return (vm.assignments || [])
+      .map((a) => {
+        const base = new Date(2026, 5, 29 + a.week * 7);
+        base.setDate(base.getDate() + a.day);
+        const isInternal = isInternalAssignment(a);
+        return {
+          id: a.id,
+          dateObj: base,
+          auditType: isInternal ? 'Internal Audit' : 'Customer Audit',
+          customer: isInternal ? '' : (a.customer || ''),
+          year: base.getFullYear(),
+        };
+      })
+      .filter((a) => a.year === vm.summaryYear);
+  }, [vm.assignments, vm.summaryYear]);
+
+  const customerAuditsCount = useMemo(() => calculateCustomerAuditsCount(yearAppts), [yearAppts]);
+  const internalAuditsCount = useMemo(() => yearAppts.filter((a) => a.auditType === 'Internal Audit').length, [yearAppts]);
+  const totalFindings = useMemo(() => (vm.summaryCells || []).reduce((sum, c) => sum + (c ? (c as any).total : 0), 0), [vm.summaryCells]);
+
   return (
     <main className="scrl" style={css('flex:1;min-height:0;overflow:auto;background:#eef0ea')}>
       <div style={css('max-width:1040px;margin:0 auto;padding:30px 24px 80px')}>
@@ -74,6 +97,33 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
           <button onClick={() => { vm.setSummaryYear(vm.summaryYear - 1); setYearText(String(vm.summaryYear - 1)); }} style={css('padding:4px 10px;border-radius:6px;border:1px solid #e0e3dc;background:#fff;cursor:pointer;font-size:12px;font-weight:600;color:#4a504a;font-family:\'Archivo\',sans-serif')}>‹</button>
           <input value={yearText} onFocus={(e) => { setYearText(String(vm.summaryYear)); e.currentTarget.select(); }} onChange={(e) => setYearText(e.currentTarget.value)} onBlur={(e) => commitYear(e.currentTarget.value)} onKeyDown={(e) => { if (e.key === 'Enter') { commitYear(e.currentTarget.value); (e.target as HTMLInputElement).blur(); } }} style={css('width:60px;text-align:center;border:1px solid #e0e3dc;border-radius:6px;padding:4px 6px;font-size:15px;font-weight:700;color:#15191e;font-family:\'Archivo\',sans-serif;outline:none;background:#fff')} />
           <button onClick={() => { vm.setSummaryYear(vm.summaryYear + 1); setYearText(String(vm.summaryYear + 1)); }} style={css('padding:4px 10px;border-radius:6px;border:1px solid #e0e3dc;background:#fff;cursor:pointer;font-size:12px;font-weight:600;color:#4a504a;font-family:\'Archivo\',sans-serif')}>›</button>
+        </div>
+
+        {/* Metric Cards Row */}
+        <div style={css('display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:12px;margin-bottom:20px')}>
+          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.02)')}>
+            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Total Audits</div>
+            <div style={css('font-size:24px;font-weight:700;color:#15191e;margin-top:2px')}>{customerAuditsCount + internalAuditsCount}</div>
+            <div style={css('font-size:11px;color:#8a9088;margin-top:2px')}>Scheduled in {vm.summaryYear}</div>
+          </div>
+
+          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.02)')}>
+            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#2756d6;text-transform:uppercase;letter-spacing:0.5px")}>Customer Audits</div>
+            <div style={css('font-size:24px;font-weight:700;color:#2756d6;margin-top:2px')}>{customerAuditsCount}</div>
+            <div style={css('font-size:11px;color:#8a9088;margin-top:2px')}>Consecutive day visits</div>
+          </div>
+
+          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.02)')}>
+            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:0.5px")}>Internal Audits</div>
+            <div style={css('font-size:24px;font-weight:700;color:#374151;margin-top:2px')}>{internalAuditsCount}</div>
+            <div style={css('font-size:11px;color:#8a9088;margin-top:2px')}>Plant & process audits</div>
+          </div>
+
+          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.02)')}>
+            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Total Findings</div>
+            <div style={css('font-size:24px;font-weight:700;color:#15191e;margin-top:2px')}>{totalFindings}</div>
+            <div style={css('font-size:11px;color:#8a9088;margin-top:2px')}>Major, Minor & OFI</div>
+          </div>
         </div>
 
         <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;padding:20px;overflow-x:auto;margin-bottom:20px')}>

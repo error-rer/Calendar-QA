@@ -138,6 +138,91 @@ export function formatApptDisplayTitle(a: Assignment, defaultOrder?: { customer?
   }
 }
 
+/**
+ * Calculates total Customer Audit visits by grouping consecutive calendar days per customer.
+ * - Same customer on consecutive calendar days (diffDays === 1) counts as a single audit visit (1).
+ * - Non-consecutive dates or breaks start a new visit (+1).
+ */
+export function calculateCustomerAuditsCount(
+  items: {
+    auditType?: string;
+    customer?: string;
+    dateObj?: Date;
+    week?: number;
+    day?: number;
+    isInternal?: boolean;
+  }[]
+): number {
+  const customerDatesMap = new Map<string, Set<string>>();
+  let noCustCount = 0;
+
+  for (const item of items) {
+    const isInternal = item.auditType
+      ? item.auditType === 'Internal Audit'
+      : (item.isInternal ?? false);
+    if (isInternal) continue;
+
+    let d = item.dateObj;
+    if (!d && item.week !== undefined && item.day !== undefined) {
+      d = new Date(2026, 5, 29 + item.week * 7 + item.day);
+    }
+    if (!d) continue;
+
+    const cust = (item.customer || '').trim().toLowerCase();
+    if (!cust) {
+      noCustCount++;
+      continue;
+    }
+
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dayStr = String(d.getDate()).padStart(2, '0');
+    const dateKey = y + '-' + m + '-' + dayStr;
+
+    let set = customerDatesMap.get(cust);
+    if (!set) {
+      set = new Set<string>();
+      customerDatesMap.set(cust, set);
+    }
+    set.add(dateKey);
+  }
+
+  let totalVisits = 0;
+
+  for (const [, dateSet] of customerDatesMap) {
+    const sortedDates = Array.from(dateSet).sort();
+    if (sortedDates.length === 0) continue;
+
+    let visits = 1;
+    for (let i = 1; i < sortedDates.length; i++) {
+      const dPrev = sortedDates[i - 1];
+      const dCurr = sortedDates[i];
+      if (!dPrev || !dCurr) continue;
+
+      const p1 = dPrev.split('-').map(Number);
+      const p2 = dCurr.split('-').map(Number);
+      const y1 = p1[0] || 0;
+      const m1 = p1[1] || 1;
+      const day1 = p1[2] || 1;
+      const y2 = p2[0] || 0;
+      const m2 = p2[1] || 1;
+      const day2 = p2[2] || 1;
+
+      const utc1 = Date.UTC(y1, m1 - 1, day1);
+      const utc2 = Date.UTC(y2, m2 - 1, day2);
+      const diffDays = Math.round((utc2 - utc1) / (1000 * 60 * 60 * 24));
+
+      if (diffDays !== 1) {
+        visits++;
+      }
+    }
+    totalVisits += visits;
+  }
+
+  totalVisits += noCustCount;
+  return totalVisits;
+}
+
 export interface Comment {
   id: string;
   who: string;

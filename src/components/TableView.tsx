@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { VM } from '../useScheduler';
 import type { Assignment } from '../types';
-import { isInternalAssignment } from '../types';
+import { isInternalAssignment, calculateCustomerAuditsCount } from '../types';
 import { css, HButton } from '../ui';
 
 interface TableRowData {
@@ -189,13 +189,12 @@ export function TableView({ vm }: { vm: VM }) {
     return sortedRows.slice(start, start + (pageSize as number));
   }, [sortedRows, currentPage, pageSize]);
 
-  // Stats calculation
+  // Stats calculation (Consecutive days per customer counted as 1 visit)
   const stats = useMemo(() => {
-    let customerCount = 0;
+    const customerCount = calculateCustomerAuditsCount(allRows);
     let internalCount = 0;
     for (const r of allRows) {
-      if (r.auditType === 'Customer Audit') customerCount++;
-      else internalCount++;
+      if (r.auditType === 'Internal Audit') internalCount++;
     }
     return {
       total: allRows.length,
@@ -205,6 +204,19 @@ export function TableView({ vm }: { vm: VM }) {
       uniqueAuditors: filterOptions.auditors.length,
     };
   }, [allRows, filterOptions]);
+
+  const filteredStats = useMemo(() => {
+    const customerCount = calculateCustomerAuditsCount(filteredRows);
+    let internalCount = 0;
+    for (const r of filteredRows) {
+      if (r.auditType === 'Internal Audit') internalCount++;
+    }
+    return {
+      total: filteredRows.length,
+      customerCount,
+      internalCount,
+    };
+  }, [filteredRows]);
 
   const hasActiveFilters =
     search.trim() !== '' ||
@@ -386,8 +398,12 @@ export function TableView({ vm }: { vm: VM }) {
 
         <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#2756d6;text-transform:uppercase;letter-spacing:0.5px")}>Customer Audits</div>
-          <div style={css('font-size:22px;font-weight:700;color:#2756d6;margin-top:2px')}>{stats.customerCount}</div>
-          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>Client & external audits</div>
+          <div style={css('font-size:22px;font-weight:700;color:#2756d6;margin-top:2px')}>
+            {hasActiveFilters ? filteredStats.customerCount : stats.customerCount}
+          </div>
+          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>
+            {hasActiveFilters ? `Showing ${filteredStats.customerCount} of ${stats.customerCount} visits` : 'Consecutive day visits'}
+          </div>
         </div>
 
         <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>

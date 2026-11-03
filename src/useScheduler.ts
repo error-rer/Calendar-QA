@@ -13,7 +13,7 @@ import type {
   State,
   SubDepartment,
 } from './types';
-import { formatApptDisplayTitle, getMissingFields, isAppointmentIncomplete, isIncompleteAssignment, isInternalAssignment } from './types';
+import { calculateCustomerAuditsCount, formatApptDisplayTitle, getMissingFields, isAppointmentIncomplete, isIncompleteAssignment, isInternalAssignment } from './types';
 import { getHolidayForDate, getHolidayStyle, type HolidayInfo } from './holidays';
 import {
   dayLabels,
@@ -489,22 +489,22 @@ export function useScheduler() {
     return !matchesFilters(a, o);
   };
 
-  /** CS key = distinct (Month, Purpose, Customer, Site); IA key = distinct (Month, Area, Site). */
+  /** CS = consecutive-day visits per customer; IA key = distinct (Month, Area, Site). */
   const summaryCounts = (assignments: Assignment[]) => {
-    const csKeys = new Set<string>();
+    const csAppts: { customer?: string; dateObj: Date }[] = [];
     const iaKeys = new Set<string>();
     for (const a of assignments) {
       const o = orderById(a.order);
       if (!o) continue;
       const d = new Date(2026, 5, 29 + a.week * 7 + a.day);
-      const ym = d.getFullYear() + '-' + d.getMonth();
       if (apptAbbr(a) === 'IA') {
+        const ym = d.getFullYear() + '-' + d.getMonth();
         iaKeys.add(ym + '\u0001' + (a.area || '') + '\u0001' + (a.site2 || o.plant || ''));
       } else {
-        csKeys.add(ym + '\u0001' + (a.purpose || o.purpose || '') + '\u0001' + (a.customer || o.customer || '') + '\u0001' + (a.site1 || o.plant || ''));
+        csAppts.push({ customer: a.customer || o.customer, dateObj: d });
       }
     }
-    return { cs: csKeys.size, ia: iaKeys.size };
+    return { cs: calculateCustomerAuditsCount(csAppts), ia: iaKeys.size };
   };
   /** Assignments (respecting sidebar filters) whose date falls within [start, end]. */
   const assignmentsInRange = (start: Date, end: Date) => {
@@ -1781,7 +1781,7 @@ export function useScheduler() {
       const daysCount = new Date(year, m + 1, 0).getDate();
       const firstWd = (firstDay.getDay() + 6) % 7; // Mon = 0, Sun = 6
 
-      const csKeys = new Set<string>();
+      const csMonthAppts: { customer?: string; dateObj: Date }[] = [];
       const iaKeys = new Set<string>();
       const days = [];
 
@@ -1809,7 +1809,7 @@ export function useScheduler() {
             iaKeys.add((a.area || '') + '\u0001' + (a.site2 || o.plant || ''));
             intCountOnDay++;
           } else {
-            csKeys.add((a.purpose || o.purpose || '') + '\u0001' + (a.customer || o.customer || '') + '\u0001' + (a.site1 || o.plant || ''));
+            csMonthAppts.push({ customer: a.customer || o.customer, dateObj: date });
             custCountOnDay++;
           }
         }
@@ -1833,7 +1833,7 @@ export function useScheduler() {
         });
       }
 
-      const customerAppts = csKeys.size;
+      const customerAppts = calculateCustomerAuditsCount(csMonthAppts);
       const internalAppts = iaKeys.size;
       const totalAppts = customerAppts + internalAppts;
 
