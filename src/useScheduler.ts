@@ -292,6 +292,7 @@ export function useScheduler() {
           const siteColors = s.siteColors && Object.keys(s.siteColors).length ? s.siteColors : (data.siteColors || {});
           const targetPackageOptions = (s.targetPackageOptions && s.targetPackageOptions.length ? s.targetPackageOptions : (data.targetPackageOptions || [])).filter((c) => !removedSet.has(c));
           const customerNameOptions = (s.customerNameOptions && s.customerNameOptions.length ? s.customerNameOptions : (data.customerNameOptions || [])).filter((c) => !removedSet.has(c));
+          const auditCategoryOptions = (s.auditCategoryOptions && s.auditCategoryOptions.length ? s.auditCategoryOptions : ((data as any).auditCategoryOptions || [])).filter((c: string) => !removedSet.has(c));
 
           const mergedState = {
             ...s,
@@ -313,6 +314,7 @@ export function useScheduler() {
             endCustomerOptions,
             targetPackageOptions,
             customerNameOptions,
+            auditCategoryOptions,
             removedOptions: s.removedOptions || [],
             googleSheetsConfig: data.googleSheetsConfig || s.googleSheetsConfig || { webhookUrl: '', autoSync: true, lastSynced: '' },
           };
@@ -329,6 +331,7 @@ export function useScheduler() {
               auditorOptions: mergedState.auditorOptions,
               targetPackageOptions: mergedState.targetPackageOptions,
               customerNameOptions: mergedState.customerNameOptions,
+              auditCategoryOptions: mergedState.auditCategoryOptions,
               customerDepartmentOptions: mergedState.customerDepartmentOptions,
               internalDepartmentOptions: mergedState.internalDepartmentOptions,
               siteCodeOptions: mergedState.siteCodeOptions,
@@ -613,7 +616,7 @@ export function useScheduler() {
   const setSelectedDay = (i: number) => setState({ selectedDay: i });
   const toggleSidebar = () => setState((s) => ({ sidebarOpen: !s.sidebarOpen }));
   const closeSidebar = () => setState({ sidebarOpen: false });
-  const toggleFilterValue = (field: 'filterEmp' | 'filterSite' | 'filterCompany' | 'filterAuditType' | 'filterAuditTopic' | 'filterTargetPackage' | 'filterCustomerName' | 'adminFilterSite' | 'adminFilterDept', value: string) =>
+  const toggleFilterValue = (field: 'filterEmp' | 'filterSite' | 'filterCompany' | 'filterAuditType' | 'filterAuditTopic' | 'filterTargetPackage' | 'filterCustomerName' | 'filterAuditCategory' | 'adminFilterSite' | 'adminFilterDept', value: string) =>
     setState((s) => {
       const arr = s[field] as unknown as string[];
       const nextArr = arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
@@ -644,7 +647,7 @@ export function useScheduler() {
   const openTimetable = (engId: string) => setState({ timetableOpenEng: engId, selected: null });
   const closeTimetable = () => setState({ timetableOpenEng: null });
   const clearFilters = () =>
-    setState({ filterEmp: [], filterSite: [], filterCompany: [], filterAuditType: [], filterAuditTopic: [], filterTargetPackage: [], filterCustomerName: [], filterApptType: [], activePlants: Object.fromEntries(S.plants.map((p) => [p.id, true])) });
+    setState({ filterEmp: [], filterSite: [], filterCompany: [], filterAuditType: [], filterAuditTopic: [], filterTargetPackage: [], filterCustomerName: [], filterAuditCategory: [], filterApptType: [], activePlants: Object.fromEntries(S.plants.map((p) => [p.id, true])) });
   const openDayDialog = (weekOffset: number, day: number) => {
     const baseDate = new Date(2026, 5, 29);
     const targetDate = new Date(baseDate);
@@ -832,6 +835,7 @@ export function useScheduler() {
     });
 
     const deletedCustomers = Array.from(new Set(siblings.map((x) => (x.customer || '').trim()).filter(Boolean)));
+    const deletedAuditCategories = Array.from(new Set(siblings.map((x) => (x.auditCategory || '').trim()).filter(Boolean)));
     const deletedEndCustomers = Array.from(new Set(siblings.map((x) => (x.endCustomer || '').trim()).filter(Boolean)));
     const deletedPurposes = Array.from(new Set(siblings.map((x) => (x.purpose || '').trim()).filter(Boolean)));
     const deletedDept1 = Array.from(
@@ -885,7 +889,22 @@ export function useScheduler() {
       const comments = Object.fromEntries(Object.entries(s.comments).filter(([cid]) => !siblingSet.has(cid)));
 
       let nextCustomerOptions = s.customerOptions || [];
+      let nextAuditCategoryOptions = s.auditCategoryOptions || [];
       let nextRemovedOptions = s.removedOptions || [];
+
+      for (const cat of deletedAuditCategories) {
+        const catLower = cat.toLowerCase();
+        const isStillUsed = remainingAssignments.some(
+          (x) => (x.auditCategory || '').trim().toLowerCase() === catLower
+        );
+        if (!isStillUsed) {
+          const isMaster = !!(s.masterCreatedOptions && s.masterCreatedOptions['auditCategoryOptions:' + catLower]);
+          if (!isMaster) {
+            nextAuditCategoryOptions = nextAuditCategoryOptions.filter((c) => c.trim().toLowerCase() !== catLower);
+            api.deleteOption('audit_category', cat).catch(() => {});
+          }
+        }
+      }
       let nextFilterCompany = s.filterCompany || [];
 
       // Manage Options Cleanup: Prune if only referenced in deleted appointment AND not a master item
@@ -1075,6 +1094,7 @@ export function useScheduler() {
           comments,
           activity: s.activity,
           customerOptions: nextCustomerOptions,
+          auditCategoryOptions: nextAuditCategoryOptions,
           endCustomerOptions: nextEndCustomerOptions,
           purposeOptions: nextPurposeOptions,
           siteCodeOptions: nextSiteCodeOptions,
@@ -1092,6 +1112,7 @@ export function useScheduler() {
         comments,
         engineers: nextEngineers,
         customerOptions: nextCustomerOptions,
+        auditCategoryOptions: nextAuditCategoryOptions,
         endCustomerOptions: nextEndCustomerOptions,
         purposeOptions: nextPurposeOptions,
         siteCodeOptions: nextSiteCodeOptions,
@@ -1195,7 +1216,7 @@ export function useScheduler() {
       createOpen: true,
       userMenuOpen: false,
       sidebarOpen: false,
-      createDraft: { order: '', eng: '', day: 0, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' },
+      createDraft: { order: '', eng: '', day: 0, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' },
     });
   };
   const openCreateAt = (engId: string, day: number) => {
@@ -1203,7 +1224,7 @@ export function useScheduler() {
     const targetDate = new Date(baseDate);
     targetDate.setDate(baseDate.getDate() + S.weekOffset * 7 + day);
     if (getHolidayForDate(targetDate)) return;
-    setState({ createOpen: true, userMenuOpen: false, createDraft: { order: '', eng: engId, day, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' } });
+    setState({ createOpen: true, userMenuOpen: false, createDraft: { order: '', eng: engId, day, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' } });
   };
   const openCreateWithDate = (dateIso?: string) => {
     const d = dateIso || '';
@@ -1218,7 +1239,7 @@ export function useScheduler() {
       createDraft: {
         order: '', eng: '', day: 0,
         dateFrom: d, dateTo: d,
-        sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditor1: '', department2: '', site2: '', area: '', auditor2: ''
+        sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: ''
       },
     });
   };
@@ -1275,6 +1296,7 @@ export function useScheduler() {
     api.createOrder(newOrder).catch(() => {});
     if (!existingEng) api.createEngineer(newEngineer).catch(() => {});
     const newCustomer = d.sectionType === 'customer' && d.customer ? d.customer.trim() : '';
+    const newAuditCategory = d.sectionType === 'internal' && d.auditCategory ? d.auditCategory.trim() : '';
     const newEndCustomer = d.sectionType === 'customer' && d.endCustomer ? d.endCustomer.trim() : '';
     const newPurpose = d.purpose ? d.purpose.trim() : '';
     const newTargetPackages = d.sectionType === 'customer' && d.targetPackage
@@ -1299,6 +1321,7 @@ export function useScheduler() {
 
     if (newCustomer) api.saveOption('customer_name', newCustomer).catch(() => {});
     if (newEndCustomer) api.saveOption('end_customer', newEndCustomer).catch(() => {});
+    if (newAuditCategory) api.saveOption('audit_category', newAuditCategory).catch(() => {});
     if (newPurpose) api.saveOption('purpose', newPurpose).catch(() => {});
     newTargetPackages.forEach((pkg) => api.saveOption('target_package', pkg).catch(() => {}));
     newCustomerNames.forEach((cn) => api.saveOption('customer_names', cn).catch(() => {}));
@@ -1343,6 +1366,7 @@ export function useScheduler() {
       }
       if (newEndCustomer) unblacklist(newEndCustomer);
       if (newPurpose) unblacklist(newPurpose);
+      if (newAuditCategory) unblacklist(newAuditCategory);
       newTargetPackages.forEach(unblacklist);
       newCustomerNames.forEach(unblacklist);
 
@@ -1358,6 +1382,11 @@ export function useScheduler() {
         if (!nextCustomerNameOpts.some((cn) => cn.toLowerCase() === n.toLowerCase())) {
           nextCustomerNameOpts = [...nextCustomerNameOpts, n];
         }
+      }
+
+      let nextAuditCategoryOpts = s.auditCategoryOptions || [];
+      if (newAuditCategory && !nextAuditCategoryOpts.some((c) => c.toLowerCase() === newAuditCategory.toLowerCase())) {
+        nextAuditCategoryOpts = [...nextAuditCategoryOpts, newAuditCategory];
       }
       if (newDept1) newDept1.split(',').map((s) => s.trim()).filter(Boolean).forEach(unblacklist);
       if (newDept2) newDept2.split(',').map((s) => s.trim()).filter(Boolean).forEach(unblacklist);
@@ -1405,6 +1434,7 @@ export function useScheduler() {
         siteCodeOptions: nextSiteOpts,
         targetPackageOptions: nextTargetPackageOpts,
         customerNameOptions: nextCustomerNameOpts,
+        auditCategoryOptions: nextAuditCategoryOpts,
         customerDepartmentOptions: nextCustDeptOpts,
         internalDepartmentOptions: nextInternalDeptOpts,
         auditorOptions: (() => {
@@ -1473,6 +1503,7 @@ export function useScheduler() {
         department2: a.department2 || '',
         targetPackage: a.targetPackage || '',
         customerNames: a.customerNames || '',
+        auditCategory: a.auditCategory || '',
       },
     });
   };
@@ -2143,7 +2174,7 @@ export function useScheduler() {
   };
 
   // ---- appointment option lists (Purpose / Department / Site) ----
-  type OptionListField = 'purposeOptions' | 'customerDepartmentOptions' | 'internalDepartmentOptions' | 'siteCodeOptions' | 'customerOptions' | 'endCustomerOptions' | 'auditorOptions' | 'targetPackageOptions' | 'customerNameOptions';
+  type OptionListField = 'purposeOptions' | 'customerDepartmentOptions' | 'internalDepartmentOptions' | 'siteCodeOptions' | 'customerOptions' | 'endCustomerOptions' | 'auditorOptions' | 'targetPackageOptions' | 'customerNameOptions' | 'auditCategoryOptions';
   const fieldToCategory: Record<OptionListField, string> = {
     purposeOptions: 'purpose',
     customerDepartmentOptions: 'customer_department',
@@ -2154,6 +2185,7 @@ export function useScheduler() {
     auditorOptions: 'auditor',
     targetPackageOptions: 'target_package',
     customerNameOptions: 'customer_names',
+    auditCategoryOptions: 'audit_category',
   };
 
   const entityTypeMap: Record<OptionListField, EntityType> = {
@@ -2166,6 +2198,7 @@ export function useScheduler() {
     purposeOptions: 'PURPOSE',
     targetPackageOptions: 'TARGET_PACKAGE',
     customerNameOptions: 'CUSTOMER_NAME',
+    auditCategoryOptions: 'AUDIT_CATEGORY',
   };
 
   const entityNameMap: Record<OptionListField, string> = {
@@ -2178,6 +2211,7 @@ export function useScheduler() {
     purposeOptions: 'Purpose',
     targetPackageOptions: 'Target Package',
     customerNameOptions: 'Customer Name',
+    auditCategoryOptions: 'Audit Category',
   };
 
   const addOption = (field: OptionListField, value: string, meta = '') => {
@@ -2729,6 +2763,7 @@ export function useScheduler() {
       apptPurpose: a.purpose || '',
       targetPackage: a.targetPackage || '',
       customerNames: a.customerNames || '',
+      auditCategory: a.auditCategory || '',
       createdAt: a.createdAt,
       major: a.major,
       minor: a.minor,
@@ -3151,6 +3186,7 @@ export function useScheduler() {
       purpose: selA.purpose || '',
       targetPackage: selA.targetPackage || '',
       customerNames: selA.customerNames || '',
+      auditCategory: selA.auditCategory || '',
       dateRangeLabel, durationDays,
       major: selA.major ?? 0, minor: selA.minor ?? 0, ofi: selA.ofi ?? 0, request: selA.request ?? 0,
       utl1: selA.utl1 ?? 0, utl2: selA.utl2 ?? 0, utl3: selA.utl3 ?? 0,
@@ -3418,6 +3454,25 @@ export function useScheduler() {
     }
     return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }, [S.assignments, S.customerNameOptions, removedSet]);
+
+  const computedAuditCategoryOptions = useMemo(() => {
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const active = S.assignments
+      .map((a) => (a.auditCategory || '').trim())
+      .filter((c) => Boolean(c) && !removedSetLower.has(c.toLowerCase()));
+    const baseList = (S.auditCategoryOptions || [])
+      .map((c) => c.trim())
+      .filter((c) => Boolean(c) && !removedSetLower.has(c.toLowerCase()));
+
+    const uniqueMap = new Map<string, string>();
+    for (const c of [...baseList, ...active]) {
+      const key = c.toLowerCase();
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, c);
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }, [S.assignments, S.auditCategoryOptions, removedSet]);
 
   const masterAuditorOptions = useMemo(() => {
     const engNames = S.engineers
@@ -3943,12 +3998,21 @@ export function useScheduler() {
     removeCustomerNameOption: (v: string) => removeOption('customerNameOptions', v),
     reorderCustomerNameOptions: (list: string[]) => reorderOptions('customerNameOptions', list),
 
+    auditCategoryOptions: computedAuditCategoryOptions,
+    masterAuditCategoryOptions: S.auditCategoryOptions,
+    addAuditCategoryOption: (v: string) => addOption('auditCategoryOptions', v),
+    removeAuditCategoryOption: (v: string) => removeOption('auditCategoryOptions', v),
+    reorderAuditCategoryOptions: (list: string[]) => reorderOptions('auditCategoryOptions', list),
+
     filterTargetPackage: S.filterTargetPackage || [],
     filterCustomerName: S.filterCustomerName || [],
+    filterAuditCategory: S.filterAuditCategory,
     toggleFilterTargetPackage: (v: string) => toggleFilterValue('filterTargetPackage', v),
     toggleFilterCustomerName: (v: string) => toggleFilterValue('filterCustomerName', v),
+    toggleFilterAuditCategory: (v: string) => toggleFilterValue('filterAuditCategory', v),
     targetPackageFilterOptions: computedTargetPackageOptions,
     customerNameFilterOptions: computedCustomerNameOptions,
+    auditCategoryFilterOptions: computedAuditCategoryOptions,
 
     reorderEngineers,
     removedOptions: S.removedOptions || [], removeGenericOption,

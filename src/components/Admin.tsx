@@ -532,6 +532,15 @@ function OptionsPanel({ vm }: { vm: VM }) {
         onReorder={vm.reorderCustomerNameOptions}
         placeholder="e.g. John Doe"
       />
+      <TagListEditor
+        title="Audit Category"
+        count={(vm.auditCategoryOptions || []).length}
+        values={vm.auditCategoryOptions || []}
+        onAdd={vm.addAuditCategoryOption}
+        onRemove={vm.removeAuditCategoryOption}
+        onReorder={vm.reorderAuditCategoryOptions}
+        placeholder="e.g. Process Audit"
+      />
     </div>
   );
 }

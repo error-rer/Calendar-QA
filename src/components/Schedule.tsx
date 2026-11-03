@@ -240,6 +240,7 @@ function ApptCard({ chip }: { chip: any }) {
               </>
             ) : (
               <>
+                {chip.auditCategory && <div>Audit Category: <span style={css('color:#3c423d')}>{chip.auditCategory}</span></div>}
                 {chip.area && <div>Area: <span style={css('color:#15191e;font-weight:600')}>{chip.area}</span></div>}
                 {chip.auditor && <div>QMS Host: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
                 {chip.department && <div>Standard: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
@@ -415,6 +416,7 @@ function Sidebar({ vm }: { vm: VM }) {
           <MultiSelect label="Purpose" items={vm.auditTypes.map((o) => ({ value: o, label: o }))} selected={vm.filterAuditType} onToggle={vm.toggleFilterAuditType} />
           <MultiSelect label="Target Package" items={(vm.targetPackageFilterOptions || []).map((o: string) => ({ value: o, label: o }))} selected={vm.filterTargetPackage} onToggle={vm.toggleFilterTargetPackage} />
           <MultiSelect label="Customer Name" items={(vm.customerNameFilterOptions || []).map((o: string) => ({ value: o, label: o }))} selected={vm.filterCustomerName} onToggle={vm.toggleFilterCustomerName} />
+          <MultiSelect label="Audit Category" items={(vm.auditCategoryFilterOptions || []).map((o: string) => ({ value: o, label: o }))} selected={vm.filterAuditCategory} onToggle={vm.toggleFilterAuditCategory} />
         </div>
       </div>
 
@@ -665,6 +667,7 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
               </>
             ) : (
               <>
+                {chip.auditCategory && <div>Audit Category: <span style={css('color:#3c423d')}>{chip.auditCategory}</span></div>}
                 {chip.area && <div>Area: <span style={css('color:#15191e;font-weight:600')}>{chip.area}</span></div>}
                 {chip.auditor && <div>QMS Host: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
                 {chip.department && <div>Standard: <span style={css('color:#3c423d')}>{chip.department}</span></div>}

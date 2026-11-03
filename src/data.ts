@@ -47,6 +47,7 @@ export function initialState(): State {
     filterAuditTopic: [],
     filterTargetPackage: [],
     filterCustomerName: [],
+    filterAuditCategory: [],
     filterApptType: [],
     adminFilterSite: [],
     adminFilterDept: [],
@@ -57,9 +58,9 @@ export function initialState(): State {
     loginPass: 'directorqa',
     userMenuOpen: false,
     createOpen: false,
-    createDraft: { order: '', eng: '', day: 0, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' },
+    createDraft: { order: '', eng: '', day: 0, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' },
     editOpen: false,
-    editDraft: { targetId: '', sectionType: 'customer', dateFrom: '', dateTo: '', site1: '', customer: '', endCustomer: '', purpose: '', targetPackage: '', customerNames: '', auditor1: '', department1: '', site2: '', area: '', auditor2: '', department2: '' },
+    editDraft: { targetId: '', sectionType: 'customer', dateFrom: '', dateTo: '', site1: '', customer: '', endCustomer: '', purpose: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department1: '', site2: '', area: '', auditor2: '', department2: '' },
     engFormOpen: false,
     engEditingId: null,
     engForm: { name: '', role: '', department: 'U1', subDepartments: [] },
@@ -84,6 +85,7 @@ export function initialState(): State {
     auditorOptions: snapshot.auditorOptions || [],
     targetPackageOptions: snapshot.targetPackageOptions || [],
     customerNameOptions: snapshot.customerNameOptions || [],
+    auditCategoryOptions: snapshot.auditCategoryOptions || [],
     removedOptions: snapshot.removedOptions || [],
     masterCreatedOptions: snapshot.masterCreatedOptions || (() => {
       const map: Record<string, boolean> = {};
@@ -96,6 +98,7 @@ export function initialState(): State {
       (snapshot.auditorOptions || []).forEach((a: string) => { map['auditorOptions:' + a.toLowerCase()] = true; });
       (snapshot.targetPackageOptions || []).forEach((t: string) => { map['targetPackageOptions:' + t.toLowerCase()] = true; });
       (snapshot.customerNameOptions || []).forEach((c: string) => { map['customerNameOptions:' + c.toLowerCase()] = true; });
+      (snapshot.auditCategoryOptions || []).forEach((c: string) => { map['auditCategoryOptions:' + c.toLowerCase()] = true; });
       return map;
     })(),
     plants: snapshot.plants || initialPlants.map((p) => ({ ...p })),

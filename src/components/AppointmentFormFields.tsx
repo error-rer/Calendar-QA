@@ -244,6 +244,7 @@ export interface AppointmentFormValues {
   purpose: string;
   targetPackage?: string;
   customerNames?: string;
+  auditCategory?: string;
   auditor1: string;
   department1: string;
   site2: string;
@@ -1811,6 +1812,9 @@ export function AppointmentFormFields({
   removeTargetPackageOption,
   addCustomerNameOption,
   removeCustomerNameOption,
+  auditCategoryOptions = [],
+  addAuditCategoryOption,
+  removeAuditCategoryOption,
 }: {
   idPrefix: string;
   values: AppointmentFormValues;
@@ -1841,6 +1845,9 @@ export function AppointmentFormFields({
   removeTargetPackageOption?: (val: string) => void;
   addCustomerNameOption?: (val: string) => void;
   removeCustomerNameOption?: (val: string) => void;
+  auditCategoryOptions?: string[];
+  addAuditCategoryOption?: (val: string) => void;
+  removeAuditCategoryOption?: (val: string) => void;
 }) {
   const id = (name: string) => `${idPrefix}-${name}`;
 
@@ -1919,6 +1926,22 @@ export function AppointmentFormFields({
     }
     return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }, [assignments, customerNameOptions, editingTargetId, removedSet]);
+
+  const auditCategorySuggestions = useMemo(() => {
+    const activeAssignments = editingTargetId
+      ? assignments.filter((a) => a.id !== editingTargetId)
+      : assignments;
+    const fromAssign = activeAssignments.map((a) => (a.auditCategory || '').trim()).filter(Boolean);
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const uniqueMap = new Map<string, string>();
+    for (const c of [...(auditCategoryOptions || []), ...fromAssign]) {
+      const key = c.trim().toLowerCase();
+      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
+        uniqueMap.set(key, c.trim());
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }, [assignments, auditCategoryOptions, editingTargetId, removedSet]);
 
   const customerDepartmentSuggestions = useMemo(() => {
     const activeAssignments = editingTargetId
@@ -2197,7 +2220,20 @@ export function AppointmentFormFields({
               />
             </div>
 
-            {/* 3. AREA */}
+            {/* Row 2: AUDIT CATEGORY | AREA */}
+            <div style={fld}>
+              <label htmlFor={id('auditCategory')} style={lbl}>AUDIT CATEGORY</label>
+              <AutocompleteInput
+                id={id('auditCategory')}
+                value={v.auditCategory || ''}
+                onChange={(auditCategory) => onChange({ auditCategory })}
+                placeholder="Type or select audit category..."
+                suggestions={auditCategorySuggestions}
+                onAddNew={addAuditCategoryOption}
+                onRemoveOption={removeAuditCategoryOption || removeGenericOption}
+              />
+            </div>
+
             <div style={fld}>
               <label htmlFor={id('area')} style={lbl}>AREA</label>
               <AutocompleteInput
@@ -2210,7 +2246,7 @@ export function AppointmentFormFields({
               />
             </div>
 
-            {/* 4. QMS HOST */}
+            {/* Row 3: QMS HOST | (empty placeholder cell for 50/50 symmetry) */}
             <div style={fld}>
               <label htmlFor={id('auditor2')} style={lbl}>QMS HOST</label>
               <MultiAuditorSelect
@@ -2223,13 +2259,14 @@ export function AppointmentFormFields({
               />
             </div>
 
-            {/* 5. FROM */}
+            <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box' }} />
+
+            {/* Row 4: FROM | TO */}
             <div style={fld}>
               <label htmlFor={id('dateFrom2')} style={lbl}>FROM</label>
               <DateInputField id={id('dateFrom2')} value={v.dateFrom} onChange={(dateFrom) => onChange({ dateFrom })} style={inp} />
             </div>
 
-            {/* 6. TO */}
             <div style={fld}>
               <label htmlFor={id('dateTo2')} style={lbl}>TO</label>
               <DateInputField id={id('dateTo2')} value={v.dateTo} onChange={(dateTo) => onChange({ dateTo })} style={inp} />

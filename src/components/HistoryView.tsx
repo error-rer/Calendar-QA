@@ -39,6 +39,8 @@ function getEntityBadgeStyle(entityType: EntityType): { bg: string; color: strin
       return { bg: '#fef3c7', color: '#92400e' };
     case 'CUSTOMER_NAME':
       return { bg: '#e0e7ff', color: '#3730a3' };
+    case 'AUDIT_CATEGORY':
+      return { bg: '#ecfdf5', color: '#065f46' };
     default:
       return { bg: '#f3f4f6', color: '#4b5563' };
   }
@@ -200,6 +202,7 @@ export function HistoryView({ vm }: { vm: VM }) {
             <option value="PURPOSE">Purpose</option>
             <option value="TARGET_PACKAGE">Target Package</option>
             <option value="CUSTOMER_NAME">Customer Name</option>
+            <option value="AUDIT_CATEGORY">Audit Category</option>
           </select>
         </div>
 

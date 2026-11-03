@@ -42,6 +42,9 @@ export function CreateModal({ vm }: { vm: VM }) {
             removeTargetPackageOption={vm.removeTargetPackageOption}
             addCustomerNameOption={vm.addCustomerNameOption}
             removeCustomerNameOption={vm.removeCustomerNameOption}
+            auditCategoryOptions={vm.auditCategoryOptions}
+            addAuditCategoryOption={vm.addAuditCategoryOption}
+            removeAuditCategoryOption={vm.removeAuditCategoryOption}
             auditorOptions={vm.masterAuditorOptions}
             removedOptions={vm.removedOptions}
             assignments={vm.assignments}
