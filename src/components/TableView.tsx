@@ -15,10 +15,12 @@ interface TableRowData {
   site: string;
   standard: string;
   purpose: string;
+  targetPackage: string;
+  customerNames: string;
   auditor: string;
 }
 
-type SortColumn = 'date' | 'auditType' | 'customer' | 'site' | 'standard' | 'purpose' | 'auditor';
+type SortColumn = 'date' | 'auditType' | 'customer' | 'site' | 'standard' | 'purpose' | 'targetPackage' | 'customerNames' | 'auditor';
 
 export function TableView({ vm }: { vm: VM }) {
   // Filters state
@@ -26,6 +28,8 @@ export function TableView({ vm }: { vm: VM }) {
   const [auditTypeFilter, setAuditTypeFilter] = useState<'ALL' | 'Customer Audit' | 'Internal Audit'>('ALL');
   const [siteFilter, setSiteFilter] = useState('ALL');
   const [standardFilter, setStandardFilter] = useState('ALL');
+  const [targetPackageFilter, setTargetPackageFilter] = useState('ALL');
+  const [customerNameFilter, setCustomerNameFilter] = useState('ALL');
   const [auditorFilter, setAuditorFilter] = useState('ALL');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -72,6 +76,8 @@ export function TableView({ vm }: { vm: VM }) {
       const site = (isInternal ? (a.site2 || a.site1) : (a.site1 || a.site2)) || '';
       const standard = (isInternal ? (a.department2 || a.department1) : (a.department1 || a.department2)) || '';
       const purpose = (isInternal ? (a.area || a.purpose) : (a.purpose || '')) || '';
+      const targetPackage = a.targetPackage || '';
+      const customerNames = a.customerNames || '';
       const auditor = (isInternal ? (a.auditor2 || a.auditor1) : (a.auditor1 || a.auditor2)) || (engMap.get(a.eng) || '');
 
       list.push({
@@ -85,6 +91,8 @@ export function TableView({ vm }: { vm: VM }) {
         site,
         standard,
         purpose,
+        targetPackage,
+        customerNames,
         auditor,
       });
     }
@@ -96,12 +104,20 @@ export function TableView({ vm }: { vm: VM }) {
   const filterOptions = useMemo(() => {
     const sites = new Set<string>();
     const standards = new Set<string>();
+    const targetPackages = new Set<string>();
+    const customerNames = new Set<string>();
     const auditors = new Set<string>();
 
     for (const r of allRows) {
       if (r.site) sites.add(r.site);
       if (r.standard) {
         r.standard.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => standards.add(s));
+      }
+      if (r.targetPackage) {
+        r.targetPackage.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => targetPackages.add(s));
+      }
+      if (r.customerNames) {
+        r.customerNames.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => customerNames.add(s));
       }
       if (r.auditor) {
         r.auditor.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => auditors.add(s));
@@ -111,6 +127,8 @@ export function TableView({ vm }: { vm: VM }) {
     return {
       sites: Array.from(sites).sort(),
       standards: Array.from(standards).sort(),
+      targetPackages: Array.from(targetPackages).sort(),
+      customerNames: Array.from(customerNames).sort(),
       auditors: Array.from(auditors).sort(),
     };
   }, [allRows]);
@@ -151,6 +169,22 @@ export function TableView({ vm }: { vm: VM }) {
         }
       }
 
+      // Target Package filter
+      if (targetPackageFilter !== 'ALL') {
+        const rowPkgs = r.targetPackage.split(',').map((s) => s.trim().toLowerCase());
+        if (!rowPkgs.includes(targetPackageFilter.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Customer Name filter
+      if (customerNameFilter !== 'ALL') {
+        const rowCns = r.customerNames.split(',').map((s) => s.trim().toLowerCase());
+        if (!rowCns.includes(customerNameFilter.toLowerCase())) {
+          return false;
+        }
+      }
+
       // Auditor filter
       if (auditorFilter !== 'ALL') {
         const rowAuds = r.auditor.split(',').map((s) => s.trim().toLowerCase());
@@ -171,7 +205,7 @@ export function TableView({ vm }: { vm: VM }) {
 
       return true;
     });
-  }, [allRows, search, auditTypeFilter, siteFilter, standardFilter, auditorFilter, dateFrom, dateTo]);
+  }, [allRows, search, auditTypeFilter, siteFilter, standardFilter, targetPackageFilter, customerNameFilter, auditorFilter, dateFrom, dateTo]);
 
   // Apply Sorting
   const sortedRows = useMemo(() => {
@@ -233,6 +267,8 @@ export function TableView({ vm }: { vm: VM }) {
     auditTypeFilter !== 'ALL' ||
     siteFilter !== 'ALL' ||
     standardFilter !== 'ALL' ||
+    targetPackageFilter !== 'ALL' ||
+    customerNameFilter !== 'ALL' ||
     auditorFilter !== 'ALL' ||
     dateFrom !== '' ||
     dateTo !== '';
@@ -242,6 +278,8 @@ export function TableView({ vm }: { vm: VM }) {
     setAuditTypeFilter('ALL');
     setSiteFilter('ALL');
     setStandardFilter('ALL');
+    setTargetPackageFilter('ALL');
+    setCustomerNameFilter('ALL');
     setAuditorFilter('ALL');
     setDateFrom('');
     setDateTo('');
@@ -260,7 +298,7 @@ export function TableView({ vm }: { vm: VM }) {
 
   // CSV Export with exact 7 columns and UTF-8 BOM
   const handleExportCSV = () => {
-    const headers = ['DD/MM/YYYY', 'Audit Type', 'Customer', 'Site', 'Standard', 'Purpose', 'QMS Host'];
+    const headers = ['DD/MM/YYYY', 'Audit Type', 'Customer', 'Site', 'Standard', 'Purpose', 'Target Package', 'Customer Name', 'QMS Host'];
     const rows = sortedRows.map((r) => [
       r.dateStr,
       r.auditType,
@@ -268,6 +306,8 @@ export function TableView({ vm }: { vm: VM }) {
       r.site,
       r.standard,
       r.purpose,
+      r.targetPackage,
+      r.customerNames,
       r.auditor,
     ]);
 
@@ -303,7 +343,7 @@ export function TableView({ vm }: { vm: VM }) {
   const handleExportExcel = async () => {
     // @ts-ignore
     const XLSX = (await import('xlsx-js-style')).default || (await import('xlsx-js-style'));
-    const headers = ['DD/MM/YYYY', 'Audit Type', 'Customer', 'Site', 'Standard', 'Purpose', 'QMS Host'];
+    const headers = ['DD/MM/YYYY', 'Audit Type', 'Customer', 'Site', 'Standard', 'Purpose', 'Target Package', 'Customer Name', 'QMS Host'];
     const rows = sortedRows.map((r) => [
       r.dateStr,
       r.auditType,
@@ -311,6 +351,8 @@ export function TableView({ vm }: { vm: VM }) {
       r.site,
       r.standard,
       r.purpose,
+      r.targetPackage,
+      r.customerNames,
       r.auditor,
     ]);
 
@@ -455,7 +497,7 @@ export function TableView({ vm }: { vm: VM }) {
               type="text"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Search date, customer, site, standard, purpose, QMS host..."
+              placeholder="Search date, customer, site, standard, purpose, target package, customer name, QMS host..."
               style={css("width:100%;box-sizing:border-box;border:1px solid #dde0d9;border-radius:8px;padding:8px 30px 8px 12px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fafbfa")}
             />
             {search && (
@@ -508,6 +550,30 @@ export function TableView({ vm }: { vm: VM }) {
             <option value="ALL">All Standards</option>
             {filterOptions.standards.map((std) => (
               <option key={std} value={std}>{std}</option>
+            ))}
+          </select>
+
+          {/* Target Package Filter Dropdown */}
+          <select
+            value={targetPackageFilter}
+            onChange={(e) => { setTargetPackageFilter(e.target.value); setPage(1); }}
+            style={css("border:1px solid #dde0d9;background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;color:#23282a;outline:none;font-family:'Archivo',sans-serif;cursor:pointer")}
+          >
+            <option value="ALL">All Target Packages</option>
+            {filterOptions.targetPackages.map((pkg) => (
+              <option key={pkg} value={pkg}>{pkg}</option>
+            ))}
+          </select>
+
+          {/* Customer Name Filter Dropdown */}
+          <select
+            value={customerNameFilter}
+            onChange={(e) => { setCustomerNameFilter(e.target.value); setPage(1); }}
+            style={css("border:1px solid #dde0d9;background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;color:#23282a;outline:none;font-family:'Archivo',sans-serif;cursor:pointer")}
+          >
+            <option value="ALL">All Customer Names</option>
+            {filterOptions.customerNames.map((cn) => (
+              <option key={cn} value={cn}>{cn}</option>
             ))}
           </select>
 
@@ -645,7 +711,33 @@ export function TableView({ vm }: { vm: VM }) {
                   </div>
                 </th>
 
-                {/* 7. Auditor */}
+                {/* 7. Target Package */}
+                <th
+                  onClick={() => handleSort('targetPackage')}
+                  style={css('padding:10px 14px;font-weight:700;cursor:pointer;white-space:nowrap')}
+                >
+                  <div style={css('display:flex;align-items:center;gap:5px')}>
+                    Target Package
+                    <span style={css('color:' + (sortCol === 'targetPackage' ? '#15191e' : '#b0b5ac'))}>
+                      {sortCol === 'targetPackage' ? (sortDir === 'asc' ? '▲' : '▼') : '↕'}
+                    </span>
+                  </div>
+                </th>
+
+                {/* 8. Customer Name */}
+                <th
+                  onClick={() => handleSort('customerNames')}
+                  style={css('padding:10px 14px;font-weight:700;cursor:pointer;white-space:nowrap')}
+                >
+                  <div style={css('display:flex;align-items:center;gap:5px')}>
+                    Customer Name
+                    <span style={css('color:' + (sortCol === 'customerNames' ? '#15191e' : '#b0b5ac'))}>
+                      {sortCol === 'customerNames' ? (sortDir === 'asc' ? '▲' : '▼') : '↕'}
+                    </span>
+                  </div>
+                </th>
+
+                {/* 9. Auditor */}
                 <th
                   onClick={() => handleSort('auditor')}
                   style={css('padding:10px 14px;font-weight:700;cursor:pointer;white-space:nowrap')}
@@ -783,7 +875,43 @@ export function TableView({ vm }: { vm: VM }) {
                         </div>
                       </td>
 
-                      {/* 7. Auditor */}
+                      {/* 7. Target Package */}
+                      <td style={css('padding:11px 14px')}>
+                        {row.targetPackage ? (
+                          <div style={css('display:flex;flex-wrap:wrap;gap:4px;align-items:center')}>
+                            {row.targetPackage.split(',').map((s) => s.trim()).filter(Boolean).map((pkg) => (
+                              <span
+                                key={pkg}
+                                style={css("display:inline-block;padding:2px 7px;border-radius:4px;background:#f4f6f1;border:1px solid #e0e3dc;font-size:11.5px;font-weight:500;color:#23282a;white-space:nowrap")}
+                              >
+                                {pkg}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span style={css('color:#a6aca2')}>—</span>
+                        )}
+                      </td>
+
+                      {/* 8. Customer Name */}
+                      <td style={css('padding:11px 14px')}>
+                        {row.customerNames ? (
+                          <div style={css('display:flex;flex-wrap:wrap;gap:4px;align-items:center')}>
+                            {row.customerNames.split(',').map((s) => s.trim()).filter(Boolean).map((cn) => (
+                              <span
+                                key={cn}
+                                style={css("display:inline-block;padding:2px 7px;border-radius:4px;background:#eef2fd;border:1px solid #d4def0;font-size:11.5px;font-weight:500;color:#2756d6;white-space:nowrap")}
+                              >
+                                {cn}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span style={css('color:#a6aca2')}>—</span>
+                        )}
+                      </td>
+
+                      {/* 9. Auditor */}
                       <td style={css('padding:11px 14px;white-space:nowrap')}>
                         {row.auditor ? (
                           <div style={css('display:flex;align-items:center;gap:7px')}>

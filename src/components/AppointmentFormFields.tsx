@@ -222,6 +222,8 @@ export interface AppointmentFormValues {
   customer: string;
   endCustomer: string;
   purpose: string;
+  targetPackage?: string;
+  customerNames?: string;
   auditor1: string;
   department1: string;
   site2: string;
@@ -644,6 +646,388 @@ function AutocompleteInput({
   );
 }
 
+
+
+/** Generic multi-select combobox with inline tags, search filter, free-text add & option removal. */
+function MultiSelectCombobox({
+  id,
+  value,
+  onChange,
+  suggestions,
+  placeholder = 'Type or select...',
+  addPlaceholder = 'Add...',
+  emptyText = 'No options found',
+  onAddNew,
+  onRemoveOption,
+}: {
+  id: string;
+  value: string;
+  onChange: (val: string) => void;
+  suggestions: string[];
+  placeholder?: string;
+  addPlaceholder?: string;
+  emptyText?: string;
+  onAddNew?: (val: string) => void;
+  onRemoveOption?: (val: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [inputVal, setInputVal] = useState('');
+  const [removedItems, setRemovedItems] = useState<Set<string>>(new Set());
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const selectedItems = useMemo(() => {
+    return value
+      ? value.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+  }, [value]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setInputVal('');
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const toggleItem = (name: string) => {
+    const cleanName = name.trim();
+    if (!cleanName) return;
+    const isAlreadySel = selectedItems.some((s) => s.toLowerCase() === cleanName.toLowerCase());
+    const next = isAlreadySel
+      ? selectedItems.filter((s) => s.toLowerCase() !== cleanName.toLowerCase())
+      : [...selectedItems, cleanName];
+    onChange(next.join(', '));
+  };
+
+  const removeItem = (name: string) => {
+    const next = selectedItems.filter((s) => s.toLowerCase() !== name.toLowerCase());
+    onChange(next.join(', '));
+  };
+
+  const addCustom = () => {
+    const clean = inputVal.trim();
+    if (!clean) return;
+    const pieces = clean.split(',').map((s) => s.trim()).filter(Boolean);
+    const toAdd = pieces.filter((p) => !selectedItems.some((sel) => sel.toLowerCase() === p.toLowerCase()));
+    if (toAdd.length > 0) {
+      onChange([...selectedItems, ...toAdd].join(', '));
+      if (onAddNew) {
+        toAdd.forEach((p) => {
+          if (!suggestions.some((s) => s.toLowerCase() === p.toLowerCase())) {
+            onAddNew(p);
+          }
+        });
+      }
+    }
+    setInputVal('');
+  };
+
+  const filteredSuggestions = useMemo(() => {
+    const q = inputVal.trim().toLowerCase();
+    const unique = Array.from(new Set(suggestions.map((s) => s.trim()).filter(Boolean)))
+      .filter((s) => !removedItems.has(s));
+    return q ? unique.filter((s) => s.toLowerCase().includes(q)) : unique;
+  }, [suggestions, inputVal, removedItems]);
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
+      {/* Combobox Input Box with Tags */}
+      <div
+        onClick={() => {
+          inputRef.current?.focus();
+          setOpen(true);
+        }}
+        style={{
+          border: '1px solid #dde0d9',
+          borderRadius: '8px',
+          padding: '4px 8px',
+          minHeight: '38px',
+          fontSize: '12.5px',
+          fontFamily: "'Archivo',sans-serif",
+          background: '#fff',
+          width: '100%',
+          boxSizing: 'border-box',
+          cursor: 'text',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: '5px',
+        }}
+      >
+        {selectedItems.map((name) => (
+          <span
+            key={name}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '2px 7px',
+              borderRadius: '5px',
+              background: '#eef2fd',
+              border: '1px solid #d4def0',
+              fontSize: '11.5px',
+              fontFamily: "'Archivo',sans-serif",
+              fontWeight: 600,
+              color: '#2756d6',
+            }}
+          >
+            {name}
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                removeItem(name);
+              }}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                color: '#2756d6',
+                cursor: 'pointer',
+                padding: 0,
+                fontSize: '10px',
+                lineHeight: 1,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              ✕
+            </button>
+          </span>
+        ))}
+
+        <input
+          ref={inputRef}
+          id={id}
+          type="text"
+          value={inputVal}
+          onChange={(e) => {
+            setInputVal(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              addCustom();
+            } else if (e.key === 'Backspace' && !inputVal && selectedItems.length > 0) {
+              removeItem(selectedItems[selectedItems.length - 1]);
+            }
+          }}
+          placeholder={selectedItems.length === 0 ? placeholder : addPlaceholder}
+          style={{
+            border: 'none',
+            outline: 'none',
+            background: 'transparent',
+            fontSize: '12.5px',
+            fontFamily: "'Archivo',sans-serif",
+            color: '#23282a',
+            flex: 1,
+            minWidth: '100px',
+            padding: '2px 0',
+          }}
+          autoComplete="off"
+        />
+
+        {selectedItems.length > 0 && (
+          <button
+            type="button"
+            title="Clear all"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onChange('');
+              setInputVal('');
+              inputRef.current?.focus();
+            }}
+            style={{
+              border: 'none',
+              background: 'transparent',
+              color: '#8a9088',
+              cursor: 'pointer',
+              padding: '2px 4px',
+              fontSize: '11px',
+              lineHeight: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#dc2626';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '#8a9088';
+            }}
+          >
+            ✕
+          </button>
+        )}
+
+        <span
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(!open);
+          }}
+          style={{
+            fontSize: '9px',
+            color: '#8a9088',
+            marginLeft: selectedItems.length === 0 ? 'auto' : '2px',
+            flexShrink: 0,
+            cursor: 'pointer',
+            padding: '2px',
+          }}
+        >
+          {open ? '▲' : '▼'}
+        </span>
+      </div>
+
+      {/* Dropdown Menu */}
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            marginTop: '4px',
+            background: '#fff',
+            border: '1px solid #dde0d9',
+            borderRadius: '8px',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+            zIndex: 100,
+            padding: '4px',
+            maxHeight: '210px',
+            overflowY: 'auto',
+          }}
+        >
+          {inputVal.trim() && !filteredSuggestions.some((s) => s.toLowerCase() === inputVal.trim().toLowerCase()) && (
+            <div
+              onMouseDown={(e) => {
+                e.preventDefault();
+                addCustom();
+              }}
+              style={{
+                padding: '7px 10px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#2756d6',
+                background: '#eef2fd',
+                border: '1px solid #d4def0',
+                marginBottom: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <span>＋ Add "{inputVal.trim()}"</span>
+            </div>
+          )}
+
+          {filteredSuggestions.length === 0 && !inputVal.trim() && (
+            <div style={{ padding: '8px 10px', fontSize: '12px', color: '#8a9088', fontFamily: "'Archivo',sans-serif" }}>
+              {emptyText}
+            </div>
+          )}
+
+          {filteredSuggestions.map((name) => {
+            const isSel = selectedItems.some((s) => s.toLowerCase() === name.toLowerCase());
+            return (
+              <div
+                key={name}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  toggleItem(name);
+                  setInputVal('');
+                }}
+                style={{
+                  padding: '7px 10px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '12.5px',
+                  fontFamily: "'Archivo',sans-serif",
+                  fontWeight: isSel ? 600 : 400,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: isSel ? '#eef2fd' : '#fff',
+                  color: isSel ? '#2756d6' : '#23282a',
+                  transition: 'background .1s ease',
+                  marginBottom: '2px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                  <span
+                    style={{
+                      width: '14px',
+                      height: '14px',
+                      borderRadius: '3px',
+                      flexShrink: 0,
+                      border: '1px solid ' + (isSel ? '#2756d6' : '#cdd2c9'),
+                      background: isSel ? '#2756d6' : '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '9px',
+                      color: '#fff',
+                    }}
+                  >
+                    {isSel ? '✓' : ''}
+                  </span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {name}
+                  </span>
+                </div>
+
+                {onRemoveOption && (
+                  <button
+                    type="button"
+                    title={"Delete \"" + name + "\" from saved options"}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setRemovedItems((prev) => new Set(prev).add(name));
+                      onRemoveOption(name);
+                    }}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      color: '#8a9088',
+                      cursor: 'pointer',
+                      padding: '2px 5px',
+                      borderRadius: '4px',
+                      fontSize: '11px',
+                      lineHeight: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#fee2e2';
+                      e.currentTarget.style.color = '#dc2626';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = '#8a9088';
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /** Multi-select standard field — combobox with inline tags, search filter, free-text add & option removal. */
 function MultiStandardSelect({
@@ -1383,6 +1767,12 @@ export function AppointmentFormFields({
   assignments = [],
   engineers = [],
   editingTargetId,
+  targetPackageOptions = [],
+  customerNameOptions = [],
+  addTargetPackageOption,
+  removeTargetPackageOption,
+  addCustomerNameOption,
+  removeCustomerNameOption,
 }: {
   idPrefix: string;
   values: AppointmentFormValues;
@@ -1407,6 +1797,12 @@ export function AppointmentFormFields({
   assignments?: Assignment[];
   engineers?: Engineer[];
   editingTargetId?: string;
+  targetPackageOptions?: string[];
+  customerNameOptions?: string[];
+  addTargetPackageOption?: (val: string) => void;
+  removeTargetPackageOption?: (val: string) => void;
+  addCustomerNameOption?: (val: string) => void;
+  removeCustomerNameOption?: (val: string) => void;
 }) {
   const id = (name: string) => `${idPrefix}-${name}`;
 
@@ -1445,7 +1841,7 @@ export function AppointmentFormFields({
     const fromAssign = activeAssignments.map((a) => (a.endCustomer || '').trim()).filter(Boolean);
     const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
     const uniqueMap = new Map<string, string>();
-    for (const c of [...endCustomerOptions, ...fromAssign]) {
+    for (const c of [...(endCustomerOptions || []), ...fromAssign]) {
       const key = c.trim().toLowerCase();
       if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
         uniqueMap.set(key, c.trim());
@@ -1453,6 +1849,38 @@ export function AppointmentFormFields({
     }
     return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }, [assignments, endCustomerOptions, editingTargetId, removedSet]);
+
+  const targetPackageSuggestions = useMemo(() => {
+    const activeAssignments = editingTargetId
+      ? assignments.filter((a) => a.id !== editingTargetId)
+      : assignments;
+    const fromAssign = activeAssignments.flatMap((a) => (a.targetPackage || '').split(',').map((s) => s.trim())).filter(Boolean);
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const uniqueMap = new Map<string, string>();
+    for (const p of [...(targetPackageOptions || []), ...fromAssign]) {
+      const key = p.trim().toLowerCase();
+      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
+        uniqueMap.set(key, p.trim());
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }, [assignments, targetPackageOptions, editingTargetId, removedSet]);
+
+  const customerNameSuggestions = useMemo(() => {
+    const activeAssignments = editingTargetId
+      ? assignments.filter((a) => a.id !== editingTargetId)
+      : assignments;
+    const fromAssign = activeAssignments.flatMap((a) => (a.customerNames || '').split(',').map((s) => s.trim())).filter(Boolean);
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const uniqueMap = new Map<string, string>();
+    for (const n of [...(customerNameOptions || []), ...fromAssign]) {
+      const key = n.trim().toLowerCase();
+      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
+        uniqueMap.set(key, n.trim());
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }, [assignments, customerNameOptions, editingTargetId, removedSet]);
 
   const customerDepartmentSuggestions = useMemo(() => {
     const activeAssignments = editingTargetId
@@ -1561,7 +1989,7 @@ export function AppointmentFormFields({
       {v.sectionType === 'customer' && (
         <div style={css('padding:14px;border:1px solid #e8ebe4;border-radius:10px;background:#fafbf9')}>
           <div style={css('display:grid;grid-template-columns:1fr 1fr;gap:14px')}>
-            {/* 1. STANDARD */}
+            {/* ROW 1: STANDARD | SITE */}
             <div style={fld}>
               <label htmlFor={id('department1')} style={lbl}>STANDARD</label>
               <MultiStandardSelect
@@ -1579,7 +2007,6 @@ export function AppointmentFormFields({
               />
             </div>
 
-            {/* 2. SITE */}
             <div style={fld}>
               <label htmlFor={id('site1')} style={lbl}>SITE</label>
               <MultiSiteSelect
@@ -1590,20 +2017,19 @@ export function AppointmentFormFields({
               />
             </div>
 
-            {/* 3. CUSTOMER */}
+            {/* ROW 2: CUSTOMER | END CUSTOMER */}
             <div style={fld}>
               <label htmlFor={id('customer')} style={lbl}>CUSTOMER</label>
               <AutocompleteInput
                 id={id('customer')}
                 value={v.customer}
                 onChange={(customer) => onChange({ customer })}
-                placeholder="Type or select customer name..."
+                placeholder="Type or select customer..."
                 suggestions={customerSuggestions}
                 onRemoveOption={removeCustomerOption}
               />
             </div>
 
-            {/* 4. END CUSTOMER */}
             <div style={fld}>
               <label htmlFor={id('endCustomer')} style={lbl}>END CUSTOMER</label>
               <AutocompleteInput
@@ -1616,7 +2042,7 @@ export function AppointmentFormFields({
               />
             </div>
 
-            {/* 5. PURPOSE */}
+            {/* ROW 3: PURPOSE | TARGET PACKAGE */}
             <div style={fld}>
               <label htmlFor={id('purpose')} style={lbl}>PURPOSE</label>
               <AutocompleteInput
@@ -1629,7 +2055,37 @@ export function AppointmentFormFields({
               />
             </div>
 
-            {/* 6. QMS HOST */}
+            <div style={fld}>
+              <label htmlFor={id('targetPackage')} style={lbl}>TARGET PACKAGE</label>
+              <MultiSelectCombobox
+                id={id('targetPackage')}
+                value={v.targetPackage || ''}
+                onChange={(targetPackage) => onChange({ targetPackage })}
+                placeholder="Type or select target package(s)..."
+                addPlaceholder="Add target package..."
+                emptyText="No target packages found"
+                suggestions={targetPackageSuggestions}
+                onAddNew={addTargetPackageOption}
+                onRemoveOption={removeTargetPackageOption || removeGenericOption}
+              />
+            </div>
+
+            {/* ROW 4: CUSTOMER NAME | QMS HOST */}
+            <div style={fld}>
+              <label htmlFor={id('customerNames')} style={lbl}>CUSTOMER NAME</label>
+              <MultiSelectCombobox
+                id={id('customerNames')}
+                value={v.customerNames || ''}
+                onChange={(customerNames) => onChange({ customerNames })}
+                placeholder="Type or select customer name(s)..."
+                addPlaceholder="Add customer name..."
+                emptyText="No customer names found"
+                suggestions={customerNameSuggestions}
+                onAddNew={addCustomerNameOption}
+                onRemoveOption={removeCustomerNameOption || removeGenericOption}
+              />
+            </div>
+
             <div style={fld}>
               <label htmlFor={id('auditor1')} style={lbl}>QMS HOST</label>
               <MultiAuditorSelect
@@ -1642,13 +2098,12 @@ export function AppointmentFormFields({
               />
             </div>
 
-            {/* 7. FROM */}
+            {/* ROW 5: FROM | TO */}
             <div style={fld}>
               <label htmlFor={id('dateFrom')} style={lbl}>FROM</label>
               <DateInputField id={id('dateFrom')} value={v.dateFrom} onChange={(dateFrom) => onChange({ dateFrom })} style={inp} />
             </div>
 
-            {/* 8. TO */}
             <div style={fld}>
               <label htmlFor={id('dateTo')} style={lbl}>TO</label>
               <DateInputField id={id('dateTo')} value={v.dateTo} onChange={(dateTo) => onChange({ dateTo })} style={inp} />

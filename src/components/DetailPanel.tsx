@@ -32,6 +32,16 @@ export function DetailPanel({ vm: _vm }: { vm: VM }) {
                     Purpose: <span style={css('color:#3c423d')}>{detail.purpose}</span>
                   </div>
                 ) : null}
+                {detail.targetPackage ? (
+                  <div style={css('font-size:11.5px;color:#5c625c')}>
+                    Target Package: <span style={css('color:#3c423d')}>{detail.targetPackage}</span>
+                  </div>
+                ) : null}
+                {detail.customerNames ? (
+                  <div style={css('font-size:11.5px;color:#5c625c')}>
+                    Customer Name: <span style={css('color:#3c423d')}>{detail.customerNames}</span>
+                  </div>
+                ) : null}
                 {detail.auditor1 ? (
                   <div style={css('font-size:11.5px;color:#5c625c')}>
                     QMS Host: <span style={css('color:#3c423d')}>{detail.auditor1}</span>

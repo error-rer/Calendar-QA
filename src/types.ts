@@ -40,6 +40,8 @@ export interface Assignment {
   endCustomer?: string;
   auditor1?: string;
   purpose?: string;
+  targetPackage?: string;
+  customerNames?: string;
   site2?: string;
   area?: string;
   auditor2?: string;
@@ -349,6 +351,8 @@ export interface CreateDraft {
   site1: string;
   customer: string;
   endCustomer: string;
+  targetPackage: string;
+  customerNames: string;
   auditor1: string;
   department2: string;
   site2: string;
@@ -367,6 +371,8 @@ export interface EditDraft {
   customer: string;
   endCustomer: string;
   purpose: string;
+  targetPackage: string;
+  customerNames: string;
   auditor1: string;
   department1: string;
   site2: string;
@@ -378,7 +384,7 @@ export interface EditDraft {
 }
 
 export type ActionType = 'CREATE' | 'UPDATE' | 'DELETE' | 'REORDER' | 'MANAGE_ITEM' | 'OTHER';
-export type EntityType = 'APPOINTMENT' | 'CUSTOMER' | 'END_CUSTOMER' | 'AUDITOR' | 'QMS_HOST' | 'SITE' | 'STANDARD' | 'PURPOSE';
+export type EntityType = 'APPOINTMENT' | 'CUSTOMER' | 'END_CUSTOMER' | 'AUDITOR' | 'QMS_HOST' | 'SITE' | 'STANDARD' | 'PURPOSE' | 'TARGET_PACKAGE' | 'CUSTOMER_NAME';
 
 export interface ActivityUser {
   name: string;
@@ -429,6 +435,8 @@ export interface State {
   filterCompany: string[];
   filterAuditType: string[];
   filterAuditTopic: string[];
+  filterTargetPackage: string[];
+  filterCustomerName: string[];
   filterApptType: string[];
   adminFilterSite: string[];
   adminFilterDept: string[];
@@ -465,6 +473,8 @@ export interface State {
   customerOptions: string[];
   endCustomerOptions: string[];
   auditorOptions: string[];
+  targetPackageOptions: string[];
+  customerNameOptions: string[];
   removedOptions: string[];
   masterCreatedOptions?: Record<string, boolean>;
   plants: Plant[];

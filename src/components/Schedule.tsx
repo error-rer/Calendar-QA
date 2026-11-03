@@ -233,6 +233,8 @@ function ApptCard({ chip }: { chip: any }) {
                 {chip.customer && <div>Customer: <span style={css('color:#15191e;font-weight:600')}>{chip.customer}</span></div>}
                 {chip.endCustomer && <div>End customer: <span style={css('color:#3c423d')}>{chip.endCustomer}</span></div>}
                 {chip.apptPurpose && <div>Purpose: <span style={css('color:#3c423d')}>{chip.apptPurpose}</span></div>}
+                {chip.targetPackage && <div>Target Package: <span style={css('color:#3c423d')}>{chip.targetPackage}</span></div>}
+                {chip.customerNames && <div>Customer Name: <span style={css('color:#3c423d')}>{chip.customerNames}</span></div>}
                 {chip.auditor && <div>QMS Host: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
                 {chip.department && <div>Standard: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
               </>
@@ -411,6 +413,8 @@ function Sidebar({ vm }: { vm: VM }) {
           <MultiSelect label="Site" items={vm.siteOptions.filter((o) => o.value).map((o) => ({ value: o.value, label: o.label }))} selected={vm.filterSite} onToggle={vm.toggleFilterSite} />
           <MultiSelect label="Customer" items={vm.companyNames.map((o) => ({ value: o, label: o }))} selected={vm.filterCompany} onToggle={vm.toggleFilterCompany} />
           <MultiSelect label="Purpose" items={vm.auditTypes.map((o) => ({ value: o, label: o }))} selected={vm.filterAuditType} onToggle={vm.toggleFilterAuditType} />
+          <MultiSelect label="Target Package" items={(vm.targetPackageFilterOptions || []).map((o: string) => ({ value: o, label: o }))} selected={vm.filterTargetPackage} onToggle={vm.toggleFilterTargetPackage} />
+          <MultiSelect label="Customer Name" items={(vm.customerNameFilterOptions || []).map((o: string) => ({ value: o, label: o }))} selected={vm.filterCustomerName} onToggle={vm.toggleFilterCustomerName} />
         </div>
       </div>
 
@@ -654,6 +658,8 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
                 {chip.customer && <div>Customer: <span style={css('color:#15191e;font-weight:600')}>{chip.customer}</span></div>}
                 {chip.endCustomer && <div>End customer: <span style={css('color:#3c423d')}>{chip.endCustomer}</span></div>}
                 {chip.apptPurpose && <div>Purpose: <span style={css('color:#3c423d')}>{chip.apptPurpose}</span></div>}
+                {chip.targetPackage && <div>Target Package: <span style={css('color:#3c423d')}>{chip.targetPackage}</span></div>}
+                {chip.customerNames && <div>Customer Name: <span style={css('color:#3c423d')}>{chip.customerNames}</span></div>}
                 {chip.auditor && <div>QMS Host: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
                 {chip.department && <div>Standard: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
               </>

@@ -514,6 +514,24 @@ function OptionsPanel({ vm }: { vm: VM }) {
         onReorder={vm.reorderPurposeOptions}
         placeholder="e.g. supplier audit"
       />
+      <TagListEditor
+        title="Target Package"
+        count={(vm.targetPackageOptions || []).length}
+        values={vm.targetPackageOptions || []}
+        onAdd={vm.addTargetPackageOption}
+        onRemove={vm.removeTargetPackageOption}
+        onReorder={vm.reorderTargetPackageOptions}
+        placeholder="e.g. BGA"
+      />
+      <TagListEditor
+        title="Customer Name"
+        count={(vm.customerNameOptions || []).length}
+        values={vm.customerNameOptions || []}
+        onAdd={vm.addCustomerNameOption}
+        onRemove={vm.removeCustomerNameOption}
+        onReorder={vm.reorderCustomerNameOptions}
+        placeholder="e.g. John Doe"
+      />
     </div>
   );
 }

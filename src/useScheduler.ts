@@ -48,7 +48,7 @@ const formatAuditors = (auditorStr?: string) => {
 export function assignmentToSheetRow(
   a: Assignment,
   engineers?: { id: string; name: string }[]
-): [string, string, string, string, string, string, string, string] {
+): [string, string, string, string, string, string, string, string, string, string] {
   const base = new Date(2026, 5, 29 + a.week * 7);
   base.setDate(base.getDate() + a.day);
   const dd = String(base.getDate()).padStart(2, '0');
@@ -62,11 +62,13 @@ export function assignmentToSheetRow(
   const site = (isInternal ? (a.site2 || a.site1) : (a.site1 || a.site2)) || '';
   const standard = (isInternal ? (a.department2 || a.department1) : (a.department1 || a.department2)) || '';
   const purpose = (isInternal ? (a.area || a.purpose) : (a.purpose || '')) || '';
+  const targetPackage = a.targetPackage || '';
+  const customerNames = a.customerNames || '';
   const fallbackEng = engineers?.find((e) => e.id === a.eng)?.name || '';
   const auditor = (isInternal ? (a.auditor2 || a.auditor1) : (a.auditor1 || a.auditor2)) || fallbackEng || '';
   const id = a.id;
 
-  return [dateStr, auditType, customer, site, standard, purpose, auditor, id];
+  return [dateStr, auditType, customer, site, standard, purpose, targetPackage, customerNames, auditor, id];
 }
 
 const parseDateToISO = (str?: string) => {
@@ -288,6 +290,8 @@ export function useScheduler() {
           const internalDepartmentOptions = (s.internalDepartmentOptions && s.internalDepartmentOptions.length ? s.internalDepartmentOptions : (data.internalDepartmentOptions || [])).filter((c) => !removedSet.has(c));
           const siteCodeOptions = (s.siteCodeOptions && s.siteCodeOptions.length ? s.siteCodeOptions : (data.siteCodeOptions || [])).filter((c) => !removedSet.has(c));
           const siteColors = s.siteColors && Object.keys(s.siteColors).length ? s.siteColors : (data.siteColors || {});
+          const targetPackageOptions = (s.targetPackageOptions && s.targetPackageOptions.length ? s.targetPackageOptions : (data.targetPackageOptions || [])).filter((c) => !removedSet.has(c));
+          const customerNameOptions = (s.customerNameOptions && s.customerNameOptions.length ? s.customerNameOptions : (data.customerNameOptions || [])).filter((c) => !removedSet.has(c));
 
           const mergedState = {
             ...s,
@@ -307,6 +311,8 @@ export function useScheduler() {
             siteColors,
             customerOptions,
             endCustomerOptions,
+            targetPackageOptions,
+            customerNameOptions,
             removedOptions: s.removedOptions || [],
             googleSheetsConfig: data.googleSheetsConfig || s.googleSheetsConfig || { webhookUrl: '', autoSync: true, lastSynced: '' },
           };
@@ -321,6 +327,8 @@ export function useScheduler() {
               activityLogs: mergedState.activityLogs,
               purposeOptions: mergedState.purposeOptions,
               auditorOptions: mergedState.auditorOptions,
+              targetPackageOptions: mergedState.targetPackageOptions,
+              customerNameOptions: mergedState.customerNameOptions,
               customerDepartmentOptions: mergedState.customerDepartmentOptions,
               internalDepartmentOptions: mergedState.internalDepartmentOptions,
               siteCodeOptions: mergedState.siteCodeOptions,
@@ -497,6 +505,26 @@ export function useScheduler() {
       if (!matchesType) return false;
     }
 
+    if (S.filterTargetPackage && S.filterTargetPackage.length > 0) {
+      const pkgStr = a.targetPackage || '';
+      const pkgs = pkgStr.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+      const matchesPkg = S.filterTargetPackage.some((filterVal) => {
+        const f = filterVal.toLowerCase();
+        return pkgs.includes(f) || pkgStr.toLowerCase() === f;
+      });
+      if (!matchesPkg) return false;
+    }
+
+    if (S.filterCustomerName && S.filterCustomerName.length > 0) {
+      const cnStr = a.customerNames || '';
+      const cns = cnStr.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+      const matchesCn = S.filterCustomerName.some((filterVal) => {
+        const f = filterVal.toLowerCase();
+        return cns.includes(f) || cnStr.toLowerCase() === f;
+      });
+      if (!matchesCn) return false;
+    }
+
     if (S.filterApptType.length > 0 && !S.filterApptType.includes(apptAbbr(a))) return false;
     return true;
   };
@@ -585,7 +613,7 @@ export function useScheduler() {
   const setSelectedDay = (i: number) => setState({ selectedDay: i });
   const toggleSidebar = () => setState((s) => ({ sidebarOpen: !s.sidebarOpen }));
   const closeSidebar = () => setState({ sidebarOpen: false });
-  const toggleFilterValue = (field: 'filterEmp' | 'filterSite' | 'filterCompany' | 'filterAuditType' | 'filterAuditTopic' | 'adminFilterSite' | 'adminFilterDept', value: string) =>
+  const toggleFilterValue = (field: 'filterEmp' | 'filterSite' | 'filterCompany' | 'filterAuditType' | 'filterAuditTopic' | 'filterTargetPackage' | 'filterCustomerName' | 'adminFilterSite' | 'adminFilterDept', value: string) =>
     setState((s) => {
       const arr = s[field] as unknown as string[];
       const nextArr = arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
@@ -616,7 +644,7 @@ export function useScheduler() {
   const openTimetable = (engId: string) => setState({ timetableOpenEng: engId, selected: null });
   const closeTimetable = () => setState({ timetableOpenEng: null });
   const clearFilters = () =>
-    setState({ filterEmp: [], filterSite: [], filterCompany: [], filterAuditType: [], filterAuditTopic: [], filterApptType: [], activePlants: Object.fromEntries(S.plants.map((p) => [p.id, true])) });
+    setState({ filterEmp: [], filterSite: [], filterCompany: [], filterAuditType: [], filterAuditTopic: [], filterTargetPackage: [], filterCustomerName: [], filterApptType: [], activePlants: Object.fromEntries(S.plants.map((p) => [p.id, true])) });
   const openDayDialog = (weekOffset: number, day: number) => {
     const baseDate = new Date(2026, 5, 29);
     const targetDate = new Date(baseDate);
@@ -820,6 +848,20 @@ export function useScheduler() {
           .filter(Boolean)
       )
     );
+    const deletedTargetPackages = Array.from(
+      new Set(
+        siblings
+          .flatMap((x) => (x.targetPackage || '').split(',').map((s) => s.trim()))
+          .filter(Boolean)
+      )
+    );
+    const deletedCustomerNames = Array.from(
+      new Set(
+        siblings
+          .flatMap((x) => (x.customerNames || '').split(',').map((s) => s.trim()))
+          .filter(Boolean)
+      )
+    );
     const deletedSites = Array.from(
       new Set(
         siblings.flatMap((x) => [
@@ -991,6 +1033,38 @@ export function useScheduler() {
         }
       }
 
+      let nextTargetPackageOptions = s.targetPackageOptions || [];
+      for (const pkg of deletedTargetPackages) {
+        const pkgLower = pkg.toLowerCase();
+        const isStillUsed = remainingAssignments.some((x) => {
+          const pkgs = (x.targetPackage || '').split(',').map((s) => s.trim().toLowerCase());
+          return pkgs.includes(pkgLower);
+        });
+        if (!isStillUsed) {
+          const isMaster = !!(s.masterCreatedOptions && s.masterCreatedOptions['targetPackageOptions:' + pkgLower]);
+          if (!isMaster) {
+            nextTargetPackageOptions = nextTargetPackageOptions.filter((p) => p.trim().toLowerCase() !== pkgLower);
+            api.deleteOption('target_package', pkg).catch(() => {});
+          }
+        }
+      }
+
+      let nextCustomerNameOptions = s.customerNameOptions || [];
+      for (const cn of deletedCustomerNames) {
+        const cnLower = cn.toLowerCase();
+        const isStillUsed = remainingAssignments.some((x) => {
+          const cns = (x.customerNames || '').split(',').map((s) => s.trim().toLowerCase());
+          return cns.includes(cnLower);
+        });
+        if (!isStillUsed) {
+          const isMaster = !!(s.masterCreatedOptions && s.masterCreatedOptions['customerNameOptions:' + cnLower]);
+          if (!isMaster) {
+            nextCustomerNameOptions = nextCustomerNameOptions.filter((c) => c.trim().toLowerCase() !== cnLower);
+            api.deleteOption('customer_names', cn).catch(() => {});
+          }
+        }
+      }
+
       // Sync local storage snapshots so fresh reloads reflect state changes immediately
       try {
         localStorage.setItem('calendar_qa_comments', JSON.stringify(comments));
@@ -1121,7 +1195,7 @@ export function useScheduler() {
       createOpen: true,
       userMenuOpen: false,
       sidebarOpen: false,
-      createDraft: { order: '', eng: '', day: 0, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' },
+      createDraft: { order: '', eng: '', day: 0, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' },
     });
   };
   const openCreateAt = (engId: string, day: number) => {
@@ -1129,7 +1203,7 @@ export function useScheduler() {
     const targetDate = new Date(baseDate);
     targetDate.setDate(baseDate.getDate() + S.weekOffset * 7 + day);
     if (getHolidayForDate(targetDate)) return;
-    setState({ createOpen: true, userMenuOpen: false, createDraft: { order: '', eng: engId, day, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' } });
+    setState({ createOpen: true, userMenuOpen: false, createDraft: { order: '', eng: engId, day, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' } });
   };
   const openCreateWithDate = (dateIso?: string) => {
     const d = dateIso || '';
@@ -1144,7 +1218,7 @@ export function useScheduler() {
       createDraft: {
         order: '', eng: '', day: 0,
         dateFrom: d, dateTo: d,
-        sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', auditor1: '', department2: '', site2: '', area: '', auditor2: ''
+        sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditor1: '', department2: '', site2: '', area: '', auditor2: ''
       },
     });
   };
@@ -1177,6 +1251,8 @@ export function useScheduler() {
           site1: d.sectionType === 'customer' ? d.site1 : '',
           customer: d.sectionType === 'customer' ? d.customer : '',
           endCustomer: d.sectionType === 'customer' ? d.endCustomer : '',
+          targetPackage: d.sectionType === 'customer' ? (d.targetPackage || '') : '',
+          customerNames: d.sectionType === 'customer' ? (d.customerNames || '') : '',
           auditor1: d.sectionType === 'customer' ? d.auditor1 : '',
           purpose: d.purpose || '',
           site2: d.sectionType === 'internal' ? d.site2 : '',
@@ -1201,6 +1277,12 @@ export function useScheduler() {
     const newCustomer = d.sectionType === 'customer' && d.customer ? d.customer.trim() : '';
     const newEndCustomer = d.sectionType === 'customer' && d.endCustomer ? d.endCustomer.trim() : '';
     const newPurpose = d.purpose ? d.purpose.trim() : '';
+    const newTargetPackages = d.sectionType === 'customer' && d.targetPackage
+      ? d.targetPackage.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
+    const newCustomerNames = d.sectionType === 'customer' && d.customerNames
+      ? d.customerNames.split(',').map((s) => s.trim()).filter(Boolean)
+      : [];
     const newDept1 = d.sectionType === 'customer' && d.department1 ? d.department1.trim() : '';
     const newDept2 = d.sectionType === 'internal' && d.department2 ? d.department2.trim() : '';
     const newSite = (d.sectionType === 'internal' ? d.site2 : d.site1) || '';
@@ -1218,6 +1300,8 @@ export function useScheduler() {
     if (newCustomer) api.saveOption('customer_name', newCustomer).catch(() => {});
     if (newEndCustomer) api.saveOption('end_customer', newEndCustomer).catch(() => {});
     if (newPurpose) api.saveOption('purpose', newPurpose).catch(() => {});
+    newTargetPackages.forEach((pkg) => api.saveOption('target_package', pkg).catch(() => {}));
+    newCustomerNames.forEach((cn) => api.saveOption('customer_names', cn).catch(() => {}));
     if (newDept1) {
       newDept1.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => {
         api.saveOption('customer_department', s).catch(() => {});
@@ -1259,6 +1343,22 @@ export function useScheduler() {
       }
       if (newEndCustomer) unblacklist(newEndCustomer);
       if (newPurpose) unblacklist(newPurpose);
+      newTargetPackages.forEach(unblacklist);
+      newCustomerNames.forEach(unblacklist);
+
+      let nextTargetPackageOpts = s.targetPackageOptions || [];
+      for (const p of newTargetPackages) {
+        if (!nextTargetPackageOpts.some((pkg) => pkg.toLowerCase() === p.toLowerCase())) {
+          nextTargetPackageOpts = [...nextTargetPackageOpts, p];
+        }
+      }
+
+      let nextCustomerNameOpts = s.customerNameOptions || [];
+      for (const n of newCustomerNames) {
+        if (!nextCustomerNameOpts.some((cn) => cn.toLowerCase() === n.toLowerCase())) {
+          nextCustomerNameOpts = [...nextCustomerNameOpts, n];
+        }
+      }
       if (newDept1) newDept1.split(',').map((s) => s.trim()).filter(Boolean).forEach(unblacklist);
       if (newDept2) newDept2.split(',').map((s) => s.trim()).filter(Boolean).forEach(unblacklist);
       if (newSite) newSite.split('/').map((s) => s.trim()).filter(Boolean).forEach(unblacklist);
@@ -1303,6 +1403,8 @@ export function useScheduler() {
         endCustomerOptions: newEndCustomer && !(s.endCustomerOptions || []).includes(newEndCustomer) ? [...(s.endCustomerOptions || []), newEndCustomer] : (s.endCustomerOptions || []),
         purposeOptions: newPurpose && !s.purposeOptions.includes(newPurpose) ? [...s.purposeOptions, newPurpose] : s.purposeOptions,
         siteCodeOptions: nextSiteOpts,
+        targetPackageOptions: nextTargetPackageOpts,
+        customerNameOptions: nextCustomerNameOpts,
         customerDepartmentOptions: nextCustDeptOpts,
         internalDepartmentOptions: nextInternalDeptOpts,
         auditorOptions: (() => {
@@ -1369,6 +1471,8 @@ export function useScheduler() {
         area: a.area || '',
         auditor2: a.auditor2 || '',
         department2: a.department2 || '',
+        targetPackage: a.targetPackage || '',
+        customerNames: a.customerNames || '',
       },
     });
   };
@@ -1506,6 +1610,14 @@ export function useScheduler() {
     const newPurpose = d.purpose ? d.purpose.trim() : '';
     const isPurposeChanged = oldPurpose !== newPurpose;
 
+    const oldTargetPkg = (target.targetPackage || '').trim();
+    const newTargetPkg = isCustomer && d.targetPackage ? d.targetPackage.trim() : '';
+    const isTargetPkgChanged = isCustomer && oldTargetPkg !== newTargetPkg;
+
+    const oldCustNames = (target.customerNames || '').trim();
+    const newCustNames = isCustomer && d.customerNames ? d.customerNames.trim() : '';
+    const isCustNamesChanged = isCustomer && oldCustNames !== newCustNames;
+
     const oldAuditor = ((wasCustomer ? target.auditor1 : target.auditor2) || '').trim();
     const newAuditor = ((isCustomer ? d.auditor1 : d.auditor2) || '').trim();
     const isAuditorChanged = oldAuditor !== newAuditor;
@@ -1539,6 +1651,12 @@ export function useScheduler() {
     }
     if (isPurposeChanged) {
       changes.push({ name: 'Purpose', oldVal: oldPurpose, newVal: newPurpose });
+    }
+    if (isCustomer && isTargetPkgChanged) {
+      changes.push({ name: 'Target Package', oldVal: oldTargetPkg, newVal: newTargetPkg });
+    }
+    if (isCustomer && isCustNamesChanged) {
+      changes.push({ name: 'Customer Name', oldVal: oldCustNames, newVal: newCustNames });
     }
     if (isAuditorChanged) {
       changes.push({ name: 'QMS Host', oldVal: oldAuditor, newVal: newAuditor });
@@ -1638,6 +1756,10 @@ export function useScheduler() {
       let nextPurposeOptions = s.purposeOptions || [];
       let nextCustomerDepartmentOptions = s.customerDepartmentOptions || [];
       let nextInternalDepartmentOptions = s.internalDepartmentOptions || [];
+      let nextTargetPackageOptions = s.targetPackageOptions || [];
+      let nextCustomerNameOptions = s.customerNameOptions || [];
+      let nextFilterTargetPackage = s.filterTargetPackage || [];
+      let nextFilterCustomerName = s.filterCustomerName || [];
       let nextSiteCodeOptions = s.siteCodeOptions || [];
       let nextAuditorOptions = s.auditorOptions || [];
       let nextRemovedOptions = s.removedOptions || [];
@@ -1709,6 +1831,46 @@ export function useScheduler() {
           if (!isMaster) {
             nextEndCustomerOptions = nextEndCustomerOptions.filter((c) => c.trim().toLowerCase() !== oldEndCustomer.toLowerCase());
             api.deleteOption('end_customer', oldEndCustomer).catch(() => {});
+          }
+        }
+      }
+
+      // Prune old targetPackage if no longer used and not a master item
+      if (oldTargetPkg && oldTargetPkg.toLowerCase() !== newTargetPkg.toLowerCase()) {
+        const oldPkgs = oldTargetPkg.split(',').map((s) => s.trim()).filter(Boolean);
+        for (const op of oldPkgs) {
+          const opLower = op.toLowerCase();
+          const isStillUsed = nextAssignments.some((a) => {
+            const pkgs = (a.targetPackage || '').split(',').map((s) => s.trim().toLowerCase());
+            return pkgs.includes(opLower);
+          });
+          if (!isStillUsed) {
+            const isMaster = !!(s.masterCreatedOptions && s.masterCreatedOptions['targetPackageOptions:' + opLower]);
+            if (!isMaster) {
+              nextTargetPackageOptions = nextTargetPackageOptions.filter((pkg) => pkg.trim().toLowerCase() !== opLower);
+              nextFilterTargetPackage = nextFilterTargetPackage.filter((f) => f.trim().toLowerCase() !== opLower);
+              api.deleteOption('target_package', op).catch(() => {});
+            }
+          }
+        }
+      }
+
+      // Prune old customerNames if no longer used and not a master item
+      if (oldCustNames && oldCustNames.toLowerCase() !== newCustNames.toLowerCase()) {
+        const oldCns = oldCustNames.split(',').map((s) => s.trim()).filter(Boolean);
+        for (const oc of oldCns) {
+          const ocLower = oc.toLowerCase();
+          const isStillUsed = nextAssignments.some((a) => {
+            const cns = (a.customerNames || '').split(',').map((s) => s.trim().toLowerCase());
+            return cns.includes(ocLower);
+          });
+          if (!isStillUsed) {
+            const isMaster = !!(s.masterCreatedOptions && s.masterCreatedOptions['customerNameOptions:' + ocLower]);
+            if (!isMaster) {
+              nextCustomerNameOptions = nextCustomerNameOptions.filter((cn) => cn.trim().toLowerCase() !== ocLower);
+              nextFilterCustomerName = nextFilterCustomerName.filter((f) => f.trim().toLowerCase() !== ocLower);
+              api.deleteOption('customer_names', oc).catch(() => {});
+            }
           }
         }
       }
@@ -1981,7 +2143,7 @@ export function useScheduler() {
   };
 
   // ---- appointment option lists (Purpose / Department / Site) ----
-  type OptionListField = 'purposeOptions' | 'customerDepartmentOptions' | 'internalDepartmentOptions' | 'siteCodeOptions' | 'customerOptions' | 'endCustomerOptions' | 'auditorOptions';
+  type OptionListField = 'purposeOptions' | 'customerDepartmentOptions' | 'internalDepartmentOptions' | 'siteCodeOptions' | 'customerOptions' | 'endCustomerOptions' | 'auditorOptions' | 'targetPackageOptions' | 'customerNameOptions';
   const fieldToCategory: Record<OptionListField, string> = {
     purposeOptions: 'purpose',
     customerDepartmentOptions: 'customer_department',
@@ -1990,6 +2152,8 @@ export function useScheduler() {
     customerOptions: 'customer_name',
     endCustomerOptions: 'end_customer',
     auditorOptions: 'auditor',
+    targetPackageOptions: 'target_package',
+    customerNameOptions: 'customer_names',
   };
 
   const entityTypeMap: Record<OptionListField, EntityType> = {
@@ -2000,6 +2164,8 @@ export function useScheduler() {
     customerDepartmentOptions: 'STANDARD',
     internalDepartmentOptions: 'STANDARD',
     purposeOptions: 'PURPOSE',
+    targetPackageOptions: 'TARGET_PACKAGE',
+    customerNameOptions: 'CUSTOMER_NAME',
   };
 
   const entityNameMap: Record<OptionListField, string> = {
@@ -2010,6 +2176,8 @@ export function useScheduler() {
     customerDepartmentOptions: 'Customer Standard',
     internalDepartmentOptions: 'Internal Standard',
     purposeOptions: 'Purpose',
+    targetPackageOptions: 'Target Package',
+    customerNameOptions: 'Customer Name',
   };
 
   const addOption = (field: OptionListField, value: string, meta = '') => {
@@ -2080,6 +2248,16 @@ export function useScheduler() {
           const s2 = (a.site2 || '').split('/').map((x) => x.trim().toLowerCase());
           return s1.includes(vLower) || s2.includes(vLower);
         }).length;
+      } else if (field === 'targetPackageOptions') {
+        linkedCount = S.assignments.filter((a) => {
+          const list = (a.targetPackage || '').split(',').map((s) => s.trim().toLowerCase());
+          return list.includes(vLower);
+        }).length;
+      } else if (field === 'customerNameOptions') {
+        linkedCount = S.assignments.filter((a) => {
+          const list = (a.customerNames || '').split(',').map((s) => s.trim().toLowerCase());
+          return list.includes(vLower);
+        }).length;
       }
 
       if (linkedCount > 0) {
@@ -2115,6 +2293,8 @@ export function useScheduler() {
     api.deleteOption('auditor', v).catch(() => {});
     api.deleteOption('customer_department', v).catch(() => {});
     api.deleteOption('internal_department', v).catch(() => {});
+    api.deleteOption('target_package', v).catch(() => {});
+    api.deleteOption('customer_names', v).catch(() => {});
     setState((s) => {
       const removedOptions = (s.removedOptions || []).includes(v) ? (s.removedOptions || []) : [...(s.removedOptions || []), v];
       return {
@@ -2547,6 +2727,8 @@ export function useScheduler() {
       department1: a.department1 || '',
       department2: a.department2 || '',
       apptPurpose: a.purpose || '',
+      targetPackage: a.targetPackage || '',
+      customerNames: a.customerNames || '',
       createdAt: a.createdAt,
       major: a.major,
       minor: a.minor,
@@ -2967,6 +3149,8 @@ export function useScheduler() {
       auditor1: selA.auditor1 || '', site2: selA.site2 || '', area: selA.area || '', auditor2: selA.auditor2 || '',
       department1: selA.department1 || '', department2: selA.department2 || '',
       purpose: selA.purpose || '',
+      targetPackage: selA.targetPackage || '',
+      customerNames: selA.customerNames || '',
       dateRangeLabel, durationDays,
       major: selA.major ?? 0, minor: selA.minor ?? 0, ofi: selA.ofi ?? 0, request: selA.request ?? 0,
       utl1: selA.utl1 ?? 0, utl2: selA.utl2 ?? 0, utl3: selA.utl3 ?? 0,
@@ -3197,6 +3381,44 @@ export function useScheduler() {
     return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }, [S.assignments, S.purposeOptions, removedSet]);
 
+  const computedTargetPackageOptions = useMemo(() => {
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const active = S.assignments
+      .flatMap((a) => (a.targetPackage || '').split(',').map((s) => s.trim()))
+      .filter((p) => Boolean(p) && !removedSetLower.has(p.toLowerCase()));
+    const baseList = (S.targetPackageOptions || [])
+      .map((p) => p.trim())
+      .filter((p) => Boolean(p) && !removedSetLower.has(p.toLowerCase()));
+
+    const uniqueMap = new Map<string, string>();
+    for (const p of [...baseList, ...active]) {
+      const key = p.toLowerCase();
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, p);
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }, [S.assignments, S.targetPackageOptions, removedSet]);
+
+  const computedCustomerNameOptions = useMemo(() => {
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const active = S.assignments
+      .flatMap((a) => (a.customerNames || '').split(',').map((s) => s.trim()))
+      .filter((n) => Boolean(n) && !removedSetLower.has(n.toLowerCase()));
+    const baseList = (S.customerNameOptions || [])
+      .map((n) => n.trim())
+      .filter((n) => Boolean(n) && !removedSetLower.has(n.toLowerCase()));
+
+    const uniqueMap = new Map<string, string>();
+    for (const n of [...baseList, ...active]) {
+      const key = n.toLowerCase();
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, n);
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }, [S.assignments, S.customerNameOptions, removedSet]);
+
   const masterAuditorOptions = useMemo(() => {
     const engNames = S.engineers
       .filter((e) => e.isMaster !== false)
@@ -3384,6 +3606,8 @@ export function useScheduler() {
 
       if (a.department1) a.department1.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => addSuggestion(s, 'Standard'));
       if (a.department2) a.department2.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => addSuggestion(s, 'Standard'));
+      if (a.targetPackage) a.targetPackage.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => addSuggestion(s, 'Target Package'));
+      if (a.customerNames) a.customerNames.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => addSuggestion(s, 'Customer Name'));
 
       if (e && e.name) addSuggestion(e.name, 'QMS Host');
       if (a.auditor1) a.auditor1.split(',').forEach((s) => addSuggestion(s, 'QMS Host'));
@@ -3425,7 +3649,7 @@ export function useScheduler() {
   const companyNames = computedCustomerOptions;
   const auditTypes = typeIsIA ? [] : computedPurposeOptions;
   const apptTypeOptions = [{ value: 'CS', label: 'Customer (CS)' }, { value: 'IA', label: 'Internal Audit (IA)' }];
-  const hasFilters = !!(S.filterEmp.length || S.filterSite.length || S.filterCompany.length || S.filterAuditType.length || S.filterAuditTopic.length || S.filterApptType.length) || S.plants.some((p) => !S.activePlants[p.id]);
+  const hasFilters = !!(S.filterEmp.length || S.filterSite.length || S.filterCompany.length || S.filterAuditType.length || S.filterAuditTopic.length || (S.filterTargetPackage && S.filterTargetPackage.length) || (S.filterCustomerName && S.filterCustomerName.length) || S.filterApptType.length) || S.plants.some((p) => !S.activePlants[p.id]);
 
   // ---- day dialog VM ----
   const dayDialogOpen = S.dayDialog !== null;
@@ -3707,6 +3931,25 @@ export function useScheduler() {
     reorderCustomerOptions: (list: string[]) => reorderOptions('customerOptions', list),
     reorderEndCustomerOptions: (list: string[]) => reorderOptions('endCustomerOptions', list),
     reorderPurposeOptions: (list: string[]) => reorderOptions('purposeOptions', list),
+    targetPackageOptions: computedTargetPackageOptions,
+    masterTargetPackageOptions: S.targetPackageOptions,
+    addTargetPackageOption: (v: string) => addOption('targetPackageOptions', v),
+    removeTargetPackageOption: (v: string) => removeOption('targetPackageOptions', v),
+    reorderTargetPackageOptions: (list: string[]) => reorderOptions('targetPackageOptions', list),
+
+    customerNameOptions: computedCustomerNameOptions,
+    masterCustomerNameOptions: S.customerNameOptions,
+    addCustomerNameOption: (v: string) => addOption('customerNameOptions', v),
+    removeCustomerNameOption: (v: string) => removeOption('customerNameOptions', v),
+    reorderCustomerNameOptions: (list: string[]) => reorderOptions('customerNameOptions', list),
+
+    filterTargetPackage: S.filterTargetPackage || [],
+    filterCustomerName: S.filterCustomerName || [],
+    toggleFilterTargetPackage: (v: string) => toggleFilterValue('filterTargetPackage', v),
+    toggleFilterCustomerName: (v: string) => toggleFilterValue('filterCustomerName', v),
+    targetPackageFilterOptions: computedTargetPackageOptions,
+    customerNameFilterOptions: computedCustomerNameOptions,
+
     reorderEngineers,
     removedOptions: S.removedOptions || [], removeGenericOption,
   };

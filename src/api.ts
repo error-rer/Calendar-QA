@@ -19,6 +19,8 @@ export interface ApiState {
   customerOptions?: string[];
   endCustomerOptions?: string[];
   auditorOptions?: string[];
+  targetPackageOptions?: string[];
+  customerNameOptions?: string[];
   googleSheetsConfig?: GoogleSheetsConfig;
 }
 
