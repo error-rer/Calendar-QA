@@ -1037,7 +1037,7 @@ export function AppointmentFormFields({
   const isCustomerEHS = v.department1 === 'EHS';
   // Customer site is always restricted to these 5 fixed values (EHS filtering no longer applies)
   void isCustomerEHS; // retained for future use
-  const customerSiteOptions = ['U1', 'U2A', 'U2B', 'U3A', 'U3T'];
+  const customerSiteOptions = Array.from(new Set(['U1', 'U2A', 'U2B', 'U3A', 'U3T', ...(siteOptions || [])]));
 
   const isInternalEHS = v.department2 === 'EHS';
   const internalSiteOptions = isInternalEHS
@@ -1050,50 +1050,80 @@ export function AppointmentFormFields({
     const activeAssignments = editingTargetId
       ? assignments.filter((a) => a.id !== editingTargetId)
       : assignments;
-    const fromAssign = activeAssignments.map((a) => a.customer).filter((s): s is string => Boolean(s));
-    return Array.from(new Set([...customerOptions, ...fromAssign]))
-      .filter((s) => !removedSet.has(s))
-      .sort();
+    const fromAssign = activeAssignments.map((a) => (a.customer || '').trim()).filter(Boolean);
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const uniqueMap = new Map<string, string>();
+    for (const c of [...customerOptions, ...fromAssign]) {
+      const key = c.trim().toLowerCase();
+      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
+        uniqueMap.set(key, c.trim());
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }, [assignments, customerOptions, editingTargetId, removedSet]);
 
   const endCustomerSuggestions = useMemo(() => {
     const activeAssignments = editingTargetId
       ? assignments.filter((a) => a.id !== editingTargetId)
       : assignments;
-    const fromAssign = activeAssignments.map((a) => a.endCustomer).filter((s): s is string => Boolean(s));
-    return Array.from(new Set([...endCustomerOptions, ...fromAssign]))
-      .filter((s) => !removedSet.has(s))
-      .sort();
+    const fromAssign = activeAssignments.map((a) => (a.endCustomer || '').trim()).filter(Boolean);
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const uniqueMap = new Map<string, string>();
+    for (const c of [...endCustomerOptions, ...fromAssign]) {
+      const key = c.trim().toLowerCase();
+      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
+        uniqueMap.set(key, c.trim());
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }, [assignments, endCustomerOptions, editingTargetId, removedSet]);
 
   const customerDepartmentSuggestions = useMemo(() => {
     const activeAssignments = editingTargetId
       ? assignments.filter((a) => a.id !== editingTargetId)
       : assignments;
-    const fromAssign = activeAssignments.map((a) => a.department1).filter((s): s is string => Boolean(s));
-    return Array.from(new Set([...customerDepartmentOptions, ...fromAssign]))
-      .filter((s) => !removedSet.has(s))
-      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    const fromAssign = activeAssignments.flatMap((a) => (a.department1 || '').split(',').map((s) => s.trim())).filter(Boolean);
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const uniqueMap = new Map<string, string>();
+    for (const d of [...customerDepartmentOptions, ...fromAssign]) {
+      const key = d.trim().toLowerCase();
+      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
+        uniqueMap.set(key, d.trim());
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }, [assignments, customerDepartmentOptions, editingTargetId, removedSet]);
 
   const internalDepartmentSuggestions = useMemo(() => {
     const activeAssignments = editingTargetId
       ? assignments.filter((a) => a.id !== editingTargetId)
       : assignments;
-    const fromAssign = activeAssignments.map((a) => a.department2).filter((s): s is string => Boolean(s));
-    return Array.from(new Set([...internalDepartmentOptions, ...fromAssign]))
-      .filter((s) => !removedSet.has(s))
-      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    const fromAssign = activeAssignments.flatMap((a) => (a.department2 || '').split(',').map((s) => s.trim())).filter(Boolean);
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const uniqueMap = new Map<string, string>();
+    for (const d of [...internalDepartmentOptions, ...fromAssign]) {
+      const key = d.trim().toLowerCase();
+      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
+        uniqueMap.set(key, d.trim());
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }, [assignments, internalDepartmentOptions, editingTargetId, removedSet]);
 
   const purposeSuggestions = useMemo(() => {
     const activeAssignments = editingTargetId
       ? assignments.filter((a) => a.id !== editingTargetId)
       : assignments;
-    const fromAssign = activeAssignments.map((a) => a.purpose).filter((s): s is string => Boolean(s));
-    return Array.from(new Set([...purposeOptions, ...fromAssign]))
-      .filter((s) => !removedSet.has(s))
-      .sort();
+    const fromAssign = activeAssignments.map((a) => (a.purpose || '').trim()).filter(Boolean);
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const uniqueMap = new Map<string, string>();
+    for (const p of [...purposeOptions, ...fromAssign]) {
+      const key = p.trim().toLowerCase();
+      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
+        uniqueMap.set(key, p.trim());
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }, [assignments, purposeOptions, editingTargetId, removedSet]);
 
   const auditorSuggestions = useMemo(() => {

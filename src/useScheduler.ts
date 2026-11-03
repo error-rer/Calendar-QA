@@ -20,6 +20,8 @@ import {
   dayNames,
   initialCustomerDepartmentOptions,
   initialInternalDepartmentOptions,
+  initialPurposeOptions,
+  initialSiteCodeOptions,
   initialState,
 } from './data';
 import { api } from './api';
@@ -783,9 +785,18 @@ export function useScheduler() {
     });
 
     const deletedCustomers = Array.from(new Set(siblings.map((x) => (x.customer || '').trim()).filter(Boolean)));
+    const deletedEndCustomers = Array.from(new Set(siblings.map((x) => (x.endCustomer || '').trim()).filter(Boolean)));
     const deletedPurposes = Array.from(new Set(siblings.map((x) => (x.purpose || '').trim()).filter(Boolean)));
     const deletedDept1 = Array.from(new Set(siblings.map((x) => (x.department1 || '').trim()).filter(Boolean)));
     const deletedDept2 = Array.from(new Set(siblings.map((x) => (x.department2 || '').trim()).filter(Boolean)));
+    const deletedSites = Array.from(
+      new Set(
+        siblings.flatMap((x) => [
+          ...(x.site1 || '').split('/').map((s) => s.trim()),
+          ...(x.site2 || '').split('/').map((s) => s.trim()),
+        ]).filter(Boolean)
+      )
+    );
     const deletedAuditors = Array.from(
       new Set(
         siblings.flatMap((x) => [
@@ -804,18 +815,37 @@ export function useScheduler() {
       let nextRemovedOptions = s.removedOptions || [];
       let nextFilterCompany = s.filterCompany || [];
 
-      // Manage Options Cleanup: If deleted customer was the only reference in active dataset, remove it from Manage Options & filters
+      // Manage Options Cleanup: Prune if only referenced in deleted appointment AND not a master item
       for (const cust of deletedCustomers) {
+        const custLower = cust.toLowerCase();
         const isCustStillUsed = remainingAssignments.some(
-          (x) => (x.customer || '').trim().toLowerCase() === cust.toLowerCase()
+          (x) => (x.customer || '').trim().toLowerCase() === custLower
         );
         if (!isCustStillUsed) {
-          nextCustomerOptions = nextCustomerOptions.filter((c) => c.trim().toLowerCase() !== cust.toLowerCase());
-          if (!nextRemovedOptions.some((r) => r.toLowerCase() === cust.toLowerCase())) {
-            nextRemovedOptions = [...nextRemovedOptions, cust];
+          const isMaster = !!(s.masterCreatedOptions && s.masterCreatedOptions['customerOptions:' + custLower]);
+          if (!isMaster) {
+            nextCustomerOptions = nextCustomerOptions.filter((c) => c.trim().toLowerCase() !== custLower);
+            if (!nextRemovedOptions.some((r) => r.toLowerCase() === custLower)) {
+              nextRemovedOptions = [...nextRemovedOptions, cust];
+            }
+            nextFilterCompany = nextFilterCompany.filter((f) => f.trim().toLowerCase() !== custLower);
+            api.deleteOption('customer_name', cust).catch(() => {});
           }
-          nextFilterCompany = nextFilterCompany.filter((f) => f.trim().toLowerCase() !== cust.toLowerCase());
-          api.deleteOption('customer_name', cust).catch(() => {});
+        }
+      }
+
+      let nextEndCustomerOptions = s.endCustomerOptions || [];
+      for (const endCust of deletedEndCustomers) {
+        const endCustLower = endCust.toLowerCase();
+        const isStillUsed = remainingAssignments.some(
+          (x) => (x.endCustomer || '').trim().toLowerCase() === endCustLower
+        );
+        if (!isStillUsed) {
+          const isMaster = !!(s.masterCreatedOptions && s.masterCreatedOptions['endCustomerOptions:' + endCustLower]);
+          if (!isMaster) {
+            nextEndCustomerOptions = nextEndCustomerOptions.filter((c) => c.trim().toLowerCase() !== endCustLower);
+            api.deleteOption('end_customer', endCust).catch(() => {});
+          }
         }
       }
 
@@ -823,13 +853,38 @@ export function useScheduler() {
       let nextFilterAuditType = s.filterAuditType || [];
 
       for (const purp of deletedPurposes) {
+        const purpLower = purp.toLowerCase();
         const isPurpStillUsed = remainingAssignments.some(
-          (x) => (x.purpose || '').trim().toLowerCase() === purp.toLowerCase()
+          (x) => (x.purpose || '').trim().toLowerCase() === purpLower
         );
         if (!isPurpStillUsed) {
-          nextPurposeOptions = nextPurposeOptions.filter((p) => p.trim().toLowerCase() !== purp.toLowerCase());
-          nextFilterAuditType = nextFilterAuditType.filter((f) => f.trim().toLowerCase() !== purp.toLowerCase());
-          api.deleteOption('purpose', purp).catch(() => {});
+          const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['purposeOptions:' + purpLower]) ||
+            initialPurposeOptions.some((init) => init.toLowerCase() === purpLower);
+          if (!isMaster) {
+            nextPurposeOptions = nextPurposeOptions.filter((p) => p.trim().toLowerCase() !== purpLower);
+            nextFilterAuditType = nextFilterAuditType.filter((f) => f.trim().toLowerCase() !== purpLower);
+            api.deleteOption('purpose', purp).catch(() => {});
+          }
+        }
+      }
+
+      let nextSiteCodeOptions = s.siteCodeOptions || [];
+      let nextFilterSite = s.filterSite || [];
+      for (const site of deletedSites) {
+        const siteLower = site.toLowerCase();
+        const isSiteStillUsed = remainingAssignments.some((x) => {
+          const s1 = (x.site1 || '').split('/').map((s) => s.trim().toLowerCase());
+          const s2 = (x.site2 || '').split('/').map((s) => s.trim().toLowerCase());
+          return s1.includes(siteLower) || s2.includes(siteLower);
+        });
+        if (!isSiteStillUsed) {
+          const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['siteCodeOptions:' + siteLower]) ||
+            initialSiteCodeOptions.some((init) => init.toLowerCase() === siteLower);
+          if (!isMaster) {
+            nextSiteCodeOptions = nextSiteCodeOptions.filter((s) => s.trim().toLowerCase() !== siteLower);
+            nextFilterSite = nextFilterSite.filter((f) => f.trim().toLowerCase() !== siteLower);
+            api.deleteOption('site_code', site).catch(() => {});
+          }
         }
       }
 
@@ -853,7 +908,7 @@ export function useScheduler() {
         });
 
         if (!isAudStillUsed) {
-          const isMaster = masterAuditorSet.has(audLower);
+          const isMaster = masterAuditorSet.has(audLower) || !!(s.masterCreatedOptions && s.masterCreatedOptions['auditorOptions:' + audLower]);
           if (!isMaster) {
             nextAuditorOptions = nextAuditorOptions.filter((a) => a.toLowerCase() !== audLower);
             api.deleteOption('auditor', aud).catch(() => {});
@@ -873,12 +928,15 @@ export function useScheduler() {
 
       let nextCustomerDepartmentOptions = s.customerDepartmentOptions || [];
       for (const dept of deletedDept1) {
+        const deptLower = dept.toLowerCase();
         const isStillUsed = remainingAssignments.some(
-          (x) => (x.department1 || '').trim().toLowerCase() === dept.toLowerCase()
+          (x) => (x.department1 || '').trim().toLowerCase() === deptLower
         );
         if (!isStillUsed) {
-          if (!initialCustomerDepartmentOptions.some((init) => init.toLowerCase() === dept.toLowerCase())) {
-            nextCustomerDepartmentOptions = nextCustomerDepartmentOptions.filter((d) => d.trim().toLowerCase() !== dept.toLowerCase());
+          const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['customerDepartmentOptions:' + deptLower]) ||
+            initialCustomerDepartmentOptions.some((init) => init.toLowerCase() === deptLower);
+          if (!isMaster) {
+            nextCustomerDepartmentOptions = nextCustomerDepartmentOptions.filter((d) => d.trim().toLowerCase() !== deptLower);
             api.deleteOption('customer_department', dept).catch(() => {});
           }
         }
@@ -886,12 +944,15 @@ export function useScheduler() {
 
       let nextInternalDepartmentOptions = s.internalDepartmentOptions || [];
       for (const dept of deletedDept2) {
+        const deptLower = dept.toLowerCase();
         const isStillUsed = remainingAssignments.some(
-          (x) => (x.department2 || '').trim().toLowerCase() === dept.toLowerCase()
+          (x) => (x.department2 || '').trim().toLowerCase() === deptLower
         );
         if (!isStillUsed) {
-          if (!initialInternalDepartmentOptions.some((init) => init.toLowerCase() === dept.toLowerCase())) {
-            nextInternalDepartmentOptions = nextInternalDepartmentOptions.filter((d) => d.trim().toLowerCase() !== dept.toLowerCase());
+          const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['internalDepartmentOptions:' + deptLower]) ||
+            initialInternalDepartmentOptions.some((init) => init.toLowerCase() === deptLower);
+          if (!isMaster) {
+            nextInternalDepartmentOptions = nextInternalDepartmentOptions.filter((d) => d.trim().toLowerCase() !== deptLower);
             api.deleteOption('internal_department', dept).catch(() => {});
           }
         }
@@ -906,42 +967,44 @@ export function useScheduler() {
           assignments: remainingAssignments,
           comments,
           activity: s.activity,
+          customerOptions: nextCustomerOptions,
+          endCustomerOptions: nextEndCustomerOptions,
           purposeOptions: nextPurposeOptions,
+          siteCodeOptions: nextSiteCodeOptions,
+          auditorOptions: nextAuditorOptions,
           customerDepartmentOptions: nextCustomerDepartmentOptions,
           internalDepartmentOptions: nextInternalDepartmentOptions,
-          siteCodeOptions: s.siteCodeOptions,
-          siteColors: s.siteColors,
-          customerOptions: nextCustomerOptions,
-          auditorOptions: nextAuditorOptions,
           removedOptions: nextRemovedOptions,
-          activePlants: s.activePlants,
-          plants: s.plants,
+          masterCreatedOptions: s.masterCreatedOptions,
         };
         localStorage.setItem('calendar_qa_snapshot', JSON.stringify(snapshot));
-      } catch (e) {
-        console.warn('Failed to update local storage snapshot on deletion:', e);
-      }
+      } catch {}
 
       return {
         assignments: remainingAssignments,
-        engineers: nextEngineers,
         comments,
+        engineers: nextEngineers,
         customerOptions: nextCustomerOptions,
+        endCustomerOptions: nextEndCustomerOptions,
         purposeOptions: nextPurposeOptions,
+        siteCodeOptions: nextSiteCodeOptions,
         auditorOptions: nextAuditorOptions,
         customerDepartmentOptions: nextCustomerDepartmentOptions,
         internalDepartmentOptions: nextInternalDepartmentOptions,
         removedOptions: nextRemovedOptions,
         filterCompany: nextFilterCompany,
+        filterSite: nextFilterSite,
         filterAuditType: nextFilterAuditType,
         filterEmp: nextFilterEmp,
         selected: s.selected && siblingSet.has(s.selected) ? null : s.selected,
         editOpen: s.editOpen && s.editDraft?.targetId && siblingSet.has(s.editDraft.targetId) ? false : s.editOpen,
       };
     });
-
-    log('You', `removed ${apptTitle(a)} appointment`, '#2756d6');
-    logActivity('DELETE', 'APPOINTMENT', `Deleted appointment for "${apptTitle(a)}"`, { assignmentId: aid });
+    log('You', `removed ${apptTitle(a)} appointment`, '#d9534f');
+    logActivity('DELETE', 'APPOINTMENT', `Deleted appointment for "${apptTitle(a)}"`, {
+      targetId: aid,
+      apptName: apptTitle(a),
+    });
   };
   const duplicate = (aid: string) => {
     const a = S.assignments.find((x) => x.id === aid);
@@ -1078,6 +1141,7 @@ export function useScheduler() {
     const newPurpose = d.purpose ? d.purpose.trim() : '';
     const newDept1 = d.sectionType === 'customer' && d.department1 ? d.department1.trim() : '';
     const newDept2 = d.sectionType === 'internal' && d.department2 ? d.department2.trim() : '';
+    const newSite = (d.sectionType === 'internal' ? d.site2 : d.site1) || '';
     const existingMasterSet = new Set(
       (S.auditorOptions || [])
         .concat(S.engineers.map((e) => e.name))
@@ -1089,20 +1153,15 @@ export function useScheduler() {
       .map((n) => n.trim())
       .filter((n) => Boolean(n) && n !== 'Unassigned' && !existingMasterSet.has(n.toLowerCase()));
 
-    if (newCustomer) {
-      api.saveOption('customer_name', newCustomer).catch(() => {});
-    }
-    if (newEndCustomer) {
-      api.saveOption('end_customer', newEndCustomer).catch(() => {});
-    }
-    if (newPurpose) {
-      api.saveOption('purpose', newPurpose).catch(() => {});
-    }
-    if (newDept1) {
-      api.saveOption('customer_department', newDept1).catch(() => {});
-    }
-    if (newDept2) {
-      api.saveOption('internal_department', newDept2).catch(() => {});
+    if (newCustomer) api.saveOption('customer_name', newCustomer).catch(() => {});
+    if (newEndCustomer) api.saveOption('end_customer', newEndCustomer).catch(() => {});
+    if (newPurpose) api.saveOption('purpose', newPurpose).catch(() => {});
+    if (newDept1) api.saveOption('customer_department', newDept1).catch(() => {});
+    if (newDept2) api.saveOption('internal_department', newDept2).catch(() => {});
+    if (newSite) {
+      newSite.split('/').map((s) => s.trim()).filter(Boolean).forEach((s) => {
+        api.saveOption('site_code', s).catch(() => {});
+      });
     }
     newAuditorNames.forEach((n) => { api.saveOption('auditor', n).catch(() => {}); });
     newAssignments.forEach((a) => api.createAssignment(a).catch(() => {}));
@@ -1110,22 +1169,39 @@ export function useScheduler() {
       action: 'create',
       rows: newAssignments.map((a) => assignmentToSheetRow(a, existingEng ? S.engineers : S.engineers.concat([newEngineer]))),
     });
+
     setState((s) => {
       const cleanCust = newCustomer.trim();
       let nextCustOpts = s.customerOptions || [];
       let nextRemovedOpts = s.removedOptions || [];
 
+      const unblacklist = (val: string) => {
+        if (!val) return;
+        const vLower = val.trim().toLowerCase();
+        nextRemovedOpts = nextRemovedOpts.filter((r) => r.trim().toLowerCase() !== vLower);
+      };
+
       if (cleanCust) {
         if (!nextCustOpts.some((c) => c.trim().toLowerCase() === cleanCust.toLowerCase())) {
           nextCustOpts = [...nextCustOpts, cleanCust];
         }
-        nextRemovedOpts = nextRemovedOpts.filter((r) => r.trim().toLowerCase() !== cleanCust.toLowerCase());
+        unblacklist(cleanCust);
       }
-      if (newDept1) {
-        nextRemovedOpts = nextRemovedOpts.filter((r) => r.trim().toLowerCase() !== newDept1.toLowerCase());
-      }
-      if (newDept2) {
-        nextRemovedOpts = nextRemovedOpts.filter((r) => r.trim().toLowerCase() !== newDept2.toLowerCase());
+      if (newEndCustomer) unblacklist(newEndCustomer);
+      if (newPurpose) unblacklist(newPurpose);
+      if (newDept1) unblacklist(newDept1);
+      if (newDept2) unblacklist(newDept2);
+      if (newSite) newSite.split('/').map((s) => s.trim()).filter(Boolean).forEach(unblacklist);
+      newAuditorNames.forEach(unblacklist);
+
+      let nextSiteOpts = s.siteCodeOptions || [];
+      if (newSite) {
+        const parts = newSite.split('/').map((s) => s.trim()).filter(Boolean);
+        for (const p of parts) {
+          if (!nextSiteOpts.some((s) => s.toLowerCase() === p.toLowerCase())) {
+            nextSiteOpts = [...nextSiteOpts, p];
+          }
+        }
       }
 
       return {
@@ -1136,6 +1212,7 @@ export function useScheduler() {
         removedOptions: nextRemovedOpts,
         endCustomerOptions: newEndCustomer && !(s.endCustomerOptions || []).includes(newEndCustomer) ? [...(s.endCustomerOptions || []), newEndCustomer] : (s.endCustomerOptions || []),
         purposeOptions: newPurpose && !s.purposeOptions.includes(newPurpose) ? [...s.purposeOptions, newPurpose] : s.purposeOptions,
+        siteCodeOptions: nextSiteOpts,
         customerDepartmentOptions: newDept1 && !(s.customerDepartmentOptions || []).includes(newDept1) ? [...(s.customerDepartmentOptions || []), newDept1] : (s.customerDepartmentOptions || []),
         internalDepartmentOptions: newDept2 && !(s.internalDepartmentOptions || []).includes(newDept2) ? [...(s.internalDepartmentOptions || []), newDept2] : (s.internalDepartmentOptions || []),
         auditorOptions: (() => {
@@ -1414,20 +1491,15 @@ export function useScheduler() {
     });
 
     
-    if (newCustomer) {
-      api.saveOption('customer_name', newCustomer).catch(() => {});
-    }
-    if (newEndCustomer) {
-      api.saveOption('end_customer', newEndCustomer).catch(() => {});
-    }
-    if (newPurpose) {
-      api.saveOption('purpose', newPurpose).catch(() => {});
-    }
-    if (newDept1) {
-      api.saveOption('customer_department', newDept1).catch(() => {});
-    }
-    if (newDept2) {
-      api.saveOption('internal_department', newDept2).catch(() => {});
+    if (newCustomer) api.saveOption('customer_name', newCustomer).catch(() => {});
+    if (newEndCustomer) api.saveOption('end_customer', newEndCustomer).catch(() => {});
+    if (newPurpose) api.saveOption('purpose', newPurpose).catch(() => {});
+    if (newDept1) api.saveOption('customer_department', newDept1).catch(() => {});
+    if (newDept2) api.saveOption('internal_department', newDept2).catch(() => {});
+    if (newSite) {
+      newSite.split('/').map((s) => s.trim()).filter(Boolean).forEach((s) => {
+        api.saveOption('site_code', s).catch(() => {});
+      });
     }
 
     const droppedSet = new Set(droppedIds);
@@ -1439,83 +1511,127 @@ export function useScheduler() {
       const nextAssignments = others.concat(updated);
 
       let nextCustomerOptions = s.customerOptions || [];
+      let nextEndCustomerOptions = s.endCustomerOptions || [];
+      let nextPurposeOptions = s.purposeOptions || [];
+      let nextCustomerDepartmentOptions = s.customerDepartmentOptions || [];
+      let nextInternalDepartmentOptions = s.internalDepartmentOptions || [];
+      let nextSiteCodeOptions = s.siteCodeOptions || [];
+      let nextAuditorOptions = s.auditorOptions || [];
       let nextRemovedOptions = s.removedOptions || [];
       let nextFilterCompany = s.filterCompany || [];
+      let nextFilterSite = s.filterSite || [];
+      let nextFilterAuditType = s.filterAuditType || [];
+      let nextFilterEmp = s.filterEmp || [];
+
+      const unblacklist = (val: string) => {
+        if (!val) return;
+        const vLower = val.trim().toLowerCase();
+        nextRemovedOptions = nextRemovedOptions.filter((r) => r.trim().toLowerCase() !== vLower);
+      };
 
       if (newCustomer) {
         if (!nextCustomerOptions.some((c) => c.trim().toLowerCase() === newCustomer.toLowerCase())) {
           nextCustomerOptions = [...nextCustomerOptions, newCustomer];
         }
-        nextRemovedOptions = nextRemovedOptions.filter((r) => r.trim().toLowerCase() !== newCustomer.toLowerCase());
+        unblacklist(newCustomer);
       }
+      if (newEndCustomer) unblacklist(newEndCustomer);
+      if (newPurpose) unblacklist(newPurpose);
+      if (newDept1) unblacklist(newDept1);
+      if (newDept2) unblacklist(newDept2);
+      if (newSite) newSite.split('/').map((s) => s.trim()).filter(Boolean).forEach(unblacklist);
+      newAuditors.forEach(unblacklist);
 
+      // Prune old customer if no longer used and not a master item
       if (oldCustomer && oldCustomer.toLowerCase() !== newCustomer.toLowerCase()) {
         const isOldCustomerStillUsed = nextAssignments.some(
           (a) => (a.customer || '').trim().toLowerCase() === oldCustomer.toLowerCase()
         );
         if (!isOldCustomerStillUsed) {
-          nextCustomerOptions = nextCustomerOptions.filter((c) => c.trim().toLowerCase() !== oldCustomer.toLowerCase());
-          if (!nextRemovedOptions.some((r) => r.trim().toLowerCase() === oldCustomer.toLowerCase())) {
-            nextRemovedOptions = [...nextRemovedOptions, oldCustomer];
+          const isMaster = !!(s.masterCreatedOptions && s.masterCreatedOptions['customerOptions:' + oldCustomer.toLowerCase()]);
+          if (!isMaster) {
+            nextCustomerOptions = nextCustomerOptions.filter((c) => c.trim().toLowerCase() !== oldCustomer.toLowerCase());
+            if (!nextRemovedOptions.some((r) => r.toLowerCase() === oldCustomer.toLowerCase())) {
+              nextRemovedOptions = [...nextRemovedOptions, oldCustomer];
+            }
+            nextFilterCompany = nextFilterCompany.filter((f) => f.trim().toLowerCase() !== oldCustomer.toLowerCase());
+            api.deleteOption('customer_name', oldCustomer).catch(() => {});
           }
-          nextFilterCompany = nextFilterCompany.filter((f) => f.trim().toLowerCase() !== oldCustomer.toLowerCase());
-          api.deleteOption('customer_name', oldCustomer).catch(() => {});
         }
       }
 
-      let nextEndCustomerOptions = s.endCustomerOptions || [];
-      if (newEndCustomer && !nextEndCustomerOptions.includes(newEndCustomer)) {
-        nextEndCustomerOptions = [...nextEndCustomerOptions, newEndCustomer];
-      }
-      if (oldEndCustomer && oldEndCustomer !== newEndCustomer) {
-        const isOldEndCustomerStillUsed = nextAssignments.some((a) => a.endCustomer === oldEndCustomer);
-        if (!isOldEndCustomerStillUsed) {
-          nextEndCustomerOptions = nextEndCustomerOptions.filter((c) => c !== oldEndCustomer);
-          api.deleteOption('end_customer', oldEndCustomer).catch(() => {});
+      // Prune old endCustomer if no longer used and not a master item
+      if (oldEndCustomer && oldEndCustomer.toLowerCase() !== newEndCustomer.toLowerCase()) {
+        const isOldEndCustStillUsed = nextAssignments.some(
+          (a) => (a.endCustomer || '').trim().toLowerCase() === oldEndCustomer.toLowerCase()
+        );
+        if (!isOldEndCustStillUsed) {
+          const isMaster = !!(s.masterCreatedOptions && s.masterCreatedOptions['endCustomerOptions:' + oldEndCustomer.toLowerCase()]);
+          if (!isMaster) {
+            nextEndCustomerOptions = nextEndCustomerOptions.filter((c) => c.trim().toLowerCase() !== oldEndCustomer.toLowerCase());
+            api.deleteOption('end_customer', oldEndCustomer).catch(() => {});
+          }
         }
       }
 
-      let nextPurposeOptions = s.purposeOptions;
-      if (newPurpose && !nextPurposeOptions.includes(newPurpose)) {
-        nextPurposeOptions = [...nextPurposeOptions, newPurpose];
-      }
-      if (oldPurpose && oldPurpose !== newPurpose) {
-        const isOldPurposeStillUsed = nextAssignments.some((a) => a.purpose === oldPurpose);
+      // Prune old purpose if no longer used and not a master item
+      if (oldPurpose && oldPurpose.toLowerCase() !== newPurpose.toLowerCase()) {
+        const isOldPurposeStillUsed = nextAssignments.some(
+          (a) => (a.purpose || '').trim().toLowerCase() === oldPurpose.toLowerCase()
+        );
         if (!isOldPurposeStillUsed) {
-          nextPurposeOptions = nextPurposeOptions.filter((p) => p !== oldPurpose);
-          api.deleteOption('purpose', oldPurpose).catch(() => {});
+          const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['purposeOptions:' + oldPurpose.toLowerCase()]) ||
+            initialPurposeOptions.some((init) => init.toLowerCase() === oldPurpose.toLowerCase());
+          if (!isMaster) {
+            nextPurposeOptions = nextPurposeOptions.filter((p) => p.trim().toLowerCase() !== oldPurpose.toLowerCase());
+            nextFilterAuditType = nextFilterAuditType.filter((f) => f.trim().toLowerCase() !== oldPurpose.toLowerCase());
+            api.deleteOption('purpose', oldPurpose).catch(() => {});
+          }
         }
       }
 
-      if (newDept1) {
-        nextRemovedOptions = nextRemovedOptions.filter((r) => r.trim().toLowerCase() !== newDept1.toLowerCase());
-      }
-      if (newDept2) {
-        nextRemovedOptions = nextRemovedOptions.filter((r) => r.trim().toLowerCase() !== newDept2.toLowerCase());
+      // Prune old site if no longer used and not a master item
+      if (oldSite && oldSite.toLowerCase() !== newSite.toLowerCase()) {
+        const oldSites = oldSite.split('/').map((s) => s.trim()).filter(Boolean);
+        for (const os of oldSites) {
+          const osLower = os.toLowerCase();
+          const isOldSiteStillUsed = nextAssignments.some((a) => {
+            const s1 = (a.site1 || '').split('/').map((s) => s.trim().toLowerCase());
+            const s2 = (a.site2 || '').split('/').map((s) => s.trim().toLowerCase());
+            return s1.includes(osLower) || s2.includes(osLower);
+          });
+          if (!isOldSiteStillUsed) {
+            const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['siteCodeOptions:' + osLower]) ||
+              initialSiteCodeOptions.some((init) => init.toLowerCase() === osLower);
+            if (!isMaster) {
+              nextSiteCodeOptions = nextSiteCodeOptions.filter((s) => s.trim().toLowerCase() !== osLower);
+              nextFilterSite = nextFilterSite.filter((f) => f.trim().toLowerCase() !== osLower);
+              api.deleteOption('site_code', os).catch(() => {});
+            }
+          }
+        }
       }
 
-      let nextCustomerDepartmentOptions = s.customerDepartmentOptions || [];
-      if (newDept1 && !nextCustomerDepartmentOptions.includes(newDept1)) {
-        nextCustomerDepartmentOptions = [...nextCustomerDepartmentOptions, newDept1];
-      }
+      // Prune old Dept1
       if (oldDept1 && oldDept1.toLowerCase() !== newDept1.toLowerCase()) {
         const isOldDept1StillUsed = nextAssignments.some((a) => (a.department1 || '').trim().toLowerCase() === oldDept1.toLowerCase());
         if (!isOldDept1StillUsed) {
-          if (!initialCustomerDepartmentOptions.some((init) => init.toLowerCase() === oldDept1.toLowerCase())) {
+          const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['customerDepartmentOptions:' + oldDept1.toLowerCase()]) ||
+            initialCustomerDepartmentOptions.some((init) => init.toLowerCase() === oldDept1.toLowerCase());
+          if (!isMaster) {
             nextCustomerDepartmentOptions = nextCustomerDepartmentOptions.filter((d) => d.trim().toLowerCase() !== oldDept1.toLowerCase());
             api.deleteOption('customer_department', oldDept1).catch(() => {});
           }
         }
       }
 
-      let nextInternalDepartmentOptions = s.internalDepartmentOptions || [];
-      if (newDept2 && !nextInternalDepartmentOptions.includes(newDept2)) {
-        nextInternalDepartmentOptions = [...nextInternalDepartmentOptions, newDept2];
-      }
+      // Prune old Dept2
       if (oldDept2 && oldDept2.toLowerCase() !== newDept2.toLowerCase()) {
         const isOldDept2StillUsed = nextAssignments.some((a) => (a.department2 || '').trim().toLowerCase() === oldDept2.toLowerCase());
         if (!isOldDept2StillUsed) {
-          if (!initialInternalDepartmentOptions.some((init) => init.toLowerCase() === oldDept2.toLowerCase())) {
+          const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['internalDepartmentOptions:' + oldDept2.toLowerCase()]) ||
+            initialInternalDepartmentOptions.some((init) => init.toLowerCase() === oldDept2.toLowerCase());
+          if (!isMaster) {
             nextInternalDepartmentOptions = nextInternalDepartmentOptions.filter((d) => d.trim().toLowerCase() !== oldDept2.toLowerCase());
             api.deleteOption('internal_department', oldDept2).catch(() => {});
           }
@@ -1527,10 +1643,8 @@ export function useScheduler() {
           .filter((e) => e.isMaster !== false)
           .map((e) => e.name.trim().toLowerCase())
       );
-      let nextAuditorOptions = s.auditorOptions || [];
-      let nextFilterEmp = s.filterEmp || [];
 
-      // 1. Register newly added auditors
+      // Register newly added auditors
       const addedAuditors = newAuditors.filter(
         (n) => !oldAuditors.some((o) => o.toLowerCase() === n.toLowerCase()) && n !== 'Unassigned'
       );
@@ -1541,7 +1655,7 @@ export function useScheduler() {
         }
       }
 
-      // 2. Prune auditors removed from this appointment if no longer used anywhere and not protected master records
+      // Prune auditors removed from this appointment if no longer used anywhere and not protected master records
       const removedAuditors = oldAuditors.filter(
         (o) => !newAuditors.some((n) => n.toLowerCase() === o.toLowerCase())
       );
@@ -1555,7 +1669,7 @@ export function useScheduler() {
         });
 
         if (!isStillUsed) {
-          const isMaster = masterAuditorSet.has(audLower);
+          const isMaster = masterAuditorSet.has(audLower) || !!(s.masterCreatedOptions && s.masterCreatedOptions['auditorOptions:' + audLower]);
           if (!isMaster) {
             nextAuditorOptions = nextAuditorOptions.filter((a) => a.toLowerCase() !== audLower);
             api.deleteOption('auditor', aud).catch(() => {});
@@ -1582,9 +1696,13 @@ export function useScheduler() {
         filterCompany: nextFilterCompany,
         endCustomerOptions: nextEndCustomerOptions,
         purposeOptions: nextPurposeOptions,
+        siteCodeOptions: nextSiteCodeOptions,
         auditorOptions: nextAuditorOptions,
         customerDepartmentOptions: nextCustomerDepartmentOptions,
         internalDepartmentOptions: nextInternalDepartmentOptions,
+        filterSite: nextFilterSite,
+        filterAuditType: nextFilterAuditType,
+        filterEmp: nextFilterEmp,
       };
     });
     log('You', logDesc, '#2756d6');
@@ -1748,9 +1866,14 @@ export function useScheduler() {
       const exists = fieldList.some((x) => x.trim().toLowerCase() === v.toLowerCase());
       const nextField = exists ? fieldList : [...fieldList, v];
       const nextRemoved = (s.removedOptions || []).filter((r) => r.trim().toLowerCase() !== v.toLowerCase());
+      const nextMasterCreated = {
+        ...(s.masterCreatedOptions || {}),
+        [`${field}:${v.toLowerCase()}`]: true,
+      };
       return {
         [field]: nextField,
         removedOptions: nextRemoved,
+        masterCreatedOptions: nextMasterCreated,
       };
     });
   };
@@ -1770,14 +1893,14 @@ export function useScheduler() {
 
     if (!force) {
       let linkedCount = 0;
+      const vLower = v.toLowerCase();
       if (field === 'customerOptions') {
-        linkedCount = S.assignments.filter((a) => a.customer === v).length;
+        linkedCount = S.assignments.filter((a) => (a.customer || '').trim().toLowerCase() === vLower).length;
       } else if (field === 'endCustomerOptions') {
-        linkedCount = S.assignments.filter((a) => a.endCustomer === v).length;
+        linkedCount = S.assignments.filter((a) => (a.endCustomer || '').trim().toLowerCase() === vLower).length;
       } else if (field === 'purposeOptions') {
-        linkedCount = S.assignments.filter((a) => a.purpose === v).length;
+        linkedCount = S.assignments.filter((a) => (a.purpose || '').trim().toLowerCase() === vLower).length;
       } else if (field === 'auditorOptions') {
-        const vLower = v.toLowerCase();
         linkedCount = S.assignments.filter((a) => {
           const list1 = (a.auditor1 || '').split(',').map((s) => s.trim().toLowerCase());
           const list2 = (a.auditor2 || '').split(',').map((s) => s.trim().toLowerCase());
@@ -1785,11 +1908,21 @@ export function useScheduler() {
           return list1.includes(vLower) || list2.includes(vLower) || (eng && eng.name.toLowerCase() === vLower);
         }).length;
       } else if (field === 'customerDepartmentOptions') {
-        linkedCount = S.assignments.filter((a) => a.department1 === v).length;
+        linkedCount = S.assignments.filter((a) => {
+          const depts = (a.department1 || '').split(',').map((s) => s.trim().toLowerCase());
+          return depts.includes(vLower) || (a.department1 || '').trim().toLowerCase() === vLower;
+        }).length;
       } else if (field === 'internalDepartmentOptions') {
-        linkedCount = S.assignments.filter((a) => a.department2 === v).length;
+        linkedCount = S.assignments.filter((a) => {
+          const depts = (a.department2 || '').split(',').map((s) => s.trim().toLowerCase());
+          return depts.includes(vLower) || (a.department2 || '').trim().toLowerCase() === vLower;
+        }).length;
       } else if (field === 'siteCodeOptions') {
-        linkedCount = S.assignments.filter((a) => (a.site1 && a.site1.split('/').includes(v)) || (a.site2 && a.site2.split('/').includes(v))).length;
+        linkedCount = S.assignments.filter((a) => {
+          const s1 = (a.site1 || '').split('/').map((x) => x.trim().toLowerCase());
+          const s2 = (a.site2 || '').split('/').map((x) => x.trim().toLowerCase());
+          return s1.includes(vLower) || s2.includes(vLower);
+        }).length;
       }
 
       if (linkedCount > 0) {
@@ -1802,11 +1935,16 @@ export function useScheduler() {
     if (category) api.deleteOption(category, v).catch(() => {});
     logActivity('DELETE', entityTypeMap[field] || 'OTHER', `Deleted ${entityNameMap[field] || 'option'} tag "${v}"`);
     setState((s) => {
-      const fieldList = (s[field] || []).filter((x) => x !== v);
-      const removedOptions = (s.removedOptions || []).includes(v) ? (s.removedOptions || []) : [...(s.removedOptions || []), v];
+      const fieldList = (s[field] || []).filter((x) => x.trim().toLowerCase() !== v.toLowerCase());
+      const removedOptions = (s.removedOptions || []).some((r) => r.toLowerCase() === v.toLowerCase())
+        ? (s.removedOptions || [])
+        : [...(s.removedOptions || []), v];
+      const nextMasterCreated = { ...(s.masterCreatedOptions || {}) };
+      delete nextMasterCreated[`${field}:${v.toLowerCase()}`];
       return {
         [field]: fieldList,
         removedOptions,
+        masterCreatedOptions: nextMasterCreated,
       };
     });
   };
@@ -1834,7 +1972,6 @@ export function useScheduler() {
       };
     });
   };
-
   const setSiteColor = (site: string, color: string) => {
     api.saveOption('site_code', site, color).catch(() => {});
     setState((s) => ({ siteColors: { ...s.siteColors, [site]: color } }));
@@ -2776,33 +2913,71 @@ export function useScheduler() {
   const utlRows = ['UTL1', 'UTL2', 'UTL3', 'Total'] as const;
   const utlCells = summaryPeriods.map((p) => sumUtlMonths(p.indices));
 
-  // ---- admin VMs ----
-  const activeSites = S.plants.filter((p) => S.activePlants[p.id]).length;
-  const adminStats = [
-    { label: 'QA', value: String(S.engineers.length), sub: S.engineers.length + ' total' },
-    { label: 'INTERNAL', value: activeSites + '/' + S.plants.length, sub: 'visible on grid' },
-    { label: 'OPEN ORDERS', value: String(poolOrders.length), sub: 'awaiting staffing' },
-    { label: 'WEEK APPOINTMENTS', value: String(wk.length), sub: 'this week' },
-  ];
-  const adminDeptOptions = [...new Set([...S.internalDepartmentOptions, ...S.customerDepartmentOptions])];
-  const toggleAdminFilterSite = (v: string) => toggleFilterValue('adminFilterSite', v);
-  const toggleAdminFilterDept = (v: string) => toggleFilterValue('adminFilterDept', v);
-  const adminEngineers = S.engineers
-    .filter((e) => {
-      if (S.adminFilterSite.length > 0 && !S.adminFilterSite.includes(e.department)) return false;
-      if (S.adminFilterDept.length > 0 && !e.subDepartments.some((d) => S.adminFilterDept.includes(d))) return false;
-      return true;
-    })
-    .map((e) => {
-      return {
-        id: e.id, name: e.name, role: e.role, department: e.department, subDepartments: e.subDepartments, initials: initials(e.name),
-        avatarStyle: sx({ width: '30px', height: '30px', borderRadius: '8px', background: '#f1f3ee', color: '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '11px', fontWeight: 600, flexShrink: 0 }),
-        appointments: wk.filter((a) => a.eng === e.id).length,
-        onDelete: () => removeEngineer(e.id),
-      };
-    });
-  // ---- filters VM ----
+  // ---- filters & options VMs ----
   const removedSet = useMemo(() => new Set(S.removedOptions || []), [S.removedOptions]);
+
+  const computedSiteCodeOptions = useMemo(() => {
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const active = S.assignments.flatMap((a) => {
+      const sites: string[] = [];
+      if (a.site1) sites.push(...a.site1.split('/').map((s) => s.trim()).filter(Boolean));
+      if (a.site2) sites.push(...a.site2.split('/').map((s) => s.trim()).filter(Boolean));
+      return sites;
+    }).filter((s) => !removedSetLower.has(s.toLowerCase()));
+
+    const baseList = (S.siteCodeOptions || [])
+      .map((s) => s.trim())
+      .filter((s) => Boolean(s) && !removedSetLower.has(s.toLowerCase()));
+
+    const uniqueMap = new Map<string, string>();
+    for (const s of [...baseList, ...active]) {
+      const key = s.toLowerCase();
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, s);
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: 'base' })
+    );
+  }, [S.assignments, S.siteCodeOptions, removedSet]);
+
+  const computedCustomerDepartmentOptions = useMemo(() => {
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const active = S.assignments
+      .flatMap((a) => (a.department1 || '').split(',').map((s) => s.trim()).filter(Boolean))
+      .filter((d) => !removedSetLower.has(d.toLowerCase()));
+    const baseList = (S.customerDepartmentOptions || [])
+      .map((d) => d.trim())
+      .filter((d) => Boolean(d) && !removedSetLower.has(d.toLowerCase()));
+
+    const uniqueMap = new Map<string, string>();
+    for (const d of [...baseList, ...active]) {
+      const key = d.toLowerCase();
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, d);
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }, [S.assignments, S.customerDepartmentOptions, removedSet]);
+
+  const computedInternalDepartmentOptions = useMemo(() => {
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const active = S.assignments
+      .flatMap((a) => (a.department2 || '').split(',').map((s) => s.trim()).filter(Boolean))
+      .filter((d) => !removedSetLower.has(d.toLowerCase()));
+    const baseList = (S.internalDepartmentOptions || [])
+      .map((d) => d.trim())
+      .filter((d) => Boolean(d) && !removedSetLower.has(d.toLowerCase()));
+
+    const uniqueMap = new Map<string, string>();
+    for (const d of [...baseList, ...active]) {
+      const key = d.toLowerCase();
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, d);
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }, [S.assignments, S.internalDepartmentOptions, removedSet]);
 
   const computedCustomerOptions = useMemo(() => {
     const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
@@ -2824,32 +2999,42 @@ export function useScheduler() {
   }, [S.assignments, S.customerOptions, removedSet]);
 
   const computedEndCustomerOptions = useMemo(() => {
-    const active = S.assignments.map((a) => a.endCustomer).filter((c): c is string => Boolean(c) && !removedSet.has(c as string));
-    const baseList = S.endCustomerOptions || [];
-    const activeExtra = Array.from(new Set(active)).filter((c) => !baseList.includes(c));
-    return Array.from(new Set([...baseList, ...activeExtra])).filter((c) => !removedSet.has(c));
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const active = S.assignments
+      .map((a) => (a.endCustomer || '').trim())
+      .filter((c) => Boolean(c) && !removedSetLower.has(c.toLowerCase()));
+    const baseList = (S.endCustomerOptions || [])
+      .map((c) => c.trim())
+      .filter((c) => Boolean(c) && !removedSetLower.has(c.toLowerCase()));
+
+    const uniqueMap = new Map<string, string>();
+    for (const c of [...baseList, ...active]) {
+      const key = c.toLowerCase();
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, c);
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }, [S.assignments, S.endCustomerOptions, removedSet]);
 
   const computedPurposeOptions = useMemo(() => {
-    const active = S.assignments.map((a) => a.purpose).filter((p): p is string => Boolean(p) && !removedSet.has(p as string));
-    const baseList = S.purposeOptions || [];
-    const activeExtra = Array.from(new Set(active)).filter((p) => !baseList.includes(p));
-    return Array.from(new Set([...baseList, ...activeExtra])).filter((p) => !removedSet.has(p));
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const active = S.assignments
+      .map((a) => (a.purpose || '').trim())
+      .filter((p) => Boolean(p) && !removedSetLower.has(p.toLowerCase()));
+    const baseList = (S.purposeOptions || [])
+      .map((p) => p.trim())
+      .filter((p) => Boolean(p) && !removedSetLower.has(p.toLowerCase()));
+
+    const uniqueMap = new Map<string, string>();
+    for (const p of [...baseList, ...active]) {
+      const key = p.toLowerCase();
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, p);
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }, [S.assignments, S.purposeOptions, removedSet]);
-
-  const computedCustomerDepartmentOptions = useMemo(() => {
-    const active = S.assignments.map((a) => a.department1).filter((d): d is string => Boolean(d) && !removedSet.has(d as string));
-    const baseList = S.customerDepartmentOptions || [];
-    const activeExtra = Array.from(new Set(active)).filter((d) => !baseList.includes(d));
-    return Array.from(new Set([...baseList, ...activeExtra])).filter((d) => !removedSet.has(d)).sort();
-  }, [S.assignments, S.customerDepartmentOptions, removedSet]);
-
-  const computedInternalDepartmentOptions = useMemo(() => {
-    const active = S.assignments.map((a) => a.department2).filter((d): d is string => Boolean(d) && !removedSet.has(d as string));
-    const baseList = S.internalDepartmentOptions || [];
-    const activeExtra = Array.from(new Set(active)).filter((d) => !baseList.includes(d));
-    return Array.from(new Set([...baseList, ...activeExtra])).filter((d) => !removedSet.has(d)).sort();
-  }, [S.assignments, S.internalDepartmentOptions, removedSet]);
 
   const masterAuditorOptions = useMemo(() => {
     const engNames = S.engineers
@@ -2904,6 +3089,91 @@ export function useScheduler() {
     );
   }, [masterAuditorOptions, S.assignments, removedSet]);
 
+  // ---- admin VMs ----
+  const adminEngineers = useMemo(() => {
+    const engMap = new Map<string, (typeof S.engineers)[0]>();
+    for (const e of S.engineers) {
+      engMap.set(e.name.toLowerCase().trim(), e);
+    }
+
+    const allNames = Array.from(
+      new Set([
+        ...computedAuditorOptions,
+        ...S.engineers.filter((e) => e.isMaster !== false).map((e) => e.name.trim()).filter(Boolean),
+      ])
+    );
+
+    const fullList = allNames.map((name) => {
+      const existing = engMap.get(name.toLowerCase());
+      if (existing) return existing;
+      return {
+        id: 'aud-' + encodeURIComponent(name.toLowerCase()),
+        name,
+        role: 'Auditor',
+        department: (computedSiteCodeOptions[0] || 'U1') as Department,
+        subDepartments: [] as SubDepartment[],
+        isMaster: false,
+      };
+    });
+
+    return fullList
+      .filter((e) => {
+        if (S.adminFilterSite.length > 0 && !S.adminFilterSite.includes(e.department)) return false;
+        if (S.adminFilterDept.length > 0 && !e.subDepartments.some((d) => S.adminFilterDept.includes(d))) return false;
+        return true;
+      })
+      .map((e) => {
+        const eLower = e.name.toLowerCase().trim();
+        const apptCount = wk.filter((a) => {
+          const eng = engById(a.eng);
+          const list1 = (a.auditor1 || '').split(',').map((s) => s.trim().toLowerCase());
+          const list2 = (a.auditor2 || '').split(',').map((s) => s.trim().toLowerCase());
+          return a.eng === e.id || list1.includes(eLower) || list2.includes(eLower) || (eng && eng.name.toLowerCase() === eLower);
+        }).length;
+
+        return {
+          id: e.id,
+          name: e.name,
+          role: e.role,
+          department: e.department,
+          subDepartments: e.subDepartments,
+          initials: initials(e.name),
+          avatarStyle: sx({
+            width: '30px',
+            height: '30px',
+            borderRadius: '8px',
+            background: '#f1f3ee',
+            color: '#5c625c',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: "'IBM Plex Mono',monospace",
+            fontSize: '11px',
+            fontWeight: 600,
+            flexShrink: 0,
+          }),
+          appointments: apptCount,
+          onDelete: () => {
+            if (e.id.startsWith('aud-')) {
+              removeOption('auditorOptions', e.name);
+            } else {
+              removeEngineer(e.id);
+            }
+          },
+        };
+      });
+  }, [S.engineers, computedAuditorOptions, S.adminFilterSite, S.adminFilterDept, wk, computedSiteCodeOptions]);
+
+  const activeSites = S.plants.filter((p) => S.activePlants[p.id]).length;
+  const adminStats = [
+    { label: 'QA', value: String(adminEngineers.length), sub: adminEngineers.length + ' total' },
+    { label: 'INTERNAL', value: activeSites + '/' + S.plants.length, sub: 'visible on grid' },
+    { label: 'OPEN ORDERS', value: String(poolOrders.length), sub: 'awaiting staffing' },
+    { label: 'WEEK APPOINTMENTS', value: String(wk.length), sub: 'this week' },
+  ];
+  const adminDeptOptions = Array.from(new Set([...computedInternalDepartmentOptions, ...computedCustomerDepartmentOptions]));
+  const toggleAdminFilterSite = (v: string) => toggleFilterValue('adminFilterSite', v);
+  const toggleAdminFilterDept = (v: string) => toggleFilterValue('adminFilterDept', v);
   // ---- search autocomplete suggestions (filter-driven & appointment card data connected) ----
   const searchSuggestions = useMemo(() => {
     const activeAssignments = S.assignments.filter((a) => {
@@ -3235,7 +3505,7 @@ export function useScheduler() {
     updateGoogleSheetsConfig,
     syncAllToGoogleSheets,
     testGoogleSheetsConnection,
-    adminEngineers, engCount: S.engineers.length,
+    adminEngineers, engCount: adminEngineers.length,
     adminFilterSite: S.adminFilterSite, adminFilterDept: S.adminFilterDept, adminDeptOptions,
     toggleAdminFilterSite, toggleAdminFilterDept,
     addEngineer: openEngForm,
@@ -3253,7 +3523,8 @@ export function useScheduler() {
     removeCustomerDepartmentOption: (v: string) => removeOption('customerDepartmentOptions', v),
     addInternalDepartmentOption: (v: string) => addOption('internalDepartmentOptions', v),
     removeInternalDepartmentOption: (v: string) => removeOption('internalDepartmentOptions', v),
-    siteCodeOptions: S.siteCodeOptions,
+    siteCodeOptions: computedSiteCodeOptions,
+    masterSiteCodeOptions: S.siteCodeOptions,
     customerOptions: computedCustomerOptions,
     masterCustomerOptions: S.customerOptions,
     endCustomerOptions: computedEndCustomerOptions,

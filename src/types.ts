@@ -373,6 +373,7 @@ export interface State {
   endCustomerOptions: string[];
   auditorOptions: string[];
   removedOptions: string[];
+  masterCreatedOptions?: Record<string, boolean>;
   plants: Plant[];
   engineers: Engineer[];
   orders: Order[];
