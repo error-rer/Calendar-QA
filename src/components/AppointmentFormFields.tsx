@@ -715,10 +715,16 @@ function MultiAuditorSelect({
   const addCustom = () => {
     const clean = inputVal.trim();
     if (!clean) return;
-    if (!selectedAuditors.includes(clean)) {
-      onChange([...selectedAuditors, clean].join(', '));
-      if (onAddNew && !suggestions.some((s) => s.toLowerCase() === clean.toLowerCase())) {
-        onAddNew(clean);
+    const pieces = clean.split(',').map((s) => s.trim()).filter(Boolean);
+    const toAdd = pieces.filter((p) => !selectedAuditors.some((sel) => sel.toLowerCase() === p.toLowerCase()));
+    if (toAdd.length > 0) {
+      onChange([...selectedAuditors, ...toAdd].join(', '));
+      if (onAddNew) {
+        toAdd.forEach((p) => {
+          if (!suggestions.some((s) => s.toLowerCase() === p.toLowerCase())) {
+            onAddNew(p);
+          }
+        });
       }
     }
     setInputVal('');
@@ -1068,13 +1074,36 @@ export function AppointmentFormFields({
   }, [assignments, purposeOptions, editingTargetId, removedSet]);
 
   const auditorSuggestions = useMemo(() => {
-    const fromEng = engineers.map((e) => e.name).filter((s): s is string => Boolean(s));
-    const fromAssign1 = assignments.flatMap((a) => (a.auditor1 || '').split(',').map((s) => s.trim())).filter((s): s is string => Boolean(s));
-    const fromAssign2 = assignments.flatMap((a) => (a.auditor2 || '').split(',').map((s) => s.trim())).filter((s): s is string => Boolean(s));
-    return Array.from(new Set([...auditorOptions, ...fromEng, ...fromAssign1, ...fromAssign2]))
-      .filter((s) => !removedSet.has(s))
-      .sort();
-  }, [auditorOptions, engineers, assignments, removedSet]);
+    const activeAssignments = editingTargetId
+      ? assignments.filter((a) => a.id !== editingTargetId)
+      : assignments;
+
+    const fromAssign1 = activeAssignments.flatMap((a) => (a.auditor1 || '').split(',').map((s) => s.trim())).filter(Boolean);
+    const fromAssign2 = activeAssignments.flatMap((a) => (a.auditor2 || '').split(',').map((s) => s.trim())).filter(Boolean);
+
+    // Protected master records from Manage page
+    const masterList = auditorOptions || [];
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const uniqueMap = new Map<string, string>();
+
+    for (const name of masterList) {
+      const key = name.trim().toLowerCase();
+      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
+        uniqueMap.set(key, name.trim());
+      }
+    }
+
+    for (const name of [...fromAssign1, ...fromAssign2]) {
+      const key = name.trim().toLowerCase();
+      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
+        uniqueMap.set(key, name.trim());
+      }
+    }
+
+    return Array.from(uniqueMap.values()).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: 'base' })
+    );
+  }, [assignments, auditorOptions, editingTargetId, removedSet]);
 
   const areaSuggestions = useMemo(() => {
     const fromAssign = assignments.map((a) => a.area).filter((s): s is string => Boolean(s));

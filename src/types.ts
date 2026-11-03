@@ -16,6 +16,7 @@ export interface Engineer {
   role: string;
   department: Department;
   subDepartments: SubDepartment[];
+  isMaster?: boolean;
 }
 
 export interface Order {

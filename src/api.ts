@@ -18,6 +18,7 @@ export interface ApiState {
   siteColors?: Record<string, string>;
   customerOptions?: string[];
   endCustomerOptions?: string[];
+  auditorOptions?: string[];
   googleSheetsConfig?: GoogleSheetsConfig;
 }
 

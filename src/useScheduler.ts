@@ -267,6 +267,7 @@ export function useScheduler() {
             }
           }
 
+          const auditorOptions = (s.auditorOptions && s.auditorOptions.length ? s.auditorOptions : (data.auditorOptions || [])).filter((c) => !removedSet.has(c));
           const purposeOptions = (s.purposeOptions && s.purposeOptions.length ? s.purposeOptions : (data.purposeOptions || [])).filter((c) => !removedSet.has(c));
           const customerDepartmentOptions = (s.customerDepartmentOptions && s.customerDepartmentOptions.length ? s.customerDepartmentOptions : (data.customerDepartmentOptions || [])).filter((c) => !removedSet.has(c));
           const internalDepartmentOptions = (s.internalDepartmentOptions && s.internalDepartmentOptions.length ? s.internalDepartmentOptions : (data.internalDepartmentOptions || [])).filter((c) => !removedSet.has(c));
@@ -284,6 +285,7 @@ export function useScheduler() {
             activity: s.activity && s.activity.length ? s.activity : (data.activity || []),
             activityLogs: s.activityLogs && s.activityLogs.length ? s.activityLogs : (data.activityLogs || []),
             purposeOptions,
+            auditorOptions,
             customerDepartmentOptions,
             internalDepartmentOptions,
             siteCodeOptions,
@@ -303,6 +305,7 @@ export function useScheduler() {
               activity: mergedState.activity,
               activityLogs: mergedState.activityLogs,
               purposeOptions: mergedState.purposeOptions,
+              auditorOptions: mergedState.auditorOptions,
               customerDepartmentOptions: mergedState.customerDepartmentOptions,
               internalDepartmentOptions: mergedState.internalDepartmentOptions,
               siteCodeOptions: mergedState.siteCodeOptions,
@@ -763,6 +766,14 @@ export function useScheduler() {
 
     const deletedCustomers = Array.from(new Set(siblings.map((x) => (x.customer || '').trim()).filter(Boolean)));
     const deletedPurposes = Array.from(new Set(siblings.map((x) => (x.purpose || '').trim()).filter(Boolean)));
+    const deletedAuditors = Array.from(
+      new Set(
+        siblings.flatMap((x) => [
+          ...(x.auditor1 || '').split(',').map((s) => s.trim()),
+          ...(x.auditor2 || '').split(',').map((s) => s.trim()),
+        ]).filter(Boolean)
+      )
+    );
 
     setState((s) => {
       const siblingSet = new Set(siblingIds);
@@ -802,11 +813,49 @@ export function useScheduler() {
         }
       }
 
+      let nextAuditorOptions = s.auditorOptions || [];
+      let nextEngineers = s.engineers;
+      let nextFilterEmp = s.filterEmp || [];
+
+      // Protected master records from Manage page
+      const masterAuditorSet = new Set(
+        s.engineers
+          .filter((e) => e.isMaster !== false)
+          .map((e) => e.name.trim().toLowerCase())
+      );
+
+      for (const aud of deletedAuditors) {
+        const audLower = aud.toLowerCase();
+        const isAudStillUsed = remainingAssignments.some((x) => {
+          const list1 = (x.auditor1 || '').split(',').map((s) => s.trim().toLowerCase());
+          const list2 = (x.auditor2 || '').split(',').map((s) => s.trim().toLowerCase());
+          return list1.includes(audLower) || list2.includes(audLower);
+        });
+
+        if (!isAudStillUsed) {
+          const isMaster = masterAuditorSet.has(audLower);
+          if (!isMaster) {
+            nextAuditorOptions = nextAuditorOptions.filter((a) => a.toLowerCase() !== audLower);
+            api.deleteOption('auditor', aud).catch(() => {});
+
+            const adhocEng = nextEngineers.find((e) => e.name.toLowerCase() === audLower && e.isMaster === false);
+            if (adhocEng) {
+              const engUsedInRemaining = remainingAssignments.some((x) => x.eng === adhocEng.id);
+              if (!engUsedInRemaining) {
+                nextEngineers = nextEngineers.filter((e) => e.id !== adhocEng.id);
+                api.deleteEngineer(adhocEng.id).catch(() => {});
+              }
+            }
+            nextFilterEmp = nextFilterEmp.filter((f) => f.toLowerCase() !== audLower);
+          }
+        }
+      }
+
       // Sync local storage snapshots so fresh reloads reflect state changes immediately
       try {
         localStorage.setItem('calendar_qa_comments', JSON.stringify(comments));
         const snapshot = {
-          engineers: s.engineers,
+          engineers: nextEngineers,
           orders: s.orders,
           assignments: remainingAssignments,
           comments,
@@ -817,6 +866,7 @@ export function useScheduler() {
           siteCodeOptions: s.siteCodeOptions,
           siteColors: s.siteColors,
           customerOptions: nextCustomerOptions,
+          auditorOptions: nextAuditorOptions,
           removedOptions: nextRemovedOptions,
           activePlants: s.activePlants,
           plants: s.plants,
@@ -828,12 +878,15 @@ export function useScheduler() {
 
       return {
         assignments: remainingAssignments,
+        engineers: nextEngineers,
         comments,
         customerOptions: nextCustomerOptions,
         purposeOptions: nextPurposeOptions,
+        auditorOptions: nextAuditorOptions,
         removedOptions: nextRemovedOptions,
         filterCompany: nextFilterCompany,
         filterAuditType: nextFilterAuditType,
+        filterEmp: nextFilterEmp,
         selected: s.selected && siblingSet.has(s.selected) ? null : s.selected,
         editOpen: s.editOpen && s.editDraft?.targetId && siblingSet.has(s.editDraft.targetId) ? false : s.editOpen,
       };
@@ -969,7 +1022,7 @@ export function useScheduler() {
       customer: d.customer || '', product: d.endCustomer || d.area || '',
       plant: d.sectionType === 'internal' ? (d.department2 || d.site2 || '') : (d.site1 || ''), purpose: d.purpose || '',
     };
-    const newEngineer = { id: engId, name: auditorPrimary, role: 'QA', department: siteToDept(d.sectionType === 'internal' ? d.site2 : d.site1), subDepartments: [] };
+    const newEngineer = { id: engId, name: auditorPrimary, role: 'QA', department: siteToDept(d.sectionType === 'internal' ? d.site2 : d.site1), subDepartments: [], isMaster: false };
     api.createOrder(newOrder).catch(() => {});
     if (!existingEng) api.createEngineer(newEngineer).catch(() => {});
     const newCustomer = d.sectionType === 'customer' && d.customer ? d.customer.trim() : '';
@@ -1088,25 +1141,27 @@ export function useScheduler() {
       if (slot.wd < 5 && !getHolidayForDate(cur)) slots.push(slot);
     }
     if (slots.length === 0) return;
-    const oldAuditorName = (target.auditor1 || target.auditor2 || S.engineers.find((e) => e.id === target.eng)?.name || '').trim();
+    const oldAuditors = Array.from(new Set([
+      ...(target.auditor1 || '').split(',').map((s) => s.trim()),
+      ...(target.auditor2 || '').split(',').map((s) => s.trim()),
+    ].filter(Boolean)));
     const newAuditorRaw = ((d.sectionType === 'customer' ? d.auditor1 : d.auditor2) || '').trim();
-    // Primary auditor = first name in comma-separated list; used for engineer record
-    const newAuditorPrimary = newAuditorRaw.split(',')[0].trim();
-    const newAuditorName = newAuditorRaw; // full raw string (stored in assignment as-is)
+    const newAuditors = Array.from(new Set(newAuditorRaw.split(',').map((s) => s.trim()).filter(Boolean)));
+    const newAuditorPrimary = newAuditors[0] || 'Unassigned';
     let finalEngId = target.eng;
     let updatedEngineers = S.engineers;
 
-    if (newAuditorPrimary) {
+    if (newAuditorPrimary && newAuditorPrimary !== 'Unassigned') {
       const existingMatchingEng = S.engineers.find((e) => e.name.toLowerCase() === newAuditorPrimary.toLowerCase());
       if (existingMatchingEng) {
         finalEngId = existingMatchingEng.id;
       } else {
         const currentEng = S.engineers.find((e) => e.id === target.eng);
         const otherApptsUsingCurrentEng = S.assignments.filter(
-          (a) => a.id !== d.targetId && (a.eng === target.eng || a.auditor1 === currentEng?.name || a.auditor2 === currentEng?.name)
+          (a) => a.id !== d.targetId && (a.eng === target.eng || (a.auditor1 || '').toLowerCase().includes(currentEng?.name.toLowerCase() || '') || (a.auditor2 || '').toLowerCase().includes(currentEng?.name.toLowerCase() || ''))
         );
 
-        if (currentEng && currentEng.name !== newAuditorPrimary && otherApptsUsingCurrentEng.length === 0) {
+        if (currentEng && currentEng.isMaster === false && currentEng.name !== newAuditorPrimary && otherApptsUsingCurrentEng.length === 0) {
           const updatedEng = { ...currentEng, name: newAuditorPrimary };
           api.updateEngineer(target.eng, updatedEng).catch(() => {});
           updatedEngineers = S.engineers.map((e) => (e.id === target.eng ? updatedEng : e));
@@ -1118,6 +1173,7 @@ export function useScheduler() {
             role: 'QA',
             department: siteToDept(d.sectionType === 'internal' ? d.site2 : d.site1),
             subDepartments: [],
+            isMaster: false,
           };
           api.createEngineer(newEng).catch(() => {});
           finalEngId = newEngId;
@@ -1243,42 +1299,53 @@ export function useScheduler() {
         }
       }
 
-      const existingMasterSet = new Set(
-        (s.auditorOptions || [])
-          .concat(updatedEngineers.map((e) => e.name))
-          .map((n) => n.trim().toLowerCase())
+      const masterAuditorSet = new Set(
+        updatedEngineers
+          .filter((e) => e.isMaster !== false)
+          .map((e) => e.name.trim().toLowerCase())
       );
       let nextAuditorOptions = s.auditorOptions || [];
-      // Only single unique custom names that do NOT yet exist in the database trigger creation of a new entry
-      const newAuditorIndividuals = newAuditorRaw
-        .split(',')
-        .map((n) => n.trim())
-        .filter((n) => Boolean(n) && n !== 'Unassigned' && !existingMasterSet.has(n.toLowerCase()));
-      for (const n of newAuditorIndividuals) {
+      let nextFilterEmp = s.filterEmp || [];
+
+      // 1. Register newly added auditors
+      const addedAuditors = newAuditors.filter(
+        (n) => !oldAuditors.some((o) => o.toLowerCase() === n.toLowerCase()) && n !== 'Unassigned'
+      );
+      for (const n of addedAuditors) {
         if (!nextAuditorOptions.some((opt) => opt.toLowerCase() === n.toLowerCase())) {
           nextAuditorOptions = [...nextAuditorOptions, n];
           api.saveOption('auditor', n).catch(() => {});
         }
       }
-      if (oldAuditorName && oldAuditorName !== newAuditorName) {
-        const isOldAuditorStillUsedInAssignments = nextAssignments.some(
-          (a) => a.auditor1 === oldAuditorName || a.auditor2 === oldAuditorName
-        );
-        const isOldAuditorStillUsedInEngineers = updatedEngineers.some(
-          (e) => e.name === oldAuditorName && nextAssignments.some((a) => a.eng === e.id)
-        );
 
-        if (!isOldAuditorStillUsedInAssignments && !isOldAuditorStillUsedInEngineers) {
-          nextAuditorOptions = nextAuditorOptions.filter((a) => a !== oldAuditorName);
-          api.deleteOption('auditor', oldAuditorName).catch(() => {});
+      // 2. Prune auditors removed from this appointment if no longer used anywhere and not protected master records
+      const removedAuditors = oldAuditors.filter(
+        (o) => !newAuditors.some((n) => n.toLowerCase() === o.toLowerCase())
+      );
 
-          const oldEng = updatedEngineers.find((e) => e.name === oldAuditorName);
-          if (oldEng && oldEng.id !== finalEngId) {
-            const hasOtherAppts = nextAssignments.some((a) => a.eng === oldEng.id);
-            if (!hasOtherAppts) {
-              updatedEngineers = updatedEngineers.filter((e) => e.id !== oldEng.id);
-              api.deleteEngineer(oldEng.id).catch(() => {});
+      for (const aud of removedAuditors) {
+        const audLower = aud.toLowerCase();
+        const isStillUsed = nextAssignments.some((a) => {
+          const list1 = (a.auditor1 || '').split(',').map((x) => x.trim().toLowerCase());
+          const list2 = (a.auditor2 || '').split(',').map((x) => x.trim().toLowerCase());
+          return list1.includes(audLower) || list2.includes(audLower);
+        });
+
+        if (!isStillUsed) {
+          const isMaster = masterAuditorSet.has(audLower);
+          if (!isMaster) {
+            nextAuditorOptions = nextAuditorOptions.filter((a) => a.toLowerCase() !== audLower);
+            api.deleteOption('auditor', aud).catch(() => {});
+
+            const oldEng = updatedEngineers.find((e) => e.name.toLowerCase() === audLower && e.isMaster === false);
+            if (oldEng && oldEng.id !== finalEngId) {
+              const hasOtherAppts = nextAssignments.some((a) => a.eng === oldEng.id);
+              if (!hasOtherAppts) {
+                updatedEngineers = updatedEngineers.filter((e) => e.id !== oldEng.id);
+                api.deleteEngineer(oldEng.id).catch(() => {});
+              }
             }
+            nextFilterEmp = nextFilterEmp.filter((f) => f.toLowerCase() !== audLower);
           }
         }
       }
@@ -1376,7 +1443,7 @@ export function useScheduler() {
       log('You', `updated auditor ${newName.split(' ')[0]}`, '#2756d6');
     } else {
       const id = 'e' + ids.current.id++;
-      const newEng = { id, name: newName, role: 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice() };
+      const newEng = { id, name: newName, role: 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice(), isMaster: true };
       api.createEngineer(newEng).catch(() => {});
       api.saveOption('auditor', newName).catch(() => {});
       setState((s) => ({
@@ -1391,13 +1458,23 @@ export function useScheduler() {
   const removeEngineer = (id: string) => {
     const eng = S.engineers.find((e) => e.id === id);
     if (!eng) return;
-    const linkedAppts = S.assignments.filter((a) => a.eng === id || a.auditor1 === eng.name || a.auditor2 === eng.name);
+    const engLower = eng.name.trim().toLowerCase();
+    const linkedAppts = S.assignments.filter((a) => {
+      const list1 = (a.auditor1 || '').split(',').map((s) => s.trim().toLowerCase());
+      const list2 = (a.auditor2 || '').split(',').map((s) => s.trim().toLowerCase());
+      return a.eng === id || list1.includes(engLower) || list2.includes(engLower);
+    });
     if (linkedAppts.length > 0) {
       alert(`Cannot remove auditor "${eng.name}" because they are currently assigned to ${linkedAppts.length} active appointment(s). Please reassign or update those appointments first.`);
       return;
     }
     api.deleteEngineer(id).catch(() => {});
-    setState((s) => ({ engineers: s.engineers.filter((e) => e.id !== id) }));
+    api.deleteOption('auditor', eng.name).catch(() => {});
+    setState((s) => ({
+      engineers: s.engineers.filter((e) => e.id !== id),
+      auditorOptions: (s.auditorOptions || []).filter((a) => a.toLowerCase() !== engLower),
+      removedOptions: (s.removedOptions || []).includes(eng.name) ? (s.removedOptions || []) : [...(s.removedOptions || []), eng.name],
+    }));
   };
 
   // ---- appointment option lists (Purpose / Department / Site) ----
@@ -1472,7 +1549,13 @@ export function useScheduler() {
       } else if (field === 'purposeOptions') {
         linkedCount = S.assignments.filter((a) => a.purpose === v).length;
       } else if (field === 'auditorOptions') {
-        linkedCount = S.assignments.filter((a) => a.auditor1 === v || a.auditor2 === v || (engById(a.eng)?.name === v)).length;
+        const vLower = v.toLowerCase();
+        linkedCount = S.assignments.filter((a) => {
+          const list1 = (a.auditor1 || '').split(',').map((s) => s.trim().toLowerCase());
+          const list2 = (a.auditor2 || '').split(',').map((s) => s.trim().toLowerCase());
+          const eng = engById(a.eng);
+          return list1.includes(vLower) || list2.includes(vLower) || (eng && eng.name.toLowerCase() === vLower);
+        }).length;
       } else if (field === 'customerDepartmentOptions') {
         linkedCount = S.assignments.filter((a) => a.department1 === v).length;
       } else if (field === 'internalDepartmentOptions') {
@@ -2524,14 +2607,58 @@ export function useScheduler() {
     return Array.from(new Set([...baseList, ...activeExtra])).filter((p) => !removedSet.has(p));
   }, [S.assignments, S.purposeOptions, removedSet]);
 
+  const masterAuditorOptions = useMemo(() => {
+    const engNames = S.engineers
+      .filter((e) => e.isMaster !== false)
+      .map((e) => e.name.trim())
+      .filter(Boolean);
+    const opts = (S.auditorOptions || []).map((s) => s.trim()).filter(Boolean);
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const uniqueMap = new Map<string, string>();
+    for (const name of [...engNames, ...opts]) {
+      const key = name.toLowerCase();
+      if (!removedSetLower.has(key) && !uniqueMap.has(key)) {
+        uniqueMap.set(key, name);
+      }
+    }
+    return Array.from(uniqueMap.values()).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: 'base' })
+    );
+  }, [S.engineers, S.auditorOptions, removedSet]);
+
   const computedAuditorOptions = useMemo(() => {
-    const fromEng = S.engineers.map((e) => e.name).filter((s): s is string => Boolean(s) && !removedSet.has(s as string));
-    const fromAssign1 = S.assignments.flatMap((a) => (a.auditor1 || '').split(',').map((s) => s.trim())).filter((s): s is string => Boolean(s) && !removedSet.has(s as string));
-    const fromAssign2 = S.assignments.flatMap((a) => (a.auditor2 || '').split(',').map((s) => s.trim())).filter((s): s is string => Boolean(s) && !removedSet.has(s as string));
-    const baseList = S.auditorOptions || [];
-    const activeExtra = Array.from(new Set([...fromEng, ...fromAssign1, ...fromAssign2])).filter((s) => !baseList.includes(s));
-    return Array.from(new Set([...baseList, ...activeExtra])).filter((s) => !removedSet.has(s));
-  }, [S.engineers, S.assignments, S.auditorOptions, removedSet]);
+    // 1. Protected master records from Manage page
+    const baseList = masterAuditorOptions;
+
+    // 2. Active auditors from all appointments across schedule
+    const activeAuditors = S.assignments.flatMap((a) => {
+      const names: string[] = [];
+      if (a.auditor1) names.push(...a.auditor1.split(',').map((s) => s.trim()).filter(Boolean));
+      if (a.auditor2) names.push(...a.auditor2.split(',').map((s) => s.trim()).filter(Boolean));
+      return names;
+    });
+
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const uniqueMap = new Map<string, string>();
+
+    for (const name of baseList) {
+      const key = name.toLowerCase();
+      if (!removedSetLower.has(key) && !uniqueMap.has(key)) {
+        uniqueMap.set(key, name);
+      }
+    }
+
+    for (const name of activeAuditors) {
+      const key = name.toLowerCase();
+      if (!removedSetLower.has(key) && !uniqueMap.has(key)) {
+        uniqueMap.set(key, name);
+      }
+    }
+
+    return Array.from(uniqueMap.values()).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: 'base' })
+    );
+  }, [masterAuditorOptions, S.assignments, removedSet]);
 
   // ---- search autocomplete suggestions (filter-driven & appointment card data connected) ----
   const searchSuggestions = useMemo(() => {
@@ -2886,7 +3013,7 @@ export function useScheduler() {
     endCustomerOptions: computedEndCustomerOptions,
     masterEndCustomerOptions: S.endCustomerOptions || [],
     auditorOptions: computedAuditorOptions,
-    masterAuditorOptions: S.auditorOptions,
+    masterAuditorOptions,
     addAuditorOption: (v: string) => addOption('auditorOptions', v),
     removeAuditorOption: (v: string) => removeOption('auditorOptions', v),
     siteColorList, siteColors: S.siteColors, setSiteColor,

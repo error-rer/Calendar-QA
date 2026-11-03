@@ -63,6 +63,8 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       const siteCodeOptions: string[] = [];
       const siteColors: Record<string, string> = {};
       const customerOptions: string[] = [];
+      const endCustomerOptions: string[] = [];
+      const auditorOptions: string[] = [];
       let googleSheetsConfig = {
         webhookUrl: env.GOOGLE_SHEETS_WEBHOOK_URL || '',
         autoSync: true,
@@ -78,6 +80,10 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
           if (row.meta) siteColors[row.value] = row.meta;
         } else if (row.category === 'customer_name') {
           customerOptions.push(row.value);
+        } else if (row.category === 'end_customer') {
+          endCustomerOptions.push(row.value);
+        } else if (row.category === 'auditor') {
+          auditorOptions.push(row.value);
         } else if (row.category === 'google_sheets_config') {
           try {
             const parsed = JSON.parse(row.value);
@@ -105,6 +111,8 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
         siteCodeOptions,
         siteColors,
         customerOptions,
+        endCustomerOptions,
+        auditorOptions,
         googleSheetsConfig,
       });
     }
