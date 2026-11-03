@@ -18,6 +18,8 @@ import { getHolidayForDate, getHolidayStyle, type HolidayInfo } from './holidays
 import {
   dayLabels,
   dayNames,
+  initialCustomerDepartmentOptions,
+  initialInternalDepartmentOptions,
   initialState,
 } from './data';
 import { api } from './api';
@@ -766,6 +768,8 @@ export function useScheduler() {
 
     const deletedCustomers = Array.from(new Set(siblings.map((x) => (x.customer || '').trim()).filter(Boolean)));
     const deletedPurposes = Array.from(new Set(siblings.map((x) => (x.purpose || '').trim()).filter(Boolean)));
+    const deletedDept1 = Array.from(new Set(siblings.map((x) => (x.department1 || '').trim()).filter(Boolean)));
+    const deletedDept2 = Array.from(new Set(siblings.map((x) => (x.department2 || '').trim()).filter(Boolean)));
     const deletedAuditors = Array.from(
       new Set(
         siblings.flatMap((x) => [
@@ -851,6 +855,32 @@ export function useScheduler() {
         }
       }
 
+      let nextCustomerDepartmentOptions = s.customerDepartmentOptions || [];
+      for (const dept of deletedDept1) {
+        const isStillUsed = remainingAssignments.some(
+          (x) => (x.department1 || '').trim().toLowerCase() === dept.toLowerCase()
+        );
+        if (!isStillUsed) {
+          if (!initialCustomerDepartmentOptions.some((init) => init.toLowerCase() === dept.toLowerCase())) {
+            nextCustomerDepartmentOptions = nextCustomerDepartmentOptions.filter((d) => d.trim().toLowerCase() !== dept.toLowerCase());
+            api.deleteOption('customer_department', dept).catch(() => {});
+          }
+        }
+      }
+
+      let nextInternalDepartmentOptions = s.internalDepartmentOptions || [];
+      for (const dept of deletedDept2) {
+        const isStillUsed = remainingAssignments.some(
+          (x) => (x.department2 || '').trim().toLowerCase() === dept.toLowerCase()
+        );
+        if (!isStillUsed) {
+          if (!initialInternalDepartmentOptions.some((init) => init.toLowerCase() === dept.toLowerCase())) {
+            nextInternalDepartmentOptions = nextInternalDepartmentOptions.filter((d) => d.trim().toLowerCase() !== dept.toLowerCase());
+            api.deleteOption('internal_department', dept).catch(() => {});
+          }
+        }
+      }
+
       // Sync local storage snapshots so fresh reloads reflect state changes immediately
       try {
         localStorage.setItem('calendar_qa_comments', JSON.stringify(comments));
@@ -861,8 +891,8 @@ export function useScheduler() {
           comments,
           activity: s.activity,
           purposeOptions: nextPurposeOptions,
-          customerDepartmentOptions: s.customerDepartmentOptions,
-          internalDepartmentOptions: s.internalDepartmentOptions,
+          customerDepartmentOptions: nextCustomerDepartmentOptions,
+          internalDepartmentOptions: nextInternalDepartmentOptions,
           siteCodeOptions: s.siteCodeOptions,
           siteColors: s.siteColors,
           customerOptions: nextCustomerOptions,
@@ -883,6 +913,8 @@ export function useScheduler() {
         customerOptions: nextCustomerOptions,
         purposeOptions: nextPurposeOptions,
         auditorOptions: nextAuditorOptions,
+        customerDepartmentOptions: nextCustomerDepartmentOptions,
+        internalDepartmentOptions: nextInternalDepartmentOptions,
         removedOptions: nextRemovedOptions,
         filterCompany: nextFilterCompany,
         filterAuditType: nextFilterAuditType,
@@ -1028,6 +1060,8 @@ export function useScheduler() {
     const newCustomer = d.sectionType === 'customer' && d.customer ? d.customer.trim() : '';
     const newEndCustomer = d.sectionType === 'customer' && d.endCustomer ? d.endCustomer.trim() : '';
     const newPurpose = d.purpose ? d.purpose.trim() : '';
+    const newDept1 = d.sectionType === 'customer' && d.department1 ? d.department1.trim() : '';
+    const newDept2 = d.sectionType === 'internal' && d.department2 ? d.department2.trim() : '';
     const existingMasterSet = new Set(
       (S.auditorOptions || [])
         .concat(S.engineers.map((e) => e.name))
@@ -1048,6 +1082,12 @@ export function useScheduler() {
     if (newPurpose) {
       api.saveOption('purpose', newPurpose).catch(() => {});
     }
+    if (newDept1) {
+      api.saveOption('customer_department', newDept1).catch(() => {});
+    }
+    if (newDept2) {
+      api.saveOption('internal_department', newDept2).catch(() => {});
+    }
     newAuditorNames.forEach((n) => { api.saveOption('auditor', n).catch(() => {}); });
     newAssignments.forEach((a) => api.createAssignment(a).catch(() => {}));
     triggerSheetSync({
@@ -1065,6 +1105,12 @@ export function useScheduler() {
         }
         nextRemovedOpts = nextRemovedOpts.filter((r) => r.trim().toLowerCase() !== cleanCust.toLowerCase());
       }
+      if (newDept1) {
+        nextRemovedOpts = nextRemovedOpts.filter((r) => r.trim().toLowerCase() !== newDept1.toLowerCase());
+      }
+      if (newDept2) {
+        nextRemovedOpts = nextRemovedOpts.filter((r) => r.trim().toLowerCase() !== newDept2.toLowerCase());
+      }
 
       return {
         orders: s.orders.concat([newOrder]),
@@ -1074,6 +1120,8 @@ export function useScheduler() {
         removedOptions: nextRemovedOpts,
         endCustomerOptions: newEndCustomer && !(s.endCustomerOptions || []).includes(newEndCustomer) ? [...(s.endCustomerOptions || []), newEndCustomer] : (s.endCustomerOptions || []),
         purposeOptions: newPurpose && !s.purposeOptions.includes(newPurpose) ? [...s.purposeOptions, newPurpose] : s.purposeOptions,
+        customerDepartmentOptions: newDept1 && !(s.customerDepartmentOptions || []).includes(newDept1) ? [...(s.customerDepartmentOptions || []), newDept1] : (s.customerDepartmentOptions || []),
+        internalDepartmentOptions: newDept2 && !(s.internalDepartmentOptions || []).includes(newDept2) ? [...(s.internalDepartmentOptions || []), newDept2] : (s.internalDepartmentOptions || []),
         auditorOptions: (() => {
           let opts = s.auditorOptions || [];
           for (const n of newAuditorNames) {
@@ -1231,6 +1279,10 @@ export function useScheduler() {
     const newEndCustomer = d.sectionType === 'customer' && d.endCustomer ? d.endCustomer.trim() : '';
     const oldPurpose = target.purpose || '';
     const newPurpose = d.purpose ? d.purpose.trim() : '';
+    const oldDept1 = target.department1 || '';
+    const newDept1 = d.sectionType === 'customer' && d.department1 ? d.department1.trim() : '';
+    const oldDept2 = target.department2 || '';
+    const newDept2 = d.sectionType === 'internal' && d.department2 ? d.department2.trim() : '';
 
     if (newCustomer) {
       api.saveOption('customer_name', newCustomer).catch(() => {});
@@ -1240,6 +1292,12 @@ export function useScheduler() {
     }
     if (newPurpose) {
       api.saveOption('purpose', newPurpose).catch(() => {});
+    }
+    if (newDept1) {
+      api.saveOption('customer_department', newDept1).catch(() => {});
+    }
+    if (newDept2) {
+      api.saveOption('internal_department', newDept2).catch(() => {});
     }
 
     const droppedSet = new Set(droppedIds);
@@ -1296,6 +1354,41 @@ export function useScheduler() {
         if (!isOldPurposeStillUsed) {
           nextPurposeOptions = nextPurposeOptions.filter((p) => p !== oldPurpose);
           api.deleteOption('purpose', oldPurpose).catch(() => {});
+        }
+      }
+
+      if (newDept1) {
+        nextRemovedOptions = nextRemovedOptions.filter((r) => r.trim().toLowerCase() !== newDept1.toLowerCase());
+      }
+      if (newDept2) {
+        nextRemovedOptions = nextRemovedOptions.filter((r) => r.trim().toLowerCase() !== newDept2.toLowerCase());
+      }
+
+      let nextCustomerDepartmentOptions = s.customerDepartmentOptions || [];
+      if (newDept1 && !nextCustomerDepartmentOptions.includes(newDept1)) {
+        nextCustomerDepartmentOptions = [...nextCustomerDepartmentOptions, newDept1];
+      }
+      if (oldDept1 && oldDept1.toLowerCase() !== newDept1.toLowerCase()) {
+        const isOldDept1StillUsed = nextAssignments.some((a) => (a.department1 || '').trim().toLowerCase() === oldDept1.toLowerCase());
+        if (!isOldDept1StillUsed) {
+          if (!initialCustomerDepartmentOptions.some((init) => init.toLowerCase() === oldDept1.toLowerCase())) {
+            nextCustomerDepartmentOptions = nextCustomerDepartmentOptions.filter((d) => d.trim().toLowerCase() !== oldDept1.toLowerCase());
+            api.deleteOption('customer_department', oldDept1).catch(() => {});
+          }
+        }
+      }
+
+      let nextInternalDepartmentOptions = s.internalDepartmentOptions || [];
+      if (newDept2 && !nextInternalDepartmentOptions.includes(newDept2)) {
+        nextInternalDepartmentOptions = [...nextInternalDepartmentOptions, newDept2];
+      }
+      if (oldDept2 && oldDept2.toLowerCase() !== newDept2.toLowerCase()) {
+        const isOldDept2StillUsed = nextAssignments.some((a) => (a.department2 || '').trim().toLowerCase() === oldDept2.toLowerCase());
+        if (!isOldDept2StillUsed) {
+          if (!initialInternalDepartmentOptions.some((init) => init.toLowerCase() === oldDept2.toLowerCase())) {
+            nextInternalDepartmentOptions = nextInternalDepartmentOptions.filter((d) => d.trim().toLowerCase() !== oldDept2.toLowerCase());
+            api.deleteOption('internal_department', oldDept2).catch(() => {});
+          }
         }
       }
 
@@ -1360,6 +1453,8 @@ export function useScheduler() {
         endCustomerOptions: nextEndCustomerOptions,
         purposeOptions: nextPurposeOptions,
         auditorOptions: nextAuditorOptions,
+        customerDepartmentOptions: nextCustomerDepartmentOptions,
+        internalDepartmentOptions: nextInternalDepartmentOptions,
       };
     });
     const prefix = d.sectionType === 'internal' ? 'IA' : 'CS';
@@ -1590,6 +1685,8 @@ export function useScheduler() {
     api.deleteOption('end_customer', v).catch(() => {});
     api.deleteOption('purpose', v).catch(() => {});
     api.deleteOption('auditor', v).catch(() => {});
+    api.deleteOption('customer_department', v).catch(() => {});
+    api.deleteOption('internal_department', v).catch(() => {});
     setState((s) => {
       const removedOptions = (s.removedOptions || []).includes(v) ? (s.removedOptions || []) : [...(s.removedOptions || []), v];
       return {
@@ -2607,6 +2704,20 @@ export function useScheduler() {
     return Array.from(new Set([...baseList, ...activeExtra])).filter((p) => !removedSet.has(p));
   }, [S.assignments, S.purposeOptions, removedSet]);
 
+  const computedCustomerDepartmentOptions = useMemo(() => {
+    const active = S.assignments.map((a) => a.department1).filter((d): d is string => Boolean(d) && !removedSet.has(d as string));
+    const baseList = S.customerDepartmentOptions || [];
+    const activeExtra = Array.from(new Set(active)).filter((d) => !baseList.includes(d));
+    return Array.from(new Set([...baseList, ...activeExtra])).filter((d) => !removedSet.has(d)).sort();
+  }, [S.assignments, S.customerDepartmentOptions, removedSet]);
+
+  const computedInternalDepartmentOptions = useMemo(() => {
+    const active = S.assignments.map((a) => a.department2).filter((d): d is string => Boolean(d) && !removedSet.has(d as string));
+    const baseList = S.internalDepartmentOptions || [];
+    const activeExtra = Array.from(new Set(active)).filter((d) => !baseList.includes(d));
+    return Array.from(new Set([...baseList, ...activeExtra])).filter((d) => !removedSet.has(d)).sort();
+  }, [S.assignments, S.internalDepartmentOptions, removedSet]);
+
   const masterAuditorOptions = useMemo(() => {
     const engNames = S.engineers
       .filter((e) => e.isMaster !== false)
@@ -2744,8 +2855,8 @@ export function useScheduler() {
   // to match (Purpose has no internal-audit equivalent, so it empties for IA-only).
   const typeIsCS = S.filterApptType.length === 1 && S.filterApptType[0] === 'CS';
   const typeIsIA = S.filterApptType.length === 1 && S.filterApptType[0] === 'IA';
-  const customerTopicOptions = typeIsIA ? [] : S.customerDepartmentOptions;
-  const internalTopicOptions = typeIsCS ? [] : S.internalDepartmentOptions;
+  const customerTopicOptions = typeIsIA ? [] : computedCustomerDepartmentOptions;
+  const internalTopicOptions = typeIsCS ? [] : computedInternalDepartmentOptions;
 
   const companyNames = computedCustomerOptions;
   const auditTypes = typeIsIA ? [] : computedPurposeOptions;
@@ -2999,8 +3110,10 @@ export function useScheduler() {
     setSummaryYear: (y: number) => setState({ summaryYear: y }),
     purposeOptions: computedPurposeOptions,
     masterPurposeOptions: S.purposeOptions,
-    customerDepartmentOptions: S.customerDepartmentOptions,
-    internalDepartmentOptions: S.internalDepartmentOptions,
+    customerDepartmentOptions: computedCustomerDepartmentOptions,
+    masterCustomerDepartmentOptions: S.customerDepartmentOptions,
+    internalDepartmentOptions: computedInternalDepartmentOptions,
+    masterInternalDepartmentOptions: S.internalDepartmentOptions,
     addPurposeOption: (v: string) => addOption('purposeOptions', v),
     removePurposeOption: (v: string) => removeOption('purposeOptions', v),
     addCustomerDepartmentOption: (v: string) => addOption('customerDepartmentOptions', v),

@@ -11,3 +11,4 @@ body{font-family:'Archivo',system-ui,sans-serif;color:#15191e;background:#e9ebe6
 .scrl::-webkit-scrollbar-thumb:hover{background:#aeb3a9;background-clip:content-box}
 /* native form controls inherit the app font */
 input,button,select,textarea{font-family:inherit}
+input::placeholder{color:#8a9088;opacity:1}

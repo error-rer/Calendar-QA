@@ -215,68 +215,6 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
   );
 }
 
-function StandardSelect({
-  id,
-  value,
-  onChange,
-  options,
-  placeholder = 'Select standard...',
-}: {
-  id: string;
-  value: string;
-  onChange: (val: string) => void;
-  options: string[];
-  placeholder?: string;
-}) {
-  return (
-    <div style={{ position: 'relative', width: '100%' }}>
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{
-          border: '1px solid #dde0d9',
-          borderRadius: '8px',
-          padding: '8px 24px 8px 10px',
-          fontSize: '12.5px',
-          fontFamily: "'Archivo',sans-serif",
-          color: value ? '#23282a' : '#8a9088',
-          outline: 'none',
-          background: '#fff',
-          width: '100%',
-          boxSizing: 'border-box',
-          cursor: 'pointer',
-          appearance: 'none',
-          WebkitAppearance: 'none',
-          MozAppearance: 'none',
-        }}
-      >
-        <option value="" style={{ color: '#8a9088' }}>
-          {placeholder}
-        </option>
-        {options.map((opt) => (
-          <option key={opt} value={opt} style={{ color: '#23282a' }}>
-            {opt}
-          </option>
-        ))}
-      </select>
-      <span
-        style={{
-          position: 'absolute',
-          right: '10px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          fontSize: '9px',
-          color: '#8a9088',
-          pointerEvents: 'none',
-          userSelect: 'none',
-        }}
-      >
-        ▼
-      </span>
-    </div>
-  );
-}
 
 export interface AppointmentFormValues {
   sectionType: 'customer' | 'internal';
@@ -500,7 +438,7 @@ function AutocompleteInput({
           background: '#fff',
           width: '100%',
           boxSizing: 'border-box',
-          paddingRight: '8px',
+          paddingRight: '6px',
           cursor: 'text',
         }}
       >
@@ -514,6 +452,16 @@ function AutocompleteInput({
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              if (rawVal.trim()) {
+                handleAddNew(rawVal);
+              }
+            } else if (e.key === 'Escape') {
+              setOpen(false);
+            }
+          }}
           placeholder={placeholder}
           style={{
             border: 'none',
@@ -529,6 +477,38 @@ function AutocompleteInput({
           }}
           autoComplete="off"
         />
+        {Boolean(value) && (
+          <button
+            type="button"
+            title="Clear"
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange('');
+              inputRef.current?.focus();
+            }}
+            style={{
+              border: 'none',
+              background: 'transparent',
+              color: '#8a9088',
+              cursor: 'pointer',
+              padding: '2px 4px',
+              fontSize: '11px',
+              lineHeight: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#dc2626';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '#8a9088';
+            }}
+          >
+            ✕
+          </button>
+        )}
         <span
           onClick={(e) => {
             e.stopPropagation();
@@ -546,7 +526,7 @@ function AutocompleteInput({
           {open ? '▲' : '▼'}
         </span>
       </div>
-      {open && (matches.length > 0 || (onAddNew && rawVal.trim() && !exactMatchExists)) && (
+      {open && (matches.length > 0 || (rawVal.trim() && !exactMatchExists)) && (
         <div
           style={{
             position: 'absolute',
@@ -579,14 +559,16 @@ function AutocompleteInput({
                 fontSize: '12.5px',
                 fontFamily: "'Archivo',sans-serif",
                 color: '#23282a',
+                background: item === value ? '#f4f6f0' : 'transparent',
+                fontWeight: item === value ? 600 : 400,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: '8px',
                 transition: 'background .1s ease',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#f0f2ec')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              onMouseEnter={(e) => (e.currentTarget.style.background = item === value ? '#edf0e8' : '#f0f2ec')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = item === value ? '#f4f6f0' : 'transparent')}
             >
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                 {item}
@@ -629,7 +611,7 @@ function AutocompleteInput({
             </div>
           ))}
 
-          {onAddNew && rawVal.trim() && !exactMatchExists && (
+          {rawVal.trim() && !exactMatchExists && (
             <div
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -653,7 +635,7 @@ function AutocompleteInput({
               onMouseEnter={(e) => (e.currentTarget.style.background = '#e0e8fc')}
               onMouseLeave={(e) => (e.currentTarget.style.background = '#eef2fd')}
             >
-              <span>＋ Add "{rawVal.trim()}"</span>
+              <span>＋ Add "${rawVal.trim()}"</span>
             </div>
           )}
         </div>
@@ -1013,6 +995,10 @@ export function AppointmentFormFields({
   removeGenericOption,
   customerDepartmentOptions,
   internalDepartmentOptions,
+  addCustomerDepartmentOption,
+  removeCustomerDepartmentOption,
+  addInternalDepartmentOption,
+  removeInternalDepartmentOption,
   siteOptions,
   customerOptions,
   endCustomerOptions = [],
@@ -1033,6 +1019,10 @@ export function AppointmentFormFields({
   removeGenericOption?: (val: string) => void;
   customerDepartmentOptions: string[];
   internalDepartmentOptions: string[];
+  addCustomerDepartmentOption?: (val: string) => void;
+  removeCustomerDepartmentOption?: (val: string) => void;
+  addInternalDepartmentOption?: (val: string) => void;
+  removeInternalDepartmentOption?: (val: string) => void;
   siteOptions: string[];
   customerOptions: string[];
   endCustomerOptions?: string[];
@@ -1075,6 +1065,26 @@ export function AppointmentFormFields({
       .filter((s) => !removedSet.has(s))
       .sort();
   }, [assignments, endCustomerOptions, editingTargetId, removedSet]);
+
+  const customerDepartmentSuggestions = useMemo(() => {
+    const activeAssignments = editingTargetId
+      ? assignments.filter((a) => a.id !== editingTargetId)
+      : assignments;
+    const fromAssign = activeAssignments.map((a) => a.department1).filter((s): s is string => Boolean(s));
+    return Array.from(new Set([...customerDepartmentOptions, ...fromAssign]))
+      .filter((s) => !removedSet.has(s))
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }, [assignments, customerDepartmentOptions, editingTargetId, removedSet]);
+
+  const internalDepartmentSuggestions = useMemo(() => {
+    const activeAssignments = editingTargetId
+      ? assignments.filter((a) => a.id !== editingTargetId)
+      : assignments;
+    const fromAssign = activeAssignments.map((a) => a.department2).filter((s): s is string => Boolean(s));
+    return Array.from(new Set([...internalDepartmentOptions, ...fromAssign]))
+      .filter((s) => !removedSet.has(s))
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }, [assignments, internalDepartmentOptions, editingTargetId, removedSet]);
 
   const purposeSuggestions = useMemo(() => {
     const activeAssignments = editingTargetId
@@ -1148,7 +1158,7 @@ export function AppointmentFormFields({
             {/* 1. STANDARD */}
             <div style={fld}>
               <label htmlFor={id('department1')} style={lbl}>STANDARD</label>
-              <StandardSelect
+              <AutocompleteInput
                 id={id('department1')}
                 value={v.department1}
                 onChange={(newDept) => {
@@ -1157,7 +1167,10 @@ export function AppointmentFormFields({
                   const validSites = currentSites.filter((s) => customerSiteOptions.includes(s));
                   onChange({ department1: newDept, site1: validSites.join('/') });
                 }}
-                options={customerDepartmentOptions}
+                placeholder="Type or select standard..."
+                suggestions={customerDepartmentSuggestions}
+                onAddNew={addCustomerDepartmentOption}
+                onRemoveOption={removeCustomerDepartmentOption || removeGenericOption}
               />
             </div>
 
@@ -1257,9 +1270,10 @@ export function AppointmentFormFields({
         <div style={css('padding:14px;border:1px solid #e8ebe4;border-radius:10px;background:#fafbf9')}>
           <div style={css('display:grid;grid-template-columns:1fr 1fr;gap:14px')}>
             {/* 1. STANDARD */}
+            {/* 1. STANDARD */}
             <div style={fld}>
               <label htmlFor={id('department2')} style={lbl}>STANDARD</label>
-              <StandardSelect
+              <AutocompleteInput
                 id={id('department2')}
                 value={v.department2}
                 onChange={(newDept) => {
@@ -1267,7 +1281,10 @@ export function AppointmentFormFields({
                   const validSites = currentSites.filter((s) => !newDept || newDept !== 'EHS' || ['U1', 'U2', 'U3'].includes(s));
                   onChange({ department2: newDept, site2: validSites.join('/') });
                 }}
-                options={internalDepartmentOptions}
+                placeholder="Type or select standard..."
+                suggestions={internalDepartmentSuggestions}
+                onAddNew={addInternalDepartmentOption}
+                onRemoveOption={removeInternalDepartmentOption || removeGenericOption}
               />
             </div>
 
