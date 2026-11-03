@@ -26,6 +26,7 @@ function getEntityBadgeStyle(entityType: EntityType): { bg: string; color: strin
       return { bg: '#f0fdf4', color: '#15803d' };
     case 'END_CUSTOMER':
       return { bg: '#faf5ff', color: '#7e22ce' };
+    case 'QMS_HOST':
     case 'AUDITOR':
       return { bg: '#fff7ed', color: '#c2410c' };
     case 'SITE':
@@ -98,7 +99,11 @@ export function HistoryView({ vm }: { vm: VM }) {
     }
 
     if (entityFilter !== 'ALL') {
-      logs = logs.filter((log) => log.entityType === entityFilter);
+      if (entityFilter === 'QMS_HOST') {
+        logs = logs.filter((log) => log.entityType === 'QMS_HOST' || log.entityType === 'AUDITOR');
+      } else {
+        logs = logs.filter((log) => log.entityType === entityFilter);
+      }
     }
 
     if (dateFrom) {
@@ -185,7 +190,7 @@ export function HistoryView({ vm }: { vm: VM }) {
             <option value="APPOINTMENT">Appointment</option>
             <option value="CUSTOMER">Customer</option>
             <option value="END_CUSTOMER">End Customer</option>
-            <option value="AUDITOR">Auditor</option>
+            <option value="QMS_HOST">QMS Host</option>
             <option value="SITE">Site</option>
             <option value="STANDARD">Standard</option>
             <option value="PURPOSE">Purpose</option>
@@ -303,7 +308,7 @@ export function HistoryView({ vm }: { vm: VM }) {
                             color: entityStyle.color,
                           }}
                         >
-                          {log.entityType}
+                          {log.entityType === 'AUDITOR' ? 'QMS_HOST' : log.entityType}
                         </span>
                       </td>
 

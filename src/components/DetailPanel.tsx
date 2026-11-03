@@ -34,7 +34,7 @@ export function DetailPanel({ vm: _vm }: { vm: VM }) {
                 ) : null}
                 {detail.auditor1 ? (
                   <div style={css('font-size:11.5px;color:#5c625c')}>
-                    Auditor: <span style={css('color:#3c423d')}>{detail.auditor1}</span>
+                    QMS Host: <span style={css('color:#3c423d')}>{detail.auditor1}</span>
                   </div>
                 ) : null}
                 {detail.department1 ? (
@@ -52,7 +52,7 @@ export function DetailPanel({ vm: _vm }: { vm: VM }) {
                 ) : null}
                 {detail.auditor2 ? (
                   <div style={css('font-size:11.5px;color:#5c625c')}>
-                    Auditor: <span style={css('color:#3c423d')}>{detail.auditor2}</span>
+                    QMS Host: <span style={css('color:#3c423d')}>{detail.auditor2}</span>
                   </div>
                 ) : null}
                 {detail.department2 ? (

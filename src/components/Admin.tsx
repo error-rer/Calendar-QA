@@ -8,7 +8,7 @@ export function Admin({ vm }: { vm: VM }) {
       <div style={vm.adminWrapStyle}>
         <div style={css('margin-bottom:20px')}>
           <div style={css('font-size:20px;font-weight:700;letter-spacing:-.3px')}>Manage workspace</div>
-          <div style={css('font-size:13px;color:#7a807a;margin-top:3px')}>Auditors and appointment form options. Changes apply to the live schedule.</div>
+          <div style={css('font-size:13px;color:#7a807a;margin-top:3px')}>QMS Hosts and appointment form options. Changes apply to the live schedule.</div>
         </div>
 
         <div style={vm.adminStatGridStyle}>
@@ -22,7 +22,7 @@ export function Admin({ vm }: { vm: VM }) {
         </div>
 
         <div style={css('display:flex;background:#fff;border:1px solid #e0e3dc;border-radius:9px;padding:2px;gap:2px;width:max-content;margin-bottom:16px')}>
-          <button onClick={vm.setTabEng} style={vm.tabEngStyle}>Auditor</button>
+          <button onClick={vm.setTabEng} style={vm.tabEngStyle}>QMS Host</button>
           <button onClick={vm.setTabOptions} style={vm.tabOptionsStyle}>Options</button>
           <button onClick={vm.setTabSheets} style={vm.tabSheetsStyle}>Google Sheets</button>
         </div>
@@ -108,7 +108,7 @@ function EngineersTable({ vm }: { vm: VM }) {
   return (
     <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;position:relative;z-index:10')}>
       <div style={css('display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #eef1ea;flex-wrap:wrap;gap:10px;position:relative;z-index:20')}>
-        <div style={css('font-size:13px;font-weight:700')}>Auditor <span style={css('color:#9aa097;font-weight:500')}>· {vm.adminEngineers.length}</span></div>
+        <div style={css('font-size:13px;font-weight:700')}>QMS Host <span style={css('color:#9aa097;font-weight:500')}>· {vm.adminEngineers.length}</span></div>
         <div style={css('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
           <AdminFilterDropdown
             label="Site"
@@ -124,7 +124,7 @@ function EngineersTable({ vm }: { vm: VM }) {
             items={vm.adminDeptOptions.map((d) => ({ value: d, label: d }))}
             onToggle={vm.toggleAdminFilterDept}
           />
-          <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New Auditor</HButton>
+          <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New QMS Host</HButton>
         </div>
       </div>
       {vm.adminEngineers.map((e, idx) => (
@@ -183,7 +183,7 @@ function EngineersTable({ vm }: { vm: VM }) {
       ))}
       {vm.adminEngineers.length === 0 && (
         <div style={css('padding:24px;text-align:center;font-size:12.5px;color:#8a9088;font-style:italic')}>
-          No auditors match the selected site/standard filters.
+          No QMS hosts match the selected site/standard filters.
         </div>
       )}
     </div>
@@ -521,7 +521,7 @@ function OptionsPanel({ vm }: { vm: VM }) {
 
 const APPS_SCRIPT_TEMPLATE = `/**
  * Google Apps Script for Calendar-QA Google Sheets Sync
- * Format: DD/MM/YYYY | Audit Type | Customer | Site | Standard | Purpose | Auditor
+ * Format: DD/MM/YYYY | Audit Type | Customer | Site | Standard | Purpose | QMS Host
  */
 
 function setupHeaders(sheet) {
@@ -532,7 +532,7 @@ function setupHeaders(sheet) {
     'Site',
     'Standard',
     'Purpose',
-    'Auditor',
+    'QMS Host',
     'ID' // Column 8 (Hidden) - used for matching edits & deletes
   ];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
@@ -549,7 +549,7 @@ function setupHeaders(sheet) {
   sheet.setColumnWidth(4, 90);  // Site
   sheet.setColumnWidth(5, 140); // Standard
   sheet.setColumnWidth(6, 180); // Purpose
-  sheet.setColumnWidth(7, 160); // Auditor
+  sheet.setColumnWidth(7, 160); // QMS Host
   sheet.hideColumns(8);         // Hide ID column
   sheet.setFrozenRows(1);
 
@@ -884,7 +884,7 @@ function GoogleSheetsPanel({ vm }: { vm: VM }) {
                 <td style={css('padding:9px 12px')}>Site</td>
                 <td style={css('padding:9px 12px')}>Standard</td>
                 <td style={css('padding:9px 12px')}>Purpose</td>
-                <td style={css('padding:9px 12px')}>Auditor</td>
+                <td style={css('padding:9px 12px')}>QMS Host</td>
               </tr>
               <tr style={css('color:#7a807a;font-size:11.5px;border-bottom:1px solid #f0f2ee')}>
                 <td style={css('padding:8px 12px')}>29/06/2026</td>

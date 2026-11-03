@@ -79,16 +79,16 @@ export function getMissingFields(a: Assignment): string[] {
   const auditorVal = (isInternal ? a.auditor2 || a.auditor1 : a.auditor1 || a.auditor2) || '';
 
   if (isInternal) {
-    // Required fields for Internal Audit (IA): Site, Area, Auditor (No Purpose check)
+    // Required fields for Internal Audit (IA): Site, Area, QMS Host (No Purpose check)
     if (!hasValue(siteVal)) missing.push('Site');
     if (!hasValue(a.area)) missing.push('Area');
-    if (!hasValue(auditorVal)) missing.push('Auditor');
+    if (!hasValue(auditorVal)) missing.push('QMS Host');
   } else {
-    // Required fields for Customer Audit (CS): Site, Customer, Purpose, Auditor
+    // Required fields for Customer Audit (CS): Site, Customer, Purpose, QMS Host
     if (!hasValue(siteVal)) missing.push('Site');
     if (!hasValue(a.customer)) missing.push('Customer');
     if (!hasValue(a.purpose)) missing.push('Purpose');
-    if (!hasValue(auditorVal)) missing.push('Auditor');
+    if (!hasValue(auditorVal)) missing.push('QMS Host');
   }
 
   return missing;
@@ -378,7 +378,7 @@ export interface EditDraft {
 }
 
 export type ActionType = 'CREATE' | 'UPDATE' | 'DELETE' | 'REORDER' | 'MANAGE_ITEM' | 'OTHER';
-export type EntityType = 'APPOINTMENT' | 'CUSTOMER' | 'END_CUSTOMER' | 'AUDITOR' | 'SITE' | 'STANDARD' | 'PURPOSE';
+export type EntityType = 'APPOINTMENT' | 'CUSTOMER' | 'END_CUSTOMER' | 'AUDITOR' | 'QMS_HOST' | 'SITE' | 'STANDARD' | 'PURPOSE';
 
 export interface ActivityUser {
   name: string;

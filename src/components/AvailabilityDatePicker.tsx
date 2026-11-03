@@ -627,7 +627,7 @@ export function AvailabilityDatePicker({
         <div style={css('display:flex;align-items:center;gap:7px;font-size:11.5px;color:#dc2626;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:8px 12px')}>
           <span style={{ fontSize: '13px' }}>⚠️</span>
           <span>
-            <strong>Booking Notice:</strong> Selected date range includes existing booking(s) for the selected Site/Auditor. You can still proceed if intended.
+            <strong>Booking Notice:</strong> Selected date range includes existing booking(s) for the selected Site/QMS Host. You can still proceed if intended.
           </span>
         </div>
       )}

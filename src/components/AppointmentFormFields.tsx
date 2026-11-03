@@ -806,7 +806,7 @@ function MultiAuditorSelect({
               removeAuditor(selectedAuditors[selectedAuditors.length - 1]);
             }
           }}
-          placeholder={selectedAuditors.length === 0 ? "Type or select auditor(s)..." : "Add auditor..."}
+          placeholder={selectedAuditors.length === 0 ? "Type or select QMS host(s)..." : "Add QMS host..."}
           style={{
             border: 'none',
             outline: 'none',
@@ -885,7 +885,7 @@ function MultiAuditorSelect({
 
           {filteredSuggestions.length === 0 && !inputVal.trim() && (
             <div style={{ padding: '8px 10px', fontSize: '12px', color: '#8a9088', fontFamily: "'Archivo',sans-serif" }}>
-              No auditors found
+              No QMS hosts found
             </div>
           )}
 
@@ -1254,9 +1254,9 @@ export function AppointmentFormFields({
               />
             </div>
 
-            {/* 6. AUDITOR */}
+            {/* 6. QMS HOST */}
             <div style={fld}>
-              <label htmlFor={id('auditor1')} style={lbl}>AUDITOR</label>
+              <label htmlFor={id('auditor1')} style={lbl}>QMS HOST</label>
               <MultiAuditorSelect
                 id={id('auditor1')}
                 value={v.auditor1}
@@ -1342,9 +1342,9 @@ export function AppointmentFormFields({
               />
             </div>
 
-            {/* 4. AUDITOR */}
+            {/* 4. QMS HOST */}
             <div style={fld}>
-              <label htmlFor={id('auditor2')} style={lbl}>AUDITOR</label>
+              <label htmlFor={id('auditor2')} style={lbl}>QMS HOST</label>
               <MultiAuditorSelect
                 id={id('auditor2')}
                 value={v.auditor2}

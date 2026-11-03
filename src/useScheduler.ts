@@ -778,11 +778,11 @@ export function useScheduler() {
           dateStr: oldDateStr,
         });
         if (oldDateStr !== newDateStr && oldEng?.name !== eng.name) {
-          logActivity('UPDATE', 'APPOINTMENT', `Updated appointment "${apptRef}": changed [Date] to "${newDateStr}", [Auditor] to "${eng.name}"`, { targetId: aid, dateRange: oldDateStr });
+          logActivity('UPDATE', 'APPOINTMENT', `Updated appointment "${apptRef}": changed [Date] to "${newDateStr}", [QMS Host] to "${eng.name}"`, { targetId: aid, dateRange: oldDateStr });
         } else if (oldDateStr !== newDateStr) {
           logActivity('UPDATE', 'APPOINTMENT', `Updated [Date] from "${oldDateStr}" to "${newDateStr}" in appointment "${apptRef}"`, { targetId: aid, dateRange: oldDateStr });
         } else if (oldEng?.name !== eng.name) {
-          logActivity('UPDATE', 'APPOINTMENT', `Updated [Auditor] from "${oldEng?.name || 'Unassigned'}" to "${eng.name}" in appointment "${apptRef}"`, { targetId: aid, dateRange: oldDateStr });
+          logActivity('UPDATE', 'APPOINTMENT', `Updated [QMS Host] from "${oldEng?.name || 'Unassigned'}" to "${eng.name}" in appointment "${apptRef}"`, { targetId: aid, dateRange: oldDateStr });
         }
       }
     }
@@ -1499,7 +1499,7 @@ export function useScheduler() {
       changes.push({ name: 'Purpose', oldVal: oldPurpose, newVal: newPurpose });
     }
     if (isAuditorChanged) {
-      changes.push({ name: 'Auditor', oldVal: oldAuditor, newVal: newAuditor });
+      changes.push({ name: 'QMS Host', oldVal: oldAuditor, newVal: newAuditor });
     }
 
     const apptRef = formatApptLogRef({
@@ -1863,7 +1863,7 @@ export function useScheduler() {
           engEditingId: null,
         };
       });
-      log('You', `updated auditor ${newName.split(' ')[0]}`, '#2756d6');
+      log('You', `updated QMS host ${newName.split(' ')[0]}`, '#2756d6');
     } else {
       const id = 'e' + ids.current.id++;
       const newEng = { id, name: newName, role: 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice(), isMaster: true };
@@ -1888,7 +1888,7 @@ export function useScheduler() {
       return a.eng === id || list1.includes(engLower) || list2.includes(engLower);
     });
     if (linkedAppts.length > 0) {
-      alert(`Cannot remove auditor "${eng.name}" because they are currently assigned to ${linkedAppts.length} active appointment(s). Please reassign or update those appointments first.`);
+      alert(`Cannot remove QMS host "${eng.name}" because they are currently assigned to ${linkedAppts.length} active appointment(s). Please reassign or update those appointments first.`);
       return;
     }
     api.deleteEngineer(id).catch(() => {});
@@ -1916,7 +1916,7 @@ export function useScheduler() {
     siteCodeOptions: 'SITE',
     customerOptions: 'CUSTOMER',
     endCustomerOptions: 'END_CUSTOMER',
-    auditorOptions: 'AUDITOR',
+    auditorOptions: 'QMS_HOST',
     customerDepartmentOptions: 'STANDARD',
     internalDepartmentOptions: 'STANDARD',
     purposeOptions: 'PURPOSE',
@@ -1926,7 +1926,7 @@ export function useScheduler() {
     siteCodeOptions: 'Site',
     customerOptions: 'Customer',
     endCustomerOptions: 'End Customer',
-    auditorOptions: 'Auditor',
+    auditorOptions: 'QMS Host',
     customerDepartmentOptions: 'Customer Standard',
     internalDepartmentOptions: 'Internal Standard',
     purposeOptions: 'Purpose',
@@ -3186,7 +3186,7 @@ export function useScheduler() {
       return {
         id: 'aud-' + encodeURIComponent(name.toLowerCase()),
         name,
-        role: 'Auditor',
+        role: 'QMS Host',
         department: (computedSiteCodeOptions[0] || 'U1') as Department,
         subDepartments: [] as SubDepartment[],
         isMaster: false,
@@ -3274,7 +3274,7 @@ export function useScheduler() {
     addSuggestion('IA', 'Audit Type');
 
     // 2. Filter Criteria options
-    computedAuditorOptions.forEach((name) => addSuggestion(name, 'Auditor'));
+    computedAuditorOptions.forEach((name) => addSuggestion(name, 'QMS Host'));
     computedCustomerOptions.forEach((c) => addSuggestion(c, 'Customer'));
     computedPurposeOptions.forEach((p) => addSuggestion(p, 'Purpose'));
     S.siteCodeOptions.forEach((s) => addSuggestion(s, 'Site'));
@@ -3301,9 +3301,9 @@ export function useScheduler() {
       if (a.department1) addSuggestion(a.department1, 'Standard');
       if (a.department2) addSuggestion(a.department2, 'Standard');
 
-      if (e && e.name) addSuggestion(e.name, 'Auditor');
-      if (a.auditor1) a.auditor1.split(',').forEach((s) => addSuggestion(s, 'Auditor'));
-      if (a.auditor2) a.auditor2.split(',').forEach((s) => addSuggestion(s, 'Auditor'));
+      if (e && e.name) addSuggestion(e.name, 'QMS Host');
+      if (a.auditor1) a.auditor1.split(',').forEach((s) => addSuggestion(s, 'QMS Host'));
+      if (a.auditor2) a.auditor2.split(',').forEach((s) => addSuggestion(s, 'QMS Host'));
     }
 
     return Array.from(suggestionsMap.values()).sort((a, b) => a.label.localeCompare(b.label));

@@ -250,7 +250,7 @@ export function TableView({ vm }: { vm: VM }) {
 
   // CSV Export with exact 7 columns and UTF-8 BOM
   const handleExportCSV = () => {
-    const headers = ['DD/MM/YYYY', 'Audit Type', 'Customer', 'Site', 'Standard', 'Purpose', 'Auditor'];
+    const headers = ['DD/MM/YYYY', 'Audit Type', 'Customer', 'Site', 'Standard', 'Purpose', 'QMS Host'];
     const rows = sortedRows.map((r) => [
       r.dateStr,
       r.auditType,
@@ -293,7 +293,7 @@ export function TableView({ vm }: { vm: VM }) {
   const handleExportExcel = async () => {
     // @ts-ignore
     const XLSX = (await import('xlsx-js-style')).default || (await import('xlsx-js-style'));
-    const headers = ['DD/MM/YYYY', 'Audit Type', 'Customer', 'Site', 'Standard', 'Purpose', 'Auditor'];
+    const headers = ['DD/MM/YYYY', 'Audit Type', 'Customer', 'Site', 'Standard', 'Purpose', 'QMS Host'];
     const rows = sortedRows.map((r) => [
       r.dateStr,
       r.auditType,
@@ -360,7 +360,7 @@ export function TableView({ vm }: { vm: VM }) {
             </span>
           </div>
           <div style={css('font-size:12.5px;color:#7a807a;margin-top:3px')}>
-            Comprehensive schedule table matching the 7-column format (DD/MM/YYYY, Audit Type, Customer, Site, Standard, Purpose, Auditor).
+            Comprehensive schedule table matching the 7-column format (DD/MM/YYYY, Audit Type, Customer, Site, Standard, Purpose, QMS Host).
           </div>
         </div>
 
@@ -430,7 +430,7 @@ export function TableView({ vm }: { vm: VM }) {
         </div>
 
         <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Active Auditors</div>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Active QMS Hosts</div>
           <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>{stats.uniqueAuditors}</div>
           <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>Across {stats.uniqueSites} plant sites</div>
         </div>
@@ -445,7 +445,7 @@ export function TableView({ vm }: { vm: VM }) {
               type="text"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Search date, customer, site, standard, purpose, auditor..."
+              placeholder="Search date, customer, site, standard, purpose, QMS host..."
               style={css("width:100%;box-sizing:border-box;border:1px solid #dde0d9;border-radius:8px;padding:8px 30px 8px 12px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fafbfa")}
             />
             {search && (
@@ -507,7 +507,7 @@ export function TableView({ vm }: { vm: VM }) {
             onChange={(e) => { setAuditorFilter(e.target.value); setPage(1); }}
             style={css("border:1px solid #dde0d9;background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;color:#23282a;outline:none;font-family:'Archivo',sans-serif;cursor:pointer")}
           >
-            <option value="ALL">All Auditors</option>
+            <option value="ALL">All QMS Hosts</option>
             {filterOptions.auditors.map((aud) => (
               <option key={aud} value={aud}>{aud}</option>
             ))}
@@ -641,7 +641,7 @@ export function TableView({ vm }: { vm: VM }) {
                   style={css('padding:10px 14px;font-weight:700;cursor:pointer;white-space:nowrap')}
                 >
                   <div style={css('display:flex;align-items:center;gap:5px')}>
-                    Auditor
+                    QMS Host
                     <span style={css('color:' + (sortCol === 'auditor' ? '#15191e' : '#b0b5ac'))}>
                       {sortCol === 'auditor' ? (sortDir === 'asc' ? '▲' : '▼') : '↕'}
                     </span>
