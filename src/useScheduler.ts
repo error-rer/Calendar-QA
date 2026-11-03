@@ -747,7 +747,23 @@ export function useScheduler() {
     }));
     if (a) {
       const eng = engById(engId);
-      if (eng) log('You', `moved ${apptTitle(a)} → ${eng.name.split(' ')[0]}, ${dayLabels[day]}`, '#2756d6');
+      if (eng) {
+        log('You', `moved ${apptTitle(a)} → ${eng.name.split(' ')[0]}, ${dayLabels[day]}`, '#2756d6');
+        const oldEng = engById(a.eng);
+        const oldDate = new Date(2026, 5, 29 + a.week * 7 + a.day);
+        const newDate = new Date(2026, 5, 29 + S.weekOffset * 7 + day);
+        const fmtDMY = (d: Date) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+        const oldDateStr = fmtDMY(oldDate);
+        const newDateStr = fmtDMY(newDate);
+        const title = apptTitle(a);
+        if (oldDateStr !== newDateStr && oldEng?.name !== eng.name) {
+          logActivity('UPDATE', 'APPOINTMENT', `Updated appointment "${title}": changed [Date] to "${newDateStr}", [Auditor] to "${eng.name}"`, { targetId: aid });
+        } else if (oldDateStr !== newDateStr) {
+          logActivity('UPDATE', 'APPOINTMENT', `Updated [Date] from "${oldDateStr}" to "${newDateStr}" in appointment "${title}"`, { targetId: aid });
+        } else if (oldEng?.name !== eng.name) {
+          logActivity('UPDATE', 'APPOINTMENT', `Updated [Auditor] from "${oldEng?.name || 'Unassigned'}" to "${eng.name}" in appointment "${title}"`, { targetId: aid });
+        }
+      }
     }
   };
   const removeAssign = (aid: string) => {
@@ -1249,6 +1265,130 @@ export function useScheduler() {
     const siblings = S.assignments
       .filter((x) => x.eng === target.eng && x.order === target.order)
       .sort((a, b) => (a.week - b.week) || (a.day - b.day));
+    const minWeek = Math.min(...siblings.map((x) => x.week));
+    const maxWeek = Math.max(...siblings.map((x) => x.week));
+    const minDay = Math.min(...siblings.filter((x) => x.week === minWeek).map((x) => x.day));
+    const maxDay = Math.max(...siblings.filter((x) => x.week === maxWeek).map((x) => x.day));
+    const oldFromDate = new Date(2026, 5, 29 + minWeek * 7 + minDay);
+    const oldToDate = new Date(2026, 5, 29 + maxWeek * 7 + maxDay);
+    const oldDateFromStr = fmtISO(oldFromDate);
+    const oldDateToStr = fmtISO(oldToDate);
+
+    const formatDMY = (isoStr: string) => {
+      if (!isoStr) return '';
+      const parts = isoStr.split('-');
+      if (parts.length === 3) return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+      return isoStr;
+    };
+
+    const oldDateFormatted = oldDateFromStr === oldDateToStr
+      ? formatDMY(oldDateFromStr)
+      : `${formatDMY(oldDateFromStr)} - ${formatDMY(oldDateToStr)}`;
+    const newDateFormatted = dateFrom === dateTo
+      ? formatDMY(dateFrom)
+      : `${formatDMY(dateFrom)} - ${formatDMY(dateTo)}`;
+    const isDateChanged = oldDateFromStr !== dateFrom || oldDateToStr !== dateTo;
+
+    const isCustomer = d.sectionType === 'customer';
+    const wasCustomer = target.sectionType !== 'internal';
+    const isAuditTypeChanged = wasCustomer !== isCustomer;
+
+    const oldCustomer = (target.customer || '').trim();
+    const newCustomer = isCustomer && d.customer ? d.customer.trim() : '';
+    const isCustomerChanged = isCustomer && oldCustomer !== newCustomer;
+
+    const oldEndCustomer = (target.endCustomer || '').trim();
+    const newEndCustomer = isCustomer && d.endCustomer ? d.endCustomer.trim() : '';
+    const isEndCustomerChanged = isCustomer && oldEndCustomer !== newEndCustomer;
+
+    const oldArea = (target.area || '').trim();
+    const newArea = !isCustomer && d.area ? d.area.trim() : '';
+    const isAreaChanged = !isCustomer && oldArea !== newArea;
+
+    const oldDept1 = (target.department1 || '').trim();
+    const newDept1 = isCustomer && d.department1 ? d.department1.trim() : '';
+    const oldDept2 = (target.department2 || '').trim();
+    const newDept2 = !isCustomer && d.department2 ? d.department2.trim() : '';
+
+    const oldStandard = ((wasCustomer ? target.department1 : target.department2) || '').trim();
+    const newStandard = ((isCustomer ? d.department1 : d.department2) || '').trim();
+    const isStandardChanged = oldStandard !== newStandard;
+
+    const oldSite = ((wasCustomer ? target.site1 : target.site2) || '').trim();
+    const newSite = ((isCustomer ? d.site1 : d.site2) || '').trim();
+    const isSiteChanged = oldSite !== newSite;
+
+    const oldPurpose = (target.purpose || '').trim();
+    const newPurpose = d.purpose ? d.purpose.trim() : '';
+    const isPurposeChanged = oldPurpose !== newPurpose;
+
+    const oldAuditor = ((wasCustomer ? target.auditor1 : target.auditor2) || '').trim();
+    const newAuditor = ((isCustomer ? d.auditor1 : d.auditor2) || '').trim();
+    const isAuditorChanged = oldAuditor !== newAuditor;
+
+    const changes: { name: string; oldVal: string; newVal: string }[] = [];
+
+    if (isDateChanged) {
+      changes.push({ name: 'Date', oldVal: oldDateFormatted, newVal: newDateFormatted });
+    }
+    if (isAuditTypeChanged) {
+      changes.push({
+        name: 'Audit Type',
+        oldVal: wasCustomer ? 'Customer Audit' : 'Internal Audit',
+        newVal: isCustomer ? 'Customer Audit' : 'Internal Audit',
+      });
+    }
+    if (isCustomer && isCustomerChanged) {
+      changes.push({ name: 'Customer', oldVal: oldCustomer, newVal: newCustomer });
+    }
+    if (isCustomer && isEndCustomerChanged) {
+      changes.push({ name: 'End Customer', oldVal: oldEndCustomer, newVal: newEndCustomer });
+    }
+    if (!isCustomer && isAreaChanged) {
+      changes.push({ name: 'Area', oldVal: oldArea, newVal: newArea });
+    }
+    if (isStandardChanged) {
+      changes.push({ name: 'Standard', oldVal: oldStandard, newVal: newStandard });
+    }
+    if (isSiteChanged) {
+      changes.push({ name: 'Site', oldVal: oldSite, newVal: newSite });
+    }
+    if (isPurposeChanged) {
+      changes.push({ name: 'Purpose', oldVal: oldPurpose, newVal: newPurpose });
+    }
+    if (isAuditorChanged) {
+      changes.push({ name: 'Auditor', oldVal: oldAuditor, newVal: newAuditor });
+    }
+
+    const apptName = isCustomer
+      ? [newCustomer || oldCustomer || 'Customer Audit', newSite || oldSite].filter(Boolean).join(' - ')
+      : [newArea || oldArea || newStandard || oldStandard || 'Internal Audit', newSite || oldSite].filter(Boolean).join(' - ');
+
+    let logDesc = `Updated appointment details for "${apptName}"`;
+    if (changes.length === 1) {
+      const c = changes[0];
+      if (c.oldVal && c.newVal) {
+        logDesc = `Updated [${c.name}] from "${c.oldVal}" to "${c.newVal}" in appointment "${apptName}"`;
+      } else if (!c.oldVal && c.newVal) {
+        logDesc = `Updated [${c.name}] to "${c.newVal}" in appointment "${apptName}"`;
+      } else {
+        logDesc = `Cleared [${c.name}] (was "${c.oldVal}") in appointment "${apptName}"`;
+      }
+    } else if (changes.length > 1) {
+      const changeList = changes
+        .map((c) => {
+          if (c.oldVal && c.newVal) {
+            return `[${c.name}] to "${c.newVal}"`;
+          } else if (!c.oldVal && c.newVal) {
+            return `[${c.name}] to "${c.newVal}"`;
+          } else {
+            return `cleared [${c.name}]`;
+          }
+        })
+        .join(', ');
+      logDesc = `Updated appointment "${apptName}": changed ${changeList}`;
+    }
+
     const siblingIds = new Set(siblings.map((x) => x.id));
     const others = S.assignments.filter((x) => !siblingIds.has(x.id));
     const reuseIds = [d.targetId, ...siblings.filter((x) => x.id !== d.targetId).map((x) => x.id)];
@@ -1273,17 +1413,7 @@ export function useScheduler() {
       rows: updated.map((a) => assignmentToSheetRow(a, updatedEngineers)),
     });
 
-    const oldCustomer = target.customer || '';
-    const newCustomer = d.sectionType === 'customer' && d.customer ? d.customer.trim() : '';
-    const oldEndCustomer = target.endCustomer || '';
-    const newEndCustomer = d.sectionType === 'customer' && d.endCustomer ? d.endCustomer.trim() : '';
-    const oldPurpose = target.purpose || '';
-    const newPurpose = d.purpose ? d.purpose.trim() : '';
-    const oldDept1 = target.department1 || '';
-    const newDept1 = d.sectionType === 'customer' && d.department1 ? d.department1.trim() : '';
-    const oldDept2 = target.department2 || '';
-    const newDept2 = d.sectionType === 'internal' && d.department2 ? d.department2.trim() : '';
-
+    
     if (newCustomer) {
       api.saveOption('customer_name', newCustomer).catch(() => {});
     }
@@ -1457,10 +1587,13 @@ export function useScheduler() {
         internalDepartmentOptions: nextInternalDepartmentOptions,
       };
     });
-    const prefix = d.sectionType === 'internal' ? 'IA' : 'CS';
-    const name = d.sectionType === 'internal' ? (d.area || 'Internal Audit') : (d.customer || 'Customer Audit');
-    log('You', `edited ${prefix} · ${name}`, '#2756d6');
-    logActivity('UPDATE', 'APPOINTMENT', `Updated appointment details for "${prefix} · ${name}"`, { targetId: d.targetId });
+    log('You', logDesc, '#2756d6');
+    logActivity('UPDATE', 'APPOINTMENT', logDesc, {
+      targetId: d.targetId,
+      apptName,
+      changedFields: changes.map((c) => c.name),
+      changes,
+    });
     setState({ editOpen: false });
   };
 
@@ -1591,7 +1724,7 @@ export function useScheduler() {
     auditorOptions: 'AUDITOR',
     customerDepartmentOptions: 'STANDARD',
     internalDepartmentOptions: 'STANDARD',
-    purposeOptions: 'STANDARD',
+    purposeOptions: 'PURPOSE',
   };
 
   const entityNameMap: Record<OptionListField, string> = {

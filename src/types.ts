@@ -285,7 +285,7 @@ export interface EditDraft {
 }
 
 export type ActionType = 'CREATE' | 'UPDATE' | 'DELETE' | 'REORDER' | 'MANAGE_ITEM' | 'OTHER';
-export type EntityType = 'APPOINTMENT' | 'CUSTOMER' | 'END_CUSTOMER' | 'AUDITOR' | 'SITE' | 'STANDARD';
+export type EntityType = 'APPOINTMENT' | 'CUSTOMER' | 'END_CUSTOMER' | 'AUDITOR' | 'SITE' | 'STANDARD' | 'PURPOSE';
 
 export interface ActivityUser {
   name: string;

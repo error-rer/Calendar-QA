@@ -32,9 +32,43 @@ function getEntityBadgeStyle(entityType: EntityType): { bg: string; color: strin
       return { bg: '#f0f9ff', color: '#0369a1' };
     case 'STANDARD':
       return { bg: '#fdf2f8', color: '#be185d' };
+    case 'PURPOSE':
+      return { bg: '#fef3c7', color: '#b45309' };
     default:
       return { bg: '#f3f4f6', color: '#4b5563' };
   }
+}
+
+function renderDescription(desc: string) {
+  if (!desc) return '';
+  // Match bracketed field tags like [Customer], [Auditor], [Site], [Standard], [Date], [Purpose], etc.
+  const parts = desc.split(/(\[[A-Za-z\s]+\])/g);
+  if (parts.length === 1) return desc;
+  return parts.map((part, i) => {
+    if (part.startsWith('[') && part.endsWith(']')) {
+      return (
+        <span
+          key={i}
+          style={{
+            display: 'inline-block',
+            fontWeight: 700,
+            color: '#1d4ed8',
+            backgroundColor: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            borderRadius: '4px',
+            padding: '1px 5px',
+            margin: '0 2px',
+            fontSize: '11px',
+            lineHeight: 1.25,
+            letterSpacing: '0.2px',
+          }}
+        >
+          {part}
+        </span>
+      );
+    }
+    return part;
+  });
 }
 
 export function HistoryView({ vm }: { vm: VM }) {
@@ -154,6 +188,7 @@ export function HistoryView({ vm }: { vm: VM }) {
             <option value="AUDITOR">Auditor</option>
             <option value="SITE">Site</option>
             <option value="STANDARD">Standard</option>
+            <option value="PURPOSE">Purpose</option>
           </select>
         </div>
 
@@ -273,8 +308,8 @@ export function HistoryView({ vm }: { vm: VM }) {
                       </td>
 
                       {/* Description */}
-                      <td style={css('padding:12px 16px;vertical-align:middle;color:#2a2f28;font-weight:500;line-height:1.35')}>
-                        {log.description}
+                      <td style={css('padding:12px 16px;vertical-align:middle;color:#2a2f28;font-weight:500;line-height:1.4')}>
+                        {renderDescription(log.description)}
                       </td>
 
                       {/* Timestamp */}
