@@ -680,6 +680,7 @@ function MultiAuditorSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [inputVal, setInputVal] = useState('');
+  const [removedItems, setRemovedItems] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -733,9 +734,10 @@ function MultiAuditorSelect({
 
   const filteredSuggestions = useMemo(() => {
     const q = inputVal.trim().toLowerCase();
-    const unique = Array.from(new Set(suggestions.map((s) => s.trim()).filter(Boolean)));
+    const unique = Array.from(new Set(suggestions.map((s) => s.trim()).filter(Boolean)))
+      .filter((s) => !removedItems.has(s));
     return q ? unique.filter((s) => s.toLowerCase().includes(q)) : unique;
-  }, [suggestions, inputVal]);
+  }, [suggestions, inputVal, removedItems]);
 
   return (
     <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
@@ -957,22 +959,33 @@ function MultiAuditorSelect({
                 {onRemoveOption && (
                   <button
                     type="button"
-                    title={`Delete option "${name}"`}
+                    title={`Delete "${name}" from saved options`}
                     onMouseDown={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      setRemovedItems((prev) => new Set(prev).add(name));
                       onRemoveOption(name);
                     }}
                     style={{
                       border: 'none',
                       background: 'transparent',
-                      color: '#dc2626',
+                      color: '#8a9088',
                       cursor: 'pointer',
-                      fontSize: '11px',
                       padding: '2px 5px',
                       borderRadius: '4px',
+                      fontSize: '11px',
+                      lineHeight: 1,
                       display: 'flex',
                       alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#fee2e2';
+                      e.currentTarget.style.color = '#dc2626';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = '#8a9088';
                     }}
                   >
                     ✕
