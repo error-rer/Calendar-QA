@@ -551,6 +551,13 @@ function setupHeaders(sheet) {
   sheet.setColumnWidth(7, 160); // Auditor
   sheet.hideColumns(8);         // Hide ID column
   sheet.setFrozenRows(1);
+
+  // Enable AutoFilter on visible columns A through G
+  var filter = sheet.getFilter();
+  if (!filter) {
+    var maxRow = Math.max(2, sheet.getLastRow());
+    sheet.getRange(1, 1, maxRow, 7).createFilter();
+  }
 }
 
 function doPost(e) {
@@ -588,6 +595,14 @@ function doPost(e) {
         sheet.getRange(2, 1, rows.length, 8).setValues(rows);
       }
       sheet.hideColumns(8);
+
+      // Re-apply AutoFilter across updated range (Columns A through G)
+      var existingFilter = sheet.getFilter();
+      if (existingFilter) {
+        existingFilter.remove();
+      }
+      sheet.getRange(1, 1, Math.max(2, rows.length + 1), 7).createFilter();
+
       return ContentService.createTextOutput(JSON.stringify({
         ok: true,
         count: rows.length
@@ -599,6 +614,9 @@ function doPost(e) {
       if (row && row.length) {
         sheet.appendRow(row);
         sheet.hideColumns(8);
+        if (!sheet.getFilter()) {
+          sheet.getRange(1, 1, Math.max(2, sheet.getLastRow()), 7).createFilter();
+        }
       }
       return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
     }

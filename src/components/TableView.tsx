@@ -316,6 +316,10 @@ export function TableView({ vm }: { vm: VM }) {
       { wch: 22 }, // Auditor
     ];
 
+    // Enable AutoFilter on header row across columns A through G
+    const lastRowIndex = Math.max(1, rows.length + 1);
+    worksheet['!autofilter'] = { ref: `A1:G${lastRowIndex}` };
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Audit Schedule');
 
