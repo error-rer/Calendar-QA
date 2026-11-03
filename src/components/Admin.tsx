@@ -540,7 +540,8 @@ function setupHeaders(sheet) {
   headerRange.setFontWeight('bold');
   headerRange.setBackground('#F3F4F6');
   headerRange.setFontColor('#111827');
-  headerRange.setHorizontalAlignment('left');
+  headerRange.setHorizontalAlignment('center');
+  headerRange.setVerticalAlignment('middle');
 
   sheet.setColumnWidth(1, 120); // Date DD/MM/YYYY
   sheet.setColumnWidth(2, 130); // Audit Type

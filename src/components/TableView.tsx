@@ -289,9 +289,10 @@ export function TableView({ vm }: { vm: VM }) {
     URL.revokeObjectURL(url);
   };
 
-  // Excel (.xlsx) Export with column widths and styled worksheet
+  // Excel (.xlsx) Export with column widths, bold centered header row, and AutoFilter
   const handleExportExcel = async () => {
-    const XLSX = await import('xlsx');
+    // @ts-ignore
+    const XLSX = (await import('xlsx-js-style')).default || (await import('xlsx-js-style'));
     const headers = ['DD/MM/YYYY', 'Audit Type', 'Customer', 'Site', 'Standard', 'Purpose', 'Auditor'];
     const rows = sortedRows.map((r) => [
       r.dateStr,
@@ -304,6 +305,18 @@ export function TableView({ vm }: { vm: VM }) {
     ]);
 
     const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+
+    // Format header row (Row 1): bold font and center alignment (horizontal & vertical)
+    for (let col = 0; col < headers.length; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+      if (worksheet[cellAddress]) {
+        worksheet[cellAddress].s = {
+          font: { bold: true },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          fill: { fgColor: { rgb: 'F3F4F6' } },
+        };
+      }
+    }
 
     // Set column widths for optimal reading in Excel
     worksheet['!cols'] = [
