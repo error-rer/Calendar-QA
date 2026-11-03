@@ -100,8 +100,12 @@ export function TableView({ vm }: { vm: VM }) {
 
     for (const r of allRows) {
       if (r.site) sites.add(r.site);
-      if (r.standard) standards.add(r.standard);
-      if (r.auditor) auditors.add(r.auditor);
+      if (r.standard) {
+        r.standard.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => standards.add(s));
+      }
+      if (r.auditor) {
+        r.auditor.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => auditors.add(s));
+      }
     }
 
     return {
@@ -140,13 +144,19 @@ export function TableView({ vm }: { vm: VM }) {
       }
 
       // Standard filter
-      if (standardFilter !== 'ALL' && r.standard !== standardFilter) {
-        return false;
+      if (standardFilter !== 'ALL') {
+        const rowStds = r.standard.split(',').map((s) => s.trim().toLowerCase());
+        if (!rowStds.includes(standardFilter.toLowerCase())) {
+          return false;
+        }
       }
 
       // Auditor filter
-      if (auditorFilter !== 'ALL' && r.auditor !== auditorFilter) {
-        return false;
+      if (auditorFilter !== 'ALL') {
+        const rowAuds = r.auditor.split(',').map((s) => s.trim().toLowerCase());
+        if (!rowAuds.includes(auditorFilter.toLowerCase())) {
+          return false;
+        }
       }
 
       // Date range filter
@@ -751,7 +761,16 @@ export function TableView({ vm }: { vm: VM }) {
                       {/* 5. Standard */}
                       <td style={css('padding:11px 14px')}>
                         {row.standard ? (
-                          <span style={css('color:#23282a;font-weight:500')}>{row.standard}</span>
+                          <div style={css('display:flex;flex-wrap:wrap;gap:4px;align-items:center')}>
+                            {row.standard.split(',').map((s) => s.trim()).filter(Boolean).map((std) => (
+                              <span
+                                key={std}
+                                style={css("display:inline-block;padding:2px 7px;border-radius:4px;background:#f4f6f1;border:1px solid #e0e3dc;font-size:11.5px;font-weight:500;color:#23282a;white-space:nowrap")}
+                              >
+                                {std}
+                              </span>
+                            ))}
+                          </div>
                         ) : (
                           <span style={css('color:#a6aca2')}>—</span>
                         )}

@@ -806,8 +806,20 @@ export function useScheduler() {
     const deletedCustomers = Array.from(new Set(siblings.map((x) => (x.customer || '').trim()).filter(Boolean)));
     const deletedEndCustomers = Array.from(new Set(siblings.map((x) => (x.endCustomer || '').trim()).filter(Boolean)));
     const deletedPurposes = Array.from(new Set(siblings.map((x) => (x.purpose || '').trim()).filter(Boolean)));
-    const deletedDept1 = Array.from(new Set(siblings.map((x) => (x.department1 || '').trim()).filter(Boolean)));
-    const deletedDept2 = Array.from(new Set(siblings.map((x) => (x.department2 || '').trim()).filter(Boolean)));
+    const deletedDept1 = Array.from(
+      new Set(
+        siblings
+          .flatMap((x) => (x.department1 || '').split(',').map((s) => s.trim()))
+          .filter(Boolean)
+      )
+    );
+    const deletedDept2 = Array.from(
+      new Set(
+        siblings
+          .flatMap((x) => (x.department2 || '').split(',').map((s) => s.trim()))
+          .filter(Boolean)
+      )
+    );
     const deletedSites = Array.from(
       new Set(
         siblings.flatMap((x) => [
@@ -948,9 +960,10 @@ export function useScheduler() {
       let nextCustomerDepartmentOptions = s.customerDepartmentOptions || [];
       for (const dept of deletedDept1) {
         const deptLower = dept.toLowerCase();
-        const isStillUsed = remainingAssignments.some(
-          (x) => (x.department1 || '').trim().toLowerCase() === deptLower
-        );
+        const isStillUsed = remainingAssignments.some((x) => {
+          const depts = (x.department1 || '').split(',').map((s) => s.trim().toLowerCase());
+          return depts.includes(deptLower);
+        });
         if (!isStillUsed) {
           const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['customerDepartmentOptions:' + deptLower]) ||
             initialCustomerDepartmentOptions.some((init) => init.toLowerCase() === deptLower);
@@ -964,9 +977,10 @@ export function useScheduler() {
       let nextInternalDepartmentOptions = s.internalDepartmentOptions || [];
       for (const dept of deletedDept2) {
         const deptLower = dept.toLowerCase();
-        const isStillUsed = remainingAssignments.some(
-          (x) => (x.department2 || '').trim().toLowerCase() === deptLower
-        );
+        const isStillUsed = remainingAssignments.some((x) => {
+          const depts = (x.department2 || '').split(',').map((s) => s.trim().toLowerCase());
+          return depts.includes(deptLower);
+        });
         if (!isStillUsed) {
           const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['internalDepartmentOptions:' + deptLower]) ||
             initialInternalDepartmentOptions.some((init) => init.toLowerCase() === deptLower);
@@ -1204,8 +1218,16 @@ export function useScheduler() {
     if (newCustomer) api.saveOption('customer_name', newCustomer).catch(() => {});
     if (newEndCustomer) api.saveOption('end_customer', newEndCustomer).catch(() => {});
     if (newPurpose) api.saveOption('purpose', newPurpose).catch(() => {});
-    if (newDept1) api.saveOption('customer_department', newDept1).catch(() => {});
-    if (newDept2) api.saveOption('internal_department', newDept2).catch(() => {});
+    if (newDept1) {
+      newDept1.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => {
+        api.saveOption('customer_department', s).catch(() => {});
+      });
+    }
+    if (newDept2) {
+      newDept2.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => {
+        api.saveOption('internal_department', s).catch(() => {});
+      });
+    }
     if (newSite) {
       newSite.split('/').map((s) => s.trim()).filter(Boolean).forEach((s) => {
         api.saveOption('site_code', s).catch(() => {});
@@ -1237,8 +1259,8 @@ export function useScheduler() {
       }
       if (newEndCustomer) unblacklist(newEndCustomer);
       if (newPurpose) unblacklist(newPurpose);
-      if (newDept1) unblacklist(newDept1);
-      if (newDept2) unblacklist(newDept2);
+      if (newDept1) newDept1.split(',').map((s) => s.trim()).filter(Boolean).forEach(unblacklist);
+      if (newDept2) newDept2.split(',').map((s) => s.trim()).filter(Boolean).forEach(unblacklist);
       if (newSite) newSite.split('/').map((s) => s.trim()).filter(Boolean).forEach(unblacklist);
       newAuditorNames.forEach(unblacklist);
 
@@ -1252,6 +1274,26 @@ export function useScheduler() {
         }
       }
 
+      let nextCustDeptOpts = s.customerDepartmentOptions || [];
+      if (newDept1) {
+        const parts = newDept1.split(',').map((s) => s.trim()).filter(Boolean);
+        for (const p of parts) {
+          if (!nextCustDeptOpts.some((d) => d.toLowerCase() === p.toLowerCase())) {
+            nextCustDeptOpts = [...nextCustDeptOpts, p];
+          }
+        }
+      }
+
+      let nextInternalDeptOpts = s.internalDepartmentOptions || [];
+      if (newDept2) {
+        const parts = newDept2.split(',').map((s) => s.trim()).filter(Boolean);
+        for (const p of parts) {
+          if (!nextInternalDeptOpts.some((d) => d.toLowerCase() === p.toLowerCase())) {
+            nextInternalDeptOpts = [...nextInternalDeptOpts, p];
+          }
+        }
+      }
+
       return {
         orders: s.orders.concat([newOrder]),
         engineers: existingEng ? s.engineers : s.engineers.concat([newEngineer]),
@@ -1261,8 +1303,8 @@ export function useScheduler() {
         endCustomerOptions: newEndCustomer && !(s.endCustomerOptions || []).includes(newEndCustomer) ? [...(s.endCustomerOptions || []), newEndCustomer] : (s.endCustomerOptions || []),
         purposeOptions: newPurpose && !s.purposeOptions.includes(newPurpose) ? [...s.purposeOptions, newPurpose] : s.purposeOptions,
         siteCodeOptions: nextSiteOpts,
-        customerDepartmentOptions: newDept1 && !(s.customerDepartmentOptions || []).includes(newDept1) ? [...(s.customerDepartmentOptions || []), newDept1] : (s.customerDepartmentOptions || []),
-        internalDepartmentOptions: newDept2 && !(s.internalDepartmentOptions || []).includes(newDept2) ? [...(s.internalDepartmentOptions || []), newDept2] : (s.internalDepartmentOptions || []),
+        customerDepartmentOptions: nextCustDeptOpts,
+        internalDepartmentOptions: nextInternalDeptOpts,
         auditorOptions: (() => {
           let opts = s.auditorOptions || [];
           for (const n of newAuditorNames) {
@@ -1567,8 +1609,16 @@ export function useScheduler() {
     if (newCustomer) api.saveOption('customer_name', newCustomer).catch(() => {});
     if (newEndCustomer) api.saveOption('end_customer', newEndCustomer).catch(() => {});
     if (newPurpose) api.saveOption('purpose', newPurpose).catch(() => {});
-    if (newDept1) api.saveOption('customer_department', newDept1).catch(() => {});
-    if (newDept2) api.saveOption('internal_department', newDept2).catch(() => {});
+    if (newDept1) {
+      newDept1.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => {
+        api.saveOption('customer_department', s).catch(() => {});
+      });
+    }
+    if (newDept2) {
+      newDept2.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => {
+        api.saveOption('internal_department', s).catch(() => {});
+      });
+    }
     if (newSite) {
       newSite.split('/').map((s) => s.trim()).filter(Boolean).forEach((s) => {
         api.saveOption('site_code', s).catch(() => {});
@@ -1610,8 +1660,24 @@ export function useScheduler() {
       }
       if (newEndCustomer) unblacklist(newEndCustomer);
       if (newPurpose) unblacklist(newPurpose);
-      if (newDept1) unblacklist(newDept1);
-      if (newDept2) unblacklist(newDept2);
+      if (newDept1) {
+        const parts = newDept1.split(',').map((s) => s.trim()).filter(Boolean);
+        for (const p of parts) {
+          if (!nextCustomerDepartmentOptions.some((d) => d.toLowerCase() === p.toLowerCase())) {
+            nextCustomerDepartmentOptions = [...nextCustomerDepartmentOptions, p];
+          }
+          unblacklist(p);
+        }
+      }
+      if (newDept2) {
+        const parts = newDept2.split(',').map((s) => s.trim()).filter(Boolean);
+        for (const p of parts) {
+          if (!nextInternalDepartmentOptions.some((d) => d.toLowerCase() === p.toLowerCase())) {
+            nextInternalDepartmentOptions = [...nextInternalDepartmentOptions, p];
+          }
+          unblacklist(p);
+        }
+      }
       if (newSite) newSite.split('/').map((s) => s.trim()).filter(Boolean).forEach(unblacklist);
       newAuditors.forEach(unblacklist);
 
@@ -1687,26 +1753,40 @@ export function useScheduler() {
 
       // Prune old Dept1
       if (oldDept1 && oldDept1.toLowerCase() !== newDept1.toLowerCase()) {
-        const isOldDept1StillUsed = nextAssignments.some((a) => (a.department1 || '').trim().toLowerCase() === oldDept1.toLowerCase());
-        if (!isOldDept1StillUsed) {
-          const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['customerDepartmentOptions:' + oldDept1.toLowerCase()]) ||
-            initialCustomerDepartmentOptions.some((init) => init.toLowerCase() === oldDept1.toLowerCase());
-          if (!isMaster) {
-            nextCustomerDepartmentOptions = nextCustomerDepartmentOptions.filter((d) => d.trim().toLowerCase() !== oldDept1.toLowerCase());
-            api.deleteOption('customer_department', oldDept1).catch(() => {});
+        const oldDepts = oldDept1.split(',').map((s) => s.trim()).filter(Boolean);
+        for (const od of oldDepts) {
+          const odLower = od.toLowerCase();
+          const isOldDept1StillUsed = nextAssignments.some((a) => {
+            const depts = (a.department1 || '').split(',').map((s) => s.trim().toLowerCase());
+            return depts.includes(odLower);
+          });
+          if (!isOldDept1StillUsed) {
+            const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['customerDepartmentOptions:' + odLower]) ||
+              initialCustomerDepartmentOptions.some((init) => init.toLowerCase() === odLower);
+            if (!isMaster) {
+              nextCustomerDepartmentOptions = nextCustomerDepartmentOptions.filter((d) => d.trim().toLowerCase() !== odLower);
+              api.deleteOption('customer_department', od).catch(() => {});
+            }
           }
         }
       }
 
       // Prune old Dept2
       if (oldDept2 && oldDept2.toLowerCase() !== newDept2.toLowerCase()) {
-        const isOldDept2StillUsed = nextAssignments.some((a) => (a.department2 || '').trim().toLowerCase() === oldDept2.toLowerCase());
-        if (!isOldDept2StillUsed) {
-          const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['internalDepartmentOptions:' + oldDept2.toLowerCase()]) ||
-            initialInternalDepartmentOptions.some((init) => init.toLowerCase() === oldDept2.toLowerCase());
-          if (!isMaster) {
-            nextInternalDepartmentOptions = nextInternalDepartmentOptions.filter((d) => d.trim().toLowerCase() !== oldDept2.toLowerCase());
-            api.deleteOption('internal_department', oldDept2).catch(() => {});
+        const oldDepts = oldDept2.split(',').map((s) => s.trim()).filter(Boolean);
+        for (const od of oldDepts) {
+          const odLower = od.toLowerCase();
+          const isOldDept2StillUsed = nextAssignments.some((a) => {
+            const depts = (a.department2 || '').split(',').map((s) => s.trim().toLowerCase());
+            return depts.includes(odLower);
+          });
+          if (!isOldDept2StillUsed) {
+            const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['internalDepartmentOptions:' + odLower]) ||
+              initialInternalDepartmentOptions.some((init) => init.toLowerCase() === odLower);
+            if (!isMaster) {
+              nextInternalDepartmentOptions = nextInternalDepartmentOptions.filter((d) => d.trim().toLowerCase() !== odLower);
+              api.deleteOption('internal_department', od).catch(() => {});
+            }
           }
         }
       }
@@ -2265,7 +2345,11 @@ export function useScheduler() {
     .filter((o) => {
       if (S.filterCompany.length > 0 && !S.filterCompany.includes(o.customer)) return false;
       if (S.filterSite.length > 0 && !S.filterSite.includes(o.plant)) return false;
-      if (S.filterAuditTopic.length > 0 && !S.assignments.some((a) => a.order === o.id && S.filterAuditTopic.includes(a.department1 || a.department2 || ''))) return false;
+      if (S.filterAuditTopic.length > 0 && !S.assignments.some((a) => {
+        if (a.order !== o.id) return false;
+        const depts = ((a.department1 || '') + ',' + (a.department2 || '')).split(',').map((s) => s.trim()).filter(Boolean);
+        return depts.some((d) => S.filterAuditTopic.includes(d));
+      })) return false;
       if (S.filterAuditType.length > 0 && !S.filterAuditType.includes(o.purpose)) return false;
       return true;
     })
@@ -3298,8 +3382,8 @@ export function useScheduler() {
       if (a.purpose) addSuggestion(a.purpose, 'Purpose');
       if (o.purpose) addSuggestion(o.purpose, 'Purpose');
 
-      if (a.department1) addSuggestion(a.department1, 'Standard');
-      if (a.department2) addSuggestion(a.department2, 'Standard');
+      if (a.department1) a.department1.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => addSuggestion(s, 'Standard'));
+      if (a.department2) a.department2.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => addSuggestion(s, 'Standard'));
 
       if (e && e.name) addSuggestion(e.name, 'QMS Host');
       if (a.auditor1) a.auditor1.split(',').forEach((s) => addSuggestion(s, 'QMS Host'));
