@@ -243,10 +243,10 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
     // @ts-ignore
     const XLSX = (await import('xlsx-js-style')).default || (await import('xlsx-js-style'));
 
-    const headers = ['Site / Metric', ...MONTHS, 'Full Year Total'];
+    const headers = ['', ...MONTHS, 'Full Year Total'];
     const rows: (string | number)[][] = [];
 
-    rows.push([`UTAC - Annual Audit Findings by Site & Month (Year ${vm.summaryYear})`]);
+    rows.push([`UTAC - Audit Findings by Site and Month (Year ${vm.summaryYear})`]);
     rows.push([]);
 
     const headerRowIndex = rows.length;
@@ -492,7 +492,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
           <div style={css('display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px')}>
             <div>
               <div style={css('font-size:16px;font-weight:700;color:#15191e;letter-spacing:-.2px')}>
-                Annual Audit Findings by Site & Month
+                Audit Findings by Site and Month
               </div>
               <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8a9088;margin-top:2px")}>
                 5 Sites (UTL1, UTL2A, UTL2B, UTL3A, UTL3T) · 12 Months · Year {vm.summaryYear}
@@ -535,7 +535,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
             <div style={css('min-width:960px')}>
               {/* Header Row */}
               <div style={css(`display:grid;grid-template-columns:${gridCols};background:#f8faf6;padding:10px 14px;border-bottom:2px solid #e2e5de;font-size:11px;font-weight:700;color:#5c625c;font-family:'IBM Plex Mono',monospace;letter-spacing:.3px`)}>
-                <div>Site / Metric</div>
+                <div />
                 {MONTHS.map((m) => (
                   <div key={m} style={css('text-align:right')}>{m}</div>
                 ))}
