@@ -260,7 +260,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
 
       // Site Header Row
       rows.push([
-        `${site} Findings`,
+        site,
         ...Array(12).fill(''),
         '',
       ]);
@@ -571,9 +571,6 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
                         </span>
                         <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;background:${conf.badgeBg};color:${conf.text};border:1px solid ${conf.border}`)}>
                           {site}
-                        </span>
-                        <span style={css('font-weight:600;color:#15191e;font-size:12.5px')}>
-                          Findings
                         </span>
                       </div>
 
