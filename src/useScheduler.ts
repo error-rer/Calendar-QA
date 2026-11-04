@@ -20,10 +20,14 @@ import {
   formatDMY,
   formatDateRange,
   getAssignmentDateFormatted,
+  getAssignmentDateRange,
   getMissingFields,
+  hasAuditResultsEntered,
   isAppointmentIncomplete,
   isIncompleteAssignment,
   isInternalAssignment,
+  isTodayWithinAssignmentRange,
+  parseTimestamp,
 } from './types';
 import { getHolidayForDate, getHolidayStyle, type HolidayInfo } from './holidays';
 import {
@@ -96,9 +100,128 @@ export const getAccentStyle = (colors: string[], borderPx = 3): CSSProperties =>
   };
 };
 
-export function isNewlyCreated(item?: { createdAt?: number }): boolean {
+export function isNewlyCreated(item?: { createdAt?: string | number }, nowMs: number = Date.now()): boolean {
   if (!item || !item.createdAt) return false;
-  return Date.now() - item.createdAt < 3 * 60 * 1000;
+  const t = parseTimestamp(item.createdAt);
+  if (t <= 0) return false;
+  return nowMs - t <= 3 * 60 * 1000 && nowMs >= t;
+}
+
+export function isRecentlyUpdated(item?: { updatedAt?: string | number }, nowMs: number = Date.now()): boolean {
+  if (!item || !item.updatedAt) return false;
+  const t = parseTimestamp(item.updatedAt);
+  if (t <= 0) return false;
+  return nowMs - t <= 3 * 60 * 1000 && nowMs >= t;
+}
+
+export type ApptPriority = 'incomplete' | 'recently_created' | 'recently_updated' | 'pending_result' | 'default';
+
+export interface ApptCardColors {
+  priority: ApptPriority;
+  barBg: string;
+  cardBorder: string;
+  accentBg: string;
+  titleColor: string;
+  purposeColor: string;
+  overrideCodeColor?: string;
+}
+
+export function getApptCardColors(
+  chip: {
+    isIncomplete?: boolean;
+    createdAt?: string | number;
+    updatedAt?: string | number;
+    isAuditDate?: boolean;
+    fromDate?: Date | string;
+    toDate?: Date | string;
+    results?: Record<string, SiteAuditResult>;
+    isInternal?: boolean;
+    colors?: string[];
+    color?: string;
+  },
+  nowMs: number = Date.now(),
+  isChipView: boolean = false
+): ApptCardColors {
+  const isInc = !!chip.isIncomplete;
+  const isNew = !isInc && isNewlyCreated(chip, nowMs);
+  const isUpd = !isInc && !isNew && isRecentlyUpdated(chip, nowMs);
+
+  let onAuditDate = chip.isAuditDate;
+  if (onAuditDate === undefined && (chip.fromDate || chip.toDate)) {
+    const today = new Date(nowMs);
+    onAuditDate = isTodayWithinAssignmentRange(chip.fromDate || today, chip.toDate || chip.fromDate || today, today);
+  }
+  const isPending = !isInc && !isNew && !isUpd && !!onAuditDate && !hasAuditResultsEntered(chip);
+
+  const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color || '#9aa097'];
+  const defaultAccentBg = getAccentBackground(chColors);
+  const defaultTitleColor = chip.isInternal ? '#10b981' : '#2756d6';
+  const defaultPurposeColor = '#5c625c';
+  const defaultBg = isChipView ? '#f0f2ec' : '#ffffff';
+  const defaultBorder = isChipView ? '1px solid #e2e5de' : '1px solid #e4e7e0';
+
+  // Priority 1: INCOMPLETE FORM (Red)
+  if (isInc) {
+    return {
+      priority: 'incomplete',
+      barBg: '#FC0000',
+      cardBorder: '1px solid #b91c1c',
+      accentBg: '#b91c1c',
+      titleColor: '#FFFFFF',
+      purposeColor: '#FFFFFF',
+      overrideCodeColor: '#FFFFFF',
+    };
+  }
+
+  // Priority 2: RECENTLY CREATED (Light Green)
+  if (isNew) {
+    return {
+      priority: 'recently_created',
+      barBg: '#d1fae5', // emerald-100/90
+      cardBorder: '1px solid #6ee7b7', // emerald-300
+      accentBg: '#059669', // emerald-600
+      titleColor: '#064e3b', // emerald-950
+      purposeColor: '#065f46', // emerald-800
+      overrideCodeColor: '#064e3b',
+    };
+  }
+
+  // Priority 3: RECENTLY UPDATED (Light Blue)
+  if (isUpd) {
+    return {
+      priority: 'recently_updated',
+      barBg: '#e0f2fe', // sky-100/90
+      cardBorder: '1px solid #7dd3fc', // sky-300
+      accentBg: '#0284c7', // sky-600
+      titleColor: '#082f49', // sky-950
+      purposeColor: '#0369a1', // sky-700
+      overrideCodeColor: '#082f49',
+    };
+  }
+
+  // Priority 4: PENDING AUDIT RESULT ON AUDIT DATE (Light Yellow)
+  if (isPending) {
+    return {
+      priority: 'pending_result',
+      barBg: '#fef3c7', // amber-100/90
+      cardBorder: '1px solid #fcd34d', // amber-300
+      accentBg: '#d97706', // amber-600
+      titleColor: '#78350f', // amber-950
+      purposeColor: '#b45309', // amber-700
+      overrideCodeColor: '#78350f',
+    };
+  }
+
+  // Default State: Standard neutral card style
+  return {
+    priority: 'default',
+    barBg: defaultBg,
+    cardBorder: defaultBorder,
+    accentBg: defaultAccentBg,
+    titleColor: defaultTitleColor,
+    purposeColor: defaultPurposeColor,
+    overrideCodeColor: undefined,
+  };
 }
 
 interface MonthChip {
@@ -113,7 +236,12 @@ interface MonthChip {
   style: CSSProperties;
   isInternal: boolean;
   isIncomplete?: boolean;
-  createdAt?: number;
+  createdAt?: string | number;
+  updatedAt?: string;
+  isAuditDate?: boolean;
+  fromDate?: Date | string;
+  toDate?: Date | string;
+  results?: Record<string, SiteAuditResult>;
   onClick?: () => void;
 }
 interface MonthCell {
@@ -138,6 +266,14 @@ const idNumber = (id: string): number => {
 
 export function useScheduler() {
   const [state, setRaw] = useState<State>(initialState);
+  // Periodic timer (every 15 seconds) to smoothly expire 3-minute timers for newly created/updated appointments
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNowTick(Date.now());
+    }, 15000);
+    return () => clearInterval(timer);
+  }, []);
   const [loading, setLoading] = useState(true);
   const ids = useRef({ id: 100 });
 
@@ -703,9 +839,10 @@ export function useScheduler() {
   };
   const moveAssign = (aid: string, engId: string, day: number) => {
     const a = S.assignments.find((x) => x.id === aid);
-    api.updateAssignment(aid, { eng: engId, day, week: S.weekOffset }).catch(() => {});
+    const nowIso = new Date().toISOString();
+    api.updateAssignment(aid, { eng: engId, day, week: S.weekOffset, updatedAt: nowIso }).catch(() => {});
     setState((s) => ({
-      assignments: s.assignments.map((x) => (x.id === aid ? { ...x, eng: engId, day, week: s.weekOffset } : x)),
+      assignments: s.assignments.map((x) => (x.id === aid ? { ...x, eng: engId, day, week: s.weekOffset, updatedAt: nowIso } : x)),
       selected: aid,
     }));
     if (a) {
@@ -1066,7 +1203,7 @@ export function useScheduler() {
     if (!a) return;
     const nd = a.day < 4 ? a.day + 1 : a.day - 1;
     const id = 'a' + ids.current.id++;
-    const clone = { ...a, id, day: nd, createdAt: Date.now() };
+    const clone = { ...a, id, day: nd, createdAt: new Date().toISOString(), updatedAt: undefined };
     api.createAssignment(clone).catch(() => {});
     setState((s) => ({ assignments: s.assignments.concat([clone]), selected: id }));
     log('You', `duplicated ${apptTitle(a)} → ${dayLabels[nd]}`, '#2756d6');
@@ -1172,7 +1309,6 @@ export function useScheduler() {
     const orderId = 'o' + ids.current.id++;
     const start = new Date(dateFrom + 'T00:00:00');
     const end = new Date(dateTo + 'T00:00:00');
-    const now = Date.now();
     for (let cur = new Date(start); cur <= end; cur.setDate(cur.getDate() + 1)) {
       const slot = dateSlot(cur);
       if (slot.wd < 5 && !getHolidayForDate(cur)) {
@@ -1193,7 +1329,7 @@ export function useScheduler() {
           department1: d.sectionType === 'customer' ? d.department1 : '',
           department2: d.sectionType === 'internal' ? d.department2 : '',
           createdBy: profile.name || 'Jordan Lee',
-          createdAt: now,
+          createdAt: new Date().toISOString(),
         });
       }
     }
@@ -1428,16 +1564,17 @@ export function useScheduler() {
     const siblings = S.assignments.filter((x) => (x.eng === a.eng && x.order === a.order) || x.id === aid);
     const siblingIds = new Set(siblings.map((x) => x.id));
 
+    const nowIso = new Date().toISOString();
     setState((s) => ({
       assignments: s.assignments.map((item) =>
-        siblingIds.has(item.id) ? { ...item, results: newResults } : item
+        siblingIds.has(item.id) ? { ...item, results: newResults, updatedAt: nowIso } : item
       ),
       resultsModalOpen: false,
       resultsTargetId: null,
     }));
 
     siblings.forEach((sib) => {
-      api.updateAssignment(sib.id, { results: newResults }).catch(() => {});
+      api.updateAssignment(sib.id, { results: newResults, updatedAt: nowIso }).catch(() => {});
     });
 
     const dateFormatted = getAssignmentDateFormatted(a, S.assignments);
@@ -1710,18 +1847,21 @@ export function useScheduler() {
     const siblingIds = new Set(siblings.map((x) => x.id));
     const others = S.assignments.filter((x) => !siblingIds.has(x.id));
     const reuseIds = [d.targetId, ...siblings.filter((x) => x.id !== d.targetId).map((x) => x.id)];
-    const originalCreatedAt = target.createdAt || siblings.find((x) => x.createdAt)?.createdAt;
+    const nowIso = new Date().toISOString();
+    const rawCreatedAt = target.createdAt || siblings.find((x) => x.createdAt)?.createdAt || nowIso;
+    const originalCreatedAt = typeof rawCreatedAt === 'number' ? new Date(rawCreatedAt).toISOString() : rawCreatedAt;
     const updated: Assignment[] = slots.map((slot, i) => ({
       id: reuseIds[i] || 'a' + ids.current.id++,
       eng: finalEngId, order: target.order,
       day: slot.wd, week: slot.weekOffset,
       createdAt: originalCreatedAt,
+      updatedAt: nowIso,
       ...fields,
     }));
     const droppedIds = reuseIds.slice(slots.length);
 
     updated.forEach((a, i) => {
-      if (i < siblings.length) api.updateAssignment(a.id, { eng: a.eng, day: a.day, week: a.week, createdAt: a.createdAt, ...fields }).catch(() => {});
+      if (i < siblings.length) api.updateAssignment(a.id, { eng: a.eng, day: a.day, week: a.week, createdAt: a.createdAt, updatedAt: a.updatedAt, ...fields }).catch(() => {});
       else api.createAssignment(a).catch(() => {});
     });
     droppedIds.forEach((id: string) => api.deleteAssignment(id).catch(() => {}));
@@ -2342,14 +2482,25 @@ export function useScheduler() {
     const site = (isInternal ? a.site2 : a.site1) || '';
     const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : (auditorName || '');
-    const barBg = isIncomplete ? '#FC0000' : '#fff';
-    const borderStyle = isIncomplete ? '1px solid #b91c1c' : '1px solid #e3e6e0';
+    const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
+    const isAuditDate = isTodayWithinAssignmentRange(fromDate, toDate, today);
+    const cardColors = getApptCardColors({
+      isIncomplete,
+      createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
+      isAuditDate,
+      results: a.results,
+      isInternal,
+      colors,
+    }, nowTick, false);
+    const barBg = cardColors.barBg;
+    const borderStyle = cardColors.priority === 'default' ? '1px solid #e3e6e0' : cardColors.cardBorder;
     const base: CSSProperties = {
       display: 'block', padding: '7px 9px', borderRadius: '6px', background: barBg, cursor: 'grab', position: 'relative',
       border: borderStyle, ...accentStyle,
       boxShadow: sel ? '0 0 0 2px ' + hexA(colors[0] || '#999', 0.55) : '0 1px 1px rgba(20,25,30,.05)',
       opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', transition: 'box-shadow .12s',
-      color: isIncomplete ? '#ffffff' : undefined,
+      color: isIncomplete ? '#ffffff' : (cardColors.priority !== 'default' ? cardColors.titleColor : undefined),
     };
     return {
       aid: a.id, code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, style: base,
@@ -2374,13 +2525,24 @@ export function useScheduler() {
     const site = (isInternal ? a.site2 : a.site1) || '';
     const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : (auditorName || '');
-    const barBg = isIncomplete ? '#FC0000' : '#fff';
-    const borderStyle = isIncomplete ? '1px solid #b91c1c' : '1px solid #e8ebe4';
+    const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
+    const isAuditDate = isTodayWithinAssignmentRange(fromDate, toDate, today);
+    const cardColors = getApptCardColors({
+      isIncomplete,
+      createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
+      isAuditDate,
+      results: a.results,
+      isInternal,
+      colors,
+    }, nowTick, false);
+    const barBg = cardColors.barBg;
+    const borderStyle = cardColors.priority === 'default' ? '1px solid #e8ebe4' : cardColors.cardBorder;
     return {
       aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, plantCode: pl ? pl.code : '?',
       isIncomplete,
-      style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: barBg, border: borderStyle, ...accentStyle, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', color: isIncomplete ? '#ffffff' : undefined }),
-      avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: isIncomplete ? '#b91c1c' : '#f1f3ee', color: isIncomplete ? '#ffffff' : '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
+      style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: barBg, border: borderStyle, ...accentStyle, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', color: isIncomplete ? '#ffffff' : (cardColors.priority !== 'default' ? cardColors.titleColor : undefined) }),
+      avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: isIncomplete ? '#b91c1c' : (cardColors.priority !== 'default' ? cardColors.accentBg : '#f1f3ee'), color: isIncomplete ? '#ffffff' : (cardColors.priority !== 'default' ? '#ffffff' : '#5c625c'), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       onClick: () => select(a.id),
     };
   };
@@ -2458,6 +2620,8 @@ export function useScheduler() {
       const pl = plantById(o.plant);
       const isInternal = isInternalAssignment(a);
       const isIncomplete = isIncompleteAssignment(a);
+      const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
+      const isAuditDate = isTodayWithinAssignmentRange(fromDate, toDate, today);
       const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
       const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
       const colors = siteColorsOfAssignment(a, S.siteColors);
@@ -2468,6 +2632,11 @@ export function useScheduler() {
         isInternal,
         isIncomplete,
         createdAt: a.createdAt,
+        updatedAt: a.updatedAt,
+        results: a.results || {},
+        isAuditDate,
+        fromDate,
+        toDate,
         countTxt: '',
         dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: isIncomplete ? '#FC0000' : color, flexShrink: 0 }),
         style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: isIncomplete ? '#FFFFFF' : '#23282a', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
@@ -2716,6 +2885,8 @@ export function useScheduler() {
       });
     };
     const isIncomplete = isIncompleteAssignment(a);
+    const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
+    const isAuditDate = isTodayWithinAssignmentRange(fromDate, toDate, today);
     return {
       id: a.id,
       code: formatApptDisplayTitle(a, o),
@@ -2738,6 +2909,10 @@ export function useScheduler() {
       auditCategory: a.auditCategory || '',
       results: a.results || {},
       createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
+      isAuditDate,
+      fromDate,
+      toDate,
       major: a.major,
       minor: a.minor,
       ofi: a.ofi,
@@ -3016,9 +3191,28 @@ export function useScheduler() {
     const color = colors[0] || (pl ? pl.color : '#999');
     const isInternal = !!(a.site2 || a.auditor2 || a.department2 || a.area);
     const isIncomplete = isIncompleteAssignment(a);
+    const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
+    const isAuditDate = isTodayWithinAssignmentRange(fromDate, toDate, today);
     const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : (auditorName || '');
-    return { ...a, _customer: formatApptDisplayTitle(a, ord), _purpose: chipPurpose, _auditor: auditorName, _qa: eng ? eng.name : '', _color: color, _colors: colors, _sel: sel, _onClick: () => openDayDialog(a.week, a.day), _ord: ord, _eng: eng, _isInternal: isInternal, _isIncomplete: isIncomplete };
+    return {
+      ...a,
+      _customer: formatApptDisplayTitle(a, ord),
+      _purpose: chipPurpose,
+      _auditor: auditorName,
+      _qa: eng ? eng.name : '',
+      _color: color,
+      _colors: colors,
+      _sel: sel,
+      _onClick: () => openDayDialog(a.week, a.day),
+      _ord: ord,
+      _eng: eng,
+      _isInternal: isInternal,
+      _isIncomplete: isIncomplete,
+      _isAuditDate: isAuditDate,
+      _fromDate: fromDate,
+      _toDate: toDate,
+    };
   });
   // group consecutive same-order same-eng assignments into merged spans
   const sorted = [...weekCalendarChips].sort((a, b) => {
@@ -3055,6 +3249,11 @@ export function useScheduler() {
       area: c.area || '', auditor2: c.auditor2 || '', isInternal: c._isInternal,
       isIncomplete: c._isIncomplete,
       createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+      results: c.results || {},
+      isAuditDate: c._isAuditDate,
+      fromDate: c._fromDate,
+      toDate: c._toDate,
       onClick: () => openDayDialog(c.week, c.day),
     };
   });
@@ -3066,6 +3265,11 @@ export function useScheduler() {
       area: c.area || '', auditor2: c.auditor2 || '', isInternal: c._isInternal,
       isIncomplete: c._isIncomplete,
       createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+      results: c.results || {},
+      isAuditDate: c._isAuditDate,
+      fromDate: c._fromDate,
+      toDate: c._toDate,
     }));
     chips.sort((a, b) => {
       if (a.isIncomplete && !b.isIncomplete) return -1;
@@ -3908,7 +4112,7 @@ export function useScheduler() {
     nextWeek: () => (S.timeScale === 'year' ? shiftMonth(12) : S.timeScale === 'month' ? shiftMonth(1) : shiftWeek(1)),
     profile,
     engForm, engFormOpen: S.engFormOpen, engEditingId: S.engEditingId, openEngForm, openEditEngineer: openEditEngForm, closeEngForm,
-    assignments: S.assignments, engineers: S.engineers,
+    nowTick, assignments: S.assignments, engineers: S.engineers,
     stats: {
       assignments: isYear ? yearSummary.cs + yearSummary.ia : isMonth ? monthScheduledCount : wk.length,
       weekCustomers,

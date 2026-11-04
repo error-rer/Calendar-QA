@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState, useMemo } from 'react';
 import type { VM } from '../useScheduler';
-import { getAccentBackground, isNewlyCreated } from '../useScheduler';
+import { getApptCardColors } from '../useScheduler';
 import { css, HButton, HInput } from '../ui';
 import { getHolidayStyle, isOfficialHoliday } from '../holidays';
 
@@ -162,14 +162,14 @@ function ApptCard({ chip }: { chip: any }) {
   };
   const cancelDelete = () => setConfirmDelete(null);
 
-  const isInc = chip.isIncomplete;
-  const isNew = isNewlyCreated(chip);
-  const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
-  const barBg = isInc ? '#FC0000' : (isNew ? '#374151' : '#fff');
-  const accentBg = isInc ? '#b91c1c' : getAccentBackground(chColors);
-  const titleColor = isInc ? '#FFFFFF' : (chip.isInternal ? '#10b981' : '#2756d6');
-  const purposeColor = isInc ? '#FFFFFF' : (isNew ? '#FFFFFF' : '#5c625c');
-  const cardBorder = isInc ? '1px solid #b91c1c' : '1px solid #e4e7e0';
+  const cardColors = getApptCardColors(chip, Date.now(), false);
+  const isInc = cardColors.priority === 'incomplete';
+  const barBg = cardColors.barBg;
+  const accentBg = cardColors.accentBg;
+  const titleColor = cardColors.titleColor;
+  const purposeColor = cardColors.purposeColor;
+  const cardBorder = cardColors.cardBorder;
+  const overrideCodeColor = cardColors.overrideCodeColor;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', background: barBg, border: cardBorder, borderRadius: '8px', overflow: 'hidden' }}>
@@ -181,7 +181,7 @@ function ApptCard({ chip }: { chip: any }) {
             style={{ minWidth: 0, flex: 1, cursor: 'pointer' }}
             title="Click to expand embedded details"
           >
-            <div style={css(`font-size:12.5px;font-weight:600;color:${titleColor}`)}>{renderApptCode(chip.code, isInc ? '#FFFFFF' : undefined)}</div>
+            <div style={css(`font-size:12.5px;font-weight:600;color:${titleColor}`)}>{renderApptCode(chip.code, overrideCodeColor)}</div>
             {chip.purpose ? (
               <div style={css(`font-size:11px;color:${purposeColor};margin-top:2px`)}>{chip.purpose}</div>
             ) : null}
@@ -236,6 +236,21 @@ function ApptCard({ chip }: { chip: any }) {
             {isInc && (
               <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;color:#dc2626;background:#fef2f2;border:1px solid #fca5a5;")}>
                 Incomplete Data
+              </span>
+            )}
+            {cardColors.priority === 'recently_created' && (
+              <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;color:#065f46;background:#d1fae5;border:1px solid #6ee7b7;")}>
+                New
+              </span>
+            )}
+            {cardColors.priority === 'recently_updated' && (
+              <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;color:#0369a1;background:#e0f2fe;border:1px solid #7dd3fc;")}>
+                Updated
+              </span>
+            )}
+            {cardColors.priority === 'pending_result' && (
+              <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;color:#78350f;background:#fef3c7;border:1px solid #fcd34d;")}>
+                Pending Results
               </span>
             )}
             {chip.site && (
@@ -615,12 +630,13 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
   };
   const cancelDelete = () => setConfirmDelete(null);
 
-  const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
-  const isInc = !!chip.isIncomplete;
-  const barBgColor = isInc ? '#FC0000' : getAccentBackground(chColors);
+  const cardColors = getApptCardColors(chip, Date.now(), false);
+  const isInc = cardColors.priority === 'incomplete';
+  const barBgColor = isInc ? '#FC0000' : cardColors.accentBg;
+  const rowBg = cardColors.priority === 'default' ? '#fff' : cardColors.barBg;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', borderBottom: isLast ? 'none' : '1px solid #e8ebe4', background: '#fff' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', borderBottom: isLast ? 'none' : '1px solid #e8ebe4', background: rowBg }}>
       <div style={{ display: 'flex', alignItems: 'stretch', minHeight: '52px' }}>
         {/* Left-Aligned Date Column */}
         <div style={{
@@ -1569,24 +1585,24 @@ function WeekCalendar({ vm }: { vm: VM }) {
             </div>
             <div style={css('display:flex;flex-direction:column;gap:2px')}>
               {vm.weekCalendarDays[i].chips.map((chip) => {
-                const isInc = chip.isIncomplete;
-                const isNew = isNewlyCreated(chip);
-                const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color];
-                const barBg = isInc ? '#FC0000' : (isNew ? '#374151' : '#f0f2ec');
-                const titleColor = isInc ? '#FFFFFF' : (chip.isInternal ? '#10b981' : '#2756d6');
-                const purposeColor = isInc ? '#FFFFFF' : (isNew ? '#FFFFFF' : '#5c625c');
-                const accentBg = isInc ? '#b91c1c' : getAccentBackground(chColors);
+                const cardColors = getApptCardColors(chip, Date.now(), true);
+                const barBg = cardColors.barBg;
+                const titleColor = cardColors.titleColor;
+                const purposeColor = cardColors.purposeColor;
+                const accentBg = cardColors.accentBg;
+                const border = cardColors.priority === 'default' ? 'none' : cardColors.cardBorder;
 
                 return (
                   <div key={chip.id} onClick={chip.onClick} title={[chip.customer, chip.auditor2 || chip.purpose, chip.auditor2 ? '' : chip.auditor1].filter(Boolean).join(' - ')} style={{
                     display: 'flex', alignItems: 'stretch',
                     background: barBg, borderRadius: '6px',
+                    border,
                     boxShadow: '0 1px 2px rgba(0,0,0,.06)',
                     cursor: 'pointer', overflow: 'hidden',
                   }}>
                     <div style={{ width: '3px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
                     <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: '11.5px', fontWeight: 600, color: titleColor }}>{renderApptCode(chip.customer, isInc ? '#FFFFFF' : undefined)}</div>
+                      <div style={{ fontSize: '11.5px', fontWeight: 600, color: titleColor }}>{renderApptCode(chip.customer, cardColors.overrideCodeColor)}</div>
                       {chip.purpose ? (
                         <div style={{ fontSize: '10px', color: purposeColor, marginTop: '1px' }}>{chip.purpose}</div>
                       ) : null}
@@ -1610,13 +1626,12 @@ function WeekCalendar({ vm }: { vm: VM }) {
         );
       })}
       {vm.weekMergedSpans.map((sp) => {
-        const isInc = sp.isIncomplete;
-        const isNew = isNewlyCreated(sp);
-        const spColors = sp.colors && sp.colors.length > 0 ? sp.colors : [sp.color];
-        const barBg = isInc ? '#FC0000' : (isNew ? '#374151' : '#f0f2ec');
-        const titleColor = isInc ? '#FFFFFF' : (sp.isInternal ? '#10b981' : '#2756d6');
-        const purposeColor = isInc ? '#FFFFFF' : (isNew ? '#FFFFFF' : '#5c625c');
-        const accentBg = isInc ? '#b91c1c' : getAccentBackground(spColors);
+        const cardColors = getApptCardColors(sp, Date.now(), true);
+        const barBg = cardColors.barBg;
+        const titleColor = cardColors.titleColor;
+        const purposeColor = cardColors.purposeColor;
+        const accentBg = cardColors.accentBg;
+        const border = cardColors.priority === 'default' ? 'none' : cardColors.cardBorder;
 
         return (
           <div onClick={sp.onClick} title={[sp.customer, sp.auditor2 || sp.purpose, sp.auditor2 ? '' : sp.auditor1].filter(Boolean).join(' - ')} style={{
@@ -1625,13 +1640,14 @@ function WeekCalendar({ vm }: { vm: VM }) {
             zIndex: 2,
             display: 'flex', alignItems: 'stretch',
             background: barBg, borderRadius: '6px',
+            border,
             boxShadow: '0 1px 2px rgba(0,0,0,.06)',
             cursor: 'pointer', overflow: 'hidden',
             margin: '2px 0',
           }}>
             <div style={{ width: '3px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
             <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: '11.5px', fontWeight: 600, color: titleColor }}>{renderApptCode(sp.customer, isInc ? '#FFFFFF' : undefined)}</div>
+              <div style={{ fontSize: '11.5px', fontWeight: 600, color: titleColor }}>{renderApptCode(sp.customer, cardColors.overrideCodeColor)}</div>
               {sp.purpose ? (
                 <div style={{ fontSize: '10px', color: purposeColor, marginTop: '1px' }}>{sp.purpose}</div>
               ) : null}
@@ -1877,13 +1893,12 @@ function MonthGrid({ vm }: { vm: VM }) {
               </div>
               <div style={css('display:flex;flex-direction:column;gap:3px;margin-top:2px')}>
                 {(c.chips ?? []).map((ch, ci) => {
-                  const isInc = ch.isIncomplete;
-                  const isNew = isNewlyCreated(ch);
-                  const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
-                  const barBg = isInc ? '#FC0000' : (isNew ? '#374151' : '#f0f2ec');
-                  const titleColor = isInc ? '#FFFFFF' : (ch.isInternal ? '#10b981' : '#2756d6');
-                  const purposeColor = isInc ? '#FFFFFF' : (isNew ? '#FFFFFF' : '#5c625c');
-                  const accentBg = isInc ? '#b91c1c' : getAccentBackground(chColors);
+                  const cardColors = getApptCardColors(ch, Date.now(), true);
+                  const barBg = cardColors.barBg;
+                  const titleColor = cardColors.titleColor;
+                  const purposeColor = cardColors.purposeColor;
+                  const accentBg = cardColors.accentBg;
+                  const border = cardColors.priority === 'default' ? 'none' : cardColors.cardBorder;
 
                   return (
                     <div
@@ -1894,6 +1909,7 @@ function MonthGrid({ vm }: { vm: VM }) {
                       style={{
                         display: 'flex', alignItems: 'stretch',
                         background: barBg, borderRadius: '5px',
+                        border,
                         boxShadow: '0 1px 2px rgba(0,0,0,.05)',
                         cursor: 'pointer',
                         overflow: 'hidden',
@@ -1901,7 +1917,7 @@ function MonthGrid({ vm }: { vm: VM }) {
                     >
                       <div style={{ width: '3px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
                       <div style={{ padding: '3px 5px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
-                        <div style={{ fontSize: '10.5px', fontWeight: 600, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code, isInc ? '#FFFFFF' : undefined)}</div>
+                        <div style={{ fontSize: '10.5px', fontWeight: 600, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code, cardColors.overrideCodeColor)}</div>
                         {ch.purpose ? (
                           <div style={{ fontSize: '9.5px', color: purposeColor, marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
                         ) : null}
@@ -1985,13 +2001,12 @@ function MonthMobile({ vm }: { vm: VM }) {
               </div>
               <div style={css('display:flex;flex-direction:column;gap:2px;margin-top:1px')}>
                 {(c.chips ?? []).map((ch, ci) => {
-                  const isInc = ch.isIncomplete;
-                  const isNew = isNewlyCreated(ch);
-                  const chColors = ch.colors && ch.colors.length > 0 ? ch.colors : [ch.color || '#9aa097'];
-                  const barBg = isInc ? '#FC0000' : (isNew ? '#374151' : '#f0f2ec');
-                  const titleColor = isInc ? '#FFFFFF' : (ch.isInternal ? '#10b981' : '#2756d6');
-                  const purposeColor = isInc ? '#FFFFFF' : (isNew ? '#FFFFFF' : '#5c625c');
-                  const accentBg = isInc ? '#b91c1c' : getAccentBackground(chColors);
+                  const cardColors = getApptCardColors(ch, Date.now(), true);
+                  const barBg = cardColors.barBg;
+                  const titleColor = cardColors.titleColor;
+                  const purposeColor = cardColors.purposeColor;
+                  const accentBg = cardColors.accentBg;
+                  const border = cardColors.priority === 'default' ? 'none' : cardColors.cardBorder;
 
                   return (
                     <div
@@ -2002,13 +2017,14 @@ function MonthMobile({ vm }: { vm: VM }) {
                       style={{
                         display: 'flex', alignItems: 'stretch',
                         background: barBg, borderRadius: '3px',
+                        border,
                         cursor: 'pointer',
                         overflow: 'hidden',
                       }}
                     >
                       <div style={{ width: '2px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
                       <div style={{ padding: '2px 4px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
-                        <div style={{ fontSize: '8px', fontWeight: 600, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code, isInc ? '#FFFFFF' : undefined)}</div>
+                        <div style={{ fontSize: '8px', fontWeight: 600, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code, cardColors.overrideCodeColor)}</div>
                         {ch.purpose ? (
                           <div style={{ fontSize: '7.5px', color: purposeColor, marginTop: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
                         ) : null}

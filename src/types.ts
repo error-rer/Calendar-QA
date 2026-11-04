@@ -65,7 +65,8 @@ export interface Assignment {
   utl3?: number;
   results?: Record<string, SiteAuditResult>;
   createdBy?: string;
-  createdAt?: number;
+  createdAt?: string | number;
+  updatedAt?: string;
 }
 
 function hasValue(val: any): boolean {
@@ -178,12 +179,15 @@ export function formatDateRange(
   return `${fromStr} - ${toStr}`;
 }
 
-export function getAssignmentDateFormatted(a: Assignment, allAssignments: Assignment[]): string {
-  if (!a) return '';
-  const siblings = allAssignments.filter((x) => (x.eng === a.eng && x.order === a.order) || x.id === a.id);
+export function getAssignmentDateRange(a: Assignment, allAssignments: Assignment[]): { fromDate: Date; toDate: Date } {
+  if (!a) {
+    const now = new Date();
+    return { fromDate: now, toDate: now };
+  }
+  const siblings = allAssignments ? allAssignments.filter((x) => (x.eng === a.eng && x.order === a.order) || x.id === a.id) : [];
   if (siblings.length === 0) {
     const d = new Date(2026, 5, 29 + a.week * 7 + a.day);
-    return formatDMY(d);
+    return { fromDate: d, toDate: d };
   }
   const minWeek = Math.min(...siblings.map((x) => x.week));
   const maxWeek = Math.max(...siblings.map((x) => x.week));
@@ -191,6 +195,51 @@ export function getAssignmentDateFormatted(a: Assignment, allAssignments: Assign
   const maxDay = Math.max(...siblings.filter((x) => x.week === maxWeek).map((x) => x.day));
   const fromDate = new Date(2026, 5, 29 + minWeek * 7 + minDay);
   const toDate = new Date(2026, 5, 29 + maxWeek * 7 + maxDay);
+  return { fromDate, toDate };
+}
+
+export function hasAuditResultsEntered(a?: { results?: Record<string, SiteAuditResult>; major?: number; minor?: number; ofi?: number }): boolean {
+  if (!a) return false;
+  if (a.results && typeof a.results === 'object') {
+    const sites = Object.keys(a.results);
+    if (sites.length > 0) {
+      for (const s of sites) {
+        const item = a.results[s];
+        if (!item) continue;
+        const total = (Number(item.major) || 0) +
+                      (Number(item.minor) || 0) +
+                      (Number(item.ofi) || 0) +
+                      (Number(item.obs) || 0) +
+                      (Number(item.findings) || 0);
+        if (total > 0) return true;
+      }
+      return false;
+    }
+  }
+  const legacySum = (Number(a.major) || 0) + (Number(a.minor) || 0) + (Number(a.ofi) || 0);
+  return legacySum > 0;
+}
+
+export function parseTimestamp(val?: string | number): number {
+  if (!val) return 0;
+  if (typeof val === 'number') return val;
+  const t = new Date(val).getTime();
+  return isNaN(t) ? 0 : t;
+}
+
+export function isTodayWithinAssignmentRange(fromDate: Date | string, toDate: Date | string, now: Date = new Date()): boolean {
+  const fromD = typeof fromDate === 'string' ? new Date(fromDate) : fromDate;
+  const toD = typeof toDate === 'string' ? new Date(toDate) : toDate;
+  if (!fromD || !toD || isNaN(fromD.getTime()) || isNaN(toD.getTime())) return false;
+  const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const fromISO = `${fromD.getFullYear()}-${String(fromD.getMonth() + 1).padStart(2, '0')}-${String(fromD.getDate()).padStart(2, '0')}`;
+  const toISO = `${toD.getFullYear()}-${String(toD.getMonth() + 1).padStart(2, '0')}-${String(toD.getDate()).padStart(2, '0')}`;
+  return todayISO >= fromISO && todayISO <= toISO;
+}
+
+export function getAssignmentDateFormatted(a: Assignment, allAssignments: Assignment[]): string {
+  if (!a) return '';
+  const { fromDate, toDate } = getAssignmentDateRange(a, allAssignments);
   return formatDateRange(fromDate, toDate);
 }
 
