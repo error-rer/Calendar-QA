@@ -14,48 +14,55 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
     : [];
   const activeSites = useMemo(() => (parsedSites.length > 0 ? parsedSites : [rawSite.trim() || 'General']), [rawSite]);
 
-  // Local state for editing the results per site
-  const [siteResults, setSiteResults] = useState<Record<string, { major: number; minor: number; ofi: number; obs: number }>>(() => {
+  // Local state for editing the results per site - keyed by siteName
+  const [siteResults, setSiteResults] = useState<Record<string, SiteAuditResult>>(() => {
     const existing = target.results || {};
-    const initial: Record<string, { major: number; minor: number; ofi: number; obs: number }> = {};
+    const initial: Record<string, SiteAuditResult> = {};
     for (const site of activeSites) {
-      const prev = existing[site] || { major: 0, minor: 0, ofi: 0, obs: 0 };
+      const prev = existing[site];
       initial[site] = {
-        major: Number(prev.major) || 0,
-        minor: Number(prev.minor) || 0,
-        ofi: Number(prev.ofi) || 0,
-        obs: Number(prev.obs) || 0,
+        major: prev ? (Number(prev.major) || 0) : 0,
+        minor: prev ? (Number(prev.minor) || 0) : 0,
+        ofi: prev ? (Number(prev.ofi) || 0) : 0,
+        obs: prev ? (Number(prev.obs) || 0) : 0,
+        findings: prev ? (Number(prev.findings) || 0) : 0,
       };
     }
     return initial;
   });
 
-  // Re-sync if the target appointment or configured sites change
+  // Re-sync if the target appointment or configured sites change:
+  // - Keeps previously entered numbers for existing sites strictly intact
+  // - Initializes only newly added sites with default 0
+  // - Deletes keys for removed sites
   const activeSitesKey = activeSites.join('|');
   useEffect(() => {
     const existing = target.results || {};
     const sites = activeSitesKey ? activeSitesKey.split('|') : ['General'];
-    const initial: Record<string, { major: number; minor: number; ofi: number; obs: number }> = {};
-    for (const site of sites) {
-      const prev = existing[site] || { major: 0, minor: 0, ofi: 0, obs: 0 };
-      initial[site] = {
-        major: Number(prev.major) || 0,
-        minor: Number(prev.minor) || 0,
-        ofi: Number(prev.ofi) || 0,
-        obs: Number(prev.obs) || 0,
-      };
-    }
-    setSiteResults(initial);
+    setSiteResults((prev) => {
+      const next: Record<string, SiteAuditResult> = {};
+      for (const site of sites) {
+        const src = prev[site] || existing[site];
+        next[site] = {
+          major: src ? (Number(src.major) || 0) : 0,
+          minor: src ? (Number(src.minor) || 0) : 0,
+          ofi: src ? (Number(src.ofi) || 0) : 0,
+          obs: src ? (Number(src.obs) || 0) : 0,
+          findings: src ? (Number(src.findings) || 0) : 0,
+        };
+      }
+      return next;
+    });
   }, [target.id, activeSitesKey, target.results]);
 
-  const handleInputChange = (site: string, field: 'major' | 'minor' | 'ofi' | 'obs', rawValue: string) => {
+  const handleInputChange = (site: string, field: keyof SiteAuditResult, rawValue: string) => {
     // Only accept positive integers, reject negative numbers, decimals, letters, scientific notation
     const sanitized = rawValue.replace(/\D/g, '');
     const num = sanitized === '' ? 0 : parseInt(sanitized, 10);
     setSiteResults((prev) => ({
       ...prev,
       [site]: {
-        ...(prev[site] || { major: 0, minor: 0, ofi: 0, obs: 0 }),
+        ...(prev[site] || { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0 }),
         [field]: num,
       },
     }));
@@ -66,22 +73,26 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
     let totalMinor = 0;
     let totalOfi = 0;
     let totalObs = 0;
+    let totalFindings = 0;
 
     for (const site of activeSites) {
-      const r = siteResults[site] || { major: 0, minor: 0, ofi: 0, obs: 0 };
+      const r = siteResults[site] || { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0 };
       totalMajor += r.major;
       totalMinor += r.minor;
       totalOfi += r.ofi;
       totalObs += r.obs;
+      totalFindings += r.findings;
     }
 
-    const totalFindings = totalMajor + totalMinor + totalOfi + totalObs;
+    // Grand total: sum of all column totals (Major + Minor + OFI + OBS + Finding(s))
+    const grandTotal = totalMajor + totalMinor + totalOfi + totalObs + totalFindings;
     return {
       totalMajor,
       totalMinor,
       totalOfi,
       totalObs,
       totalFindings,
+      grandTotal,
     };
   }, [activeSites, siteResults]);
 
@@ -89,13 +100,13 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
     // Strict Synchronization: Only save results for currently active sites, pruned cleanly!
     const cleanResults: Record<string, SiteAuditResult> = {};
     for (const site of activeSites) {
-      const r = siteResults[site] || { major: 0, minor: 0, ofi: 0, obs: 0 };
+      const r = siteResults[site] || { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0 };
       cleanResults[site] = {
-        major: r.major,
-        minor: r.minor,
-        ofi: r.ofi,
-        obs: r.obs,
-        findings: r.major + r.minor + r.ofi + r.obs,
+        major: Number(r.major) || 0,
+        minor: Number(r.minor) || 0,
+        ofi: Number(r.ofi) || 0,
+        obs: Number(r.obs) || 0,
+        findings: Number(r.findings) || 0,
       };
     }
     vm.saveResults(target.id, cleanResults);
@@ -175,15 +186,14 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
                   <th style={{ padding: '10px 8px', fontSize: '11.5px', fontWeight: 700, color: '#0d9488', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.04em', width: '90px' }}>
                     OBS
                   </th>
-                  <th style={{ padding: '10px 12px', fontSize: '11.5px', fontWeight: 700, color: '#15191e', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.04em', width: '105px' }}>
+                  <th style={{ padding: '10px 8px', fontSize: '11.5px', fontWeight: 700, color: '#15191e', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.04em', width: '95px' }}>
                     Finding(s)
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {activeSites.map((site, idx) => {
-                  const values = siteResults[site] || { major: 0, minor: 0, ofi: 0, obs: 0 };
-                  const siteFindings = values.major + values.minor + values.ofi + values.obs;
+                  const values = siteResults[site] || { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0 };
                   const siteColor = vm.siteColors[site] || '#6b7280';
 
                   return (
@@ -204,7 +214,7 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
                         </div>
                       </td>
 
-                      {/* Major input */}
+                      {/* Major editable number input */}
                       <td style={{ padding: '6px 8px', verticalAlign: 'middle' }}>
                         <input
                           type="text"
@@ -233,7 +243,7 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
                         />
                       </td>
 
-                      {/* Minor input */}
+                      {/* Minor editable number input */}
                       <td style={{ padding: '6px 8px', verticalAlign: 'middle' }}>
                         <input
                           type="text"
@@ -262,7 +272,7 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
                         />
                       </td>
 
-                      {/* OFI input */}
+                      {/* OFI editable number input */}
                       <td style={{ padding: '6px 8px', verticalAlign: 'middle' }}>
                         <input
                           type="text"
@@ -291,7 +301,7 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
                         />
                       </td>
 
-                      {/* OBS input */}
+                      {/* OBS editable number input */}
                       <td style={{ padding: '6px 8px', verticalAlign: 'middle' }}>
                         <input
                           type="text"
@@ -320,16 +330,33 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
                         />
                       </td>
 
-                      {/* Finding(s) Row Total */}
-                      <td style={{ padding: '6px 12px', verticalAlign: 'middle', textAlign: 'center' }}>
-                        <span style={{
-                          fontFamily: "'IBM Plex Mono', monospace",
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          color: siteFindings > 0 ? '#15191e' : '#8a9088',
-                        }}>
-                          {siteFindings}
-                        </span>
+                      {/* Finding(s) editable number input (manual entry) */}
+                      <td style={{ padding: '6px 8px', verticalAlign: 'middle' }}>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={values.findings === 0 ? '0' : String(values.findings)}
+                          onKeyDown={(e) => {
+                            if (['-', '+', 'e', 'E', '.', ','].includes(e.key)) e.preventDefault();
+                          }}
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) => handleInputChange(site, 'findings', e.target.value)}
+                          style={{
+                            width: '100%',
+                            height: '36px',
+                            textAlign: 'center',
+                            fontFamily: "'IBM Plex Mono', monospace",
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            borderRadius: '6px',
+                            border: '1px solid #dde0d9',
+                            background: '#fff',
+                            color: '#15191e',
+                            outline: 'none',
+                            boxSizing: 'border-box',
+                          }}
+                        />
                       </td>
                     </tr>
                   );
@@ -353,7 +380,7 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
                   <td style={{ textAlign: 'center', padding: '10px 8px', fontFamily: "'IBM Plex Mono', monospace", fontSize: '13px', color: '#0d9488' }}>
                     {totals.totalObs}
                   </td>
-                  <td style={{ textAlign: 'center', padding: '10px 12px', fontFamily: "'IBM Plex Mono', monospace", fontSize: '13.5px', color: '#15191e', fontWeight: 700 }}>
+                  <td style={{ textAlign: 'center', padding: '10px 8px', fontFamily: "'IBM Plex Mono', monospace", fontSize: '13px', color: '#15191e', fontWeight: 700 }}>
                     {totals.totalFindings}
                   </td>
                 </tr>
@@ -363,8 +390,8 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
                   <td colSpan={5} style={{ padding: '11px 14px', fontSize: '12px', color: '#1e3a8a', textAlign: 'right', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
                     Grand Total / Total Across Categories:
                   </td>
-                  <td style={{ textAlign: 'center', padding: '11px 12px', fontFamily: "'IBM Plex Mono', monospace", fontSize: '14px', color: '#2756d6', fontWeight: 800 }}>
-                    {totals.totalFindings}
+                  <td style={{ textAlign: 'center', padding: '11px 8px', fontFamily: "'IBM Plex Mono', monospace", fontSize: '14px', color: '#2756d6', fontWeight: 800 }}>
+                    {totals.grandTotal}
                   </td>
                 </tr>
               </tfoot>

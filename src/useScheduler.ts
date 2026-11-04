@@ -1608,11 +1608,44 @@ export function useScheduler() {
       }
     }
 
+    // replace every sibling assignment (same order + eng, i.e. the days that make up
+    // this appointment's span) with one entry per slot in the new date range, instead
+    // of leaving the old day-records in place and piling new ones on top of them.
+    const siblings = S.assignments
+      .filter((x) => x.eng === target.eng && x.order === target.order)
+      .sort((a, b) => (a.week - b.week) || (a.day - b.day));
+
+    const newSiteRaw = (d.sectionType === 'customer' ? d.site1 : d.site2) || '';
+    const newSites = Array.from(new Set(newSiteRaw.split(/[/,]/).map((s) => s.trim()).filter(Boolean)));
+    const existingResults = target.results || siblings.find((x) => x.results && Object.keys(x.results).length > 0)?.results || {};
+
+    // State Preservation Logic (Keyed by Site Name):
+    // - Adding a new Site: keep all previously entered numbers strictly intact, initialize new site with 0.
+    // - Removing a Site: only delete the key and data corresponding to the specific removed site.
+    // - All remaining sites retain their previously entered numbers without alteration.
+    const reconciledResults: Record<string, SiteAuditResult> = {};
+    for (const s of newSites) {
+      if (existingResults[s]) {
+        reconciledResults[s] = {
+          major: Number(existingResults[s].major) || 0,
+          minor: Number(existingResults[s].minor) || 0,
+          ofi: Number(existingResults[s].ofi) || 0,
+          obs: Number(existingResults[s].obs) || 0,
+          findings: Number(existingResults[s].findings) || 0,
+        };
+      } else {
+        reconciledResults[s] = { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0 };
+      }
+    }
+
     const fields = {
       sectionType: d.sectionType,
       site1: d.sectionType === 'customer' ? d.site1 : '',
       customer: d.sectionType === 'customer' ? d.customer : '',
       endCustomer: d.sectionType === 'customer' ? d.endCustomer : '',
+      targetPackage: d.sectionType === 'customer' ? (d.targetPackage || '') : '',
+      customerNames: d.sectionType === 'customer' ? (d.customerNames || '') : '',
+      auditCategory: d.sectionType === 'internal' ? (d.auditCategory || '') : '',
       auditor1: d.sectionType === 'customer' ? d.auditor1 : '',
       purpose: d.purpose || '',
       site2: d.sectionType === 'internal' ? d.site2 : '',
@@ -1620,13 +1653,8 @@ export function useScheduler() {
       auditor2: d.sectionType === 'internal' ? d.auditor2 : '',
       department1: d.sectionType === 'customer' ? d.department1 : '',
       department2: d.sectionType === 'internal' ? d.department2 : '',
+      results: reconciledResults,
     };
-    // replace every sibling assignment (same order + eng, i.e. the days that make up
-    // this appointment's span) with one entry per slot in the new date range, instead
-    // of leaving the old day-records in place and piling new ones on top of them.
-    const siblings = S.assignments
-      .filter((x) => x.eng === target.eng && x.order === target.order)
-      .sort((a, b) => (a.week - b.week) || (a.day - b.day));
     const minWeek = Math.min(...siblings.map((x) => x.week));
     const maxWeek = Math.max(...siblings.map((x) => x.week));
     const minDay = Math.min(...siblings.filter((x) => x.week === minWeek).map((x) => x.day));

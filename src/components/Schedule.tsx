@@ -278,7 +278,7 @@ function ApptCard({ chip }: { chip: any }) {
                   rMinor += Number(item.minor) || 0;
                   rOfi += Number(item.ofi) || 0;
                   rObs += Number(item.obs) || 0;
-                  rFindings += Number(item.findings) || ((Number(item.major) || 0) + (Number(item.minor) || 0) + (Number(item.ofi) || 0) + (Number(item.obs) || 0));
+                  rFindings += Number(item.findings) || 0;
                 }
               }
               if (rFindings > 0 || rMajor > 0 || rMinor > 0 || rOfi > 0 || rObs > 0) {
@@ -744,7 +744,7 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
                   rMinor += Number(item.minor) || 0;
                   rOfi += Number(item.ofi) || 0;
                   rObs += Number(item.obs) || 0;
-                  rFindings += Number(item.findings) || ((Number(item.major) || 0) + (Number(item.minor) || 0) + (Number(item.ofi) || 0) + (Number(item.obs) || 0));
+                  rFindings += Number(item.findings) || 0;
                 }
               }
               if (rFindings > 0 || rMajor > 0 || rMinor > 0 || rOfi > 0 || rObs > 0) {
