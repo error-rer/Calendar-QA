@@ -1,7 +1,6 @@
 interface Env {
   DB: D1Database;
   ASSETS: Fetcher;
-  GOOGLE_SHEETS_WEBHOOK_URL?: string;
 }
 
 function json(data: unknown, status = 200): Response {
@@ -94,12 +93,6 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       const targetPackageOptions: string[] = [];
       const customerNameOptions: string[] = [];
       const auditCategoryOptions: string[] = [];
-      let googleSheetsConfig = {
-        webhookUrl: env.GOOGLE_SHEETS_WEBHOOK_URL || '',
-        autoSync: true,
-        lastSynced: '',
-      };
-
       for (const row of (optionsRows.results as any[] || [])) {
         if (row.category === 'purpose') purposeOptions.push(row.value);
         else if (row.category === 'customer_department') customerDepartmentOptions.push(row.value);
@@ -119,13 +112,6 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
           customerNameOptions.push(row.value);
         } else if (row.category === 'audit_category') {
           auditCategoryOptions.push(row.value);
-        } else if (row.category === 'google_sheets_config') {
-          try {
-            const parsed = JSON.parse(row.value);
-            googleSheetsConfig = { ...googleSheetsConfig, ...parsed };
-          } catch {}
-        } else if (row.category === 'google_sheets_last_sync') {
-          googleSheetsConfig.lastSynced = row.value;
         }
       }
 
@@ -151,7 +137,6 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
         targetPackageOptions,
         customerNameOptions,
         auditCategoryOptions,
-        googleSheetsConfig,
       });
     }
 

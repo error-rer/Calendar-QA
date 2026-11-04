@@ -417,13 +417,7 @@ export interface ActivityLog {
 export type Page = 'schedule' | 'table' | 'admin' | 'profile' | 'summary' | 'history';
 export type View = 'person' | 'plant' | 'site' | 'timetable';
 export type TimeScale = 'week' | 'month' | 'year' | 'search';
-export interface GoogleSheetsConfig {
-  webhookUrl: string;
-  autoSync: boolean;
-  lastSynced?: string;
-}
-
-export type AdminTab = 'engineers' | 'options' | 'sheets';
+export type AdminTab = 'engineers' | 'options';
 
 export interface EngineerForm {
   name: string;
@@ -500,5 +494,4 @@ export interface State {
   comments: Record<string, Comment[]>;
   activity: Activity[];
   activityLogs: ActivityLog[];
-  googleSheetsConfig?: GoogleSheetsConfig;
 }

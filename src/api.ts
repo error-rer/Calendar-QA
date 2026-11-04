@@ -1,4 +1,4 @@
-import type { Activity, ActivityLog, Assignment, Comment, Engineer, GoogleSheetsConfig, Order, Plant } from './types';
+import type { Activity, ActivityLog, Assignment, Comment, Engineer, Order, Plant } from './types';
 
 const BASE = '/api';
 
@@ -22,7 +22,6 @@ export interface ApiState {
   targetPackageOptions?: string[];
   customerNameOptions?: string[];
   auditCategoryOptions?: string[];
-  googleSheetsConfig?: GoogleSheetsConfig;
 }
 
 async function req<T>(url: string, opts?: RequestInit): Promise<T> {
@@ -66,8 +65,4 @@ export const api = {
   deleteOption: (category: string, value: string) =>
     req('/options', { method: 'DELETE', body: JSON.stringify({ category, value }) }),
 
-  saveGoogleSheetsConfig: (data: GoogleSheetsConfig) =>
-    req<{ ok: boolean }>('/google-sheets/config', { method: 'POST', body: JSON.stringify(data) }),
-  syncGoogleSheets: (data: { action: 'create' | 'edit' | 'delete' | 'sync_all' | 'test'; rows?: any[][]; ids?: string[]; id?: string }) =>
-    req<{ ok: boolean; error?: string; timestamp?: string }>('/google-sheets/sync', { method: 'POST', body: JSON.stringify(data) }),
 };

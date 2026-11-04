@@ -8,7 +8,6 @@ import type {
   EditDraft,
   EngineerForm,
   EntityType,
-  GoogleSheetsConfig,
   Order,
   SiteAuditResult,
   State,
@@ -45,32 +44,6 @@ const formatAuditors = (auditorStr?: string) => {
   if (!str) return '';
   return str.split(',').map((s) => s.trim()).filter(Boolean).join(', ');
 };
-
-export function assignmentToSheetRow(
-  a: Assignment,
-  engineers?: { id: string; name: string }[]
-): [string, string, string, string, string, string, string, string, string, string] {
-  const base = new Date(2026, 5, 29 + a.week * 7);
-  base.setDate(base.getDate() + a.day);
-  const dd = String(base.getDate()).padStart(2, '0');
-  const mm = String(base.getMonth() + 1).padStart(2, '0');
-  const yyyy = base.getFullYear();
-  const dateStr = `${dd}/${mm}/${yyyy}`;
-
-  const isInternal = isInternalAssignment(a);
-  const auditType = isInternal ? 'Internal Audit' : 'Customer Audit';
-  const customer = isInternal ? '' : (a.customer || '');
-  const site = (isInternal ? (a.site2 || a.site1) : (a.site1 || a.site2)) || '';
-  const standard = (isInternal ? (a.department2 || a.department1) : (a.department1 || a.department2)) || '';
-  const purpose = (isInternal ? (a.area || a.purpose) : (a.purpose || '')) || '';
-  const targetPackage = a.targetPackage || '';
-  const customerNames = a.customerNames || '';
-  const fallbackEng = engineers?.find((e) => e.id === a.eng)?.name || '';
-  const auditor = (isInternal ? (a.auditor2 || a.auditor1) : (a.auditor1 || a.auditor2)) || fallbackEng || '';
-  const id = a.id;
-
-  return [dateStr, auditType, customer, site, standard, purpose, targetPackage, customerNames, auditor, id];
-}
 
 const parseDateToISO = (str?: string) => {
   if (!str) return '';
@@ -317,7 +290,6 @@ export function useScheduler() {
             customerNameOptions,
             auditCategoryOptions,
             removedOptions: s.removedOptions || [],
-            googleSheetsConfig: data.googleSheetsConfig || s.googleSheetsConfig || { webhookUrl: '', autoSync: true, lastSynced: '' },
           };
 
           try {
@@ -705,95 +677,11 @@ export function useScheduler() {
       .filter((a) => a.week === todayWeekOffset)
       .map((a) => ({ ...a, id: 'a' + ids.current.id++, week: off }));
     clones.forEach((c) => api.createAssignment(c).catch(() => {}));
-    triggerSheetSync({
-      action: 'create',
-      rows: clones.map((c) => assignmentToSheetRow(c, S.engineers)),
-    });
     setState((s) => ({ assignments: s.assignments.concat(clones) }));
     log('You', 'copied current week\'s plan', '#2756d6');
   };
 
-  // ---- google sheets sync ----
-  const triggerSheetSync = (payload: { action: 'create' | 'edit' | 'delete' | 'sync_all'; rows?: any[][]; ids?: string[]; id?: string }) => {
-    if (!S.googleSheetsConfig?.webhookUrl || S.googleSheetsConfig.autoSync === false) return;
-    api.syncGoogleSheets(payload)
-      .then((res) => {
-        if (res.timestamp) {
-          setState((s) => ({
-            googleSheetsConfig: {
-              ...(s.googleSheetsConfig || { webhookUrl: '', autoSync: true }),
-              lastSynced: res.timestamp,
-            },
-          }));
-        }
-      })
-      .catch((err) => {
-        console.warn('Google Sheets sync notice:', err);
-      });
-  };
 
-  const updateGoogleSheetsConfig = async (patch: Partial<GoogleSheetsConfig>) => {
-    const nextCfg: GoogleSheetsConfig = {
-      ...(S.googleSheetsConfig || { webhookUrl: '', autoSync: true, lastSynced: '' }),
-      ...patch,
-    };
-    setState({ googleSheetsConfig: nextCfg });
-    try {
-      localStorage.setItem('calendar_qa_google_sheets_config', JSON.stringify(nextCfg));
-    } catch {}
-    await api.saveGoogleSheetsConfig(nextCfg).catch(() => {});
-  };
-
-  const syncAllToGoogleSheets = async (): Promise<{ success: boolean; message?: string; count?: number }> => {
-    if (!S.googleSheetsConfig?.webhookUrl) {
-      return { success: false, message: 'Google Sheets Webhook URL is not configured. Please enter your Webhook URL in Manage > Google Sheets.' };
-    }
-    try {
-      const sorted = S.assignments.slice().sort((a, b) => {
-        if (a.week !== b.week) return a.week - b.week;
-        return a.day - b.day;
-      });
-      const rows = sorted.map((a) => assignmentToSheetRow(a, S.engineers));
-      const res = await api.syncGoogleSheets({
-        action: 'sync_all',
-        rows,
-      });
-      const nowIso = res.timestamp || new Date().toISOString();
-      setState((s) => {
-        const nextCfg = {
-          ...(s.googleSheetsConfig || { webhookUrl: '', autoSync: true }),
-          lastSynced: nowIso,
-        };
-        try {
-          localStorage.setItem('calendar_qa_google_sheets_config', JSON.stringify(nextCfg));
-        } catch {}
-        return { googleSheetsConfig: nextCfg };
-      });
-      log('You', `synced ${rows.length} appointment records to Google Sheets`, '#1f9d57');
-      logActivity('OTHER', 'APPOINTMENT', `Synced ${rows.length} appointment records to Google Sheets`);
-      return { success: true, count: rows.length };
-    } catch (err: any) {
-      return { success: false, message: err?.message || 'Failed to sync to Google Sheets' };
-    }
-  };
-
-  const testGoogleSheetsConnection = async (testUrl?: string): Promise<{ success: boolean; message?: string }> => {
-    const url = testUrl || S.googleSheetsConfig?.webhookUrl;
-    if (!url) {
-      return { success: false, message: 'Please enter a Webhook URL first.' };
-    }
-    try {
-      const res = await api.syncGoogleSheets({
-        action: 'test',
-      });
-      if (res.ok) {
-        return { success: true, message: 'Connection verified! Your Google Sheet is successfully connected.' };
-      }
-      return { success: false, message: res.error || 'Webhook responded with an error.' };
-    } catch (err: any) {
-      return { success: false, message: err?.message || 'Failed to connect. Make sure your Web App is deployed with "Anyone" access.' };
-    }
-  };
 
   // ---- schedule mutations ----
   const select = (aid: string) => setState({ selected: aid, draft: '' });
@@ -803,10 +691,6 @@ export function useScheduler() {
     const now = Date.now();
     const newA: Assignment = { id, eng: engId, order: orderId, day, week, createdAt: now };
     api.createAssignment(newA).catch(() => {});
-    triggerSheetSync({
-      action: 'create',
-      rows: [assignmentToSheetRow(newA, S.engineers)],
-    });
     setState((s) => ({
       assignments: s.assignments.concat([{ id, eng: engId, order: orderId, day, week: s.weekOffset, createdAt: now }]),
       selected: id,
@@ -820,13 +704,6 @@ export function useScheduler() {
   const moveAssign = (aid: string, engId: string, day: number) => {
     const a = S.assignments.find((x) => x.id === aid);
     api.updateAssignment(aid, { eng: engId, day, week: S.weekOffset }).catch(() => {});
-    if (a) {
-      triggerSheetSync({
-        action: 'edit',
-        ids: [aid],
-        rows: [assignmentToSheetRow({ ...a, eng: engId, day, week: S.weekOffset }, S.engineers)],
-      });
-    }
     setState((s) => ({
       assignments: s.assignments.map((x) => (x.id === aid ? { ...x, eng: engId, day, week: s.weekOffset } : x)),
       selected: aid,
@@ -871,10 +748,6 @@ export function useScheduler() {
 
     // Delete assignments from database via API
     siblingIds.forEach((id) => api.deleteAssignment(id).catch(() => {}));
-    triggerSheetSync({
-      action: 'delete',
-      ids: siblingIds,
-    });
 
     const deletedCustomers = Array.from(new Set(siblings.map((x) => (x.customer || '').trim()).filter(Boolean)));
     const deletedAuditCategories = Array.from(new Set(siblings.map((x) => (x.auditCategory || '').trim()).filter(Boolean)));
@@ -1195,10 +1068,6 @@ export function useScheduler() {
     const id = 'a' + ids.current.id++;
     const clone = { ...a, id, day: nd, createdAt: Date.now() };
     api.createAssignment(clone).catch(() => {});
-    triggerSheetSync({
-      action: 'create',
-      rows: [assignmentToSheetRow(clone, S.engineers)],
-    });
     setState((s) => ({ assignments: s.assignments.concat([clone]), selected: id }));
     log('You', `duplicated ${apptTitle(a)} → ${dayLabels[nd]}`, '#2756d6');
     const isCust = clone.sectionType !== 'internal';
@@ -1384,10 +1253,6 @@ export function useScheduler() {
     }
     newAuditorNames.forEach((n) => { api.saveOption('auditor', n).catch(() => {}); });
     newAssignments.forEach((a) => api.createAssignment(a).catch(() => {}));
-    triggerSheetSync({
-      action: 'create',
-      rows: newAssignments.map((a) => assignmentToSheetRow(a, existingEng ? S.engineers : S.engineers.concat([newEngineer]))),
-    });
 
     setState((s) => {
       const cleanCust = newCustomer.trim();
@@ -1860,11 +1725,6 @@ export function useScheduler() {
       else api.createAssignment(a).catch(() => {});
     });
     droppedIds.forEach((id: string) => api.deleteAssignment(id).catch(() => {}));
-    triggerSheetSync({
-      action: 'edit',
-      ids: siblings.map((x) => x.id),
-      rows: updated.map((a) => assignmentToSheetRow(a, updatedEngineers)),
-    });
 
     
     if (newCustomer) api.saveOption('customer_name', newCustomer).catch(() => {});
@@ -4085,15 +3945,10 @@ export function useScheduler() {
     editOpen: S.editOpen, editDraft: S.editDraft, setEditDraft, closeEdit, submitEdit, openEdit: (aid: string) => openEdit(aid), removeAssign: (aid: string) => removeAssign(aid),
     resultsModalOpen: S.resultsModalOpen, resultsTargetId: S.resultsTargetId, openResultsModal, closeResultsModal, saveResults,
     adminStats,
-    tabEngineers: S.adminTab === 'engineers', tabOptions: S.adminTab === 'options', tabSheets: S.adminTab === 'sheets',
-    setTabEng: () => setAdminTab('engineers'), setTabOptions: () => setAdminTab('options'), setTabSheets: () => setAdminTab('sheets'),
+    tabEngineers: S.adminTab === 'engineers', tabOptions: S.adminTab === 'options',
+    setTabEng: () => setAdminTab('engineers'), setTabOptions: () => setAdminTab('options'),
     tabEngStyle: S.adminTab === 'engineers' ? tabOn : tabOff,
     tabOptionsStyle: S.adminTab === 'options' ? tabOn : tabOff,
-    tabSheetsStyle: S.adminTab === 'sheets' ? tabOn : tabOff,
-    googleSheetsConfig: S.googleSheetsConfig || { webhookUrl: '', autoSync: true, lastSynced: '' },
-    updateGoogleSheetsConfig,
-    syncAllToGoogleSheets,
-    testGoogleSheetsConnection,
     adminEngineers, engCount: adminEngineers.length,
     adminFilterSite: S.adminFilterSite, adminFilterDept: S.adminFilterDept, adminDeptOptions,
     toggleAdminFilterSite, toggleAdminFilterDept,
