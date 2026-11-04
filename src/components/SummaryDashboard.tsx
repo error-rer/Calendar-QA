@@ -260,9 +260,9 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
 
       // Site Header Row
       rows.push([
-        `${site} - Total Findings`,
-        ...matrixData.siteMonthlyTotal[site],
-        matrixData.siteFullYearTotals[site].total,
+        `${site} Findings`,
+        ...Array(12).fill(''),
+        '',
       ]);
 
       // Category Sub-rows
@@ -573,25 +573,15 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
                           {site}
                         </span>
                         <span style={css('font-weight:600;color:#15191e;font-size:12.5px')}>
-                          Total Findings
+                          Findings
                         </span>
                       </div>
 
-                      {MONTHS.map((_, mIdx) => {
-                        const count = matrixData.siteMonthlyTotal[site][mIdx];
-                        return (
-                          <div
-                            key={mIdx}
-                            style={css(`text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;${count > 0 ? 'color:#15191e' : 'color:#9ca3af'}`)}
-                          >
-                            {count}
-                          </div>
-                        );
-                      })}
+                      {MONTHS.map((_, mIdx) => (
+                        <div key={mIdx} />
+                      ))}
 
-                      <div style={css(`text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:800;${siteTotal > 0 ? 'color:#2756d6' : 'color:#9ca3af'}`)}>
-                        {siteTotal}
-                      </div>
+                      <div />
                     </div>
 
                     {/* Detailed Sub-Rows when Expanded */}
