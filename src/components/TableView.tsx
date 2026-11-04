@@ -458,14 +458,6 @@ export function TableView({ vm }: { vm: VM }) {
             </svg>
             Export CSV
           </HButton>
-
-          <HButton
-            onClick={vm.openCreate}
-            style={css("background:#15191e;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;display:flex;align-items:center;gap:6px")}
-            hover={{ background: '#23282e' }}
-          >
-            <span style={css('font-size:14px;line-height:1')}>＋</span> New appointment
-          </HButton>
         </div>
       </div>
 
