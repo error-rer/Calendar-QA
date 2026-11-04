@@ -246,7 +246,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
     const headers = ['', ...MONTHS, 'Full Year Total'];
     const rows: (string | number)[][] = [];
 
-    rows.push([`UTAC - Audit Findings by Site and Month (Year ${vm.summaryYear})`]);
+    rows.push([`UTAC - Audit Findings by Site (Year ${vm.summaryYear})`]);
     rows.push([]);
 
     const headerRowIndex = rows.length;
@@ -486,13 +486,13 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
           </div>
         </div>
 
-        {/* Unified Annual Audit Findings by Site & Month Matrix */}
+        {/* Unified Annual Audit Findings by Site Matrix */}
         <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.02)')}>
           {/* Card Header & Controls */}
           <div style={css('display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px')}>
             <div>
               <div style={css('font-size:16px;font-weight:700;color:#15191e;letter-spacing:-.2px')}>
-                Audit Findings by Site and Month
+                Audit Findings by Site
               </div>
               <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8a9088;margin-top:2px")}>
                 5 Sites (UTL1, UTL2A, UTL2B, UTL3A, UTL3T) · 12 Months · Year {vm.summaryYear}
