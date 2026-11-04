@@ -252,6 +252,9 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
     const seenVisits = new Set<string>();
 
     for (const a of vm.assignments || []) {
+      // Strictly only evaluate Customer Audit (CS) appointments
+      if (isInternalAssignment(a) || a.sectionType === 'internal') continue;
+
       const d = new Date(2026, 5, 29 + a.week * 7 + a.day);
       if (d.getFullYear() !== vm.summaryYear) continue;
 
@@ -308,7 +311,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
 
     const rows: (string | number)[][] = [];
 
-    rows.push([`UTAC - Audit Visits by Site (Year ${vm.summaryYear})`]);
+    rows.push([`UTAC - Customer Audit Visits by Site (Year ${vm.summaryYear})`]);
     rows.push([]);
 
     const headers = ['Site', ...MONTHS, 'Full Year Total'];
@@ -599,7 +602,7 @@ const handleExportExcel = async () => {
     const workbook = XLSX.utils.book_new();
     // Generate Visits Worksheet
     const vRows: (string | number)[][] = [];
-    vRows.push([`UTAC - Audit Visits by Site (Year ${vm.summaryYear})`]);
+    vRows.push([`UTAC - Customer Audit Visits by Site (Year ${vm.summaryYear})`]);
     vRows.push([]);
     const vHeaders = ['Site', ...MONTHS, 'Full Year Total'];
     vRows.push(vHeaders);
@@ -681,7 +684,7 @@ const handleExportExcel = async () => {
                 Audit Visits by Site
               </div>
               <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8a9088;margin-top:2px")}>
-                5 Sites (UTL1, UTL2A, UTL2B, UTL3A, UTL3T) · 12 Months · Year {vm.summaryYear}
+                Customer Audits (CS) · 5 Sites (UTL1, UTL2A, UTL2B, UTL3A, UTL3T) · 12 Months · Year {vm.summaryYear}
               </div>
             </div>
 
