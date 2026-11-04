@@ -28,6 +28,14 @@ export interface Order {
   purpose: string;
 }
 
+export interface SiteAuditResult {
+  major: number;
+  minor: number;
+  ofi: number;
+  obs: number;
+  findings: number;
+}
+
 export interface Assignment {
   id: string;
   eng: string;
@@ -55,6 +63,7 @@ export interface Assignment {
   utl1?: number;
   utl2?: number;
   utl3?: number;
+  results?: Record<string, SiteAuditResult>;
   createdBy?: string;
   createdAt?: number;
 }
@@ -455,6 +464,8 @@ export interface State {
   createDraft: CreateDraft;
   editOpen: boolean;
   editDraft: EditDraft;
+  resultsModalOpen: boolean;
+  resultsTargetId: string | null;
   engFormOpen: boolean;
   engEditingId: string | null;
   engForm: EngineerForm;

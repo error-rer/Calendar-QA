@@ -10,6 +10,7 @@ import type {
   EntityType,
   GoogleSheetsConfig,
   Order,
+  SiteAuditResult,
   State,
   SubDepartment,
 } from './types';
@@ -1508,6 +1509,48 @@ export function useScheduler() {
     });
   };
   const closeEdit = () => setState({ editOpen: false });
+
+  const openResultsModal = (aid: string) => {
+    setState({ resultsModalOpen: true, resultsTargetId: aid });
+  };
+  const closeResultsModal = () => {
+    setState({ resultsModalOpen: false, resultsTargetId: null });
+  };
+  const saveResults = (aid: string, newResults: Record<string, SiteAuditResult>) => {
+    const a = S.assignments.find((x) => x.id === aid);
+    if (!a) return;
+    const siblings = S.assignments.filter((x) => (x.eng === a.eng && x.order === a.order) || x.id === aid);
+    const siblingIds = new Set(siblings.map((x) => x.id));
+
+    setState((s) => ({
+      assignments: s.assignments.map((item) =>
+        siblingIds.has(item.id) ? { ...item, results: newResults } : item
+      ),
+      resultsModalOpen: false,
+      resultsTargetId: null,
+    }));
+
+    siblings.forEach((sib) => {
+      api.updateAssignment(sib.id, { results: newResults }).catch(() => {});
+    });
+
+    const dateFormatted = getAssignmentDateFormatted(a, S.assignments);
+    const isCust = a.sectionType !== 'internal';
+    const ord = orderById(a.order);
+    const apptRef = formatApptLogRef({
+      isCustomer: isCust,
+      customer: a.customer || ord?.customer,
+      site: a.site1 || a.site2 || ord?.plant,
+      standard: isCust ? (a.department1 || a.department2) : (a.department2 || a.department1),
+      area: a.area,
+      dateStr: dateFormatted,
+    });
+    logActivity('UPDATE', 'APPOINTMENT', `Updated Audit Results for appointment "${apptRef}"`, {
+      targetId: aid,
+      apptName: apptRef,
+      results: newResults,
+    });
+  };
   const setEditDraft = (patch: Partial<EditDraft>) =>
     setState((s) => ({ editDraft: { ...s.editDraft, ...patch } }));
   const submitEdit = () => {
@@ -2764,6 +2807,7 @@ export function useScheduler() {
       targetPackage: a.targetPackage || '',
       customerNames: a.customerNames || '',
       auditCategory: a.auditCategory || '',
+      results: a.results || {},
       createdAt: a.createdAt,
       major: a.major,
       minor: a.minor,
@@ -2783,7 +2827,7 @@ export function useScheduler() {
     type SearchGroup = {
       dateLabel: string;
       dateISO: string;
-      items: (ReturnType<typeof apptChipFields> & { weekOffset: number; day: number; onView: () => void; onEdit: () => void; onDelete: () => void })[];
+      items: (ReturnType<typeof apptChipFields> & { weekOffset: number; day: number; onView: () => void; onResults: () => void; onEdit: () => void; onDelete: () => void })[];
     };
     const groups: SearchGroup[] = [];
     const grouped: Record<string, SearchGroup> = {};
@@ -2843,6 +2887,7 @@ export function useScheduler() {
         ...apptChipFields(a),
         weekOffset: a.week, day: a.day,
         onView: () => select(a.id),
+        onResults: () => openResultsModal(a.id),
         onEdit: () => openEdit(a.id),
         onDelete: () => removeAssign(a.id),
       });
@@ -3742,10 +3787,12 @@ export function useScheduler() {
     if (!e) return null;
     return {
       ...apptChipFields(a),
+      onResults: () => openResultsModal(a.id),
       onEdit: () => { closeDayDialog(); openEdit(a.id); },
       onDelete: () => removeAssign(a.id),
     };
   }).filter(Boolean) as (ReturnType<typeof apptChipFields> & {
+    onResults: () => void;
     onEdit: () => void;
     onDelete: () => void;
   })[];
@@ -3935,6 +3982,7 @@ export function useScheduler() {
     dayDialogOpen, dayDialogDate, dayDialogDateISO, dayDialogChips, dayDialogInfo, closeDayDialog,
     openCreate, openCreateWithDate, closeCreate, createOpen: S.createOpen, create, stop: (e: React.MouseEvent) => e.stopPropagation(),
     editOpen: S.editOpen, editDraft: S.editDraft, setEditDraft, closeEdit, submitEdit, openEdit: (aid: string) => openEdit(aid), removeAssign: (aid: string) => removeAssign(aid),
+    resultsModalOpen: S.resultsModalOpen, resultsTargetId: S.resultsTargetId, openResultsModal, closeResultsModal, saveResults,
     adminStats,
     tabEngineers: S.adminTab === 'engineers', tabOptions: S.adminTab === 'options', tabSheets: S.adminTab === 'sheets',
     setTabEng: () => setAdminTab('engineers'), setTabOptions: () => setAdminTab('options'), setTabSheets: () => setAdminTab('sheets'),

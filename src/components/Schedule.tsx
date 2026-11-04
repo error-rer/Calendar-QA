@@ -122,6 +122,16 @@ function EyeOffIcon({ size = 15, color = '#5c625c' }: { size?: number; color?: s
   );
 }
 
+function ClipboardCheckIcon({ size = 15, color = '#5c625c' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <path d="m9 14 2 2 4-4" />
+    </svg>
+  );
+}
+
 function EyeOnIcon({ size = 15, color = '#2756d6' }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -177,6 +187,14 @@ function ApptCard({ chip }: { chip: any }) {
             ) : null}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); chip.onResults?.(); }}
+              title="Audit Results"
+              style={css('width:30px;height:30px;border:1px solid ' + (chip.results && Object.keys(chip.results).length > 0 ? '#b8cbf7' : '#dde0d9') + ';background:' + (chip.results && Object.keys(chip.results).length > 0 ? '#f0f4fe' : '#f4f6f1') + ';border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')}
+            >
+              <ClipboardCheckIcon size={15} color={chip.results && Object.keys(chip.results).length > 0 ? '#2756d6' : '#5c625c'} />
+            </button>
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); toggleExpand(); }}
@@ -248,17 +266,48 @@ function ApptCard({ chip }: { chip: any }) {
             )}
           </div>
 
-          {(chip.major || chip.minor || chip.ofi || chip.request || chip.utl1 || chip.utl2 || chip.utl3) ? (
-            <div style={css('display:flex;gap:8px;flex-wrap:wrap;margin-top:2px')}>
-              {!!chip.major && <span style={css('font-size:10px;color:#b32f2f;font-weight:600')}>Major: {chip.major}</span>}
-              {!!chip.minor && <span style={css('font-size:10px;color:#c2620c;font-weight:600')}>Minor: {chip.minor}</span>}
-              {!!chip.ofi && <span style={css('font-size:10px;color:#5b7fd6;font-weight:600')}>OFI: {chip.ofi}</span>}
-              {!!chip.request && <span style={css('font-size:10px;color:#1f8a5b;font-weight:600')}>Request: {chip.request}</span>}
-              {!!chip.utl1 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL1: {chip.utl1}</span>}
-              {!!chip.utl2 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL2: {chip.utl2}</span>}
-              {!!chip.utl3 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL3: {chip.utl3}</span>}
-            </div>
-          ) : null}
+          {(() => {
+            const resObj = chip.results || {};
+            const resSites = Object.keys(resObj);
+            if (resSites.length > 0) {
+              let rMajor = 0, rMinor = 0, rOfi = 0, rObs = 0, rFindings = 0;
+              for (const s of resSites) {
+                const item = resObj[s];
+                if (item) {
+                  rMajor += Number(item.major) || 0;
+                  rMinor += Number(item.minor) || 0;
+                  rOfi += Number(item.ofi) || 0;
+                  rObs += Number(item.obs) || 0;
+                  rFindings += Number(item.findings) || ((Number(item.major) || 0) + (Number(item.minor) || 0) + (Number(item.ofi) || 0) + (Number(item.obs) || 0));
+                }
+              }
+              if (rFindings > 0 || rMajor > 0 || rMinor > 0 || rOfi > 0 || rObs > 0) {
+                return (
+                  <div style={css('display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;align-items:center;background:#f8faf6;padding:5px 8px;border-radius:6px;border:1px solid #eef1ea')}>
+                    <span style={css('font-size:10.5px;color:#15191e;font-weight:700')}>Results: {rFindings} Findings</span>
+                    {!!rMajor && <span style={css('font-size:10px;color:#b32f2f;font-weight:600')}>Major: {rMajor}</span>}
+                    {!!rMinor && <span style={css('font-size:10px;color:#c2620c;font-weight:600')}>Minor: {rMinor}</span>}
+                    {!!rOfi && <span style={css('font-size:10px;color:#2563eb;font-weight:600')}>OFI: {rOfi}</span>}
+                    {!!rObs && <span style={css('font-size:10px;color:#0d9488;font-weight:600')}>OBS: {rObs}</span>}
+                  </div>
+                );
+              }
+            }
+            if (chip.major || chip.minor || chip.ofi || chip.request || chip.utl1 || chip.utl2 || chip.utl3) {
+              return (
+                <div style={css('display:flex;gap:8px;flex-wrap:wrap;margin-top:2px')}>
+                  {!!chip.major && <span style={css('font-size:10px;color:#b32f2f;font-weight:600')}>Major: {chip.major}</span>}
+                  {!!chip.minor && <span style={css('font-size:10px;color:#c2620c;font-weight:600')}>Minor: {chip.minor}</span>}
+                  {!!chip.ofi && <span style={css('font-size:10px;color:#5b7fd6;font-weight:600')}>OFI: {chip.ofi}</span>}
+                  {!!chip.request && <span style={css('font-size:10px;color:#1f8a5b;font-weight:600')}>Request: {chip.request}</span>}
+                  {!!chip.utl1 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL1: {chip.utl1}</span>}
+                  {!!chip.utl2 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL2: {chip.utl2}</span>}
+                  {!!chip.utl3 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL3: {chip.utl3}</span>}
+                </div>
+              );
+            }
+            return null;
+          })()}
 
           <EmbeddedNotes notes={chip.notes || []} onAddNote={chip.onAddNote} />
         </div>
@@ -610,6 +659,14 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
             <button
               type="button"
+              onClick={(e) => { e.stopPropagation(); chip.onResults?.(); }}
+              title="Audit Results"
+              style={css('width:30px;height:30px;border:1px solid ' + (chip.results && Object.keys(chip.results).length > 0 ? '#b8cbf7' : '#dde0d9') + ';background:' + (chip.results && Object.keys(chip.results).length > 0 ? '#f0f4fe' : '#f4f6f1') + ';border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')}
+            >
+              <ClipboardCheckIcon size={15} color={chip.results && Object.keys(chip.results).length > 0 ? '#2756d6' : '#5c625c'} />
+            </button>
+            <button
+              type="button"
               onClick={(e) => { e.stopPropagation(); toggleExpand(); }}
               title={isExpanded ? 'Hide embedded details' : 'Show embedded details'}
               style={css('width:30px;height:30px;border:1px solid ' + (isExpanded ? '#9bb0e8' : '#dde0d9') + ';background:' + (isExpanded ? '#eef2fd' : '#f4f6f1') + ';border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')}
@@ -675,17 +732,48 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
             )}
           </div>
 
-          {(chip.major || chip.minor || chip.ofi || chip.request || chip.utl1 || chip.utl2 || chip.utl3) ? (
-            <div style={css('display:flex;gap:8px;flex-wrap:wrap;margin-top:2px')}>
-              {!!chip.major && <span style={css('font-size:10px;color:#b32f2f;font-weight:600')}>Major: {chip.major}</span>}
-              {!!chip.minor && <span style={css('font-size:10px;color:#c2620c;font-weight:600')}>Minor: {chip.minor}</span>}
-              {!!chip.ofi && <span style={css('font-size:10px;color:#5b7fd6;font-weight:600')}>OFI: {chip.ofi}</span>}
-              {!!chip.request && <span style={css('font-size:10px;color:#1f8a5b;font-weight:600')}>Request: {chip.request}</span>}
-              {!!chip.utl1 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL1: {chip.utl1}</span>}
-              {!!chip.utl2 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL2: {chip.utl2}</span>}
-              {!!chip.utl3 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL3: {chip.utl3}</span>}
-            </div>
-          ) : null}
+          {(() => {
+            const resObj = chip.results || {};
+            const resSites = Object.keys(resObj);
+            if (resSites.length > 0) {
+              let rMajor = 0, rMinor = 0, rOfi = 0, rObs = 0, rFindings = 0;
+              for (const s of resSites) {
+                const item = resObj[s];
+                if (item) {
+                  rMajor += Number(item.major) || 0;
+                  rMinor += Number(item.minor) || 0;
+                  rOfi += Number(item.ofi) || 0;
+                  rObs += Number(item.obs) || 0;
+                  rFindings += Number(item.findings) || ((Number(item.major) || 0) + (Number(item.minor) || 0) + (Number(item.ofi) || 0) + (Number(item.obs) || 0));
+                }
+              }
+              if (rFindings > 0 || rMajor > 0 || rMinor > 0 || rOfi > 0 || rObs > 0) {
+                return (
+                  <div style={css('display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;align-items:center;background:#f8faf6;padding:5px 8px;border-radius:6px;border:1px solid #eef1ea')}>
+                    <span style={css('font-size:10.5px;color:#15191e;font-weight:700')}>Results: {rFindings} Findings</span>
+                    {!!rMajor && <span style={css('font-size:10px;color:#b32f2f;font-weight:600')}>Major: {rMajor}</span>}
+                    {!!rMinor && <span style={css('font-size:10px;color:#c2620c;font-weight:600')}>Minor: {rMinor}</span>}
+                    {!!rOfi && <span style={css('font-size:10px;color:#2563eb;font-weight:600')}>OFI: {rOfi}</span>}
+                    {!!rObs && <span style={css('font-size:10px;color:#0d9488;font-weight:600')}>OBS: {rObs}</span>}
+                  </div>
+                );
+              }
+            }
+            if (chip.major || chip.minor || chip.ofi || chip.request || chip.utl1 || chip.utl2 || chip.utl3) {
+              return (
+                <div style={css('display:flex;gap:8px;flex-wrap:wrap;margin-top:2px')}>
+                  {!!chip.major && <span style={css('font-size:10px;color:#b32f2f;font-weight:600')}>Major: {chip.major}</span>}
+                  {!!chip.minor && <span style={css('font-size:10px;color:#c2620c;font-weight:600')}>Minor: {chip.minor}</span>}
+                  {!!chip.ofi && <span style={css('font-size:10px;color:#5b7fd6;font-weight:600')}>OFI: {chip.ofi}</span>}
+                  {!!chip.request && <span style={css('font-size:10px;color:#1f8a5b;font-weight:600')}>Request: {chip.request}</span>}
+                  {!!chip.utl1 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL1: {chip.utl1}</span>}
+                  {!!chip.utl2 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL2: {chip.utl2}</span>}
+                  {!!chip.utl3 && <span style={css('font-size:10px;color:#8a5bbf;font-weight:600')}>UTL3: {chip.utl3}</span>}
+                </div>
+              );
+            }
+            return null;
+          })()}
 
           <EmbeddedNotes notes={chip.notes || []} onAddNote={chip.onAddNote} />
         </div>

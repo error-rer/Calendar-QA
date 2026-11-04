@@ -16,12 +16,19 @@ function engineerOut(r: any) {
 }
 
 function assignmentOut(r: any) {
+  let parsedResults = {};
+  if (r.results) {
+    try {
+      parsedResults = typeof r.results === 'string' ? JSON.parse(r.results) : r.results;
+    } catch {}
+  }
   return {
     id: r.id, eng: r.eng, order: r.order_id, day: r.day, week: r.week,
     site1: r.site1, customer: r.customer, endCustomer: r.end_customer, auditor1: r.auditor1, purpose: r.purpose,
     targetPackage: r.target_package || '', customerNames: r.customer_names || '', auditCategory: r.audit_category || '',
     site2: r.site2, area: r.area, auditor2: r.auditor2, department1: r.department1, department2: r.department2,
     major: r.major, minor: r.minor, ofi: r.ofi, request: r.request, utl1: r.utl1, utl2: r.utl2, utl3: r.utl3,
+    results: parsedResults,
   };
 }
 
@@ -36,6 +43,9 @@ async function ensureAssignmentColumns(DB: D1Database) {
   } catch {}
   try {
     await DB.prepare('ALTER TABLE assignments ADD COLUMN audit_category TEXT NOT NULL DEFAULT ""').run();
+  } catch {}
+  try {
+    await DB.prepare('ALTER TABLE assignments ADD COLUMN results TEXT NOT NULL DEFAULT "{}"').run();
   } catch {}
   migrationChecked = true;
 }
@@ -239,13 +249,14 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       await ensureAssignmentColumns(DB);
       const d = body || {};
       await DB.prepare(
-        `INSERT INTO assignments (id, eng, order_id, day, week, site1, customer, end_customer, auditor1, purpose, target_package, customer_names, audit_category, site2, area, auditor2, department1, department2)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO assignments (id, eng, order_id, day, week, site1, customer, end_customer, auditor1, purpose, target_package, customer_names, audit_category, site2, area, auditor2, department1, department2, results)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
         d.id, d.eng || '', d.order || '', d.day ?? 0, d.week ?? 0,
         d.site1 || '', d.customer || '', d.endCustomer || '', d.auditor1 || '', d.purpose || '',
         d.targetPackage || '', d.customerNames || '', d.auditCategory || '',
         d.site2 || '', d.area || '', d.auditor2 || '', d.department1 || '', d.department2 || '',
+        typeof d.results === 'string' ? d.results : JSON.stringify(d.results || {}),
       ).run();
       return json({ id: d.id }, 201);
     }
@@ -260,12 +271,13 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       await ensureAssignmentColumns(DB);
       await DB.prepare(
         `UPDATE assignments SET eng = ?, order_id = ?, day = ?, week = ?, site1 = ?, customer = ?, end_customer = ?, auditor1 = ?, purpose = ?,
-           target_package = ?, customer_names = ?, audit_category = ?, site2 = ?, area = ?, auditor2 = ?, department1 = ?, department2 = ? WHERE id = ?`,
+           target_package = ?, customer_names = ?, audit_category = ?, site2 = ?, area = ?, auditor2 = ?, department1 = ?, department2 = ?, results = ? WHERE id = ?`,
       ).bind(
         d.eng ?? existing.eng, d.order ?? existing.order_id, d.day ?? existing.day, d.week ?? existing.week,
         d.site1 ?? existing.site1, d.customer ?? existing.customer, d.endCustomer ?? existing.end_customer, d.auditor1 ?? existing.auditor1, d.purpose ?? existing.purpose,
         d.targetPackage ?? existing.target_package ?? '', d.customerNames ?? existing.customer_names ?? '', d.auditCategory ?? existing.audit_category ?? '',
         d.site2 ?? existing.site2, d.area ?? existing.area, d.auditor2 ?? existing.auditor2, d.department1 ?? existing.department1, d.department2 ?? existing.department2,
+        d.results !== undefined ? (typeof d.results === 'string' ? d.results : JSON.stringify(d.results)) : (existing.results ?? '{}'),
         assignMatch[1],
       ).run();
       return json({ ok: true });
