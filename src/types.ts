@@ -1,4 +1,4 @@
-export type Department = 'U1' | 'U2' | 'U3';
+export type Department = 'UTL1' | 'UTL2' | 'UTL3' | 'U1' | 'U2' | 'U3';
 export type SubDepartment = 'QMS' | 'EHS' | 'ESD' | 'ESD Audit' | 'QS Audit';
 
 export interface Plant {
@@ -34,6 +34,74 @@ export interface SiteAuditResult {
   ofi: number;
   obs: number;
   findings: number;
+}
+
+
+/** Standardize site codes: prefix legacy U1..U3T with UTL */
+export function normalizeSite(site: string): string {
+  if (!site) return '';
+  const s = site.trim();
+  const legacyMatch = s.match(/^u(1|2|3|2a|2b|3a|3t)$/i);
+  if (legacyMatch) {
+    return 'UTL' + legacyMatch[1].toUpperCase();
+  }
+  const utlMatch = s.match(/^utl(1|2|3|2a|2b|3a|3t)$/i);
+  if (utlMatch) {
+    return 'UTL' + utlMatch[1].toUpperCase();
+  }
+  return s;
+}
+
+/** Standardize slash/comma-separated multi-site string */
+export function normalizeSites(raw: string): string {
+  if (!raw) return '';
+  if (raw.includes('/') || raw.includes(',')) {
+    return raw
+      .split(/[/,]/)
+      .map((s) => normalizeSite(s.trim()))
+      .filter(Boolean)
+      .join('/');
+  }
+  return normalizeSite(raw);
+}
+
+/** Standardize audit results record keys to UTL site codes */
+export function normalizeAuditResults(results?: Record<string, SiteAuditResult>): Record<string, SiteAuditResult> {
+  if (!results || typeof results !== 'object') return {};
+  const out: Record<string, SiteAuditResult> = {};
+  for (const [key, val] of Object.entries(results)) {
+    if (!val) continue;
+    const normKey = normalizeSite(key);
+    if (!out[normKey]) {
+      out[normKey] = {
+        major: Number(val.major) || 0,
+        minor: Number(val.minor) || 0,
+        ofi: Number(val.ofi) || 0,
+        obs: Number(val.obs) || 0,
+        findings: Number(val.findings) || 0,
+      };
+    } else {
+      out[normKey] = {
+        major: out[normKey].major + (Number(val.major) || 0),
+        minor: out[normKey].minor + (Number(val.minor) || 0),
+        ofi: out[normKey].ofi + (Number(val.ofi) || 0),
+        obs: out[normKey].obs + (Number(val.obs) || 0),
+        findings: out[normKey].findings + (Number(val.findings) || 0),
+      };
+    }
+  }
+  return out;
+}
+
+/** Standardize an assignment's sites and audit results */
+export function normalizeAssignment(a: Assignment): Assignment {
+  if (!a) return a;
+  return {
+    ...a,
+    site1: a.site1 ? normalizeSites(a.site1) : a.site1,
+    site2: a.site2 ? normalizeSites(a.site2) : a.site2,
+    results: a.results ? normalizeAuditResults(a.results) : a.results,
+  };
 }
 
 export interface Assignment {
@@ -124,7 +192,7 @@ export function formatApptDisplayTitle(a: Assignment, defaultOrder?: { customer?
     // Sequence: IA · {Department} · {Area} - {Site}
     const dept = (a.department2 || a.department1 || '').trim();
     const area = (a.area || '').trim();
-    const site = (a.site2 || a.site1 || '').trim();
+    const site = normalizeSites((a.site2 || a.site1 || '').trim());
 
     const mainSegments: string[] = ['IA'];
     if (dept) mainSegments.push(dept);
@@ -139,7 +207,7 @@ export function formatApptDisplayTitle(a: Assignment, defaultOrder?: { customer?
     // Label Formatting for "CS" (Customer Audit) Type:
     // Sequence: CS · {Customer} - {Site}
     const cust = (a.customer || (defaultOrder ? defaultOrder.customer : '') || 'Customer Audit').trim();
-    const site = (a.site1 || a.site2 || (defaultOrder ? defaultOrder.plant : '') || '').trim();
+    const site = normalizeSites((a.site1 || a.site2 || (defaultOrder ? defaultOrder.plant : '') || '').trim());
 
     let title = 'CS';
     if (cust) {
@@ -260,7 +328,7 @@ export function formatApptLogRef(opts: FormatApptLogRefOptions): string {
 
   if (isCustomer) {
     const custName = (customer || 'Customer Audit').trim();
-    const cleanSite = (site || '').trim();
+    const cleanSite = normalizeSites((site || '').trim());
     const cleanStd = (standard || '').trim();
 
     // If site changed AND standard is present, omit site from prefix.
@@ -278,7 +346,7 @@ export function formatApptLogRef(opts: FormatApptLogRefOptions): string {
   } else {
     const cleanStd = (standard || '').trim();
     const cleanArea = (area || '').trim();
-    const cleanSite = (site || '').trim();
+    const cleanSite = normalizeSites((site || '').trim());
 
     const segments: string[] = ['Internal Audit'];
     if (cleanStd && !isStandardChanged) segments.push(cleanStd);

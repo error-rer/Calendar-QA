@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import type { VM } from '../useScheduler';
 import type { Assignment, SiteAuditResult } from '../types';
 import { css, HButton } from '../ui';
-import { isInternalAssignment } from '../types';
+import { isInternalAssignment, normalizeSite, normalizeAuditResults } from '../types';
 
 function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
   const isInternal = isInternalAssignment(target);
@@ -10,16 +10,16 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
   // Extract active sites configured on this appointment
   const rawSite = (isInternal ? target.site2 : target.site1) || '';
   const parsedSites = rawSite
-    ? Array.from(new Set(rawSite.split(/[/,]/).map((s) => s.trim()).filter(Boolean)))
+    ? Array.from(new Set(rawSite.split(/[/,]/).map((s) => normalizeSite(s.trim())).filter(Boolean)))
     : [];
   const activeSites = useMemo(() => (parsedSites.length > 0 ? parsedSites : [rawSite.trim() || 'General']), [rawSite]);
 
   // Local state for editing the results per site - keyed by siteName
   const [siteResults, setSiteResults] = useState<Record<string, SiteAuditResult>>(() => {
-    const existing = target.results || {};
+    const existing = normalizeAuditResults(target.results);
     const initial: Record<string, SiteAuditResult> = {};
     for (const site of activeSites) {
-      const prev = existing[site];
+      const prev = existing[site] || existing[normalizeSite(site)];
       initial[site] = {
         major: prev ? (Number(prev.major) || 0) : 0,
         minor: prev ? (Number(prev.minor) || 0) : 0,
@@ -37,12 +37,12 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
   // - Deletes keys for removed sites
   const activeSitesKey = activeSites.join('|');
   useEffect(() => {
-    const existing = target.results || {};
+    const existing = normalizeAuditResults(target.results);
     const sites = activeSitesKey ? activeSitesKey.split('|') : ['General'];
     setSiteResults((prev) => {
       const next: Record<string, SiteAuditResult> = {};
       for (const site of sites) {
-        const src = prev[site] || existing[site];
+        const src = prev[site] || existing[site] || existing[normalizeSite(site)];
         next[site] = {
           major: src ? (Number(src.major) || 0) : 0,
           minor: src ? (Number(src.minor) || 0) : 0,
@@ -100,8 +100,9 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
     // Strict Synchronization: Only save results for currently active sites, pruned cleanly!
     const cleanResults: Record<string, SiteAuditResult> = {};
     for (const site of activeSites) {
-      const r = siteResults[site] || { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0 };
-      cleanResults[site] = {
+      const normSite = normalizeSite(site);
+      const r = siteResults[site] || siteResults[normSite] || { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0 };
+      cleanResults[normSite] = {
         major: Number(r.major) || 0,
         minor: Number(r.minor) || 0,
         ofi: Number(r.ofi) || 0,

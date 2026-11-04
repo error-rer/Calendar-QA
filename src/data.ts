@@ -1,4 +1,5 @@
 import type { Plant, State } from './types';
+import { normalizeSite, normalizeAssignment } from './types';
 
 export const initialPlants: Plant[] = [
   { id: 'QMS', name: 'QMS', loc: '', code: 'QMS', color: '#2f6df0', active: true },
@@ -19,9 +20,25 @@ export const dayLabels = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
 export const initialPurposeOptions = ['site qualification', 'system audit', 'product qualification', 'pre-audit', 'annual audit', 'process control', 'gemba walk', 'QMS audit'];
 export const initialCustomerDepartmentOptions = ['ESD Audit', 'QS Audit', 'IATF16949/ISO9001', 'ISO14001/ISO45001', 'RBA'];
 export const initialInternalDepartmentOptions = ['QMS', 'EHS', 'ESD'];
-export const initialSiteCodeOptions = ['U1', 'U2', 'U2A', 'U2B', 'U3', 'U3A', 'U3T'];
+export const initialSiteCodeOptions = ['UTL1', 'UTL2', 'UTL2A', 'UTL2B', 'UTL3', 'UTL3A', 'UTL3T'];
 // red for U1, green shades for U2 family, blue shades for U3 family
-export const initialSiteColors: Record<string, string> = { U1: '#c0392b', U2: '#2e7d32', U2A: '#66bb6a', U2B: '#1b5e20', U3: '#1e5fa8', U3A: '#4a90d9', U3T: '#123f73' };
+export const initialSiteColors: Record<string, string> = {
+  UTL1: '#c0392b',
+  UTL2: '#2e7d32',
+  UTL2A: '#66bb6a',
+  UTL2B: '#1b5e20',
+  UTL3: '#1e5fa8',
+  UTL3A: '#4a90d9',
+  UTL3T: '#123f73',
+  // Backward compatibility keys for legacy records
+  U1: '#c0392b',
+  U2: '#2e7d32',
+  U2A: '#66bb6a',
+  U2B: '#1b5e20',
+  U3: '#1e5fa8',
+  U3A: '#4a90d9',
+  U3T: '#123f73',
+};
 
 export function initialState(): State {
   let snapshot: any = {};
@@ -65,7 +82,7 @@ export function initialState(): State {
     resultsTargetId: null,
     engFormOpen: false,
     engEditingId: null,
-    engForm: { name: '', role: '', department: 'U1', subDepartments: [] },
+    engForm: { name: '', role: '', department: 'UTL1', subDepartments: [] },
     weekOffset: 0,
     activePlants: snapshot.activePlants || { QMS: true, EHS: true, ESD: true },
     selected: null,
@@ -80,8 +97,15 @@ export function initialState(): State {
     purposeOptions: snapshot.purposeOptions || initialPurposeOptions.slice(),
     customerDepartmentOptions: snapshot.customerDepartmentOptions || initialCustomerDepartmentOptions.slice(),
     internalDepartmentOptions: snapshot.internalDepartmentOptions || initialInternalDepartmentOptions.slice(),
-    siteCodeOptions: snapshot.siteCodeOptions || initialSiteCodeOptions.slice(),
-    siteColors: snapshot.siteColors || { ...initialSiteColors },
+    siteCodeOptions: snapshot.siteCodeOptions ? Array.from(new Set(snapshot.siteCodeOptions.map((s: string) => normalizeSite(s)))) : initialSiteCodeOptions.slice(),
+    siteColors: (() => {
+      const base: Record<string, string> = { ...initialSiteColors, ...(snapshot.siteColors || {}) };
+      for (const [k, v] of Object.entries(base)) {
+        const norm = normalizeSite(k);
+        if (!base[norm]) base[norm] = v;
+      }
+      return base;
+    })(),
     customerOptions: snapshot.customerOptions || [],
     endCustomerOptions: snapshot.endCustomerOptions || [],
     auditorOptions: snapshot.auditorOptions || [],
@@ -106,7 +130,7 @@ export function initialState(): State {
     plants: snapshot.plants || initialPlants.map((p) => ({ ...p })),
     engineers: snapshot.engineers || [],
     orders: snapshot.orders || [],
-    assignments: snapshot.assignments || [],
+    assignments: (snapshot.assignments || []).map(normalizeAssignment),
     comments: snapshot.comments || (() => {
       try {
         const saved = typeof window !== 'undefined' ? localStorage.getItem('calendar_qa_comments') : null;

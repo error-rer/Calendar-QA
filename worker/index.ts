@@ -10,6 +10,50 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
+
+function normalizeSite(site: string): string {
+  if (!site) return '';
+  const s = site.trim();
+  const match = s.match(/^u(1|2|3|2a|2b|3a|3t)$/i);
+  if (match) return 'UTL' + match[1].toUpperCase();
+  const utlMatch = s.match(/^utl(1|2|3|2a|2b|3a|3t)$/i);
+  if (utlMatch) return 'UTL' + utlMatch[1].toUpperCase();
+  return s;
+}
+
+function normalizeSites(raw: string): string {
+  if (!raw) return '';
+  if (raw.includes('/') || raw.includes(',')) {
+    return raw
+      .split(/[/,]/)
+      .map((s) => normalizeSite(s.trim()))
+      .filter(Boolean)
+      .join('/');
+  }
+  return normalizeSite(raw);
+}
+
+function normalizeAuditResults(results: any): Record<string, any> {
+  if (!results || typeof results !== 'object') return {};
+  const out: Record<string, any> = {};
+  for (const [key, val] of Object.entries(results)) {
+    if (!val) continue;
+    const normKey = normalizeSite(key);
+    if (!out[normKey]) {
+      out[normKey] = val;
+    } else {
+      out[normKey] = {
+        major: (Number((out[normKey] as any).major) || 0) + (Number((val as any).major) || 0),
+        minor: (Number((out[normKey] as any).minor) || 0) + (Number((val as any).minor) || 0),
+        ofi: (Number((out[normKey] as any).ofi) || 0) + (Number((val as any).ofi) || 0),
+        obs: (Number((out[normKey] as any).obs) || 0) + (Number((val as any).obs) || 0),
+        findings: (Number((out[normKey] as any).findings) || 0) + (Number((val as any).findings) || 0),
+      };
+    }
+  }
+  return out;
+}
+
 function engineerOut(r: any) {
   return { id: r.id, name: r.name, role: r.role, department: r.department, subDepartments: JSON.parse(r.sub_departments || '[]') };
 }
@@ -23,11 +67,11 @@ function assignmentOut(r: any) {
   }
   return {
     id: r.id, eng: r.eng, order: r.order_id, day: r.day, week: r.week,
-    site1: r.site1, customer: r.customer, endCustomer: r.end_customer, auditor1: r.auditor1, purpose: r.purpose,
+    site1: normalizeSites(r.site1 || ''), customer: r.customer, endCustomer: r.end_customer, auditor1: r.auditor1, purpose: r.purpose,
     targetPackage: r.target_package || '', customerNames: r.customer_names || '', auditCategory: r.audit_category || '',
-    site2: r.site2, area: r.area, auditor2: r.auditor2, department1: r.department1, department2: r.department2,
+    site2: normalizeSites(r.site2 || ''), area: r.area, auditor2: r.auditor2, department1: r.department1, department2: r.department2,
     major: r.major, minor: r.minor, ofi: r.ofi, request: r.request, utl1: r.utl1, utl2: r.utl2, utl3: r.utl3,
-    results: parsedResults,
+    results: normalizeAuditResults(parsedResults),
     createdAt: r.created_at || (r.created_at_num ? String(r.created_at_num) : undefined),
     updatedAt: r.updated_at || undefined,
   };
@@ -53,6 +97,15 @@ async function ensureAssignmentColumns(DB: D1Database) {
   } catch {}
   try {
     await DB.prepare('ALTER TABLE assignments ADD COLUMN updated_at TEXT NOT NULL DEFAULT ""').run();
+  } catch {}
+  try {
+    await DB.prepare("UPDATE options SET value = 'UTL1' WHERE category = 'site_code' AND value = 'U1'").run();
+    await DB.prepare("UPDATE options SET value = 'UTL2' WHERE category = 'site_code' AND value = 'U2'").run();
+    await DB.prepare("UPDATE options SET value = 'UTL2A' WHERE category = 'site_code' AND value = 'U2A'").run();
+    await DB.prepare("UPDATE options SET value = 'UTL2B' WHERE category = 'site_code' AND value = 'U2B'").run();
+    await DB.prepare("UPDATE options SET value = 'UTL3' WHERE category = 'site_code' AND value = 'U3'").run();
+    await DB.prepare("UPDATE options SET value = 'UTL3A' WHERE category = 'site_code' AND value = 'U3A'").run();
+    await DB.prepare("UPDATE options SET value = 'UTL3T' WHERE category = 'site_code' AND value = 'U3T'").run();
   } catch {}
   migrationChecked = true;
 }
@@ -106,8 +159,12 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
         else if (row.category === 'customer_department') customerDepartmentOptions.push(row.value);
         else if (row.category === 'internal_department') internalDepartmentOptions.push(row.value);
         else if (row.category === 'site_code') {
-          siteCodeOptions.push(row.value);
-          if (row.meta) siteColors[row.value] = row.meta;
+          const norm = normalizeSite(row.value);
+          if (!siteCodeOptions.includes(norm)) siteCodeOptions.push(norm);
+          if (row.meta) {
+            siteColors[norm] = row.meta;
+            siteColors[row.value] = row.meta;
+          }
         } else if (row.category === 'customer_name') {
           customerOptions.push(row.value);
         } else if (row.category === 'end_customer') {
@@ -157,14 +214,14 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       const { id, name, role, department, subDepartments } = body || {};
       const sd = JSON.stringify(subDepartments || []);
       await DB.prepare('INSERT INTO engineers (id, name, role, department, sub_departments) VALUES (?, ?, ?, ?, ?)')
-        .bind(id, name || '', role || '', department || 'U1', sd).run();
+        .bind(id, name || '', role || '', department || 'UTL1', sd).run();
       return json({ id, name, role, department, subDepartments: subDepartments || [] }, 201);
     }
     const engMatch = path.match(/^engineers\/(.+)$/);
     if (engMatch && method === 'PUT') {
       const { name, role, department, subDepartments } = body || {};
       await DB.prepare('UPDATE engineers SET name = ?, role = ?, department = ?, sub_departments = ? WHERE id = ?')
-        .bind(name || '', role || '', department || 'U1', JSON.stringify(subDepartments || []), engMatch[1]).run();
+        .bind(name || '', role || '', department || 'UTL1', JSON.stringify(subDepartments || []), engMatch[1]).run();
       return json({ ok: true });
     }
     if (engMatch && method === 'DELETE') {

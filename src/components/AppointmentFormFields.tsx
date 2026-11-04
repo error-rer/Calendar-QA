@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { Assignment, Engineer } from '../types';
+import { normalizeSite } from '../types';
 import { css } from '../ui';
 import { AvailabilityDatePicker } from './AvailabilityDatePicker';
 
@@ -268,7 +269,7 @@ function MultiSiteSelect({
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const selectedSites = value ? value.split('/').map((s) => s.trim()).filter(Boolean) : [];
+  const selectedSites = value ? value.split('/').map((s) => normalizeSite(s.trim())).filter(Boolean) : [];
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -280,7 +281,8 @@ function MultiSiteSelect({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const toggleSite = (site: string) => {
+  const toggleSite = (rawSite: string) => {
+    const site = normalizeSite(rawSite);
     let next: string[];
     if (selectedSites.includes(site)) {
       next = selectedSites.filter((s) => s !== site);
@@ -345,7 +347,8 @@ function MultiSiteSelect({
             padding: '4px',
           }}
         >
-          {siteOptions.map((s) => {
+          {siteOptions.map((rawS) => {
+            const s = normalizeSite(rawS);
             const isSel = selectedSites.includes(s);
             return (
               <div
@@ -1854,12 +1857,12 @@ export function AppointmentFormFields({
   const isCustomerEHS = v.department1.split(',').map((s) => s.trim()).includes('EHS');
   // Customer site is always restricted to these 5 fixed values (EHS filtering no longer applies)
   void isCustomerEHS; // retained for future use
-  const customerSiteOptions = Array.from(new Set(['U1', 'U2A', 'U2B', 'U3A', 'U3T', ...(siteOptions || [])]));
+  const customerSiteOptions = Array.from(new Set(['UTL1', 'UTL2A', 'UTL2B', 'UTL3A', 'UTL3T', ...(siteOptions || []).map(normalizeSite)]));
 
   const isInternalEHS = v.department2.split(',').map((s) => s.trim()).includes('EHS');
   const internalSiteOptions = isInternalEHS
-    ? siteOptions.filter((s) => ['U1', 'U2', 'U3'].includes(s))
-    : siteOptions;
+    ? siteOptions.filter((s) => ['UTL1', 'UTL2', 'UTL3', 'U1', 'U2', 'U3'].includes(s)).map(normalizeSite)
+    : siteOptions.map(normalizeSite);
 
   const removedSet = useMemo(() => new Set(removedOptions), [removedOptions]);
 
@@ -2198,9 +2201,9 @@ export function AppointmentFormFields({
                 id={id('department2')}
                 value={v.department2}
                 onChange={(newDept) => {
-                  const currentSites = v.site2.split('/').map((s) => s.trim()).filter(Boolean);
+                  const currentSites = v.site2.split('/').map((s) => normalizeSite(s.trim())).filter(Boolean);
                   const isEHS = newDept.split(',').map((s) => s.trim()).includes('EHS');
-                  const validSites = currentSites.filter((s) => !isEHS || ['U1', 'U2', 'U3'].includes(s));
+                  const validSites = currentSites.filter((s) => !isEHS || ['UTL1', 'UTL2', 'UTL3', 'U1', 'U2', 'U3'].includes(s));
                   onChange({ department2: newDept, site2: validSites.join('/') });
                 }}
                 suggestions={internalDepartmentSuggestions}

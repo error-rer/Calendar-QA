@@ -27,6 +27,10 @@ import {
   isIncompleteAssignment,
   isInternalAssignment,
   isTodayWithinAssignmentRange,
+  normalizeSite,
+  normalizeSites,
+  normalizeAuditResults,
+  normalizeAssignment,
   parseTimestamp,
 } from './types';
 import { getHolidayForDate, getHolidayStyle, type HolidayInfo } from './holidays';
@@ -37,6 +41,7 @@ import {
   initialInternalDepartmentOptions,
   initialPurposeOptions,
   initialSiteCodeOptions,
+  initialSiteColors,
   initialState,
 } from './data';
 import { api } from './api';
@@ -68,7 +73,7 @@ export const siteColorsOfAssignment = (a: Assignment, siteColors: Record<string,
   const siteStr = a.site1 || a.site2 || '';
   const sites = siteStr.split('/').map((s) => s.trim()).filter(Boolean);
   if (sites.length === 0) return ['#999999'];
-  return sites.map((s) => siteColors[s] || '#999999');
+  return sites.map((s) => siteColors[s] || siteColors[normalizeSite(s)] || '#999999');
 };
 
 export const getAccentBackground = (colors: string[]): string => {
@@ -398,19 +403,27 @@ export function useScheduler() {
           const purposeOptions = (s.purposeOptions && s.purposeOptions.length ? s.purposeOptions : (data.purposeOptions || [])).filter((c) => !removedSet.has(c));
           const customerDepartmentOptions = (s.customerDepartmentOptions && s.customerDepartmentOptions.length ? s.customerDepartmentOptions : (data.customerDepartmentOptions || [])).filter((c) => !removedSet.has(c));
           const internalDepartmentOptions = (s.internalDepartmentOptions && s.internalDepartmentOptions.length ? s.internalDepartmentOptions : (data.internalDepartmentOptions || [])).filter((c) => !removedSet.has(c));
-          const siteCodeOptions = (s.siteCodeOptions && s.siteCodeOptions.length ? s.siteCodeOptions : (data.siteCodeOptions || [])).filter((c) => !removedSet.has(c));
-          const siteColors = s.siteColors && Object.keys(s.siteColors).length ? s.siteColors : (data.siteColors || {});
+          const rawSiteCodes = (s.siteCodeOptions && s.siteCodeOptions.length ? s.siteCodeOptions : (data.siteCodeOptions || initialSiteCodeOptions)).filter((c) => !removedSet.has(c));
+          const siteCodeOptions: string[] = Array.from(new Set(rawSiteCodes.map((s: string) => normalizeSite(s))));
+          const siteColors = (() => {
+            const base: Record<string, string> = { ...initialSiteColors, ...(data.siteColors || {}), ...(s.siteColors || {}) };
+            for (const [k, v] of Object.entries(base)) {
+              const norm = normalizeSite(k);
+              if (!base[norm]) base[norm] = v;
+            }
+            return base;
+          })();
           const targetPackageOptions = (s.targetPackageOptions && s.targetPackageOptions.length ? s.targetPackageOptions : (data.targetPackageOptions || [])).filter((c) => !removedSet.has(c));
           const customerNameOptions = (s.customerNameOptions && s.customerNameOptions.length ? s.customerNameOptions : (data.customerNameOptions || [])).filter((c) => !removedSet.has(c));
           const auditCategoryOptions = (s.auditCategoryOptions && s.auditCategoryOptions.length ? s.auditCategoryOptions : ((data as any).auditCategoryOptions || [])).filter((c: string) => !removedSet.has(c));
 
           const mergedState = {
             ...s,
-            engineers: mergedEngineers,
+            engineers: mergedEngineers.map((e) => ({ ...e, department: (e.department ? normalizeSite(e.department) : 'UTL1') as Department })),
             plants: data.plants && data.plants.length ? data.plants : s.plants,
             activePlants: { ...s.activePlants, ...(data.activePlants || {}) },
-            orders: mergedOrders,
-            assignments: mergedAssignments,
+            orders: mergedOrders.map((o) => ({ ...o, plant: o.plant ? normalizeSites(o.plant) : o.plant })),
+            assignments: mergedAssignments.map(normalizeAssignment),
             comments: mergedComments,
             activity: s.activity && s.activity.length ? s.activity : (data.activity || []),
             activityLogs: s.activityLogs && s.activityLogs.length ? s.activityLogs : (data.activityLogs || []),
@@ -454,7 +467,7 @@ export function useScheduler() {
           } catch {}
 
           const allIds: string[] = [
-            ...mergedState.assignments.map((a) => a.id),
+            ...mergedState.assignments.map((a: Assignment) => a.id),
             ...mergedState.orders.map((o) => o.id),
             ...mergedState.engineers.map((e) => e.id),
             ...Object.values(mergedState.comments).flat().map((c: any) => c.id),
@@ -533,7 +546,7 @@ export function useScheduler() {
   const plantById = (id: string) => S.plants.find((p) => p.id === id) || { id: '', name: id || 'Unknown', loc: '', code: (id || '?').slice(0, 3).toUpperCase(), color: S.siteColors[id] || '#999', active: true };
   const initials = (name: string) =>
     name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
-  const siteToDept = (site: string): Department => (site.startsWith('U3') ? 'U3' : site.startsWith('U2') ? 'U2' : 'U1');
+  const siteToDept = (site: string): Department => (site.startsWith('UTL3') || site.startsWith('U3') ? 'UTL3' : site.startsWith('UTL2') || site.startsWith('U2') ? 'UTL2' : 'UTL1');
   /** "CS" for Customer appointments, "IA" for Internal Audit. */
   const apptAbbr = (a: Assignment) => (a.site2 || a.auditor2 || a.department2 || a.area ? 'IA' : 'CS');
   /** Returns Customer name with CS prefix for Customer Audit or Area/topic with IA prefix for Internal Audit. */
@@ -589,9 +602,9 @@ export function useScheduler() {
 
     if (S.filterSite.length > 0) {
       const apptSiteStr = a.site1 || a.site2 || o.plant || '';
-      const apptSites = apptSiteStr.split('/').map((s) => s.trim().toLowerCase()).filter(Boolean);
+      const apptSites = apptSiteStr.split('/').map((s) => normalizeSite(s.trim()).toLowerCase()).filter(Boolean);
       const matchesSite = S.filterSite.some((filterVal) => {
-        const f = filterVal.toLowerCase();
+        const f = normalizeSite(filterVal.trim()).toLowerCase();
         return apptSites.includes(f);
       });
       if (!matchesSite) return false;
@@ -741,8 +754,8 @@ export function useScheduler() {
       const nextArr = arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
       if (field === 'filterAuditTopic') {
         const hasEHS = nextArr.includes('EHS');
-        const validSites = hasEHS ? ['U1', 'U2', 'U3'] : s.siteCodeOptions;
-        return { filterAuditTopic: nextArr, filterSite: s.filterSite.filter((site) => validSites.includes(site)) };
+        const validSites = hasEHS ? ['UTL1', 'UTL2', 'UTL3', 'U1', 'U2', 'U3'] : s.siteCodeOptions;
+        return { filterAuditTopic: nextArr, filterSite: s.filterSite.filter((site) => validSites.includes(site) || validSites.includes(normalizeSite(site))) };
       }
       return { [field]: nextArr };
     });
@@ -1316,14 +1329,14 @@ export function useScheduler() {
           id: 'a' + ids.current.id++,
           eng: engId, order: orderId, day: slot.wd, week: slot.weekOffset,
           sectionType: d.sectionType,
-          site1: d.sectionType === 'customer' ? d.site1 : '',
+          site1: d.sectionType === 'customer' ? normalizeSites(d.site1 || '') : '',
           customer: d.sectionType === 'customer' ? d.customer : '',
           endCustomer: d.sectionType === 'customer' ? d.endCustomer : '',
           targetPackage: d.sectionType === 'customer' ? (d.targetPackage || '') : '',
           customerNames: d.sectionType === 'customer' ? (d.customerNames || '') : '',
           auditor1: d.sectionType === 'customer' ? d.auditor1 : '',
           purpose: d.purpose || '',
-          site2: d.sectionType === 'internal' ? d.site2 : '',
+          site2: d.sectionType === 'internal' ? normalizeSites(d.site2 || '') : '',
           area: d.sectionType === 'internal' ? d.area : '',
           auditor2: d.sectionType === 'internal' ? d.auditor2 : '',
           department1: d.sectionType === 'customer' ? d.department1 : '',
@@ -1337,7 +1350,7 @@ export function useScheduler() {
     const newOrder = {
       id: orderId, code: 'NEW-' + String(S.orders.length + 1).padStart(3, '0'),
       customer: d.customer || '', product: d.endCustomer || d.area || '',
-      plant: d.sectionType === 'internal' ? (d.department2 || d.site2 || '') : (d.site1 || ''), purpose: d.purpose || '',
+      plant: d.sectionType === 'internal' ? (d.department2 || normalizeSites(d.site2 || '') || '') : (normalizeSites(d.site1 || '') || ''), purpose: d.purpose || '',
     };
     const newEngineer = { id: engId, name: auditorPrimary, role: 'QA', department: siteToDept(d.sectionType === 'internal' ? d.site2 : d.site1), subDepartments: [], isMaster: false };
     api.createOrder(newOrder).catch(() => {});
@@ -1354,7 +1367,7 @@ export function useScheduler() {
       : [];
     const newDept1 = d.sectionType === 'customer' && d.department1 ? d.department1.trim() : '';
     const newDept2 = d.sectionType === 'internal' && d.department2 ? d.department2.trim() : '';
-    const newSite = (d.sectionType === 'internal' ? d.site2 : d.site1) || '';
+    const newSite = normalizeSites((d.sectionType === 'internal' ? d.site2 : d.site1) || '');
     const existingMasterSet = new Set(
       (S.auditorOptions || [])
         .concat(S.engineers.map((e) => e.name))
@@ -1383,7 +1396,7 @@ export function useScheduler() {
       });
     }
     if (newSite) {
-      newSite.split('/').map((s) => s.trim()).filter(Boolean).forEach((s) => {
+      newSite.split('/').map((s: string) => s.trim()).filter(Boolean).forEach((s: string) => {
         api.saveOption('site_code', s).catch(() => {});
       });
     }
@@ -1433,12 +1446,12 @@ export function useScheduler() {
       }
       if (newDept1) newDept1.split(',').map((s) => s.trim()).filter(Boolean).forEach(unblacklist);
       if (newDept2) newDept2.split(',').map((s) => s.trim()).filter(Boolean).forEach(unblacklist);
-      if (newSite) newSite.split('/').map((s) => s.trim()).filter(Boolean).forEach(unblacklist);
+      if (newSite) newSite.split('/').map((s: string) => s.trim()).filter(Boolean).forEach(unblacklist);
       newAuditorNames.forEach(unblacklist);
 
       let nextSiteOpts = s.siteCodeOptions || [];
       if (newSite) {
-        const parts = newSite.split('/').map((s) => s.trim()).filter(Boolean);
+        const parts = newSite.split('/').map((s: string) => normalizeSite(s.trim())).filter(Boolean);
         for (const p of parts) {
           if (!nextSiteOpts.some((s) => s.toLowerCase() === p.toLowerCase())) {
             nextSiteOpts = [...nextSiteOpts, p];
@@ -1534,13 +1547,13 @@ export function useScheduler() {
         sectionType: isInternal ? 'internal' : 'customer',
         dateFrom: fmtISO(fromDate),
         dateTo: fmtISO(toDate),
-        site1: a.site1 || '',
+        site1: normalizeSites(a.site1 || ''),
         customer: a.customer || '',
         endCustomer: a.endCustomer || '',
         purpose: a.purpose || '',
         auditor1: a.auditor1 || '',
         department1: a.department1 || '',
-        site2: a.site2 || '',
+        site2: normalizeSites(a.site2 || ''),
         area: a.area || '',
         auditor2: a.auditor2 || '',
         department2: a.department2 || '',
@@ -1564,17 +1577,18 @@ export function useScheduler() {
     const siblings = S.assignments.filter((x) => (x.eng === a.eng && x.order === a.order) || x.id === aid);
     const siblingIds = new Set(siblings.map((x) => x.id));
 
+    const normalizedResults = normalizeAuditResults(newResults);
     const nowIso = new Date().toISOString();
     setState((s) => ({
       assignments: s.assignments.map((item) =>
-        siblingIds.has(item.id) ? { ...item, results: newResults, updatedAt: nowIso } : item
+        siblingIds.has(item.id) ? { ...item, results: normalizedResults, updatedAt: nowIso } : item
       ),
       resultsModalOpen: false,
       resultsTargetId: null,
     }));
 
     siblings.forEach((sib) => {
-      api.updateAssignment(sib.id, { results: newResults, updatedAt: nowIso }).catch(() => {});
+      api.updateAssignment(sib.id, { results: normalizedResults, updatedAt: nowIso }).catch(() => {});
     });
 
     const dateFormatted = getAssignmentDateFormatted(a, S.assignments);
@@ -1659,8 +1673,9 @@ export function useScheduler() {
       .sort((a, b) => (a.week - b.week) || (a.day - b.day));
 
     const newSiteRaw = (d.sectionType === 'customer' ? d.site1 : d.site2) || '';
-    const newSites = Array.from(new Set(newSiteRaw.split(/[/,]/).map((s) => s.trim()).filter(Boolean)));
-    const existingResults = target.results || siblings.find((x) => x.results && Object.keys(x.results).length > 0)?.results || {};
+    const newSites = Array.from(new Set(newSiteRaw.split(/[/,]/).map((s) => normalizeSite(s.trim())).filter(Boolean)));
+    const existingRawResults = target.results || siblings.find((x) => x.results && Object.keys(x.results).length > 0)?.results || {};
+    const existingResults = normalizeAuditResults(existingRawResults);
 
     // State Preservation Logic (Keyed by Site Name):
     // - Adding a new Site: keep all previously entered numbers strictly intact, initialize new site with 0.
@@ -1668,13 +1683,14 @@ export function useScheduler() {
     // - All remaining sites retain their previously entered numbers without alteration.
     const reconciledResults: Record<string, SiteAuditResult> = {};
     for (const s of newSites) {
-      if (existingResults[s]) {
+      const prev = existingResults[s] || existingResults[s.replace(/^UTL/, 'U')];
+      if (prev) {
         reconciledResults[s] = {
-          major: Number(existingResults[s].major) || 0,
-          minor: Number(existingResults[s].minor) || 0,
-          ofi: Number(existingResults[s].ofi) || 0,
-          obs: Number(existingResults[s].obs) || 0,
-          findings: Number(existingResults[s].findings) || 0,
+          major: Number(prev.major) || 0,
+          minor: Number(prev.minor) || 0,
+          ofi: Number(prev.ofi) || 0,
+          obs: Number(prev.obs) || 0,
+          findings: Number(prev.findings) || 0,
         };
       } else {
         reconciledResults[s] = { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0 };
@@ -2182,7 +2198,7 @@ export function useScheduler() {
   const setAdminTab = (t: State['adminTab']) => setState({ adminTab: t });
   // ---- create-engineer modal ----
   const openEngForm = () =>
-    setState({ engFormOpen: true, engEditingId: null, userMenuOpen: false, sidebarOpen: false, engForm: { name: '', role: '', department: (S.siteCodeOptions[0] || 'U1') as Department, subDepartments: [] } });
+    setState({ engFormOpen: true, engEditingId: null, userMenuOpen: false, sidebarOpen: false, engForm: { name: '', role: '', department: (S.siteCodeOptions[0] ? normalizeSite(S.siteCodeOptions[0]) : 'UTL1') as Department, subDepartments: [] } });
   const openEditEngForm = (id: string) => {
     const e = S.engineers.find((eng) => eng.id === id);
     if (!e) return;
@@ -2191,7 +2207,7 @@ export function useScheduler() {
       engEditingId: id,
       userMenuOpen: false,
       sidebarOpen: false,
-      engForm: { name: e.name, role: e.role || '', department: (e.department || 'U1') as Department, subDepartments: [...e.subDepartments] },
+      engForm: { name: e.name, role: e.role || '', department: (e.department ? normalizeSite(e.department) : 'UTL1') as Department, subDepartments: [...e.subDepartments] },
     });
   };
   const closeEngForm = () => setState({ engFormOpen: false, engEditingId: null });
@@ -2456,15 +2472,19 @@ export function useScheduler() {
     });
   };
   const setSiteColor = (site: string, color: string) => {
-    api.saveOption('site_code', site, color).catch(() => {});
-    setState((s) => ({ siteColors: { ...s.siteColors, [site]: color } }));
+    const norm = normalizeSite(site);
+    api.saveOption('site_code', norm, color).catch(() => {});
+    setState((s) => ({ siteColors: { ...s.siteColors, [site]: color, [norm]: color } }));
   };
 
   const removeSiteCodeOption = (v: string) => {
     removeOption('siteCodeOptions', v);
+    const norm = normalizeSite(v);
+    if (norm !== v) removeOption('siteCodeOptions', norm);
     setState((s) => {
       const siteColors = { ...s.siteColors };
       delete siteColors[v];
+      delete siteColors[norm];
       return { siteColors };
     });
   };
@@ -2479,7 +2499,7 @@ export function useScheduler() {
     const isIncomplete = isIncompleteAssignment(a);
     const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
     const mainName = isInternal ? (a.area || '') : (a.customer || '');
-    const site = (isInternal ? a.site2 : a.site1) || '';
+    const site = normalizeSites((isInternal ? a.site2 : a.site1) || '');
     const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : (auditorName || '');
     const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
@@ -2522,7 +2542,7 @@ export function useScheduler() {
     const isIncomplete = isIncompleteAssignment(a);
     const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
     const mainName = isInternal ? (a.area || '') : (a.customer || '');
-    const site = (isInternal ? a.site2 : a.site1) || '';
+    const site = normalizeSites((isInternal ? a.site2 : a.site1) || '');
     const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : (auditorName || '');
     const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
@@ -2856,7 +2876,7 @@ export function useScheduler() {
     const o = orderById(a.order)!;
     const pl = plantById(o.plant);
     const isInternal = isInternalAssignment(a);
-    const site = (isInternal ? a.site2 : a.site1) || '';
+    const site = normalizeSites((isInternal ? a.site2 : a.site1) || '');
     const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
     const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : (auditorName || '');
     const colors = siteColorsOfAssignment(a, S.siteColors);
@@ -2961,6 +2981,7 @@ export function useScheduler() {
         a.area || '',
         a.purpose || o.purpose || '',
         a.site1 || a.site2 || o.plant || '',
+        normalizeSites(a.site1 || a.site2 || o.plant || ''),
         a.auditor1 || '', a.auditor2 || '',
         e ? e.name : '',
         a.department1 || '', a.department2 || '',
@@ -3479,13 +3500,13 @@ export function useScheduler() {
     const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
     const active = S.assignments.flatMap((a) => {
       const sites: string[] = [];
-      if (a.site1) sites.push(...a.site1.split('/').map((s) => s.trim()).filter(Boolean));
-      if (a.site2) sites.push(...a.site2.split('/').map((s) => s.trim()).filter(Boolean));
+      if (a.site1) sites.push(...a.site1.split('/').map((s) => normalizeSite(s.trim())).filter(Boolean));
+      if (a.site2) sites.push(...a.site2.split('/').map((s) => normalizeSite(s.trim())).filter(Boolean));
       return sites;
     }).filter((s) => !removedSetLower.has(s.toLowerCase()));
 
     const baseList = (S.siteCodeOptions || [])
-      .map((s) => s.trim())
+      .map((s) => normalizeSite(s.trim()))
       .filter((s) => Boolean(s) && !removedSetLower.has(s.toLowerCase()));
 
     const uniqueMap = new Map<string, string>();
@@ -3726,7 +3747,7 @@ export function useScheduler() {
         id: 'aud-' + encodeURIComponent(name.toLowerCase()),
         name,
         role: 'QMS Host',
-        department: (computedSiteCodeOptions[0] || 'U1') as Department,
+        department: (computedSiteCodeOptions[0] ? normalizeSite(computedSiteCodeOptions[0]) : 'UTL1') as Department,
         subDepartments: [] as SubDepartment[],
         isMaster: false,
       };
@@ -3734,7 +3755,7 @@ export function useScheduler() {
 
     return fullList
       .filter((e) => {
-        if (S.adminFilterSite.length > 0 && !S.adminFilterSite.includes(e.department)) return false;
+        if (S.adminFilterSite.length > 0 && !S.adminFilterSite.some((s) => normalizeSite(s) === normalizeSite(e.department))) return false;
         if (S.adminFilterDept.length > 0 && !e.subDepartments.some((d) => S.adminFilterDept.includes(d))) return false;
         return true;
       })
@@ -3817,7 +3838,7 @@ export function useScheduler() {
     computedCustomerOptions.forEach((c) => addSuggestion(c, 'Customer'));
     computedPurposeOptions.forEach((p) => addSuggestion(p, 'Purpose'));
     computedAuditCategoryOptions.forEach((c) => addSuggestion(c, 'Audit Category'));
-    S.siteCodeOptions.forEach((s) => addSuggestion(s, 'Site'));
+    S.siteCodeOptions.forEach((s) => addSuggestion(normalizeSite(s), 'Site'));
     S.customerDepartmentOptions.forEach((d) => addSuggestion(d, 'Standard'));
     S.internalDepartmentOptions.forEach((d) => addSuggestion(d, 'Standard'));
 
@@ -3830,9 +3851,9 @@ export function useScheduler() {
       if (o.customer) addSuggestion(o.customer, 'Customer');
       if (a.endCustomer) addSuggestion(a.endCustomer, 'End Customer');
 
-      if (a.site1) a.site1.split('/').forEach((s) => addSuggestion(s, 'Site'));
-      if (a.site2) a.site2.split('/').forEach((s) => addSuggestion(s, 'Site'));
-      if (o.plant) addSuggestion(o.plant, 'Plant');
+      if (a.site1) a.site1.split('/').forEach((s) => addSuggestion(normalizeSite(s), 'Site'));
+      if (a.site2) a.site2.split('/').forEach((s) => addSuggestion(normalizeSite(s), 'Site'));
+      if (o.plant) addSuggestion(normalizeSites(o.plant), 'Plant');
 
       if (a.area) addSuggestion(a.area, 'Area');
       if (a.purpose) addSuggestion(a.purpose, 'Purpose');
@@ -3868,8 +3889,8 @@ export function useScheduler() {
   }, [S.engineers, computedAuditorOptions]);
 
   const availableSiteCodes = S.filterAuditTopic.includes('EHS')
-    ? S.siteCodeOptions.filter((s) => ['U1', 'U2', 'U3'].includes(s))
-    : S.siteCodeOptions;
+    ? S.siteCodeOptions.filter((s) => ['UTL1', 'UTL2', 'UTL3', 'U1', 'U2', 'U3'].includes(s)).map(normalizeSite)
+    : S.siteCodeOptions.map(normalizeSite);
   const siteOptions = [{ value: '', label: 'All sites' }, ...availableSiteCodes.map((s) => ({ value: s, label: s }))];
   const siteColorList = S.siteCodeOptions.map((s) => ({ site: s, color: S.siteColors[s] || '#999' }));
   // filter dropdowns share the same admin-managed lists as the appointment form

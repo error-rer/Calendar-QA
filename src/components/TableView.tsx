@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { VM } from '../useScheduler';
 import type { Assignment } from '../types';
-import { isInternalAssignment, calculateCustomerAuditsCount } from '../types';
+import { isInternalAssignment, calculateCustomerAuditsCount, normalizeSite, normalizeSites } from '../types';
 import { css, HButton } from '../ui';
 
 interface TableRowData {
@@ -75,7 +75,7 @@ export function TableView({ vm }: { vm: VM }) {
       const isInternal = isInternalAssignment(a);
       const auditType: 'Customer Audit' | 'Internal Audit' = isInternal ? 'Internal Audit' : 'Customer Audit';
       const customer = isInternal ? '' : (a.customer || '');
-      const site = (isInternal ? (a.site2 || a.site1) : (a.site1 || a.site2)) || '';
+      const site = normalizeSites((isInternal ? (a.site2 || a.site1) : (a.site1 || a.site2)) || '');
       const standard = (isInternal ? (a.department2 || a.department1) : (a.department1 || a.department2)) || '';
       const auditCategory = isInternal ? (a.auditCategory || '') : '';
       const purpose = (isInternal ? (a.area || a.purpose) : (a.purpose || '')) || '';
@@ -165,7 +165,7 @@ export function TableView({ vm }: { vm: VM }) {
       }
 
       // Site filter
-      if (siteFilter !== 'ALL' && r.site !== siteFilter) {
+      if (siteFilter !== 'ALL' && r.site !== siteFilter && normalizeSite(r.site) !== normalizeSite(siteFilter)) {
         return false;
       }
 
@@ -817,7 +817,7 @@ export function TableView({ vm }: { vm: VM }) {
                 </tr>
               ) : (
                 paginatedRows.map((row) => {
-                  const siteColor = vm.siteColors[row.site] || '#9aa097';
+                  const siteColor = vm.siteColors[row.site] || vm.siteColors[normalizeSite(row.site)] || '#9aa097';
                   const isCustomer = row.auditType === 'Customer Audit';
                   const isConfirmingDelete = deleteConfirmId === row.id;
 
