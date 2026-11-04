@@ -459,13 +459,23 @@ function Sidebar({ vm }: { vm: VM }) {
         <div style={css('display:flex;flex-direction:column;gap:6px')}>
           <MultiSelect label="Audit Type" items={vm.apptTypeOptions} selected={vm.filterApptType} onToggle={vm.toggleFilterApptType} />
           <MultiSelect label="QMS Host" items={vm.employeeOptions.filter((o) => o.value).map((o) => ({ value: o.value, label: o.label }))} selected={vm.filterEmp} onToggle={vm.toggleFilterEmp} />
-          <MultiSelect label="Standard" items={[...vm.customerTopicOptions, ...vm.internalTopicOptions].map((o) => ({ value: o, label: o }))} selected={vm.filterAuditTopic} onToggle={vm.toggleFilterAuditTopic} />
+          <MultiSelect label="Standard" items={vm.standardFilterOptions.map((o) => ({ value: o, label: o }))} selected={vm.filterAuditTopic} onToggle={vm.toggleFilterAuditTopic} />
           <MultiSelect label="Site" items={vm.siteOptions.filter((o) => o.value).map((o) => ({ value: o.value, label: o.label }))} selected={vm.filterSite} onToggle={vm.toggleFilterSite} />
-          <MultiSelect label="Customer" items={vm.companyNames.map((o) => ({ value: o, label: o }))} selected={vm.filterCompany} onToggle={vm.toggleFilterCompany} />
-          <MultiSelect label="Purpose" items={vm.auditTypes.map((o) => ({ value: o, label: o }))} selected={vm.filterAuditType} onToggle={vm.toggleFilterAuditType} />
-          <MultiSelect label="Target Package" items={(vm.targetPackageFilterOptions || []).map((o: string) => ({ value: o, label: o }))} selected={vm.filterTargetPackage} onToggle={vm.toggleFilterTargetPackage} />
-          <MultiSelect label="Customer Name" items={(vm.customerNameFilterOptions || []).map((o: string) => ({ value: o, label: o }))} selected={vm.filterCustomerName} onToggle={vm.toggleFilterCustomerName} />
-          <MultiSelect label="Audit Category" items={(vm.auditCategoryFilterOptions || []).map((o: string) => ({ value: o, label: o }))} selected={vm.filterAuditCategory} onToggle={vm.toggleFilterAuditCategory} />
+          {!vm.isFilterIA && (
+            <MultiSelect label="Customer" items={vm.companyNames.map((o) => ({ value: o, label: o }))} selected={vm.filterCompany} onToggle={vm.toggleFilterCompany} />
+          )}
+          {!vm.isFilterIA && (
+            <MultiSelect label="Purpose" items={vm.auditTypes.map((o) => ({ value: o, label: o }))} selected={vm.filterAuditType} onToggle={vm.toggleFilterAuditType} />
+          )}
+          {!vm.isFilterIA && (
+            <MultiSelect label="Target Package" items={(vm.targetPackageFilterOptions || []).map((o: string) => ({ value: o, label: o }))} selected={vm.filterTargetPackage} onToggle={vm.toggleFilterTargetPackage} />
+          )}
+          {!vm.isFilterIA && (
+            <MultiSelect label="Customer Name" items={(vm.customerNameFilterOptions || []).map((o: string) => ({ value: o, label: o }))} selected={vm.filterCustomerName} onToggle={vm.toggleFilterCustomerName} />
+          )}
+          {!vm.isFilterCS && (
+            <MultiSelect label="Audit Category" items={(vm.auditCategoryFilterOptions || []).map((o: string) => ({ value: o, label: o }))} selected={vm.filterAuditCategory} onToggle={vm.toggleFilterAuditCategory} />
+          )}
         </div>
       </div>
 

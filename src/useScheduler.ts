@@ -529,6 +529,16 @@ export function useScheduler() {
       if (!matchesCn) return false;
     }
 
+    if (S.filterAuditCategory && S.filterAuditCategory.length > 0) {
+      const catStr = a.auditCategory || '';
+      const cats = catStr.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+      const matchesCat = S.filterAuditCategory.some((filterVal) => {
+        const f = filterVal.toLowerCase();
+        return cats.includes(f) || catStr.toLowerCase() === f;
+      });
+      if (!matchesCat) return false;
+    }
+
     if (S.filterApptType.length > 0 && !S.filterApptType.includes(apptAbbr(a))) return false;
     return true;
   };
@@ -628,21 +638,52 @@ export function useScheduler() {
       }
       return { [field]: nextArr };
     });
-  // narrowing the Type filter can hide some Department/Purpose options (see
-  // customerTopicOptions/internalTopicOptions/auditTypes below) — drop any
-  // selected values that are no longer visible so a hidden filter can't keep
-  // silently narrowing results.
+  // narrowing the Type filter dynamically hides certain filters (Customer, Purpose, Target Package, Customer Name for IA;
+  // Audit Category for CS). Drop any selected values of hidden filters so they don't silently narrow results.
   const toggleFilterApptType = (value: string) =>
     setState((s) => {
       const next = s.filterApptType.includes(value) ? s.filterApptType.filter((v) => v !== value) : [...s.filterApptType, value];
       const nextIsCS = next.length === 1 && next[0] === 'CS';
       const nextIsIA = next.length === 1 && next[0] === 'IA';
-      const visibleDepts = [...(nextIsIA ? [] : s.customerDepartmentOptions), ...(nextIsCS ? [] : s.internalDepartmentOptions)];
-      const visiblePurposes = nextIsIA ? [] : s.purposeOptions;
+
+      let nextAuditTopic = s.filterAuditTopic;
+      let nextAuditCategory = s.filterAuditCategory || [];
+      let nextCompany = s.filterCompany;
+      let nextAuditType = s.filterAuditType;
+      let nextTargetPackage = s.filterTargetPackage || [];
+      let nextCustomerName = s.filterCustomerName || [];
+
+      if (nextIsCS) {
+        // Hide Audit Category -> clear filterAuditCategory
+        nextAuditCategory = [];
+        // Keep only standards that belong to Customer Audit
+        const csDepts = new Set([
+          ...(s.customerDepartmentOptions || []).map((d) => d.toLowerCase()),
+          ...s.assignments.flatMap((a) => (a.department1 || '').split(',').map((x) => x.trim().toLowerCase())).filter(Boolean),
+        ]);
+        nextAuditTopic = nextAuditTopic.filter((v) => csDepts.has(v.toLowerCase()));
+      } else if (nextIsIA) {
+        // Hide Customer, Purpose, Target Package, Customer Name -> clear them
+        nextCompany = [];
+        nextAuditType = [];
+        nextTargetPackage = [];
+        nextCustomerName = [];
+        // Keep only standards that belong to Internal Audit
+        const iaDepts = new Set([
+          ...(s.internalDepartmentOptions || []).map((d) => d.toLowerCase()),
+          ...s.assignments.flatMap((a) => (a.department2 || '').split(',').map((x) => x.trim().toLowerCase())).filter(Boolean),
+        ]);
+        nextAuditTopic = nextAuditTopic.filter((v) => iaDepts.has(v.toLowerCase()));
+      }
+
       return {
         filterApptType: next,
-        filterAuditTopic: s.filterAuditTopic.filter((v) => visibleDepts.includes(v)),
-        filterAuditType: s.filterAuditType.filter((v) => visiblePurposes.includes(v)),
+        filterAuditTopic: nextAuditTopic,
+        filterAuditCategory: nextAuditCategory,
+        filterCompany: nextCompany,
+        filterAuditType: nextAuditType,
+        filterTargetPackage: nextTargetPackage,
+        filterCustomerName: nextCustomerName,
       };
     });
   const openTimetable = (engId: string) => setState({ timetableOpenEng: engId, selected: null });
@@ -3711,6 +3752,7 @@ export function useScheduler() {
     computedAuditorOptions.forEach((name) => addSuggestion(name, 'QMS Host'));
     computedCustomerOptions.forEach((c) => addSuggestion(c, 'Customer'));
     computedPurposeOptions.forEach((p) => addSuggestion(p, 'Purpose'));
+    computedAuditCategoryOptions.forEach((c) => addSuggestion(c, 'Audit Category'));
     S.siteCodeOptions.forEach((s) => addSuggestion(s, 'Site'));
     S.customerDepartmentOptions.forEach((d) => addSuggestion(d, 'Standard'));
     S.internalDepartmentOptions.forEach((d) => addSuggestion(d, 'Standard'));
@@ -3736,6 +3778,7 @@ export function useScheduler() {
       if (a.department2) a.department2.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => addSuggestion(s, 'Standard'));
       if (a.targetPackage) a.targetPackage.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => addSuggestion(s, 'Target Package'));
       if (a.customerNames) a.customerNames.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => addSuggestion(s, 'Customer Name'));
+      if (a.auditCategory) a.auditCategory.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => addSuggestion(s, 'Audit Category'));
 
       if (e && e.name) addSuggestion(e.name, 'QMS Host');
       if (a.auditor1) a.auditor1.split(',').forEach((s) => addSuggestion(s, 'QMS Host'));
@@ -3771,13 +3814,42 @@ export function useScheduler() {
   // to match (Purpose has no internal-audit equivalent, so it empties for IA-only).
   const typeIsCS = S.filterApptType.length === 1 && S.filterApptType[0] === 'CS';
   const typeIsIA = S.filterApptType.length === 1 && S.filterApptType[0] === 'IA';
+  const isFilterCS = typeIsCS;
+  const isFilterIA = typeIsIA;
+  const isFilterAll = !typeIsCS && !typeIsIA;
+
+  const standardFilterOptions = useMemo(() => {
+    if (isFilterCS) return computedCustomerDepartmentOptions;
+    if (isFilterIA) return computedInternalDepartmentOptions;
+    const set = new Set<string>();
+    const res: string[] = [];
+    for (const item of [...computedCustomerDepartmentOptions, ...computedInternalDepartmentOptions]) {
+      const key = item.toLowerCase();
+      if (!set.has(key)) {
+        set.add(key);
+        res.push(item);
+      }
+    }
+    return res.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }, [isFilterCS, isFilterIA, computedCustomerDepartmentOptions, computedInternalDepartmentOptions]);
+
   const customerTopicOptions = typeIsIA ? [] : computedCustomerDepartmentOptions;
   const internalTopicOptions = typeIsCS ? [] : computedInternalDepartmentOptions;
 
   const companyNames = computedCustomerOptions;
   const auditTypes = typeIsIA ? [] : computedPurposeOptions;
   const apptTypeOptions = [{ value: 'CS', label: 'Customer (CS)' }, { value: 'IA', label: 'Internal Audit (IA)' }];
-  const hasFilters = !!(S.filterEmp.length || S.filterSite.length || S.filterCompany.length || S.filterAuditType.length || S.filterAuditTopic.length || (S.filterTargetPackage && S.filterTargetPackage.length) || (S.filterCustomerName && S.filterCustomerName.length) || S.filterApptType.length) || S.plants.some((p) => !S.activePlants[p.id]);
+  const hasFilters = !!(
+    S.filterEmp.length ||
+    S.filterSite.length ||
+    S.filterCompany.length ||
+    S.filterAuditType.length ||
+    S.filterAuditTopic.length ||
+    (S.filterTargetPackage && S.filterTargetPackage.length) ||
+    (S.filterCustomerName && S.filterCustomerName.length) ||
+    (S.filterAuditCategory && S.filterAuditCategory.length) ||
+    S.filterApptType.length
+  ) || S.plants.some((p) => !S.activePlants[p.id]);
 
   // ---- day dialog VM ----
   const dayDialogOpen = S.dayDialog !== null;
@@ -4000,6 +4072,7 @@ export function useScheduler() {
     adminMainStyle, adminWrapStyle, adminStatGridStyle, loginWrapStyle, loginBrandStyle, loginFormWrapStyle,
     filterEmp: S.filterEmp, filterSite: S.filterSite, filterCompany: S.filterCompany, filterAuditType: S.filterAuditType, filterAuditTopic: S.filterAuditTopic, filterApptType: S.filterApptType,
     employeeOptions, siteOptions, customerTopicOptions, internalTopicOptions, companyNames, auditTypes, apptTypeOptions, hasFilters,
+    isFilterCS, isFilterIA, isFilterAll, standardFilterOptions,
     toggleFilterEmp: (v: string) => toggleFilterValue('filterEmp', v),
     toggleFilterSite: (v: string) => toggleFilterValue('filterSite', v),
     toggleFilterCompany: (v: string) => toggleFilterValue('filterCompany', v),
