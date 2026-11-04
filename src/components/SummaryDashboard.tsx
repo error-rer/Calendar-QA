@@ -70,13 +70,6 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
     });
   };
 
-  // Customer Audit Visits view state
-  const [visitsViewMode, setVisitsViewMode] = useState<'detailed' | 'summary' | 'month'>('detailed');
-  const [selectedVisitsMonth, setSelectedVisitsMonth] = useState<number>(() => {
-    const curMonth = new Date().getMonth();
-    return curMonth >= 0 && curMonth < 12 ? curMonth : 0;
-  });
-
 // Metric cards: Audits count in selected year
   const yearAppts = useMemo(() => {
     return (vm.assignments || [])
@@ -246,16 +239,19 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
   const totalFindings = matrixData.grandTotalFullYear.overall;
 
   // Export to Excel with custom styles, borders, and structured grouping
-    // Aggregate Customer Audit Visits by Customer, Month, and Site
-  const customerVisitsData = useMemo(() => {
+    // Aggregate Audit Visits by Site (UTL1, UTL2A, UTL2B, UTL3A, UTL3T) and Month (0..11)
+  const auditVisitsData = useMemo(() => {
+    const siteVisits: Record<TargetSite, number[]> = {
+      UTL1: Array(12).fill(0),
+      UTL2A: Array(12).fill(0),
+      UTL2B: Array(12).fill(0),
+      UTL3A: Array(12).fill(0),
+      UTL3T: Array(12).fill(0),
+    };
+
     const seenVisits = new Set<string>();
-    const rawCustomerMap = new Map<string, {
-      monthly: Record<TargetSite, number>[];
-    }>();
 
     for (const a of vm.assignments || []) {
-      if (isInternalAssignment(a) || a.sectionType === 'internal') continue;
-
       const d = new Date(2026, 5, 29 + a.week * 7 + a.day);
       if (d.getFullYear() !== vm.summaryYear) continue;
 
@@ -263,9 +259,8 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
       if (month < 0 || month > 11) continue;
 
       const dateISO = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const customer = (a.customer || a.customerNames || 'Unknown').trim();
-      if (!customer) continue;
 
+      // Identify the site(s) assigned to the appointment / day
       const rawSiteStr = (a.site1 || a.site2 || '').trim();
       const rawSites = rawSiteStr.split(/[/,]/).map((s) => s.trim()).filter(Boolean);
 
@@ -277,187 +272,67 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
         if (seenVisits.has(visitKey)) continue;
         seenVisits.add(visitKey);
 
-        if (!rawCustomerMap.has(customer)) {
-          rawCustomerMap.set(customer, {
-            monthly: Array.from({ length: 12 }, () => ({
-              UTL1: 0,
-              UTL2A: 0,
-              UTL2B: 0,
-              UTL3A: 0,
-              UTL3T: 0,
-            })),
-          });
-        }
-
-        rawCustomerMap.get(customer)!.monthly[month][targetSite]++;
+        siteVisits[targetSite][month]++;
       }
     }
 
-    const customers = Array.from(rawCustomerMap.keys()).sort((a, b) => a.localeCompare(b));
-
-    const grid: Record<string, Record<number, Record<TargetSite, number>>> = {};
-    const customerSiteTotals: Record<string, Record<TargetSite, number>> = {};
-    const customerMonthlyTotals: Record<string, number[]> = {};
-    const customerYearTotals: Record<string, number> = {};
-
-    const siteMonthlyTotals: Record<TargetSite, number[]> = {
-      UTL1: Array(12).fill(0),
-      UTL2A: Array(12).fill(0),
-      UTL2B: Array(12).fill(0),
-      UTL3A: Array(12).fill(0),
-      UTL3T: Array(12).fill(0),
+    const siteFullYearTotals: Record<TargetSite, number> = {
+      UTL1: siteVisits.UTL1.reduce((a, b) => a + b, 0),
+      UTL2A: siteVisits.UTL2A.reduce((a, b) => a + b, 0),
+      UTL2B: siteVisits.UTL2B.reduce((a, b) => a + b, 0),
+      UTL3A: siteVisits.UTL3A.reduce((a, b) => a + b, 0),
+      UTL3T: siteVisits.UTL3T.reduce((a, b) => a + b, 0),
     };
 
-    const siteYearTotals: Record<TargetSite, number> = {
-      UTL1: 0,
-      UTL2A: 0,
-      UTL2B: 0,
-      UTL3A: 0,
-      UTL3T: 0,
-    };
-
-    const monthTotals = Array(12).fill(0);
-
-    for (const cust of customers) {
-      const custEntry = rawCustomerMap.get(cust)!;
-      grid[cust] = {};
-      customerSiteTotals[cust] = { UTL1: 0, UTL2A: 0, UTL2B: 0, UTL3A: 0, UTL3T: 0 };
-      customerMonthlyTotals[cust] = Array(12).fill(0);
-      let custYearTotal = 0;
-
-      for (let m = 0; m < 12; m++) {
-        grid[cust][m] = { ...custEntry.monthly[m] };
-        let mSum = 0;
-        for (const site of TARGET_SITES) {
-          const val = custEntry.monthly[m][site];
-          customerSiteTotals[cust][site] += val;
-          siteMonthlyTotals[site][m] += val;
-          mSum += val;
-        }
-        customerMonthlyTotals[cust][m] = mSum;
-        custYearTotal += mSum;
-      }
-
-      customerYearTotals[cust] = custYearTotal;
-    }
-
+    const monthlyTotals = Array(12).fill(0);
     for (let m = 0; m < 12; m++) {
       for (const site of TARGET_SITES) {
-        monthTotals[m] += siteMonthlyTotals[site][m];
+        monthlyTotals[m] += siteVisits[site][m];
       }
     }
 
-    for (const site of TARGET_SITES) {
-      siteYearTotals[site] = siteMonthlyTotals[site].reduce((a, b) => a + b, 0);
-    }
-
-    const grandTotal = monthTotals.reduce((a, b) => a + b, 0);
+    const grandTotal = monthlyTotals.reduce((a, b) => a + b, 0);
 
     return {
-      customers,
-      grid,
-      customerSiteTotals,
-      customerMonthlyTotals,
-      customerYearTotals,
-      siteMonthlyTotals,
-      siteYearTotals,
-      monthTotals,
+      siteVisits,
+      siteFullYearTotals,
+      monthlyTotals,
       grandTotal,
     };
   }, [vm.assignments, vm.summaryYear]);
 
-  // Export Customer Audit Visits to Excel with formatted 2-level headers and full totals
+  // Export Audit Visits to Excel
   const handleExportVisitsExcel = async () => {
     // @ts-ignore
     const XLSX = (await import('xlsx-js-style')).default || (await import('xlsx-js-style'));
 
     const rows: (string | number)[][] = [];
-    const merges: { s: { r: number; c: number }; e: { r: number; c: number } }[] = [];
 
-    // Row 0: Title
-    rows.push([`UTAC - Customer Audit Visits by Site & Month (Year ${vm.summaryYear})`]);
-    merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 66 } });
-
-    // Row 1: Blank
+    rows.push([`UTAC - Audit Visits by Site (Year ${vm.summaryYear})`]);
     rows.push([]);
 
-    // Row 2: Header Level 1
-    const h1 = ['Customer'];
-    for (const m of MONTHS) {
-      h1.push(m, '', '', '', '');
-    }
-    h1.push('Full Year Total', '', '', '', '', 'Grand Total');
-    rows.push(h1);
+    const headers = ['Site', ...MONTHS, 'Full Year Total'];
+    const headerRowIndex = rows.length;
+    rows.push(headers);
 
-    // Row 3: Header Level 2
-    const h2 = [''];
-    for (let m = 0; m < 12; m++) {
-      h2.push(...TARGET_SITES);
-    }
-    h2.push(...TARGET_SITES, '');
-    rows.push(h2);
-
-    // Merges for headers
-    merges.push({ s: { r: 2, c: 0 }, e: { r: 3, c: 0 } }); // Customer
-    for (let m = 0; m < 12; m++) {
-      const sc = 1 + m * 5;
-      merges.push({ s: { r: 2, c: sc }, e: { r: 2, c: sc + 4 } });
-    }
-    merges.push({ s: { r: 2, c: 61 }, e: { r: 2, c: 65 } }); // Full Year Total
-    merges.push({ s: { r: 2, c: 66 }, e: { r: 3, c: 66 } }); // Grand Total
-
-    const custStartRow = 4;
-    for (const cust of customerVisitsData.customers) {
-      const r: (string | number)[] = [cust];
-      for (let m = 0; m < 12; m++) {
-        for (const s of TARGET_SITES) {
-          r.push(customerVisitsData.grid[cust]?.[m]?.[s] || 0);
-        }
-      }
-      for (const s of TARGET_SITES) {
-        r.push(customerVisitsData.customerSiteTotals[cust]?.[s] || 0);
-      }
-      r.push(customerVisitsData.customerYearTotals[cust] || 0);
-      rows.push(r);
+    for (const site of TARGET_SITES) {
+      rows.push([
+        site,
+        ...auditVisitsData.siteVisits[site],
+        auditVisitsData.siteFullYearTotals[site],
+      ]);
     }
 
-    // Row: Total Visits (by site)
-    const totalVisitsRow: (string | number)[] = ['Total Visits'];
-    for (let m = 0; m < 12; m++) {
-      for (const s of TARGET_SITES) {
-        totalVisitsRow.push(customerVisitsData.siteMonthlyTotals[s]?.[m] || 0);
-      }
-    }
-    for (const s of TARGET_SITES) {
-      totalVisitsRow.push(customerVisitsData.siteYearTotals[s] || 0);
-    }
-    totalVisitsRow.push(customerVisitsData.grandTotal);
-    const totalVisitsRowIdx = rows.length;
-    rows.push(totalVisitsRow);
-
-    // Row: Grand Total (by month)
-    const grandTotalRow: (string | number)[] = ['Grand Total'];
-    for (let m = 0; m < 12; m++) {
-      grandTotalRow.push(customerVisitsData.monthTotals[m] || 0, '', '', '', '');
-      const sc = 1 + m * 5;
-      merges.push({ s: { r: totalVisitsRowIdx + 1, c: sc }, e: { r: totalVisitsRowIdx + 1, c: sc + 4 } });
-    }
-    // Full Year merged
-    grandTotalRow.push(customerVisitsData.grandTotal, '', '', '', '', customerVisitsData.grandTotal);
-    merges.push({ s: { r: totalVisitsRowIdx + 1, c: 61 }, e: { r: totalVisitsRowIdx + 1, c: 65 } });
-    const grandTotalRowIdx = rows.length;
-    rows.push(grandTotalRow);
+    const totalRowIndex = rows.length;
+    rows.push([
+      'Total',
+      ...auditVisitsData.monthlyTotals,
+      auditVisitsData.grandTotal,
+    ]);
 
     const worksheet = XLSX.utils.aoa_to_sheet(rows);
-    worksheet['!merges'] = merges;
 
-    worksheet['!cols'] = [
-      { wch: 22 },
-      ...Array.from({ length: 65 }, () => ({ wch: 7 })),
-      { wch: 12 },
-    ];
-
-    // Styles
+    // Style Title
     if (worksheet['A1']) {
       worksheet['A1'].s = {
         font: { name: 'Calibri', sz: 14, bold: true, color: { rgb: '1E3A8A' } },
@@ -465,28 +340,16 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
       };
     }
 
-    for (let c = 0; c <= 66; c++) {
-      const c2 = XLSX.utils.encode_cell({ r: 2, c });
-      if (worksheet[c2]) {
-        worksheet[c2].s = {
+    // Style Header Row
+    for (let col = 0; col < headers.length; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: headerRowIndex, c: col });
+      if (worksheet[cellAddress]) {
+        worksheet[cellAddress].s = {
           font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '1E293B' } },
-          alignment: { horizontal: 'center', vertical: 'center' },
+          alignment: { horizontal: col === 0 ? 'left' : 'right', vertical: 'center' },
           fill: { fgColor: { rgb: 'F1F5F9' } },
           border: {
             top: { style: 'medium', color: { rgb: '94A3B8' } },
-            bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
-            left: { style: 'thin', color: { rgb: 'CBD5E1' } },
-            right: { style: 'thin', color: { rgb: 'CBD5E1' } },
-          },
-        };
-      }
-      const c3 = XLSX.utils.encode_cell({ r: 3, c });
-      if (worksheet[c3]) {
-        worksheet[c3].s = {
-          font: { name: 'Calibri', sz: 9, bold: true, color: { rgb: '475569' } },
-          alignment: { horizontal: 'center', vertical: 'center' },
-          fill: { fgColor: { rgb: 'F8FAFC' } },
-          border: {
             bottom: { style: 'medium', color: { rgb: '94A3B8' } },
             left: { style: 'thin', color: { rgb: 'E2E8F0' } },
             right: { style: 'thin', color: { rgb: 'E2E8F0' } },
@@ -495,65 +358,58 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
       }
     }
 
-    for (let r = custStartRow; r < totalVisitsRowIdx; r++) {
-      for (let c = 0; c <= 66; c++) {
-        const addr = XLSX.utils.encode_cell({ r, c });
-        if (worksheet[addr]) {
-          const val = worksheet[addr].v;
+    // Style Site Data Rows
+    for (let r = headerRowIndex + 1; r < totalRowIndex; r++) {
+      for (let col = 0; col < headers.length; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r, c: col });
+        if (worksheet[cellAddress]) {
+          const val = worksheet[cellAddress].v;
           const isNum = typeof val === 'number';
-          const isTotalCol = c >= 61;
-          worksheet[addr].s = {
+          const isTotalCol = col === headers.length - 1;
+          worksheet[cellAddress].s = {
             font: {
               name: 'Calibri',
               sz: 10,
               bold: isTotalCol || (isNum && val > 0),
-              color: isNum && val === 0 ? { rgb: '94A3B8' } : (isTotalCol ? { rgb: '1D4ED8' } : { rgb: '0F172A' }),
+              color: isNum && val === 0 ? { rgb: '94A3B8' } : (isTotalCol ? { rgb: '2563EB' } : { rgb: '0F172A' }),
             },
-            alignment: { horizontal: c === 0 ? 'left' : 'center', vertical: 'center' },
+            alignment: { horizontal: col === 0 ? 'left' : 'right', vertical: 'center' },
             fill: isTotalCol ? { fgColor: { rgb: 'F8FAFC' } } : undefined,
             border: {
               bottom: { style: 'thin', color: { rgb: 'E2E8F0' } },
-              right: (c === 0 || c % 5 === 0) ? { style: 'thin', color: { rgb: 'CBD5E1' } } : { style: 'hair', color: { rgb: 'F1F5F9' } },
+              left: { style: 'thin', color: { rgb: 'F1F5F9' } },
+              right: { style: 'thin', color: { rgb: 'F1F5F9' } },
             },
           };
         }
       }
     }
 
-    for (let c = 0; c <= 66; c++) {
-      const addr = XLSX.utils.encode_cell({ r: totalVisitsRowIdx, c });
-      if (worksheet[addr]) {
-        worksheet[addr].s = {
-          font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '0F172A' } },
-          alignment: { horizontal: c === 0 ? 'left' : 'center', vertical: 'center' },
+    // Style Total Row
+    for (let col = 0; col < headers.length; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: totalRowIndex, c: col });
+      if (worksheet[cellAddress]) {
+        worksheet[cellAddress].s = {
+          font: { name: 'Calibri', sz: 11, bold: true, color: col === headers.length - 1 ? { rgb: '2563EB' } : { rgb: '0F172A' } },
+          alignment: { horizontal: col === 0 ? 'left' : 'right', vertical: 'center' },
           fill: { fgColor: { rgb: 'E2E8F0' } },
           border: {
             top: { style: 'medium', color: { rgb: '475569' } },
-            bottom: { style: 'thin', color: { rgb: '94A3B8' } },
-            right: (c === 0 || c % 5 === 0) ? { style: 'thin', color: { rgb: '94A3B8' } } : undefined,
-          },
-        };
-      }
-    }
-
-    for (let c = 0; c <= 66; c++) {
-      const addr = XLSX.utils.encode_cell({ r: grandTotalRowIdx, c });
-      if (worksheet[addr]) {
-        worksheet[addr].s = {
-          font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: '1E3A8A' } },
-          alignment: { horizontal: c === 0 ? 'left' : 'center', vertical: 'center' },
-          fill: { fgColor: { rgb: 'CBD5E1' } },
-          border: {
-            top: { style: 'thin', color: { rgb: '94A3B8' } },
             bottom: { style: 'double', color: { rgb: '0F172A' } },
           },
         };
       }
     }
 
+    worksheet['!cols'] = [
+      { wch: 18 },
+      ...Array.from({ length: 12 }, () => ({ wch: 9 })),
+      { wch: 15 },
+    ];
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, `Visits ${vm.summaryYear}`);
-    XLSX.writeFile(workbook, `customer-audit-visits-${vm.summaryYear}.xlsx`);
+    XLSX.writeFile(workbook, `audit-visits-${vm.summaryYear}.xlsx`);
   };
 
 const handleExportExcel = async () => {
@@ -741,6 +597,19 @@ const handleExportExcel = async () => {
     ];
 
     const workbook = XLSX.utils.book_new();
+    // Generate Visits Worksheet
+    const vRows: (string | number)[][] = [];
+    vRows.push([`UTAC - Audit Visits by Site (Year ${vm.summaryYear})`]);
+    vRows.push([]);
+    const vHeaders = ['Site', ...MONTHS, 'Full Year Total'];
+    vRows.push(vHeaders);
+    for (const site of TARGET_SITES) {
+      vRows.push([site, ...auditVisitsData.siteVisits[site], auditVisitsData.siteFullYearTotals[site]]);
+    }
+    vRows.push(['Total', ...auditVisitsData.monthlyTotals, auditVisitsData.grandTotal]);
+    const visitsWorksheet = XLSX.utils.aoa_to_sheet(vRows);
+    visitsWorksheet['!cols'] = [{ wch: 18 }, ...Array.from({ length: 12 }, () => ({ wch: 9 })), { wch: 15 }];
+    XLSX.utils.book_append_sheet(workbook, visitsWorksheet, `Visits ${vm.summaryYear}`);
     XLSX.utils.book_append_sheet(workbook, worksheet, `Findings ${vm.summaryYear}`);
     XLSX.writeFile(workbook, `annual-audit-findings-${vm.summaryYear}.xlsx`);
   };
@@ -803,61 +672,20 @@ const handleExportExcel = async () => {
           </div>
         </div>
 
-        {/* Customer Audit Visits by Site & Month Matrix */}
+        {/* Audit Visits by Site Matrix */}
         <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.02);margin-bottom:20px')}>
           {/* Card Header & Controls */}
           <div style={css('display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px')}>
             <div>
               <div style={css('font-size:16px;font-weight:700;color:#15191e;letter-spacing:-.2px')}>
-                Customer Audit Visits by Site & Month
+                Audit Visits by Site
               </div>
               <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8a9088;margin-top:2px")}>
-                5 Sites (UTL1, UTL2A, UTL2B, UTL3A, UTL3T) · 12 Months · Year {vm.summaryYear} · {customerVisitsData.grandTotal} Audit Site-Days
+                5 Sites (UTL1, UTL2A, UTL2B, UTL3A, UTL3T) · 12 Months · Year {vm.summaryYear}
               </div>
             </div>
 
-            <div style={css('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
-              {/* View Mode Segmented Control */}
-              <div style={css('display:flex;align-items:center;background:#eef0ea;padding:2px;border-radius:8px;border:1px solid #dde0d9')}>
-                <button
-                  type="button"
-                  onClick={() => setVisitsViewMode('detailed')}
-                  style={css(`padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:${visitsViewMode === 'detailed' ? '600' : '500'};color:${visitsViewMode === 'detailed' ? '#15191e' : '#64748b'};background:${visitsViewMode === 'detailed' ? '#fff' : 'transparent'};border:none;cursor:pointer;box-shadow:${visitsViewMode === 'detailed' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none'};transition:all .15s`)}
-                >
-                  Detailed Grid (5 Sites)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setVisitsViewMode('summary')}
-                  style={css(`padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:${visitsViewMode === 'summary' ? '600' : '500'};color:${visitsViewMode === 'summary' ? '#15191e' : '#64748b'};background:${visitsViewMode === 'summary' ? '#fff' : 'transparent'};border:none;cursor:pointer;box-shadow:${visitsViewMode === 'summary' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none'};transition:all .15s`)}
-                >
-                  Monthly Summary
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setVisitsViewMode('month')}
-                  style={css(`padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:${visitsViewMode === 'month' ? '600' : '500'};color:${visitsViewMode === 'month' ? '#15191e' : '#64748b'};background:${visitsViewMode === 'month' ? '#fff' : 'transparent'};border:none;cursor:pointer;box-shadow:${visitsViewMode === 'month' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none'};transition:all .15s`)}
-                >
-                  Month Focus
-                </button>
-              </div>
-
-              {/* Month Dropdown if Month Focus active */}
-              {visitsViewMode === 'month' && (
-                <select
-                  value={selectedVisitsMonth}
-                  onChange={(e) => setSelectedVisitsMonth(Number(e.target.value))}
-                  style={css("padding:5px 10px;border-radius:7px;border:1px solid #dde0d9;background:#fff;font-size:12px;font-weight:600;color:#15191e;outline:none;cursor:pointer;font-family:'Archivo',sans-serif")}
-                >
-                  {MONTHS.map((m, idx) => (
-                    <option key={m} value={idx}>
-                      {m} ({vm.summaryYear})
-                    </option>
-                  ))}
-                </select>
-              )}
-
-              {/* Export to Excel */}
+            <div style={css('display:flex;align-items:center;gap:8px')}>
               <button
                 type="button"
                 onClick={handleExportVisitsExcel}
@@ -875,353 +703,77 @@ const handleExportExcel = async () => {
             </div>
           </div>
 
-          {/* Table Container */}
-          {customerVisitsData.customers.length === 0 ? (
-            <div style={css('padding:36px;text-align:center;border:1px dashed #d1d5db;border-radius:10px;color:#8a9088;font-size:13px')}>
-              No customer audit visits recorded for {vm.summaryYear}.
+          {/* Matrix Table with Horizontal Scroll */}
+          <div style={css('overflow-x:auto;border:1px solid #e7eae3;border-radius:10px')}>
+            <div style={css('min-width:960px')}>
+              {/* Header Row */}
+              <div style={css(`display:grid;grid-template-columns:${gridCols};background:#f8faf6;padding:10px 14px;border-bottom:2px solid #e2e5de;font-size:11px;font-weight:700;color:#5c625c;font-family:'IBM Plex Mono',monospace;letter-spacing:.3px`)}>
+                <div />
+                {MONTHS.map((m) => (
+                  <div key={m} style={css('text-align:right')}>{m}</div>
+                ))}
+                <div style={css('text-align:right;color:#2756d6')}>Full Year Total</div>
+              </div>
+
+              {/* 5 Sites Rows */}
+              {TARGET_SITES.map((site) => {
+                const conf = SITE_CONFIG[site];
+                const siteTotal = auditVisitsData.siteFullYearTotals[site];
+
+                return (
+                  <div
+                    key={site}
+                    style={css(`display:grid;grid-template-columns:${gridCols};padding:10px 14px;background:#ffffff;align-items:center;font-size:12.5px;border-bottom:1px solid #e7eae3;transition:background 0.15s`)}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f9faf7')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
+                  >
+                    <div style={css('display:flex;align-items:center;gap:8px')}>
+                      <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;background:${conf.badgeBg};color:${conf.text};border:1px solid ${conf.border}`)}>
+                        {site}
+                      </span>
+                    </div>
+
+                    {MONTHS.map((_, mIdx) => {
+                      const count = auditVisitsData.siteVisits[site][mIdx];
+                      return (
+                        <div
+                          key={mIdx}
+                          style={css(`text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;color:${count > 0 ? '#15191e' : '#b4b9ae'};font-weight:${count > 0 ? '700' : '400'}`)}
+                        >
+                          {count}
+                        </div>
+                      );
+                    })}
+
+                    <div style={css(`text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:${siteTotal > 0 ? '#2756d6' : '#b4b9ae'}`)}>
+                      {siteTotal}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Total Bottom Row */}
+              <div style={css(`display:grid;grid-template-columns:${gridCols};padding:11px 14px;background:#f8faf6;align-items:center;border-top:2px solid #e2e5de;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#15191e`)}>
+                <div style={css('text-transform:uppercase;letter-spacing:.5px;font-weight:800')}>Total</div>
+
+                {MONTHS.map((_, mIdx) => {
+                  const mSum = auditVisitsData.monthlyTotals[mIdx];
+                  return (
+                    <div
+                      key={mIdx}
+                      style={css(`text-align:right;font-size:12px;font-weight:800;color:${mSum > 0 ? '#15191e' : '#b4b9ae'}`)}
+                    >
+                      {mSum}
+                    </div>
+                  );
+                })}
+
+                <div style={css('text-align:right;font-size:13px;font-weight:800;color:#2756d6')}>
+                  {auditVisitsData.grandTotal}
+                </div>
+              </div>
             </div>
-          ) : (
-            <div style={css('overflow-x:auto;border:1px solid #e7eae3;border-radius:10px')}>
-              {visitsViewMode === 'detailed' && (
-                <table style={css('border-collapse:collapse;width:100%;font-size:11.5px;font-family:\'Archivo\',sans-serif;min-width:2400px')}>
-                  <thead>
-                    {/* Top Level Header */}
-                    <tr style={css("background:#f8faf6;border-bottom:1px solid #e2e5de;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#5c625c;letter-spacing:.3px")}>
-                      <th
-                        rowSpan={2}
-                        style={css('position:sticky;left:0;z-index:20;background:#f8faf6;padding:10px 14px;text-align:left;border-bottom:2px solid #e2e5de;border-right:2px solid #dde1d8;min-width:180px')}
-                      >
-                        Customer
-                      </th>
-                      {MONTHS.map((m) => (
-                        <th
-                          key={m}
-                          colSpan={5}
-                          style={css('padding:8px 4px;text-align:center;border-right:1px solid #e2e5de;border-bottom:1px solid #e2e5de;background:#f8faf6;color:#374151')}
-                        >
-                          {m}
-                        </th>
-                      ))}
-                      <th
-                        colSpan={5}
-                        style={css('padding:8px 4px;text-align:center;border-right:1px solid #cbd5e1;border-bottom:1px solid #e2e5de;background:#f0f7ff;color:#1d4ed8')}
-                      >
-                        Full Year Total
-                      </th>
-                      <th
-                        rowSpan={2}
-                        style={css('padding:10px 14px;text-align:right;border-bottom:2px solid #e2e5de;background:#eff6ff;color:#1e3a8a;min-width:90px')}
-                      >
-                        Grand Total
-                      </th>
-                    </tr>
-
-                    {/* Sub Header (Sites) */}
-                    <tr style={css("background:#fafbf9;border-bottom:2px solid #e2e5de;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700")}>
-                      {MONTHS.map((m) =>
-                        TARGET_SITES.map((site, sIdx) => (
-                          <th
-                            key={`${m}_${site}`}
-                            style={css(`padding:6px 2px;text-align:center;color:${SITE_CONFIG[site].text};min-width:38px;border-right:${sIdx === 4 ? '1px solid #e2e5de' : '1px solid #f1f3ee'}`)}
-                          >
-                            {site}
-                          </th>
-                        ))
-                      )}
-                      {TARGET_SITES.map((site, sIdx) => (
-                        <th
-                          key={`total_${site}`}
-                          style={css(`padding:6px 2px;text-align:center;color:${SITE_CONFIG[site].text};min-width:40px;background:#e8f1fc;border-right:${sIdx === 4 ? '1px solid #cbd5e1' : '1px solid #e2e8f0'}`)}
-                        >
-                          {site}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {customerVisitsData.customers.map((cust) => (
-                      <tr
-                        key={cust}
-                        style={css('border-bottom:1px solid #eef1ea;transition:background-color .1s')}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#f6f8f5';
-                          const firstCell = e.currentTarget.firstElementChild as HTMLElement | null;
-                          if (firstCell) firstCell.style.backgroundColor = '#f6f8f5';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = '';
-                          const firstCell = e.currentTarget.firstElementChild as HTMLElement | null;
-                          if (firstCell) firstCell.style.backgroundColor = '#fff';
-                        }}
-                      >
-                        <td style={css('position:sticky;left:0;z-index:10;background:#fff;padding:8px 14px;font-weight:600;color:#15191e;border-right:2px solid #dde1d8;white-space:nowrap')}>
-                          {cust}
-                        </td>
-
-                        {MONTHS.map((_, m) =>
-                          TARGET_SITES.map((site, sIdx) => {
-                            const val = customerVisitsData.grid[cust]?.[m]?.[site] || 0;
-                            return (
-                              <td
-                                key={`${m}_${site}`}
-                                style={css(`padding:8px 2px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:${val > 0 ? '#15191e' : '#b4b9ae'};font-weight:${val > 0 ? '700' : '400'};border-right:${sIdx === 4 ? '1px solid #e2e5de' : '1px solid #f8f9f6'}`)}
-                              >
-                                {val > 0 ? val : '-'}
-                              </td>
-                            );
-                          })
-                        )}
-
-                        {TARGET_SITES.map((site, sIdx) => {
-                          const val = customerVisitsData.customerSiteTotals[cust]?.[site] || 0;
-                          return (
-                            <td
-                              key={`total_${site}`}
-                              style={css(`padding:8px 2px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:${val > 0 ? SITE_CONFIG[site].text : '#b4b9ae'};font-weight:${val > 0 ? '700' : '400'};background:#f8fafd;border-right:${sIdx === 4 ? '1px solid #cbd5e1' : '1px solid #eef2f6'}`)}
-                            >
-                              {val > 0 ? val : '-'}
-                            </td>
-                          );
-                        })}
-
-                        <td style={css("padding:8px 14px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:#1d4ed8;background:#f0f7ff")}>
-                          {customerVisitsData.customerYearTotals[cust] || 0}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-
-                  <tfoot>
-                    {/* Row 1: Total Visits by site */}
-                    <tr style={css("background:#f8faf6;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#15191e")}>
-                      <td style={css('position:sticky;left:0;z-index:10;background:#f8faf6;padding:10px 14px;border-top:2px solid #cbd5e1;border-bottom:1px solid #e2e5de;border-right:2px solid #dde1d8')}>
-                        Total Visits
-                      </td>
-
-                      {MONTHS.map((_, m) =>
-                        TARGET_SITES.map((site, sIdx) => {
-                          const val = customerVisitsData.siteMonthlyTotals[site]?.[m] || 0;
-                          return (
-                            <td
-                              key={`sum_${m}_${site}`}
-                              style={css(`padding:10px 2px;text-align:center;color:${val > 0 ? '#15191e' : '#b4b9ae'};border-top:2px solid #cbd5e1;border-bottom:1px solid #e2e5de;border-right:${sIdx === 4 ? '1px solid #e2e5de' : '1px solid #edf0ea'}`)}
-                            >
-                              {val > 0 ? val : '-'}
-                            </td>
-                          );
-                        })
-                      )}
-
-                      {TARGET_SITES.map((site, sIdx) => {
-                        const val = customerVisitsData.siteYearTotals[site] || 0;
-                        return (
-                          <td
-                            key={`sum_tot_${site}`}
-                            style={css(`padding:10px 2px;text-align:center;color:${val > 0 ? SITE_CONFIG[site].text : '#b4b9ae'};background:#eef6ff;border-top:2px solid #cbd5e1;border-bottom:1px solid #e2e5de;border-right:${sIdx === 4 ? '1px solid #cbd5e1' : '1px solid #dbeafe'}`)}
-                          >
-                            {val > 0 ? val : '-'}
-                          </td>
-                        );
-                      })}
-
-                      <td style={css('padding:10px 14px;text-align:right;font-size:13px;font-weight:800;color:#1e3a8a;background:#e0edff;border-top:2px solid #cbd5e1;border-bottom:1px solid #e2e5de')}>
-                        {customerVisitsData.grandTotal}
-                      </td>
-                    </tr>
-
-                    {/* Row 2: Grand Total by month */}
-                    <tr style={css("background:#edf1e8;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#15191e")}>
-                      <td style={css('position:sticky;left:0;z-index:10;background:#edf1e8;padding:10px 14px;border-top:1px solid #dde1d8;border-right:2px solid #dde1d8')}>
-                        Grand Total
-                      </td>
-
-                      {MONTHS.map((_, m) => {
-                        const mTotal = customerVisitsData.monthTotals[m] || 0;
-                        return (
-                          <td
-                            key={`grand_${m}`}
-                            colSpan={5}
-                            style={css('padding:10px 4px;text-align:center;font-size:12px;font-weight:700;color:#15191e;border-top:1px solid #dde1d8;border-right:1px solid #dde1d8')}
-                          >
-                            {mTotal > 0 ? mTotal : '-'}
-                          </td>
-                        );
-                      })}
-
-                      <td
-                        colSpan={5}
-                        style={css('padding:10px 4px;text-align:center;font-size:12px;font-weight:800;color:#1d4ed8;background:#e1ecfc;border-top:1px solid #dde1d8;border-right:1px solid #cbd5e1')}
-                      >
-                        {customerVisitsData.grandTotal > 0 ? customerVisitsData.grandTotal : '-'}
-                      </td>
-
-                      <td style={css('padding:10px 14px;text-align:right;font-size:13px;font-weight:800;color:#1e3a8a;background:#d4e5fc;border-top:1px solid #dde1d8')}>
-                        {customerVisitsData.grandTotal}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              )}
-
-              {visitsViewMode === 'summary' && (
-                <table style={css('border-collapse:collapse;width:100%;font-size:11.5px;font-family:\'Archivo\',sans-serif;min-width:850px')}>
-                  <thead>
-                    <tr style={css("background:#f8faf6;border-bottom:2px solid #e2e5de;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#5c625c;letter-spacing:.3px")}>
-                      <th style={css('position:sticky;left:0;z-index:20;background:#f8faf6;padding:10px 14px;text-align:left;border-right:2px solid #dde1d8;min-width:180px')}>
-                        Customer
-                      </th>
-                      {MONTHS.map((m) => (
-                        <th key={m} style={css('padding:10px 8px;text-align:right;border-right:1px solid #f1f3ee')}>
-                          {m}
-                        </th>
-                      ))}
-                      <th style={css('padding:10px 14px;text-align:right;background:#eff6ff;color:#1e3a8a;min-width:110px')}>
-                        Full Year Total
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {customerVisitsData.customers.map((cust) => (
-                      <tr
-                        key={cust}
-                        style={css('border-bottom:1px solid #eef1ea;transition:background-color .1s')}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#f6f8f5';
-                          const firstCell = e.currentTarget.firstElementChild as HTMLElement | null;
-                          if (firstCell) firstCell.style.backgroundColor = '#f6f8f5';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = '';
-                          const firstCell = e.currentTarget.firstElementChild as HTMLElement | null;
-                          if (firstCell) firstCell.style.backgroundColor = '#fff';
-                        }}
-                      >
-                        <td style={css('position:sticky;left:0;z-index:10;background:#fff;padding:8px 14px;font-weight:600;color:#15191e;border-right:2px solid #dde1d8;white-space:nowrap')}>
-                          {cust}
-                        </td>
-                        {MONTHS.map((_, m) => {
-                          const val = customerVisitsData.customerMonthlyTotals[cust]?.[m] || 0;
-                          return (
-                            <td
-                              key={m}
-                              style={css(`padding:8px 8px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;color:${val > 0 ? '#15191e' : '#b4b9ae'};font-weight:${val > 0 ? '700' : '400'};border-right:1px solid #f8f9f6`)}
-                            >
-                              {val > 0 ? val : '-'}
-                            </td>
-                          );
-                        })}
-                        <td style={css("padding:8px 14px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:#1d4ed8;background:#f0f7ff")}>
-                          {customerVisitsData.customerYearTotals[cust] || 0}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr style={css("background:#f8faf6;font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:700;color:#15191e;border-top:2px solid #cbd5e1")}>
-                      <td style={css('position:sticky;left:0;z-index:10;background:#f8faf6;padding:10px 14px;border-right:2px solid #dde1d8')}>
-                        Total Visits
-                      </td>
-                      {MONTHS.map((_, m) => {
-                        const val = customerVisitsData.monthTotals[m] || 0;
-                        return (
-                          <td
-                            key={m}
-                            style={css(`padding:10px 8px;text-align:right;color:${val > 0 ? '#15191e' : '#b4b9ae'};border-right:1px solid #edf0ea`)}
-                          >
-                            {val > 0 ? val : '-'}
-                          </td>
-                        );
-                      })}
-                      <td style={css('padding:10px 14px;text-align:right;font-size:13px;font-weight:800;color:#1e3a8a;background:#e0edff')}>
-                        {customerVisitsData.grandTotal}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              )}
-
-              {visitsViewMode === 'month' && (
-                <table style={css('border-collapse:collapse;width:100%;font-size:11.5px;font-family:\'Archivo\',sans-serif;min-width:600px')}>
-                  <thead>
-                    <tr style={css("background:#f8faf6;border-bottom:2px solid #e2e5de;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#5c625c;letter-spacing:.3px")}>
-                      <th style={css('position:sticky;left:0;z-index:20;background:#f8faf6;padding:10px 14px;text-align:left;border-right:2px solid #dde1d8;min-width:180px')}>
-                        Customer
-                      </th>
-                      {TARGET_SITES.map((site) => (
-                        <th
-                          key={site}
-                          style={css(`padding:10px 12px;text-align:center;color:${SITE_CONFIG[site].text};border-right:1px solid #f1f3ee;min-width:80px`)}
-                        >
-                          {site}
-                        </th>
-                      ))}
-                      <th style={css('padding:10px 14px;text-align:right;background:#eff6ff;color:#1e3a8a;min-width:100px')}>
-                        {MONTHS[selectedVisitsMonth]} Total
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {customerVisitsData.customers.map((cust) => (
-                      <tr
-                        key={cust}
-                        style={css('border-bottom:1px solid #eef1ea;transition:background-color .1s')}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#f6f8f5';
-                          const firstCell = e.currentTarget.firstElementChild as HTMLElement | null;
-                          if (firstCell) firstCell.style.backgroundColor = '#f6f8f5';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = '';
-                          const firstCell = e.currentTarget.firstElementChild as HTMLElement | null;
-                          if (firstCell) firstCell.style.backgroundColor = '#fff';
-                        }}
-                      >
-                        <td style={css('position:sticky;left:0;z-index:10;background:#fff;padding:8px 14px;font-weight:600;color:#15191e;border-right:2px solid #dde1d8;white-space:nowrap')}>
-                          {cust}
-                        </td>
-                        {TARGET_SITES.map((site) => {
-                          const val = customerVisitsData.grid[cust]?.[selectedVisitsMonth]?.[site] || 0;
-                          return (
-                            <td
-                              key={site}
-                              style={css(`padding:8px 12px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;color:${val > 0 ? '#15191e' : '#b4b9ae'};font-weight:${val > 0 ? '700' : '400'};border-right:1px solid #f8f9f6`)}
-                            >
-                              {val > 0 ? val : '-'}
-                            </td>
-                          );
-                        })}
-                        <td style={css("padding:8px 14px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:#1d4ed8;background:#f0f7ff")}>
-                          {customerVisitsData.customerMonthlyTotals[cust]?.[selectedVisitsMonth] || 0}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr style={css("background:#f8faf6;font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:700;color:#15191e;border-top:2px solid #cbd5e1")}>
-                      <td style={css('position:sticky;left:0;z-index:10;background:#f8faf6;padding:10px 14px;border-right:2px solid #dde1d8')}>
-                        Total Visits
-                      </td>
-                      {TARGET_SITES.map((site) => {
-                        const val = customerVisitsData.siteMonthlyTotals[site]?.[selectedVisitsMonth] || 0;
-                        return (
-                          <td
-                            key={site}
-                            style={css(`padding:10px 12px;text-align:center;color:${val > 0 ? SITE_CONFIG[site].text : '#b4b9ae'};border-right:1px solid #edf0ea`)}
-                          >
-                            {val > 0 ? val : '-'}
-                          </td>
-                        );
-                      })}
-                      <td style={css('padding:10px 14px;text-align:right;font-size:13px;font-weight:800;color:#1e3a8a;background:#e0edff')}>
-                        {customerVisitsData.monthTotals[selectedVisitsMonth] || 0}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              )}
-            </div>
-          )}
+          </div>
         </div>
 
         {/* Unified Annual Audit Findings by Site Matrix */}
