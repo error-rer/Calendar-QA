@@ -887,13 +887,52 @@ export function useScheduler() {
       }
     }
   };
-  const removeAssign = (aid: string) => {
+  const removeAssign = (aid: string, scope: 'day' | 'all' = 'all') => {
     const a = S.assignments.find((x) => x.id === aid);
     if (!a) return;
 
+    if (scope === 'day') {
+      api.deleteAssignment(aid).catch(() => {});
+      const targetDate = new Date(2026, 5, 29 + a.week * 7 + a.day);
+      const targetDateStr = formatDMY(fmtISO(targetDate));
+      const isCust = a.sectionType !== 'internal';
+      const ord = orderById(a.order);
+      const apptRef = formatApptLogRef({
+        isCustomer: isCust,
+        customer: a.customer || ord?.customer,
+        site: a.site1 || a.site2 || ord?.plant,
+        standard: isCust ? (a.department1 || a.department2) : (a.department2 || a.department1),
+        area: a.area,
+        dateStr: targetDateStr,
+      });
+
+      setState((s) => {
+        const remaining = s.assignments.filter((x) => x.id !== aid);
+        const comments = Object.fromEntries(Object.entries(s.comments).filter(([cid]) => cid !== aid));
+        try {
+          localStorage.setItem('calendar_qa_comments', JSON.stringify(comments));
+        } catch {}
+        return {
+          assignments: remaining,
+          comments,
+          selected: s.selected === aid ? null : s.selected,
+          editOpen: s.editOpen && s.editDraft?.targetId === aid ? false : s.editOpen,
+        };
+      });
+
+      log('You', `removed ${apptTitle(a)} date (${targetDateStr})`, '#d9534f');
+      logActivity('DELETE', 'APPOINTMENT', `Deleted single day (${targetDateStr}) from appointment "${apptRef}"`, {
+        targetId: aid,
+        dateStr: targetDateStr,
+        isDayOnly: true,
+      });
+      return;
+    }
+
     // A multi-day appointment is several sibling assignments (same order + eng,
     // one per day) — remove the whole span, not just the single day clicked.
-    const siblings = S.assignments.filter((x) => (x.eng === a.eng && x.order === a.order) || x.id === aid);
+    const seriesKey = a.seriesId || a.groupId || a.order;
+    const siblings = S.assignments.filter((x) => (x.seriesId && x.seriesId === seriesKey) || (x.groupId && x.groupId === seriesKey) || (x.eng === a.eng && x.order === a.order) || x.id === aid);
     const siblingIds = siblings.map((x) => x.id);
 
     // Delete assignments from database via API
@@ -1320,6 +1359,7 @@ export function useScheduler() {
     const engId = existingEng ? existingEng.id : 'e' + ids.current.id++;
     const newAssignments: Assignment[] = [];
     const orderId = 'o' + ids.current.id++;
+    const seriesId = 's_' + orderId;
     const start = new Date(dateFrom + 'T00:00:00');
     const end = new Date(dateTo + 'T00:00:00');
     for (let cur = new Date(start); cur <= end; cur.setDate(cur.getDate() + 1)) {
@@ -1327,7 +1367,9 @@ export function useScheduler() {
       if (slot.wd < 5 && !getHolidayForDate(cur)) {
         newAssignments.push({
           id: 'a' + ids.current.id++,
-          eng: engId, order: orderId, day: slot.wd, week: slot.weekOffset,
+          eng: engId, order: orderId,
+          seriesId, groupId: seriesId,
+          day: slot.wd, week: slot.weekOffset,
           sectionType: d.sectionType,
           site1: d.sectionType === 'customer' ? normalizeSites(d.site1 || '') : '',
           customer: d.sectionType === 'customer' ? d.customer : '',
@@ -1528,25 +1570,54 @@ export function useScheduler() {
   };
 
   // ---- edit modal ----
-  const openEdit = (aid: string) => {
+  const openEdit = (aid: string, forceScope?: 'day' | 'all') => {
     const a = S.assignments.find((x) => x.id === aid);
     if (!a) return;
     const isInternal = isInternalAssignment(a);
-    // find all sibling assignments (same order + eng) for the full date range
-    const siblings = S.assignments.filter((x) => x.eng === a.eng && x.order === a.order);
-    const minWeek = Math.min(...siblings.map((x) => x.week));
-    const maxWeek = Math.max(...siblings.map((x) => x.week));
-    const minDay = Math.min(...siblings.filter((x) => x.week === minWeek).map((x) => x.day));
-    const maxDay = Math.max(...siblings.filter((x) => x.week === maxWeek).map((x) => x.day));
-    const fromDate = new Date(2026, 5, 29 + minWeek * 7 + minDay);
-    const toDate = new Date(2026, 5, 29 + maxWeek * 7 + maxDay);
+    const seriesKey = a.seriesId || a.groupId || a.order;
+    const siblings = S.assignments.filter(
+      (x) =>
+        (x.seriesId && x.seriesId === seriesKey) ||
+        (x.groupId && x.groupId === seriesKey) ||
+        (x.eng === a.eng && x.order === a.order) ||
+        x.id === aid
+    );
+
+    const targetDate = new Date(2026, 5, 29 + a.week * 7 + a.day);
+    const singleDateISO = fmtISO(targetDate);
+    const singleDateStr = formatDMY(singleDateISO);
+    const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
+    const fullRangeStr = formatDateRange(fromDate, toDate);
+
+    // If multi-day visit and no scope forced yet, show scope prompt choice
+    if (!forceScope && siblings.length > 1) {
+      const ord = orderById(a.order);
+      const title = formatApptDisplayTitle(a, ord);
+      const site = normalizeSites((isInternal ? a.site2 : a.site1) || '');
+      setState({
+        editScopePrompt: {
+          open: true,
+          targetId: aid,
+          singleDateStr,
+          singleDateISO,
+          fullRangeStr,
+          title,
+          site,
+          totalDays: siblings.length,
+        },
+      });
+      return;
+    }
+
+    const scope = forceScope || 'all';
     setState({
+      editScopePrompt: null,
       editOpen: true,
       editDraft: {
         targetId: aid,
         sectionType: isInternal ? 'internal' : 'customer',
-        dateFrom: fmtISO(fromDate),
-        dateTo: fmtISO(toDate),
+        dateFrom: scope === 'day' ? singleDateISO : fmtISO(fromDate),
+        dateTo: scope === 'day' ? singleDateISO : fmtISO(toDate),
         site1: normalizeSites(a.site1 || ''),
         customer: a.customer || '',
         endCustomer: a.endCustomer || '',
@@ -1560,10 +1631,20 @@ export function useScheduler() {
         targetPackage: a.targetPackage || '',
         customerNames: a.customerNames || '',
         auditCategory: a.auditCategory || '',
+        editScope: scope,
+        scopeDateStr: singleDateStr,
       },
     });
   };
   const closeEdit = () => setState({ editOpen: false });
+  const closeEditScopePrompt = () => setState({ editScopePrompt: null });
+  const chooseEditScope = (scope: 'day' | 'all') => {
+    const prompt = S.editScopePrompt;
+    if (!prompt) return;
+    const targetId = prompt.targetId;
+    setState({ editScopePrompt: null });
+    openEdit(targetId, scope);
+  };
 
   const openResultsModal = (aid: string) => {
     setState({ resultsModalOpen: true, resultsTargetId: aid });
@@ -1571,27 +1652,37 @@ export function useScheduler() {
   const closeResultsModal = () => {
     setState({ resultsModalOpen: false, resultsTargetId: null });
   };
-  const saveResults = (aid: string, newResults: Record<string, SiteAuditResult>) => {
+  const saveResults = (aid: string, newResults: Record<string, SiteAuditResult>, scope: 'day' | 'all' = 'all') => {
     const a = S.assignments.find((x) => x.id === aid);
     if (!a) return;
-    const siblings = S.assignments.filter((x) => (x.eng === a.eng && x.order === a.order) || x.id === aid);
-    const siblingIds = new Set(siblings.map((x) => x.id));
+    const seriesKey = a.seriesId || a.groupId || a.order;
+    const siblings = S.assignments.filter(
+      (x) =>
+        (x.seriesId && x.seriesId === seriesKey) ||
+        (x.groupId && x.groupId === seriesKey) ||
+        (x.eng === a.eng && x.order === a.order) ||
+        x.id === aid
+    );
+    const targetIds = scope === 'day' ? new Set([aid]) : new Set(siblings.map((x) => x.id));
 
     const normalizedResults = normalizeAuditResults(newResults);
     const nowIso = new Date().toISOString();
     setState((s) => ({
       assignments: s.assignments.map((item) =>
-        siblingIds.has(item.id) ? { ...item, results: normalizedResults, updatedAt: nowIso } : item
+        targetIds.has(item.id)
+          ? { ...item, results: normalizedResults, updatedAt: nowIso, isDaySplit: scope === 'day' ? true : item.isDaySplit }
+          : item
       ),
       resultsModalOpen: false,
       resultsTargetId: null,
     }));
 
-    siblings.forEach((sib) => {
-      api.updateAssignment(sib.id, { results: normalizedResults, updatedAt: nowIso }).catch(() => {});
+    targetIds.forEach((id) => {
+      api.updateAssignment(id, { results: normalizedResults, updatedAt: nowIso }).catch(() => {});
     });
 
-    const dateFormatted = getAssignmentDateFormatted(a, S.assignments);
+    const targetDate = new Date(2026, 5, 29 + a.week * 7 + a.day);
+    const dateFormatted = scope === 'day' ? formatDMY(fmtISO(targetDate)) : getAssignmentDateFormatted(a, S.assignments);
     const isCust = a.sectionType !== 'internal';
     const ord = orderById(a.order);
     const apptRef = formatApptLogRef({
@@ -1602,10 +1693,11 @@ export function useScheduler() {
       area: a.area,
       dateStr: dateFormatted,
     });
-    logActivity('UPDATE', 'APPOINTMENT', `Updated Audit Results for appointment "${apptRef}"`, {
+    logActivity('UPDATE', 'APPOINTMENT', `Updated Audit Results for appointment "${apptRef}"${scope === 'day' ? ' (Single Day)' : ''}`, {
       targetId: aid,
       apptName: apptRef,
       results: newResults,
+      scope,
     });
   };
   const setEditDraft = (patch: Partial<EditDraft>) =>
@@ -1860,15 +1952,88 @@ export function useScheduler() {
       logDesc = `Updated appointment "${apptRef}": changed ${changeList}`;
     }
 
+    if (d.editScope === 'day') {
+      const nowIso = new Date().toISOString();
+      const seriesId = target.seriesId || target.groupId || ('s_' + target.order);
+      const updatedTarget: Assignment = {
+        ...target,
+        seriesId,
+        groupId: seriesId,
+        isDaySplit: true,
+        eng: finalEngId,
+        updatedAt: nowIso,
+        ...fields,
+      };
+
+      api.updateAssignment(target.id, {
+        eng: finalEngId,
+        seriesId,
+        groupId: seriesId,
+        isDaySplit: true,
+        updatedAt: nowIso,
+        ...fields,
+      }).catch(() => {});
+
+      if (newCustomer) api.saveOption('customer_name', newCustomer).catch(() => {});
+      if (newEndCustomer) api.saveOption('end_customer', newEndCustomer).catch(() => {});
+      if (newPurpose) api.saveOption('purpose', newPurpose).catch(() => {});
+      if (newDept1) {
+        newDept1.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => {
+          api.saveOption('customer_department', s).catch(() => {});
+        });
+      }
+      if (newDept2) {
+        newDept2.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => {
+          api.saveOption('internal_department', s).catch(() => {});
+        });
+      }
+      if (newSite) {
+        newSite.split('/').map((s) => s.trim()).filter(Boolean).forEach((s) => {
+          api.saveOption('site_code', s).catch(() => {});
+        });
+      }
+
+      const targetDate = new Date(2026, 5, 29 + target.week * 7 + target.day);
+      const targetDateStr = formatDMY(fmtISO(targetDate));
+
+      const apptRefDay = formatApptLogRef({
+        isCustomer: wasCustomer,
+        customer: target.customer || (isCustomer ? d.customer : '') || oldCustomer || newCustomer,
+        site: newSite || oldSite,
+        standard: (wasCustomer ? target.department1 : target.department2) || oldStandard || newStandard,
+        area: target.area || oldArea || newArea,
+        dateStr: targetDateStr,
+        isSiteChanged,
+        isStandardChanged,
+        isAreaChanged,
+      });
+
+      logActivity('UPDATE', 'APPOINTMENT', `Updated details for ${targetDateStr} in appointment "${apptRefDay}"`, {
+        targetId: target.id,
+        dateStr: targetDateStr,
+        isDaySplit: true,
+      });
+
+      setState((s) => ({
+        assignments: s.assignments.map((x) => (x.id === target.id ? updatedTarget : x)),
+        engineers: updatedEngineers,
+        editOpen: false,
+      }));
+      return;
+    }
+
     const siblingIds = new Set(siblings.map((x) => x.id));
     const others = S.assignments.filter((x) => !siblingIds.has(x.id));
     const reuseIds = [d.targetId, ...siblings.filter((x) => x.id !== d.targetId).map((x) => x.id)];
     const nowIso = new Date().toISOString();
     const rawCreatedAt = target.createdAt || siblings.find((x) => x.createdAt)?.createdAt || nowIso;
     const originalCreatedAt = typeof rawCreatedAt === 'number' ? new Date(rawCreatedAt).toISOString() : rawCreatedAt;
+    const seriesId = target.seriesId || target.groupId || ('s_' + target.order);
     const updated: Assignment[] = slots.map((slot, i) => ({
       id: reuseIds[i] || 'a' + ids.current.id++,
       eng: finalEngId, order: target.order,
+      seriesId,
+      groupId: seriesId,
       day: slot.wd, week: slot.weekOffset,
       createdAt: originalCreatedAt,
       updatedAt: nowIso,
@@ -1877,7 +2042,7 @@ export function useScheduler() {
     const droppedIds = reuseIds.slice(slots.length);
 
     updated.forEach((a, i) => {
-      if (i < siblings.length) api.updateAssignment(a.id, { eng: a.eng, day: a.day, week: a.week, createdAt: a.createdAt, updatedAt: a.updatedAt, ...fields }).catch(() => {});
+      if (i < siblings.length) api.updateAssignment(a.id, { eng: a.eng, day: a.day, week: a.week, seriesId: a.seriesId, groupId: a.groupId, createdAt: a.createdAt, updatedAt: a.updatedAt, ...fields }).catch(() => {});
       else api.createAssignment(a).catch(() => {});
     });
     droppedIds.forEach((id: string) => api.deleteAssignment(id).catch(() => {}));
@@ -2907,6 +3072,19 @@ export function useScheduler() {
     const isIncomplete = isIncompleteAssignment(a);
     const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
     const isAuditDate = isTodayWithinAssignmentRange(fromDate, toDate, today);
+    const seriesKey = a.seriesId || a.groupId || a.order;
+    const siblings = S.assignments.filter(
+      (x) =>
+        (x.seriesId && x.seriesId === seriesKey) ||
+        (x.groupId && x.groupId === seriesKey) ||
+        (x.eng === a.eng && x.order === a.order) ||
+        x.id === a.id
+    );
+    const isMultiDay = siblings.length > 1;
+    const targetDate = new Date(2026, 5, 29 + a.week * 7 + a.day);
+    const singleDateISO = fmtISO(targetDate);
+    const singleDateStr = formatDMY(singleDateISO);
+    const dateRangeStr = formatDateRange(fromDate, toDate);
     return {
       id: a.id,
       code: formatApptDisplayTitle(a, o),
@@ -2933,6 +3111,12 @@ export function useScheduler() {
       isAuditDate,
       fromDate,
       toDate,
+      isMultiDay,
+      singleDateStr,
+      singleDateISO,
+      dateRangeStr,
+      onDeleteDay: () => removeAssign(a.id, 'day'),
+      onDeleteAll: () => removeAssign(a.id, 'all'),
       major: a.major,
       minor: a.minor,
       ofi: a.ofi,
@@ -3248,7 +3432,9 @@ export function useScheduler() {
   const groups: { ids: string[]; startDay: number; endDay: number; chip: typeof weekCalendarChips[number] }[] = [];
   let current: typeof groups[number] | null = null;
   for (const c of sorted) {
-    if (current && c.order === current.chip.order && c.eng === current.chip.eng && c.day === current.endDay + 1) {
+    const sameSeries = current && c.order === current.chip.order && c.eng === current.chip.eng;
+    const sameSite = current && (c.site1 || '') === (current.chip.site1 || '') && (c.site2 || '') === (current.chip.site2 || '');
+    if (current && sameSeries && sameSite && c.day === current.endDay + 1) {
       current.ids.push(c.id);
       current.endDay = c.day;
     } else {
@@ -4167,8 +4353,12 @@ export function useScheduler() {
     clearFilters,
     dayDialogOpen, dayDialogDate, dayDialogDateISO, dayDialogChips, dayDialogInfo, closeDayDialog,
     openCreate, openCreateWithDate, closeCreate, createOpen: S.createOpen, create, stop: (e: React.MouseEvent) => e.stopPropagation(),
-    editOpen: S.editOpen, editDraft: S.editDraft, setEditDraft, closeEdit, submitEdit, openEdit: (aid: string) => openEdit(aid), removeAssign: (aid: string) => removeAssign(aid),
-    resultsModalOpen: S.resultsModalOpen, resultsTargetId: S.resultsTargetId, openResultsModal, closeResultsModal, saveResults,
+    editOpen: S.editOpen, editDraft: S.editDraft, setEditDraft, closeEdit, submitEdit,
+    editScopePrompt: S.editScopePrompt, chooseEditScope, closeEditScopePrompt,
+    openEdit: (aid: string, forceScope?: 'day' | 'all') => openEdit(aid, forceScope),
+    removeAssign: (aid: string, scope?: 'day' | 'all') => removeAssign(aid, scope),
+    resultsModalOpen: S.resultsModalOpen, resultsTargetId: S.resultsTargetId, openResultsModal, closeResultsModal,
+    saveResults: (aid: string, newResults: Record<string, SiteAuditResult>, scope?: 'day' | 'all') => saveResults(aid, newResults, scope),
     adminStats,
     tabEngineers: S.adminTab === 'engineers', tabOptions: S.adminTab === 'options',
     setTabEng: () => setAdminTab('engineers'), setTabOptions: () => setAdminTab('options'),

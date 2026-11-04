@@ -10,17 +10,56 @@ export function EditModal({ vm }: { vm: VM }) {
       <div onClick={vm.stop} style={vm.modalCardStyle}>
         <div style={css('padding:16px 20px;border-bottom:1px solid #eef1ea;display:flex;align-items:center;justify-content:space-between')}>
           <div>
-            <div style={css('font-size:15px;font-weight:700;letter-spacing:-.2px')}>Edit appointment</div>
+            <div style={css('font-size:15px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;gap:8px')}>
+              <span>Edit appointment</span>
+              {ed.editScope === 'day' && (
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    padding: '2px 7px',
+                    borderRadius: '12px',
+                    background: '#dcfce7',
+                    color: '#166534',
+                    border: '1px solid #86efac',
+                  }}
+                >
+                  Single Day: {ed.scopeDateStr || ed.dateFrom}
+                </span>
+              )}
+            </div>
             <div style={css('font-size:11.5px;color:#8a9088;margin-top:1px')}>{vm.weekLabel} - {vm.weekTag}</div>
           </div>
           <HButton onClick={vm.closeEdit} style={css('width:28px;height:28px;border:1px solid #e2e5de;background:#fff;border-radius:7px;cursor:pointer;color:#6a706a;font-size:14px')} hover={{ background: '#f1f3ee' }}>✕</HButton>
         </div>
 
         <div className="scrl" style={css('overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:20px')}>
+          {ed.editScope === 'day' && (
+            <div
+              style={{
+                padding: '10px 14px',
+                background: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                borderRadius: '8px',
+                fontSize: '12px',
+                color: '#166534',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <span style={{ fontSize: '16px' }}>📅</span>
+              <div>
+                <strong>Day-Only Scope:</strong> Changes apply strictly to{' '}
+                <strong>{ed.scopeDateStr || ed.dateFrom}</strong>. Other scheduled days for this appointment remain untouched.
+              </div>
+            </div>
+          )}
           <AppointmentFormFields
             idPrefix="edit"
             values={ed}
             onChange={vm.setEditDraft}
+            isDateLocked={ed.editScope === 'day'}
             purposeOptions={vm.purposeOptions}
             removePurposeOption={vm.removePurposeOption}
             removeCustomerOption={vm.removeCustomerOption}

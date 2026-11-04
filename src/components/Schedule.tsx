@@ -334,30 +334,106 @@ function ApptCard({ chip }: { chip: any }) {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={css('background:#fff;border-radius:14px;padding:28px 28px 22px;width:100%;max-width:360px;box-shadow:0 12px 48px rgba(0,0,0,.22);display:flex;flex-direction:column;gap:18px;margin:20px')}
+            style={css('background:#fff;border-radius:14px;padding:26px 28px 22px;width:100%;max-width:380px;box-shadow:0 12px 48px rgba(0,0,0,.22);display:flex;flex-direction:column;gap:18px;margin:20px')}
           >
             <div style={css('display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center')}>
               <div style={css('width:48px;height:48px;border-radius:50%;background:#fef2f2;border:1.5px solid #fecaca;display:flex;align-items:center;justify-content:center;font-size:20px')}>🗑️</div>
-              <div style={css('font-size:15px;font-weight:700;color:#15191e')}>Delete this appointment?</div>
+              <div style={css('font-size:15px;font-weight:700;color:#15191e')}>
+                {chip.isMultiDay ? 'Delete multi-day appointment?' : 'Delete this appointment?'}
+              </div>
               <div style={css('font-size:12px;color:#6a706a;line-height:1.5')}>
                 <span style={css('font-weight:600;color:#23282a')}>{confirmDelete.code}</span>
-                {' '}will be permanently removed. This action cannot be undone.
+                {chip.isMultiDay ? (
+                  <span>
+                    {' '}spans multiple days (<strong style={{ color: '#2756d6' }}>{chip.dateRangeStr}</strong>). Choose whether to delete only <strong>{chip.singleDateStr}</strong> or the whole appointment.
+                  </span>
+                ) : (
+                  ' will be permanently removed. This action cannot be undone.'
+                )}
               </div>
             </div>
-            <div style={css('display:flex;gap:10px')}>
-              <button
-                onClick={cancelDelete}
-                style={css("flex:1;padding:9px 0;border:1px solid #dde0d9;background:#f4f6f1;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#3c423d;font-family:'Archivo',sans-serif")}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDeleteAction}
-                style={css("flex:1;padding:9px 0;border:none;background:#dc2626;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#fff;font-family:'Archivo',sans-serif")}
-              >
-                Delete
-              </button>
-            </div>
+
+            {chip.isMultiDay ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (chip.onDeleteDay) chip.onDeleteDay();
+                    else confirmDeleteAction();
+                    setConfirmDelete(null);
+                  }}
+                  style={{
+                    padding: '10px 14px',
+                    border: '1px solid #fca5a5',
+                    background: '#fef2f2',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    color: '#b91c1c',
+                    fontFamily: "'Archivo',sans-serif",
+                    textAlign: 'center',
+                  }}
+                >
+                  Delete this day only ({chip.singleDateStr})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (chip.onDeleteAll) chip.onDeleteAll();
+                    else confirmDeleteAction();
+                    setConfirmDelete(null);
+                  }}
+                  style={{
+                    padding: '10px 14px',
+                    border: 'none',
+                    background: '#dc2626',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    color: '#fff',
+                    fontFamily: "'Archivo',sans-serif",
+                    textAlign: 'center',
+                  }}
+                >
+                  Delete entire appointment ({chip.dateRangeStr})
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelDelete}
+                  style={{
+                    padding: '8px 14px',
+                    border: '1px solid #dde0d9',
+                    background: '#f4f6f1',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    color: '#3c423d',
+                    fontFamily: "'Archivo',sans-serif",
+                    marginTop: '2px',
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div style={css('display:flex;gap:10px')}>
+                <button
+                  onClick={cancelDelete}
+                  style={css("flex:1;padding:9px 0;border:1px solid #dde0d9;background:#f4f6f1;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#3c423d;font-family:'Archivo',sans-serif")}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteAction}
+                  style={css("flex:1;padding:9px 0;border:none;background:#dc2626;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#fff;font-family:'Archivo',sans-serif")}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -824,9 +900,9 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
             style={{
               background: '#fff',
               border: '1px solid #dde0d9',
-              borderRadius: '12px',
-              padding: '20px',
-              maxWidth: '360px',
+              borderRadius: '14px',
+              padding: '24px',
+              maxWidth: '380px',
               width: '100%',
               boxShadow: '0 12px 32px rgba(0,0,0,0.18)',
               display: 'flex',
@@ -835,45 +911,119 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#dc2626', fontSize: '15px', fontWeight: 700 }}>
-              <span>⚠️ Delete Appointment?</span>
+              <span>⚠️ {chip.isMultiDay ? 'Delete Multi-Day Appointment?' : 'Delete Appointment?'}</span>
             </div>
             <div style={{ fontSize: '13px', color: '#3c423d', lineHeight: '1.4' }}>
-              Are you sure you want to delete <strong style={{ color: '#15191e' }}>{confirmDelete.code}</strong>? This action cannot be undone.
+              Are you sure you want to delete <strong style={{ color: '#15191e' }}>{confirmDelete.code}</strong>?
+              {chip.isMultiDay ? (
+                <span>
+                  {' '}This appointment spans multiple days (<strong style={{ color: '#2756d6' }}>{chip.dateRangeStr}</strong>). Choose whether to delete only <strong>{chip.singleDateStr}</strong> or the full appointment.
+                </span>
+              ) : (
+                ' This action cannot be undone.'
+              )}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
-              <button
-                type="button"
-                onClick={cancelDelete}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '7px',
-                  border: '1px solid #dde0d9',
-                  background: '#f4f6f1',
-                  color: '#3c423d',
-                  fontSize: '12.5px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmDeleteAction}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '7px',
-                  border: 'none',
-                  background: '#dc2626',
-                  color: '#fff',
-                  fontSize: '12.5px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Delete
-              </button>
-            </div>
+
+            {chip.isMultiDay ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (chip.onDeleteDay) chip.onDeleteDay();
+                    else confirmDeleteAction();
+                    setConfirmDelete(null);
+                  }}
+                  style={{
+                    padding: '9px 14px',
+                    border: '1px solid #fca5a5',
+                    background: '#fef2f2',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    color: '#b91c1c',
+                    fontFamily: "'Archivo',sans-serif",
+                    textAlign: 'center',
+                  }}
+                >
+                  Delete this day only ({chip.singleDateStr})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (chip.onDeleteAll) chip.onDeleteAll();
+                    else confirmDeleteAction();
+                    setConfirmDelete(null);
+                  }}
+                  style={{
+                    padding: '9px 14px',
+                    border: 'none',
+                    background: '#dc2626',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    color: '#fff',
+                    fontFamily: "'Archivo',sans-serif",
+                    textAlign: 'center',
+                  }}
+                >
+                  Delete entire appointment ({chip.dateRangeStr})
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelDelete}
+                  style={{
+                    padding: '8px 14px',
+                    border: '1px solid #dde0d9',
+                    background: '#f4f6f1',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    color: '#3c423d',
+                    fontFamily: "'Archivo',sans-serif",
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
+                <button
+                  type="button"
+                  onClick={cancelDelete}
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: '7px',
+                    border: '1px solid #dde0d9',
+                    background: '#f4f6f1',
+                    color: '#3c423d',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDeleteAction}
+                  style={{
+                    padding: '7px 14px',
+                    borderRadius: '7px',
+                    border: 'none',
+                    background: '#dc2626',
+                    color: '#fff',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

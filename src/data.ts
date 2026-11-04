@@ -78,6 +78,7 @@ export function initialState(): State {
     createDraft: { order: '', eng: '', day: 0, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' },
     editOpen: false,
     editDraft: { targetId: '', sectionType: 'customer', dateFrom: '', dateTo: '', site1: '', customer: '', endCustomer: '', purpose: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department1: '', site2: '', area: '', auditor2: '', department2: '' },
+    editScopePrompt: null,
     resultsModalOpen: false,
     resultsTargetId: null,
     engFormOpen: false,

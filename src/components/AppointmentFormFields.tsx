@@ -14,9 +14,10 @@ interface DateInputFieldProps {
   value: string;
   onChange: (isoVal: string) => void;
   style?: React.CSSProperties;
+  disabled?: boolean;
 }
 
-function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
+function DateInputField({ id, value, onChange, style, disabled }: DateInputFieldProps) {
   const dayRef = useRef<HTMLInputElement>(null);
   const monthRef = useRef<HTMLInputElement>(null);
   const yearRef = useRef<HTMLInputElement>(null);
@@ -160,17 +161,19 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
         height: '42px',
         fontSize: '12.5px',
         fontFamily: "'Archivo',sans-serif",
-        background: '#fff',
+        background: disabled ? '#f3f4f6' : '#fff',
+        opacity: disabled ? 0.8 : 1,
         width: '100%',
         minWidth: 0,
         boxSizing: 'border-box',
-        cursor: 'text',
+        cursor: disabled ? 'not-allowed' : 'text',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         ...style,
       }}
       onClick={(e) => {
+        if (disabled) return;
         if (e.target === containerRef.current) {
           if (!day) dayRef.current?.focus();
           else if (!month) monthRef.current?.focus();
@@ -186,11 +189,12 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
           placeholder="DD"
           maxLength={2}
           value={day}
+          disabled={disabled}
           onChange={handleDayChange}
           onBlur={handleBlur}
           onKeyDown={(e) => handleKeyDown(e, 'day')}
           style={css(
-            "width:24px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:'Archivo',sans-serif;font-weight:600;color:#23282a;padding:0;height:24px;line-height:24px"
+            `width:24px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:'Archivo',sans-serif;font-weight:600;color:${disabled ? '#6b7280' : '#23282a'};padding:0;height:24px;line-height:24px;cursor:${disabled ? 'not-allowed' : 'text'}`
           )}
         />
         <span style={css('color:#8a9088;font-weight:600;user-select:none')}>/</span>
@@ -201,11 +205,12 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
           placeholder="MM"
           maxLength={2}
           value={month}
+          disabled={disabled}
           onChange={handleMonthChange}
           onBlur={handleBlur}
           onKeyDown={(e) => handleKeyDown(e, 'month')}
           style={css(
-            "width:26px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:'Archivo',sans-serif;font-weight:600;color:#23282a;padding:0;height:24px;line-height:24px"
+            `width:26px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:'Archivo',sans-serif;font-weight:600;color:${disabled ? '#6b7280' : '#23282a'};padding:0;height:24px;line-height:24px;cursor:${disabled ? 'not-allowed' : 'text'}`
           )}
         />
         <span style={css('color:#8a9088;font-weight:600;user-select:none')}>/</span>
@@ -216,11 +221,12 @@ function DateInputField({ id, value, onChange, style }: DateInputFieldProps) {
           placeholder="YYYY"
           maxLength={4}
           value={year}
+          disabled={disabled}
           onChange={handleYearChange}
           onBlur={handleBlur}
           onKeyDown={(e) => handleKeyDown(e, 'year')}
           style={css(
-            "width:40px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:'Archivo',sans-serif;font-weight:600;color:#23282a;padding:0;height:24px;line-height:24px"
+            `width:40px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:'Archivo',sans-serif;font-weight:600;color:${disabled ? '#6b7280' : '#23282a'};padding:0;height:24px;line-height:24px;cursor:${disabled ? 'not-allowed' : 'text'}`
           )}
         />
       </div>
@@ -1818,6 +1824,7 @@ export function AppointmentFormFields({
   auditCategoryOptions = [],
   addAuditCategoryOption,
   removeAuditCategoryOption,
+  isDateLocked,
 }: {
   idPrefix: string;
   values: AppointmentFormValues;
@@ -1851,6 +1858,7 @@ export function AppointmentFormFields({
   auditCategoryOptions?: string[];
   addAuditCategoryOption?: (val: string) => void;
   removeAuditCategoryOption?: (val: string) => void;
+  isDateLocked?: boolean;
 }) {
   const id = (name: string) => `${idPrefix}-${name}`;
 
@@ -2165,26 +2173,33 @@ export function AppointmentFormFields({
             {/* ROW 5: FROM | TO */}
             <div style={fld}>
               <label htmlFor={id('dateFrom')} style={lbl}>FROM</label>
-              <DateInputField id={id('dateFrom')} value={v.dateFrom} onChange={(dateFrom) => onChange({ dateFrom })} style={inp} />
+              <DateInputField id={id('dateFrom')} value={v.dateFrom} onChange={(dateFrom) => onChange({ dateFrom })} style={inp} disabled={isDateLocked} />
             </div>
 
             <div style={fld}>
               <label htmlFor={id('dateTo')} style={lbl}>TO</label>
-              <DateInputField id={id('dateTo')} value={v.dateTo} onChange={(dateTo) => onChange({ dateTo })} style={inp} />
+              <DateInputField id={id('dateTo')} value={v.dateTo} onChange={(dateTo) => onChange({ dateTo })} style={inp} disabled={isDateLocked} />
             </div>
 
             <div style={{ gridColumn: '1 / -1' }}>
-              <AvailabilityDatePicker
-                sectionType="customer"
-                site={v.site1}
-                auditor={v.auditor1}
-                dateFrom={v.dateFrom}
-                dateTo={v.dateTo}
-                onChange={onChange}
-                assignments={assignments}
-                engineers={engineers}
-                editingTargetId={editingTargetId}
-              />
+              {isDateLocked ? (
+                <div style={{ fontSize: '12px', color: '#166534', background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '8px 12px', borderRadius: '7px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>🔒</span>
+                  <span>Date range is locked for single-day editing. To adjust dates across the appointment, choose <strong>Edit entire appointment</strong>.</span>
+                </div>
+              ) : (
+                <AvailabilityDatePicker
+                  sectionType="customer"
+                  site={v.site1}
+                  auditor={v.auditor1}
+                  dateFrom={v.dateFrom}
+                  dateTo={v.dateTo}
+                  onChange={onChange}
+                  assignments={assignments}
+                  engineers={engineers}
+                  editingTargetId={editingTargetId}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -2267,26 +2282,33 @@ export function AppointmentFormFields({
             {/* Row 4: FROM | TO */}
             <div style={fld}>
               <label htmlFor={id('dateFrom2')} style={lbl}>FROM</label>
-              <DateInputField id={id('dateFrom2')} value={v.dateFrom} onChange={(dateFrom) => onChange({ dateFrom })} style={inp} />
+              <DateInputField id={id('dateFrom2')} value={v.dateFrom} onChange={(dateFrom) => onChange({ dateFrom })} style={inp} disabled={isDateLocked} />
             </div>
 
             <div style={fld}>
               <label htmlFor={id('dateTo2')} style={lbl}>TO</label>
-              <DateInputField id={id('dateTo2')} value={v.dateTo} onChange={(dateTo) => onChange({ dateTo })} style={inp} />
+              <DateInputField id={id('dateTo2')} value={v.dateTo} onChange={(dateTo) => onChange({ dateTo })} style={inp} disabled={isDateLocked} />
             </div>
 
             <div style={{ gridColumn: '1 / -1' }}>
-              <AvailabilityDatePicker
-                sectionType="internal"
-                site={v.site2}
-                auditor={v.auditor2}
-                dateFrom={v.dateFrom}
-                dateTo={v.dateTo}
-                onChange={onChange}
-                assignments={assignments}
-                engineers={engineers}
-                editingTargetId={editingTargetId}
-              />
+              {isDateLocked ? (
+                <div style={{ fontSize: '12px', color: '#166534', background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '8px 12px', borderRadius: '7px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>🔒</span>
+                  <span>Date range is locked for single-day editing. To adjust dates across the appointment, choose <strong>Edit entire appointment</strong>.</span>
+                </div>
+              ) : (
+                <AvailabilityDatePicker
+                  sectionType="internal"
+                  site={v.site2}
+                  auditor={v.auditor2}
+                  dateFrom={v.dateFrom}
+                  dateTo={v.dateTo}
+                  onChange={onChange}
+                  assignments={assignments}
+                  engineers={engineers}
+                  editingTargetId={editingTargetId}
+                />
+              )}
             </div>
           </div>
         </div>

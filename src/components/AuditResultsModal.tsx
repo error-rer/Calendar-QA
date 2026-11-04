@@ -96,6 +96,18 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
     };
   }, [activeSites, siteResults]);
 
+  // Appointment details context for the header
+  const seriesKey = target.seriesId || target.groupId || target.order;
+  const siblings = vm.assignments.filter(
+    (x) =>
+      (x.seriesId && x.seriesId === seriesKey) ||
+      (x.groupId && x.groupId === seriesKey) ||
+      (x.eng === target.eng && x.order === target.order) ||
+      x.id === target.id
+  );
+  const isMultiDay = siblings.length > 1;
+  const [applyScope, setApplyScope] = useState<'day' | 'all'>('all');
+
   const handleSave = () => {
     // Strict Synchronization: Only save results for currently active sites, pruned cleanly!
     const cleanResults: Record<string, SiteAuditResult> = {};
@@ -110,11 +122,9 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
         findings: Number(r.findings) || 0,
       };
     }
-    vm.saveResults(target.id, cleanResults);
+    vm.saveResults(target.id, cleanResults, isMultiDay ? applyScope : 'all');
   };
 
-  // Appointment details context for the header
-  const siblings = vm.assignments.filter((x) => (x.eng === target.eng && x.order === target.order) || x.id === target.id);
   const minWeek = Math.min(...siblings.map((x) => x.week));
   const maxWeek = Math.max(...siblings.map((x) => x.week));
   const minDay = Math.min(...siblings.filter((x) => x.week === minWeek).map((x) => x.day));
@@ -123,6 +133,8 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
   const toDate = new Date(2026, 5, 29 + maxWeek * 7 + maxDay);
   const fmt = (d: Date) => String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
   const dateRangeStr = fmt(fromDate) === fmt(toDate) ? fmt(fromDate) : `${fmt(fromDate)} - ${fmt(toDate)}`;
+  const targetDate = new Date(2026, 5, 29 + target.week * 7 + target.day);
+  const targetDateStr = fmt(targetDate);
 
   const customerTitle = target.customer || 'Customer Audit';
   const standardText = (isInternal ? (target.department2 || target.department1) : (target.department1 || target.department2)) || '';
@@ -168,6 +180,63 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
 
         {/* Modal Body / Table */}
         <div className="scrl" style={css('overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px')}>
+          {isMultiDay && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: '#f8faf6',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                border: '1px solid #e2e8df',
+                fontSize: '12px',
+                flexWrap: 'wrap',
+                gap: '8px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '14px' }}>📊</span>
+                <span style={{ fontWeight: 600, color: '#3c423d' }}>Save findings to:</span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setApplyScope('all')}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: '6px',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    border: applyScope === 'all' ? '1.5px solid #2756d6' : '1px solid #dde0d9',
+                    background: applyScope === 'all' ? '#eff6ff' : '#fff',
+                    color: applyScope === 'all' ? '#1d4ed8' : '#4b5563',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  All days ({dateRangeStr})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setApplyScope('day')}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: '6px',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    border: applyScope === 'day' ? '1.5px solid #16a34a' : '1px solid #dde0d9',
+                    background: applyScope === 'day' ? '#f0fdf4' : '#fff',
+                    color: applyScope === 'day' ? '#166534' : '#4b5563',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  This day only ({targetDateStr})
+                </button>
+              </div>
+            </div>
+          )}
           <div style={{ border: '1px solid #e2e5de', borderRadius: '8px', overflow: 'hidden', background: '#fff' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>

@@ -108,6 +108,9 @@ export interface Assignment {
   id: string;
   eng: string;
   order: string;
+  seriesId?: string;
+  groupId?: string;
+  isDaySplit?: boolean;
   day: number;
   week: number;
   sectionType?: 'customer' | 'internal';
@@ -252,7 +255,16 @@ export function getAssignmentDateRange(a: Assignment, allAssignments: Assignment
     const now = new Date();
     return { fromDate: now, toDate: now };
   }
-  const siblings = allAssignments ? allAssignments.filter((x) => (x.eng === a.eng && x.order === a.order) || x.id === a.id) : [];
+  const seriesKey = a.seriesId || a.groupId || a.order;
+  const siblings = allAssignments
+    ? allAssignments.filter(
+        (x) =>
+          (x.seriesId && x.seriesId === seriesKey) ||
+          (x.groupId && x.groupId === seriesKey) ||
+          (x.eng === a.eng && x.order === a.order) ||
+          x.id === a.id
+      )
+    : [];
   if (siblings.length === 0) {
     const d = new Date(2026, 5, 29 + a.week * 7 + a.day);
     return { fromDate: d, toDate: d };
@@ -510,6 +522,19 @@ export interface EditDraft {
   department2: string;
   warn?: boolean;
   warnText?: string;
+  editScope?: 'day' | 'all';
+  scopeDateStr?: string;
+}
+
+export interface EditScopePrompt {
+  open: boolean;
+  targetId: string;
+  singleDateStr: string;
+  singleDateISO: string;
+  fullRangeStr: string;
+  title: string;
+  site: string;
+  totalDays: number;
 }
 
 export type ActionType = 'CREATE' | 'UPDATE' | 'DELETE' | 'REORDER' | 'MANAGE_ITEM' | 'OTHER';
@@ -575,6 +600,7 @@ export interface State {
   createDraft: CreateDraft;
   editOpen: boolean;
   editDraft: EditDraft;
+  editScopePrompt: EditScopePrompt | null;
   resultsModalOpen: boolean;
   resultsTargetId: string | null;
   engFormOpen: boolean;

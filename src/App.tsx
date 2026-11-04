@@ -10,6 +10,7 @@ import { HistoryView } from './components/HistoryView';
 import { TableView } from './components/TableView';
 import { CreateModal } from './components/CreateModal';
 import { EditModal } from './components/EditModal';
+import { EditScopeModal } from './components/EditScopeModal';
 import { EngineerModal } from './components/EngineerModal';
 import { AuditResultsModal } from './components/AuditResultsModal';
 
@@ -35,6 +36,7 @@ export default function App() {
           {vm.isHistory && <HistoryView vm={vm} />}
           <CreateModal vm={vm} />
           <EditModal vm={vm} />
+          <EditScopeModal vm={vm} />
           <EngineerModal vm={vm} />
           <AuditResultsModal vm={vm} />
         </div>
