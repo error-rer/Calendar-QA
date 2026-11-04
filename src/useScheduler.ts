@@ -173,29 +173,29 @@ export function getApptCardColors(
     };
   }
 
-  // Priority 2: RECENTLY CREATED (Light Green)
+  // Priority 2: RECENTLY CREATED (Light Green - 3 Minutes)
   if (isNew) {
     return {
       priority: 'recently_created',
-      barBg: '#d1fae5', // emerald-100/90
-      cardBorder: '1px solid #6ee7b7', // emerald-300
-      accentBg: '#059669', // emerald-600
-      titleColor: '#064e3b', // emerald-950
-      purposeColor: '#065f46', // emerald-800
-      overrideCodeColor: '#064e3b',
+      barBg: isChipView ? '#dcfce7' : '#ecfdf5', // soft light green (bg-emerald-50 / bg-green-100)
+      cardBorder: '1px solid #bbf7d0',
+      accentBg: defaultAccentBg, // PRESERVE original side-stripe
+      titleColor: defaultTitleColor, // PRESERVE typography colors
+      purposeColor: defaultPurposeColor, // PRESERVE subtitle colors
+      overrideCodeColor: undefined,
     };
   }
 
-  // Priority 3: RECENTLY UPDATED (Light Blue)
+  // Priority 3: RECENTLY UPDATED (Light Blue - 3 Minutes)
   if (isUpd) {
     return {
       priority: 'recently_updated',
-      barBg: '#e0f2fe', // sky-100/90
-      cardBorder: '1px solid #7dd3fc', // sky-300
-      accentBg: '#0284c7', // sky-600
-      titleColor: '#082f49', // sky-950
-      purposeColor: '#0369a1', // sky-700
-      overrideCodeColor: '#082f49',
+      barBg: isChipView ? '#e0f2fe' : '#f0f9ff', // soft light blue (bg-sky-50 / bg-blue-100)
+      cardBorder: '1px solid #bae6fd',
+      accentBg: defaultAccentBg, // PRESERVE original side-stripe
+      titleColor: defaultTitleColor, // PRESERVE typography colors
+      purposeColor: defaultPurposeColor, // PRESERVE subtitle colors
+      overrideCodeColor: undefined,
     };
   }
 
@@ -203,12 +203,12 @@ export function getApptCardColors(
   if (isPending) {
     return {
       priority: 'pending_result',
-      barBg: '#fef3c7', // amber-100/90
-      cardBorder: '1px solid #fcd34d', // amber-300
-      accentBg: '#d97706', // amber-600
-      titleColor: '#78350f', // amber-950
-      purposeColor: '#b45309', // amber-700
-      overrideCodeColor: '#78350f',
+      barBg: isChipView ? '#fef9c3' : '#fefce8', // soft light yellow (bg-amber-50 / bg-yellow-100)
+      cardBorder: '1px solid #fef08a',
+      accentBg: defaultAccentBg, // PRESERVE original side-stripe
+      titleColor: defaultTitleColor, // PRESERVE typography colors
+      purposeColor: defaultPurposeColor, // PRESERVE subtitle colors
+      overrideCodeColor: undefined,
     };
   }
 
@@ -2500,7 +2500,7 @@ export function useScheduler() {
       border: borderStyle, ...accentStyle,
       boxShadow: sel ? '0 0 0 2px ' + hexA(colors[0] || '#999', 0.55) : '0 1px 1px rgba(20,25,30,.05)',
       opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', transition: 'box-shadow .12s',
-      color: isIncomplete ? '#ffffff' : (cardColors.priority !== 'default' ? cardColors.titleColor : undefined),
+      color: isIncomplete ? '#ffffff' : undefined,
     };
     return {
       aid: a.id, code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, style: base,
@@ -2541,8 +2541,8 @@ export function useScheduler() {
     return {
       aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, plantCode: pl ? pl.code : '?',
       isIncomplete,
-      style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: barBg, border: borderStyle, ...accentStyle, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', color: isIncomplete ? '#ffffff' : (cardColors.priority !== 'default' ? cardColors.titleColor : undefined) }),
-      avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: isIncomplete ? '#b91c1c' : (cardColors.priority !== 'default' ? cardColors.accentBg : '#f1f3ee'), color: isIncomplete ? '#ffffff' : (cardColors.priority !== 'default' ? '#ffffff' : '#5c625c'), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
+      style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: barBg, border: borderStyle, ...accentStyle, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', color: isIncomplete ? '#ffffff' : undefined }),
+      avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: isIncomplete ? '#b91c1c' : '#f1f3ee', color: isIncomplete ? '#ffffff' : '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       onClick: () => select(a.id),
     };
   };

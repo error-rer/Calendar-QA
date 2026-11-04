@@ -169,7 +169,6 @@ function ApptCard({ chip }: { chip: any }) {
   const titleColor = cardColors.titleColor;
   const purposeColor = cardColors.purposeColor;
   const cardBorder = cardColors.cardBorder;
-  const overrideCodeColor = cardColors.overrideCodeColor;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', background: barBg, border: cardBorder, borderRadius: '8px', overflow: 'hidden' }}>
@@ -181,7 +180,7 @@ function ApptCard({ chip }: { chip: any }) {
             style={{ minWidth: 0, flex: 1, cursor: 'pointer' }}
             title="Click to expand embedded details"
           >
-            <div style={css(`font-size:12.5px;font-weight:600;color:${titleColor}`)}>{renderApptCode(chip.code, overrideCodeColor)}</div>
+            <div style={css(`font-size:12.5px;font-weight:600;color:${titleColor}`)}>{renderApptCode(chip.code, isInc ? '#FFFFFF' : undefined)}</div>
             {chip.purpose ? (
               <div style={css(`font-size:11px;color:${purposeColor};margin-top:2px`)}>{chip.purpose}</div>
             ) : null}
@@ -1602,7 +1601,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
                   }}>
                     <div style={{ width: '3px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
                     <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: '11.5px', fontWeight: 600, color: titleColor }}>{renderApptCode(chip.customer, cardColors.overrideCodeColor)}</div>
+                      <div style={{ fontSize: '11.5px', fontWeight: 600, color: titleColor }}>{renderApptCode(chip.customer, cardColors.priority === 'incomplete' ? '#FFFFFF' : undefined)}</div>
                       {chip.purpose ? (
                         <div style={{ fontSize: '10px', color: purposeColor, marginTop: '1px' }}>{chip.purpose}</div>
                       ) : null}
@@ -1647,7 +1646,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
           }}>
             <div style={{ width: '3px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
             <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: '11.5px', fontWeight: 600, color: titleColor }}>{renderApptCode(sp.customer, cardColors.overrideCodeColor)}</div>
+              <div style={{ fontSize: '11.5px', fontWeight: 600, color: titleColor }}>{renderApptCode(sp.customer, cardColors.priority === 'incomplete' ? '#FFFFFF' : undefined)}</div>
               {sp.purpose ? (
                 <div style={{ fontSize: '10px', color: purposeColor, marginTop: '1px' }}>{sp.purpose}</div>
               ) : null}
@@ -1917,7 +1916,7 @@ function MonthGrid({ vm }: { vm: VM }) {
                     >
                       <div style={{ width: '3px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
                       <div style={{ padding: '3px 5px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
-                        <div style={{ fontSize: '10.5px', fontWeight: 600, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code, cardColors.overrideCodeColor)}</div>
+                        <div style={{ fontSize: '10.5px', fontWeight: 600, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code, cardColors.priority === 'incomplete' ? '#FFFFFF' : undefined)}</div>
                         {ch.purpose ? (
                           <div style={{ fontSize: '9.5px', color: purposeColor, marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
                         ) : null}
@@ -2024,7 +2023,7 @@ function MonthMobile({ vm }: { vm: VM }) {
                     >
                       <div style={{ width: '2px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
                       <div style={{ padding: '2px 4px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
-                        <div style={{ fontSize: '8px', fontWeight: 600, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code, cardColors.overrideCodeColor)}</div>
+                        <div style={{ fontSize: '8px', fontWeight: 600, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code, cardColors.priority === 'incomplete' ? '#FFFFFF' : undefined)}</div>
                         {ch.purpose ? (
                           <div style={{ fontSize: '7.5px', color: purposeColor, marginTop: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
                         ) : null}
