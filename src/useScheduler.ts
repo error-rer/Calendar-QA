@@ -1652,7 +1652,7 @@ export function useScheduler() {
   const closeResultsModal = () => {
     setState({ resultsModalOpen: false, resultsTargetId: null });
   };
-  const saveResults = (aid: string, newResults: Record<string, SiteAuditResult>, scope: 'day' | 'all' = 'all') => {
+  const saveResults = (aid: string, newResults: Record<string, SiteAuditResult>) => {
     const a = S.assignments.find((x) => x.id === aid);
     if (!a) return;
     const seriesKey = a.seriesId || a.groupId || a.order;
@@ -1663,14 +1663,14 @@ export function useScheduler() {
         (x.eng === a.eng && x.order === a.order) ||
         x.id === aid
     );
-    const targetIds = scope === 'day' ? new Set([aid]) : new Set(siblings.map((x) => x.id));
+    const targetIds = new Set(siblings.map((x) => x.id));
 
     const normalizedResults = normalizeAuditResults(newResults);
     const nowIso = new Date().toISOString();
     setState((s) => ({
       assignments: s.assignments.map((item) =>
         targetIds.has(item.id)
-          ? { ...item, results: normalizedResults, updatedAt: nowIso, isDaySplit: scope === 'day' ? true : item.isDaySplit }
+          ? { ...item, results: normalizedResults, updatedAt: nowIso }
           : item
       ),
       resultsModalOpen: false,
@@ -1681,8 +1681,7 @@ export function useScheduler() {
       api.updateAssignment(id, { results: normalizedResults, updatedAt: nowIso }).catch(() => {});
     });
 
-    const targetDate = new Date(2026, 5, 29 + a.week * 7 + a.day);
-    const dateFormatted = scope === 'day' ? formatDMY(fmtISO(targetDate)) : getAssignmentDateFormatted(a, S.assignments);
+    const dateFormatted = getAssignmentDateFormatted(a, S.assignments);
     const isCust = a.sectionType !== 'internal';
     const ord = orderById(a.order);
     const apptRef = formatApptLogRef({
@@ -1693,11 +1692,10 @@ export function useScheduler() {
       area: a.area,
       dateStr: dateFormatted,
     });
-    logActivity('UPDATE', 'APPOINTMENT', `Updated Audit Results for appointment "${apptRef}"${scope === 'day' ? ' (Single Day)' : ''}`, {
+    logActivity('UPDATE', 'APPOINTMENT', `Updated Audit Results for appointment "${apptRef}"`, {
       targetId: aid,
       apptName: apptRef,
       results: newResults,
-      scope,
     });
   };
   const setEditDraft = (patch: Partial<EditDraft>) =>
@@ -1760,8 +1758,15 @@ export function useScheduler() {
     // replace every sibling assignment (same order + eng, i.e. the days that make up
     // this appointment's span) with one entry per slot in the new date range, instead
     // of leaving the old day-records in place and piling new ones on top of them.
+    const seriesKey = target.seriesId || target.groupId || target.order;
     const siblings = S.assignments
-      .filter((x) => x.eng === target.eng && x.order === target.order)
+      .filter(
+        (x) =>
+          (x.seriesId && x.seriesId === seriesKey) ||
+          (x.groupId && x.groupId === seriesKey) ||
+          (x.eng === target.eng && x.order === target.order) ||
+          x.id === target.id
+      )
       .sort((a, b) => (a.week - b.week) || (a.day - b.day));
 
     const newSiteRaw = (d.sectionType === 'customer' ? d.site1 : d.site2) || '';
@@ -1769,12 +1774,29 @@ export function useScheduler() {
     const existingRawResults = target.results || siblings.find((x) => x.results && Object.keys(x.results).length > 0)?.results || {};
     const existingResults = normalizeAuditResults(existingRawResults);
 
+    // Compute the union of sites across the appointment series:
+    // When editing a single day ('day'), the series retains sites scheduled on the other sibling days.
+    // When editing the entire appointment ('all'), the series union is newSites.
+    const seriesSitesSet = new Set<string>(newSites);
+    if (d.editScope === 'day') {
+      const otherSiblings = siblings.filter((x) => x.id !== target.id);
+      for (const sib of otherSiblings) {
+        const sRaw = (sib.sectionType === 'internal' ? sib.site2 : sib.site1) || '';
+        sRaw
+          .split(/[/,]/)
+          .map((s) => normalizeSite(s.trim()))
+          .filter(Boolean)
+          .forEach((s) => seriesSitesSet.add(s));
+      }
+    }
+    const seriesUnionSites = Array.from(seriesSitesSet);
+
     // State Preservation Logic (Keyed by Site Name):
     // - Adding a new Site: keep all previously entered numbers strictly intact, initialize new site with 0.
-    // - Removing a Site: only delete the key and data corresponding to the specific removed site.
-    // - All remaining sites retain their previously entered numbers without alteration.
+    // - Removing a Site: only delete the key and data if the site is removed from ALL days across the series.
+    // - All remaining sites in the series union retain their previously entered numbers without alteration.
     const reconciledResults: Record<string, SiteAuditResult> = {};
-    for (const s of newSites) {
+    for (const s of seriesUnionSites) {
       const prev = existingResults[s] || existingResults[s.replace(/^UTL/, 'U')];
       if (prev) {
         reconciledResults[s] = {
@@ -1963,6 +1985,7 @@ export function useScheduler() {
         eng: finalEngId,
         updatedAt: nowIso,
         ...fields,
+        results: reconciledResults,
       };
 
       api.updateAssignment(target.id, {
@@ -1972,7 +1995,19 @@ export function useScheduler() {
         isDaySplit: true,
         updatedAt: nowIso,
         ...fields,
+        results: reconciledResults,
       }).catch(() => {});
+
+      // Synchronize seriesId, groupId, and reconciledResults to all sibling days across the series
+      const otherSiblings = siblings.filter((x) => x.id !== target.id);
+      otherSiblings.forEach((sib) => {
+        api.updateAssignment(sib.id, {
+          seriesId,
+          groupId: seriesId,
+          results: reconciledResults,
+          updatedAt: nowIso,
+        }).catch(() => {});
+      });
 
       if (newCustomer) api.saveOption('customer_name', newCustomer).catch(() => {});
       if (newEndCustomer) api.saveOption('end_customer', newEndCustomer).catch(() => {});
@@ -2014,8 +2049,21 @@ export function useScheduler() {
         isDaySplit: true,
       });
 
+      const siblingIds = new Set(siblings.map((x) => x.id));
       setState((s) => ({
-        assignments: s.assignments.map((x) => (x.id === target.id ? updatedTarget : x)),
+        assignments: s.assignments.map((x) => {
+          if (x.id === target.id) return updatedTarget;
+          if (siblingIds.has(x.id)) {
+            return {
+              ...x,
+              seriesId,
+              groupId: seriesId,
+              results: reconciledResults,
+              updatedAt: nowIso,
+            };
+          }
+          return x;
+        }),
         engineers: updatedEngineers,
         editOpen: false,
       }));
@@ -4358,7 +4406,7 @@ export function useScheduler() {
     openEdit: (aid: string, forceScope?: 'day' | 'all') => openEdit(aid, forceScope),
     removeAssign: (aid: string, scope?: 'day' | 'all') => removeAssign(aid, scope),
     resultsModalOpen: S.resultsModalOpen, resultsTargetId: S.resultsTargetId, openResultsModal, closeResultsModal,
-    saveResults: (aid: string, newResults: Record<string, SiteAuditResult>, scope?: 'day' | 'all') => saveResults(aid, newResults, scope),
+    saveResults: (aid: string, newResults: Record<string, SiteAuditResult>) => saveResults(aid, newResults),
     adminStats,
     tabEngineers: S.adminTab === 'engineers', tabOptions: S.adminTab === 'options',
     setTabEng: () => setAdminTab('engineers'), setTabOptions: () => setAdminTab('options'),

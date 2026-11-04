@@ -105,7 +105,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
     const apptMap = new Map<string, { month: number; year: number; results?: Record<string, SiteAuditResult>; raw: Assignment }>();
 
     for (const a of vm.assignments || []) {
-      const key = a.order ? `${a.order}_${a.eng || ''}` : a.id;
+      const key = a.seriesId || a.groupId || (a.order ? a.order : a.id);
       const d = new Date(2026, 5, 29 + a.week * 7 + a.day);
       const existing = apptMap.get(key);
       if (!existing) {
@@ -271,7 +271,8 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
         const targetSite = normalizeToTargetSite(raw);
         if (!targetSite) continue;
 
-        const visitKey = `${a.order || a.id}_${dateISO}_${targetSite}`;
+        const seriesKey = a.seriesId || a.groupId || (a.order ? a.order : a.id);
+        const visitKey = `${seriesKey}_${dateISO}_${targetSite}`;
         if (seenVisits.has(visitKey)) continue;
         seenVisits.add(visitKey);
 

@@ -7,19 +7,48 @@ import { isInternalAssignment, normalizeSite, normalizeAuditResults } from '../t
 function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
   const isInternal = isInternalAssignment(target);
 
-  // Extract active sites configured on this appointment
-  const rawSite = (isInternal ? target.site2 : target.site1) || '';
-  const parsedSites = rawSite
-    ? Array.from(new Set(rawSite.split(/[/,]/).map((s) => normalizeSite(s.trim())).filter(Boolean)))
-    : [];
-  const activeSites = useMemo(() => (parsedSites.length > 0 ? parsedSites : [rawSite.trim() || 'General']), [rawSite]);
+  // Sibling assignments across the appointment series (shared by groupId / seriesId)
+  const siblings = useMemo(() => {
+    const seriesKey = target.seriesId || target.groupId || target.order;
+    return vm.assignments.filter(
+      (x) =>
+        (x.seriesId && x.seriesId === seriesKey) ||
+        (x.groupId && x.groupId === seriesKey) ||
+        (x.eng === target.eng && x.order === target.order) ||
+        x.id === target.id
+    );
+  }, [vm.assignments, target.id, target.seriesId, target.groupId, target.order, target.eng]);
+
+  const isMultiDay = siblings.length > 1;
+
+  // Shared results across the appointment series
+  const sharedResults = useMemo(() => {
+    const withRes = siblings.find((x) => x.results && Object.keys(x.results).length > 0);
+    return normalizeAuditResults(target.results && Object.keys(target.results).length > 0 ? target.results : withRes?.results);
+  }, [target.results, siblings]);
+
+  // Dynamic Site Union: Aggregate the UNION of all sites scheduled across ALL days belonging to this appointment series
+  const activeSites = useMemo(() => {
+    const siteSet = new Set<string>();
+    for (const sib of siblings) {
+      const raw = (isInternalAssignment(sib) ? sib.site2 : sib.site1) || '';
+      if (raw) {
+        raw
+          .split(/[/,]/)
+          .map((s) => normalizeSite(s.trim()))
+          .filter(Boolean)
+          .forEach((s) => siteSet.add(s));
+      }
+    }
+    const list = Array.from(siteSet);
+    return list.length > 0 ? list : ['General'];
+  }, [siblings]);
 
   // Local state for editing the results per site - keyed by siteName
   const [siteResults, setSiteResults] = useState<Record<string, SiteAuditResult>>(() => {
-    const existing = normalizeAuditResults(target.results);
     const initial: Record<string, SiteAuditResult> = {};
     for (const site of activeSites) {
-      const prev = existing[site] || existing[normalizeSite(site)];
+      const prev = sharedResults[site] || sharedResults[normalizeSite(site)];
       initial[site] = {
         major: prev ? (Number(prev.major) || 0) : 0,
         minor: prev ? (Number(prev.minor) || 0) : 0,
@@ -31,18 +60,17 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
     return initial;
   });
 
-  // Re-sync if the target appointment or configured sites change:
+  // Re-sync if the target appointment, union of sites, or shared results change:
   // - Keeps previously entered numbers for existing sites strictly intact
   // - Initializes only newly added sites with default 0
   // - Deletes keys for removed sites
   const activeSitesKey = activeSites.join('|');
   useEffect(() => {
-    const existing = normalizeAuditResults(target.results);
     const sites = activeSitesKey ? activeSitesKey.split('|') : ['General'];
     setSiteResults((prev) => {
       const next: Record<string, SiteAuditResult> = {};
       for (const site of sites) {
-        const src = prev[site] || existing[site] || existing[normalizeSite(site)];
+        const src = prev[site] || sharedResults[site] || sharedResults[normalizeSite(site)];
         next[site] = {
           major: src ? (Number(src.major) || 0) : 0,
           minor: src ? (Number(src.minor) || 0) : 0,
@@ -53,7 +81,7 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
       }
       return next;
     });
-  }, [target.id, activeSitesKey, target.results]);
+  }, [target.id, activeSitesKey, sharedResults]);
 
   const handleInputChange = (site: string, field: keyof SiteAuditResult, rawValue: string) => {
     // Only accept positive integers, reject negative numbers, decimals, letters, scientific notation
@@ -96,20 +124,8 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
     };
   }, [activeSites, siteResults]);
 
-  // Appointment details context for the header
-  const seriesKey = target.seriesId || target.groupId || target.order;
-  const siblings = vm.assignments.filter(
-    (x) =>
-      (x.seriesId && x.seriesId === seriesKey) ||
-      (x.groupId && x.groupId === seriesKey) ||
-      (x.eng === target.eng && x.order === target.order) ||
-      x.id === target.id
-  );
-  const isMultiDay = siblings.length > 1;
-  const [applyScope, setApplyScope] = useState<'day' | 'all'>('all');
-
   const handleSave = () => {
-    // Strict Synchronization: Only save results for currently active sites, pruned cleanly!
+    // Strict Synchronization: Save unified results for the union of all scheduled sites across the series
     const cleanResults: Record<string, SiteAuditResult> = {};
     for (const site of activeSites) {
       const normSite = normalizeSite(site);
@@ -122,7 +138,7 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
         findings: Number(r.findings) || 0,
       };
     }
-    vm.saveResults(target.id, cleanResults, isMultiDay ? applyScope : 'all');
+    vm.saveResults(target.id, cleanResults);
   };
 
   const minWeek = Math.min(...siblings.map((x) => x.week));
@@ -133,11 +149,10 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
   const toDate = new Date(2026, 5, 29 + maxWeek * 7 + maxDay);
   const fmt = (d: Date) => String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
   const dateRangeStr = fmt(fromDate) === fmt(toDate) ? fmt(fromDate) : `${fmt(fromDate)} - ${fmt(toDate)}`;
-  const targetDate = new Date(2026, 5, 29 + target.week * 7 + target.day);
-  const targetDateStr = fmt(targetDate);
 
   const customerTitle = target.customer || 'Customer Audit';
   const standardText = (isInternal ? (target.department2 || target.department1) : (target.department1 || target.department2)) || '';
+  const seriesSiteDisplay = activeSites.join('/');
 
   return (
     <div style={vm.modalOverlayStyle}>
@@ -158,7 +173,7 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
             <div style={css('font-size:12px;color:#5c625c;margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap')}>
               <span style={css('font-weight:600;color:#15191e')}>{isInternal ? (target.area ? `${target.area} · ` : '') + 'Internal Audit' : customerTitle}</span>
               <span>·</span>
-              <span>Site: {rawSite || 'Unassigned'}</span>
+              <span>Site: {seriesSiteDisplay || 'Unassigned'}</span>
               {standardText && (
                 <>
                   <span>·</span>
@@ -185,55 +200,18 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
                 background: '#f8faf6',
                 padding: '10px 14px',
                 borderRadius: '8px',
                 border: '1px solid #e2e8df',
                 fontSize: '12px',
-                flexWrap: 'wrap',
+                color: '#3c423d',
                 gap: '8px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '14px' }}>📊</span>
-                <span style={{ fontWeight: 600, color: '#3c423d' }}>Save findings to:</span>
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={() => setApplyScope('all')}
-                  style={{
-                    padding: '5px 12px',
-                    borderRadius: '6px',
-                    fontSize: '11.5px',
-                    fontWeight: 600,
-                    border: applyScope === 'all' ? '1.5px solid #2756d6' : '1px solid #dde0d9',
-                    background: applyScope === 'all' ? '#eff6ff' : '#fff',
-                    color: applyScope === 'all' ? '#1d4ed8' : '#4b5563',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  All days ({dateRangeStr})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setApplyScope('day')}
-                  style={{
-                    padding: '5px 12px',
-                    borderRadius: '6px',
-                    fontSize: '11.5px',
-                    fontWeight: 600,
-                    border: applyScope === 'day' ? '1.5px solid #16a34a' : '1px solid #dde0d9',
-                    background: applyScope === 'day' ? '#f0fdf4' : '#fff',
-                    color: applyScope === 'day' ? '#166534' : '#4b5563',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  This day only ({targetDateStr})
-                </button>
+              <span style={{ fontSize: '15px' }}>🔗</span>
+              <div>
+                <strong>Unified Series Results:</strong> Showing all sites scheduled across this multi-day appointment (<strong style={{ color: '#2756d6' }}>{activeSites.join(', ')}</strong>). Findings entered here are shared across all {siblings.length} scheduled days.
               </div>
             </div>
           )}
