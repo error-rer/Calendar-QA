@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState, useMemo } from 'react';
 import type { VM } from '../useScheduler';
 import { getApptCardColors } from '../useScheduler';
+import { isAuditResultCompleted } from '../types';
 import { css, HButton, HInput } from '../ui';
 import { getHolidayStyle, isOfficialHoliday } from '../holidays';
 
@@ -169,6 +170,7 @@ function ApptCard({ chip }: { chip: any }) {
   const titleColor = cardColors.titleColor;
   const purposeColor = cardColors.purposeColor;
   const cardBorder = cardColors.cardBorder;
+  const hasResults = isAuditResultCompleted(chip);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', background: barBg, border: cardBorder, borderRadius: '8px', overflow: 'hidden' }}>
@@ -190,9 +192,9 @@ function ApptCard({ chip }: { chip: any }) {
               type="button"
               onClick={(e) => { e.stopPropagation(); chip.onResults?.(); }}
               title="Audit Results"
-              style={css('width:30px;height:30px;border:1px solid ' + (chip.results && Object.keys(chip.results).length > 0 ? '#b8cbf7' : '#dde0d9') + ';background:' + (chip.results && Object.keys(chip.results).length > 0 ? '#f0f4fe' : '#f4f6f1') + ';border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')}
+              style={css('width:30px;height:30px;border:1px solid ' + (hasResults ? '#b8cbf7' : '#dde0d9') + ';background:' + (hasResults ? '#f0f4fe' : '#f4f6f1') + ';border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')}
             >
-              <ClipboardCheckIcon size={15} color={chip.results && Object.keys(chip.results).length > 0 ? '#2756d6' : '#5c625c'} />
+              <ClipboardCheckIcon size={15} color={hasResults ? '#2756d6' : '#5c625c'} />
             </button>
             <button
               type="button"
@@ -709,6 +711,7 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
   const isInc = cardColors.priority === 'incomplete';
   const barBgColor = isInc ? '#FC0000' : cardColors.accentBg;
   const rowBg = cardColors.priority === 'default' ? '#fff' : cardColors.barBg;
+  const hasResults = isAuditResultCompleted(chip);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', borderBottom: isLast ? 'none' : '1px solid #e8ebe4', background: rowBg }}>
@@ -762,9 +765,9 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
               type="button"
               onClick={(e) => { e.stopPropagation(); chip.onResults?.(); }}
               title="Audit Results"
-              style={css('width:30px;height:30px;border:1px solid ' + (chip.results && Object.keys(chip.results).length > 0 ? '#b8cbf7' : '#dde0d9') + ';background:' + (chip.results && Object.keys(chip.results).length > 0 ? '#f0f4fe' : '#f4f6f1') + ';border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')}
+              style={css('width:30px;height:30px;border:1px solid ' + (hasResults ? '#b8cbf7' : '#dde0d9') + ';background:' + (hasResults ? '#f0f4fe' : '#f4f6f1') + ';border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')}
             >
-              <ClipboardCheckIcon size={15} color={chip.results && Object.keys(chip.results).length > 0 ? '#2756d6' : '#5c625c'} />
+              <ClipboardCheckIcon size={15} color={hasResults ? '#2756d6' : '#5c625c'} />
             </button>
             <button
               type="button"
@@ -1783,7 +1786,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
         const border = cardColors.priority === 'default' ? 'none' : cardColors.cardBorder;
 
         return (
-          <div onClick={sp.onClick} title={[sp.customer, sp.auditor2 || sp.purpose, sp.auditor2 ? '' : sp.auditor1].filter(Boolean).join(' - ')} style={{
+          <div key={sp.id} onClick={sp.onClick} title={[sp.customer, sp.auditor2 || sp.purpose, sp.auditor2 ? '' : sp.auditor1].filter(Boolean).join(' - ')} style={{
             gridColumn: `${sp.startDay + 1} / span ${sp.span}`,
             gridRow: `${sp.gridRow + 2}`,
             zIndex: 2,

@@ -133,6 +133,8 @@ export interface Assignment {
   major?: number;
   minor?: number;
   ofi?: number;
+  obs?: number;
+  findings?: number | any;
   request?: number;
   utl1?: number;
   utl2?: number;
@@ -141,7 +143,14 @@ export interface Assignment {
   createdBy?: string;
   createdAt?: string | number;
   updatedAt?: string;
+  status?: string;
+  isCompleted?: boolean;
+  resultSummary?: string;
+  result?: any;
+  auditResult?: any;
 }
+
+export type Appointment = Assignment;
 
 function hasValue(val: any): boolean {
   return val !== undefined && val !== null && String(val).trim() !== '';
@@ -281,26 +290,65 @@ export function getAssignmentDateRange(a: Assignment, allAssignments: Assignment
   return { fromDate, toDate };
 }
 
-export function hasAuditResultsEntered(a?: { results?: Record<string, SiteAuditResult>; major?: number; minor?: number; ofi?: number }): boolean {
-  if (!a) return false;
-  if (a.results && typeof a.results === 'object') {
-    const sites = Object.keys(a.results);
-    if (sites.length > 0) {
-      for (const s of sites) {
-        const item = a.results[s];
-        if (!item) continue;
-        const total = (Number(item.major) || 0) +
-                      (Number(item.minor) || 0) +
-                      (Number(item.ofi) || 0) +
-                      (Number(item.obs) || 0) +
-                      (Number(item.findings) || 0);
-        if (total > 0) return true;
-      }
-      return false;
-    }
+/**
+ * Helper to check if actual result data exists and is completed.
+ * Used for evaluation of audit results across calendar cards and forms.
+ *
+ * Rules:
+ * - Check if results object/fields exist and are not empty
+ * - If result is an object with finding categories (Major, Minor, OFI, etc.):
+ *   Ensure at least one finding count or status field is officially recorded,
+ *   or check dedicated completed flag if schema uses `isCompleted` / `status === 'Completed'`.
+ * - If results were previously entered but later deleted/cleared (all 0s/empty), returns false.
+ */
+export function isAuditResultCompleted(audit?: any): boolean {
+  if (!audit) return false;
+
+  // Check dedicated completed flags
+  if (audit.status === 'Completed' || Boolean(audit.isCompleted) || Boolean(audit.resultSummary)) {
+    return true;
   }
-  const legacySum = (Number(a.major) || 0) + (Number(a.minor) || 0) + (Number(a.ofi) || 0);
-  return legacySum > 0;
+
+  // Check legacy top-level finding fields
+  const legacySum =
+    (Number(audit.major) || 0) +
+    (Number(audit.minor) || 0) +
+    (Number(audit.ofi) || 0) +
+    (Number(audit.obs) || 0) +
+    (Number(audit.findings) || 0);
+  if (legacySum > 0) return true;
+
+  // Check if results object/fields exist and are not empty
+  if (!audit.result && !audit.findings && !audit.auditResult && !audit.results) {
+    return false;
+  }
+
+  const res = audit.result ?? audit.findings ?? audit.auditResult ?? audit.results;
+
+  // If result is an object with finding categories (Major, Minor, OFI, etc.)
+  if (typeof res === 'object' && res !== null) {
+    const hasRecordedFinding = (val: any): boolean => {
+      if (val === null || val === undefined || val === '') return false;
+      if (typeof val === 'number') return val > 0;
+      if (typeof val === 'string') {
+        const num = Number(val);
+        return !isNaN(num) ? num > 0 : val.trim() !== '';
+      }
+      if (typeof val === 'object') {
+        return Object.values(val).some(hasRecordedFinding);
+      }
+      return Boolean(val);
+    };
+
+    const hasFindings = Object.values(res).some(hasRecordedFinding);
+    return hasFindings || audit.status === 'Completed' || Boolean(audit.isCompleted) || Boolean(audit.resultSummary);
+  }
+
+  return Boolean(res);
+}
+
+export function hasAuditResultsEntered(a?: any): boolean {
+  return isAuditResultCompleted(a);
 }
 
 export function parseTimestamp(val?: string | number): number {
@@ -310,15 +358,18 @@ export function parseTimestamp(val?: string | number): number {
   return isNaN(t) ? 0 : t;
 }
 
-export function isTodayWithinAssignmentRange(fromDate: Date | string, toDate: Date | string, now: Date = new Date()): boolean {
-  const fromD = typeof fromDate === 'string' ? new Date(fromDate) : fromDate;
-  const toD = typeof toDate === 'string' ? new Date(toDate) : toDate;
-  if (!fromD || !toD || isNaN(fromD.getTime()) || isNaN(toD.getTime())) return false;
+export function isTodayWithinAssignmentRange(fromDate?: Date | string, toDate?: Date | string, now: Date = new Date()): boolean {
+  const start = fromDate || toDate;
+  if (!start) return false;
+  const fromD = typeof start === 'string' ? new Date(start) : start;
+  if (!fromD || isNaN(fromD.getTime())) return false;
   const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const fromISO = `${fromD.getFullYear()}-${String(fromD.getMonth() + 1).padStart(2, '0')}-${String(fromD.getDate()).padStart(2, '0')}`;
-  const toISO = `${toD.getFullYear()}-${String(toD.getMonth() + 1).padStart(2, '0')}-${String(toD.getDate()).padStart(2, '0')}`;
-  return todayISO >= fromISO && todayISO <= toISO;
+  // When an audit reaches today (date <= today) or has already passed:
+  return fromISO <= todayISO;
 }
+
+export const isAuditDatePassedOrToday = isTodayWithinAssignmentRange;
 
 export function getAssignmentDateFormatted(a: Assignment, allAssignments: Assignment[]): string {
   if (!a) return '';

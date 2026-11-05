@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import type { VM } from '../useScheduler';
 import type { Assignment, SiteAuditResult } from '../types';
 import { css, HButton } from '../ui';
-import { isInternalAssignment, normalizeSite, normalizeAuditResults } from '../types';
+import { isInternalAssignment, normalizeSite, normalizeAuditResults, isAuditResultCompleted } from '../types';
 
 function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
   const isInternal = isInternalAssignment(target);
@@ -139,6 +139,21 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
       };
     }
     vm.saveResults(target.id, cleanResults);
+  };
+
+  const handleClear = () => {
+    const clearedResults: Record<string, SiteAuditResult> = {};
+    for (const site of activeSites) {
+      const normSite = normalizeSite(site);
+      clearedResults[normSite] = {
+        major: 0,
+        minor: 0,
+        ofi: 0,
+        obs: 0,
+        findings: 0,
+      };
+    }
+    vm.saveResults(target.id, clearedResults);
   };
 
   const minWeek = Math.min(...siblings.map((x) => x.week));
@@ -448,20 +463,33 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
         </div>
 
         {/* Modal Footer */}
-        <div style={css('padding:14px 20px;display:flex;justify-content:flex-end;gap:9px;border-top:1px solid #eef1ea')}>
-          <HButton
-            onClick={vm.closeResultsModal}
-            style={css("background:#f4f6f1;border:1px solid #e0e3dc;color:#3c423d;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
-            hover={{ background: '#eaede6' }}
-          >
-            Cancel
-          </HButton>
-          <button
-            onClick={handleSave}
-            style={css("background:#15191e;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
-          >
-            Save Results
-          </button>
+        <div style={css('padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:9px;border-top:1px solid #eef1ea')}>
+          <div>
+            {isAuditResultCompleted(target) && (
+              <button
+                type="button"
+                onClick={handleClear}
+                style={css("background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:8px;padding:9px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
+              >
+                Clear Results
+              </button>
+            )}
+          </div>
+          <div style={css('display:flex;align-items:center;gap:9px')}>
+            <HButton
+              onClick={vm.closeResultsModal}
+              style={css("background:#f4f6f1;border:1px solid #e0e3dc;color:#3c423d;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
+              hover={{ background: '#eaede6' }}
+            >
+              Cancel
+            </HButton>
+            <button
+              onClick={handleSave}
+              style={css("background:#15191e;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
+            >
+              Save Results
+            </button>
+          </div>
         </div>
       </div>
     </div>

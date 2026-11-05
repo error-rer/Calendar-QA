@@ -23,8 +23,8 @@ import {
   getAssignmentDateFormatted,
   getAssignmentDateRange,
   getMissingFields,
-  hasAuditResultsEntered,
   isAppointmentIncomplete,
+  isAuditResultCompleted,
   isIncompleteAssignment,
   isInternalAssignment,
   isTodayWithinAssignmentRange,
@@ -144,20 +144,29 @@ export function getApptCardColors(
     isInternal?: boolean;
     colors?: string[];
     color?: string;
+    [key: string]: any;
   },
   nowMs: number = Date.now(),
   isChipView: boolean = false
 ): ApptCardColors {
   const isInc = !!chip.isIncomplete;
-  const isNew = !isInc && isNewlyCreated(chip, nowMs);
-  const isUpd = !isInc && !isNew && isRecentlyUpdated(chip, nowMs);
 
   let onAuditDate = chip.isAuditDate;
-  if (onAuditDate === undefined && (chip.fromDate || chip.toDate)) {
+  if (chip.fromDate || chip.toDate) {
     const today = new Date(nowMs);
-    onAuditDate = isTodayWithinAssignmentRange(chip.fromDate || today, chip.toDate || chip.fromDate || today, today);
+    onAuditDate = isTodayWithinAssignmentRange(chip.fromDate, chip.toDate, today);
+  } else if (onAuditDate === undefined && typeof (chip as any).week === 'number' && typeof (chip as any).day === 'number') {
+    const today = new Date(nowMs);
+    const d = new Date(2026, 5, 29 + (chip as any).week * 7 + (chip as any).day);
+    onAuditDate = isTodayWithinAssignmentRange(d, d, today);
   }
-  const isPending = !isInc && !isNew && !isUpd && !!onAuditDate && !hasAuditResultsEntered(chip);
+
+  const isCompleted = isAuditResultCompleted(chip);
+  const isPending = !isInc && !!onAuditDate && !isCompleted;
+
+  // New / Updated badges only apply when not pending results and not on/past audit date
+  const isNew = !isInc && !onAuditDate && isNewlyCreated(chip, nowMs);
+  const isUpd = !isInc && !onAuditDate && !isNew && isRecentlyUpdated(chip, nowMs);
 
   const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color || '#9aa097'];
   const defaultAccentBg = getAccentBackground(chColors);
@@ -179,7 +188,20 @@ export function getApptCardColors(
     };
   }
 
-  // Priority 2: RECENTLY CREATED (Light Green - 3 Minutes)
+  // Priority 2: PENDING AUDIT RESULT ON AUDIT DATE (Soft Yellow Warning State)
+  if (isPending) {
+    return {
+      priority: 'pending_result',
+      barBg: isChipView ? '#fef9c3' : '#fffbeb', // soft yellow (bg-yellow-100 / bg-amber-50)
+      cardBorder: '1px solid #fde047', // border accent (border-amber-300 / #fde047)
+      accentBg: defaultAccentBg, // PRESERVE original side-stripe
+      titleColor: defaultTitleColor, // PRESERVE typography colors
+      purposeColor: '#78350f', // subtle warm amber/brown text accent
+      overrideCodeColor: undefined,
+    };
+  }
+
+  // Priority 3: RECENTLY CREATED (Light Green - 3 Minutes)
   if (isNew) {
     return {
       priority: 'recently_created',
@@ -192,7 +214,7 @@ export function getApptCardColors(
     };
   }
 
-  // Priority 3: RECENTLY UPDATED (Light Blue - 3 Minutes)
+  // Priority 4: RECENTLY UPDATED (Light Blue - 3 Minutes)
   if (isUpd) {
     return {
       priority: 'recently_updated',
@@ -205,20 +227,7 @@ export function getApptCardColors(
     };
   }
 
-  // Priority 4: PENDING AUDIT RESULT ON AUDIT DATE (Light Yellow)
-  if (isPending) {
-    return {
-      priority: 'pending_result',
-      barBg: isChipView ? '#fef9c3' : '#fefce8', // soft light yellow (bg-amber-50 / bg-yellow-100)
-      cardBorder: '1px solid #fef08a',
-      accentBg: defaultAccentBg, // PRESERVE original side-stripe
-      titleColor: defaultTitleColor, // PRESERVE typography colors
-      purposeColor: defaultPurposeColor, // PRESERVE subtitle colors
-      overrideCodeColor: undefined,
-    };
-  }
-
-  // Default State: Standard neutral card style
+  // Default State: Standard neutral card style (Completed audits or normal scheduled audits)
   return {
     priority: 'default',
     barBg: defaultBg,
@@ -248,6 +257,15 @@ interface MonthChip {
   fromDate?: Date | string;
   toDate?: Date | string;
   results?: Record<string, SiteAuditResult>;
+  major?: number;
+  minor?: number;
+  ofi?: number;
+  obs?: number;
+  findings?: number;
+  status?: string;
+  isCompleted?: boolean;
+  resultSummary?: string;
+  result?: any;
   onClick?: () => void;
 }
 interface MonthCell {
@@ -1671,10 +1689,30 @@ export function useScheduler() {
 
     const normalizedResults = normalizeAuditResults(newResults);
     const nowIso = new Date().toISOString();
+
+    let totalMajor = 0, totalMinor = 0, totalOfi = 0, totalObs = 0, totalFindings = 0;
+    for (const siteRes of Object.values(normalizedResults)) {
+      if (!siteRes) continue;
+      totalMajor += Number(siteRes.major) || 0;
+      totalMinor += Number(siteRes.minor) || 0;
+      totalOfi += Number(siteRes.ofi) || 0;
+      totalObs += Number(siteRes.obs) || 0;
+      totalFindings += Number(siteRes.findings) || 0;
+    }
+
     setState((s) => ({
       assignments: s.assignments.map((item) =>
         targetIds.has(item.id)
-          ? { ...item, results: normalizedResults, updatedAt: nowIso }
+          ? {
+              ...item,
+              results: normalizedResults,
+              major: totalMajor,
+              minor: totalMinor,
+              ofi: totalOfi,
+              obs: totalObs,
+              findings: totalFindings,
+              updatedAt: nowIso,
+            }
           : item
       ),
       resultsModalOpen: false,
@@ -1682,7 +1720,13 @@ export function useScheduler() {
     }));
 
     targetIds.forEach((id) => {
-      api.updateAssignment(id, { results: normalizedResults, updatedAt: nowIso }).catch(() => {});
+      api.updateAssignment(id, {
+        results: normalizedResults,
+        major: totalMajor,
+        minor: totalMinor,
+        ofi: totalOfi,
+        updatedAt: nowIso,
+      }).catch(() => {});
     });
 
     const dateFormatted = getAssignmentDateFormatted(a, S.assignments);
@@ -2791,6 +2835,7 @@ export function useScheduler() {
     const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
     const isAuditDate = isTodayWithinAssignmentRange(fromDate, toDate, today);
     const cardColors = getApptCardColors({
+      ...a,
       isIncomplete,
       createdAt: a.createdAt,
       updatedAt: a.updatedAt,
@@ -2798,6 +2843,8 @@ export function useScheduler() {
       results: a.results,
       isInternal,
       colors,
+      fromDate,
+      toDate,
     }, nowTick, false);
     const barBg = cardColors.barBg;
     const borderStyle = cardColors.priority === 'default' ? '1px solid #e3e6e0' : cardColors.cardBorder;
@@ -2834,6 +2881,7 @@ export function useScheduler() {
     const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
     const isAuditDate = isTodayWithinAssignmentRange(fromDate, toDate, today);
     const cardColors = getApptCardColors({
+      ...a,
       isIncomplete,
       createdAt: a.createdAt,
       updatedAt: a.updatedAt,
@@ -2841,6 +2889,8 @@ export function useScheduler() {
       results: a.results,
       isInternal,
       colors,
+      fromDate,
+      toDate,
     }, nowTick, false);
     const barBg = cardColors.barBg;
     const borderStyle = cardColors.priority === 'default' ? '1px solid #e8ebe4' : cardColors.cardBorder;
@@ -2940,6 +2990,15 @@ export function useScheduler() {
         createdAt: a.createdAt,
         updatedAt: a.updatedAt,
         results: a.results || {},
+        major: a.major,
+        minor: a.minor,
+        ofi: a.ofi,
+        obs: a.obs,
+        findings: a.findings,
+        status: a.status,
+        isCompleted: a.isCompleted,
+        resultSummary: a.resultSummary,
+        result: a.result,
         isAuditDate,
         fromDate,
         toDate,
@@ -3241,6 +3300,12 @@ export function useScheduler() {
       major: a.major,
       minor: a.minor,
       ofi: a.ofi,
+      obs: a.obs,
+      findings: a.findings,
+      status: a.status,
+      isCompleted: a.isCompleted,
+      resultSummary: a.resultSummary,
+      result: a.result,
       request: a.request,
       utl1: a.utl1,
       utl2: a.utl2,
@@ -3579,6 +3644,15 @@ export function useScheduler() {
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
       results: c.results || {},
+      major: c.major,
+      minor: c.minor,
+      ofi: c.ofi,
+      obs: c.obs,
+      findings: c.findings,
+      status: c.status,
+      isCompleted: c.isCompleted,
+      resultSummary: c.resultSummary,
+      result: c.result,
       isAuditDate: c._isAuditDate,
       fromDate: c._fromDate,
       toDate: c._toDate,
@@ -3595,6 +3669,15 @@ export function useScheduler() {
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
       results: c.results || {},
+      major: c.major,
+      minor: c.minor,
+      ofi: c.ofi,
+      obs: c.obs,
+      findings: c.findings,
+      status: c.status,
+      isCompleted: c.isCompleted,
+      resultSummary: c.resultSummary,
+      result: c.result,
       isAuditDate: c._isAuditDate,
       fromDate: c._fromDate,
       toDate: c._toDate,
