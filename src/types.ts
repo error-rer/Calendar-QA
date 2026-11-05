@@ -39,6 +39,19 @@ export interface SiteAuditResult {
 }
 
 
+export const SITE_ORDER = [
+  'UTL1',
+  'UTL2',
+  'UTL2A',
+  'UTL2B',
+  'UTL3',
+  'UTL3A',
+  'UTL3B',
+  'UTL3T',
+] as const;
+
+export type SiteCode = typeof SITE_ORDER[number];
+
 /** Standardize site codes: prefix legacy U1..U3T with UTL */
 export function normalizeSite(site: string): string {
   if (!site) return '';
@@ -54,17 +67,38 @@ export function normalizeSite(site: string): string {
   return s;
 }
 
-/** Standardize slash/comma-separated multi-site string */
+/** Get index of site in canonical SITE_ORDER */
+export function getSiteOrderIndex(site: string): number {
+  if (!site) return 999;
+  const norm = normalizeSite(site).toUpperCase();
+  const idx = SITE_ORDER.indexOf(norm as any);
+  return idx !== -1 ? idx : 999;
+}
+
+/** Sort an array of site names according to canonical SITE_ORDER */
+export function sortSites(sites: string[]): string[] {
+  if (!sites || sites.length <= 1) return sites ? [...sites] : [];
+  return [...sites].sort((a, b) => {
+    const idxA = getSiteOrderIndex(a);
+    const idxB = getSiteOrderIndex(b);
+    if (idxA !== idxB) {
+      return idxA - idxB;
+    }
+    return normalizeSite(a).localeCompare(normalizeSite(b));
+  });
+}
+
+/** Standardize slash/comma-separated multi-site string and sort in canonical site order */
 export function normalizeSites(raw: string): string {
   if (!raw) return '';
-  if (raw.includes('/') || raw.includes(',')) {
-    return raw
-      .split(/[/,]/)
-      .map((s) => normalizeSite(s.trim()))
-      .filter(Boolean)
-      .join('/');
-  }
-  return normalizeSite(raw);
+  const parts = raw
+    .split(/[/,]/)
+    .map((s) => normalizeSite(s.trim()))
+    .filter(Boolean);
+  if (parts.length === 0) return '';
+  const uniqueSites = Array.from(new Set(parts));
+  const sorted = sortSites(uniqueSites);
+  return sorted.join('/');
 }
 
 /** Standardize audit results record keys to UTL site codes */

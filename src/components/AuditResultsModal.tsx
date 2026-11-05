@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import type { VM } from '../useScheduler';
 import type { Assignment, SiteAuditResult } from '../types';
 import { css, HButton } from '../ui';
-import { isInternalAssignment, normalizeSite, normalizeAuditResults, isAuditResultCompleted } from '../types';
+import { isInternalAssignment, normalizeSite, normalizeAuditResults, isAuditResultCompleted, sortSites } from '../types';
 
 function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
   const isInternal = isInternalAssignment(target);
@@ -41,7 +41,7 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
       }
     }
     const list = Array.from(siteSet);
-    return list.length > 0 ? list : ['General'];
+    return list.length > 0 ? sortSites(list) : ['General'];
   }, [siblings]);
 
   // Local state for editing the results per site - keyed by siteName

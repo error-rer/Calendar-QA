@@ -21,16 +21,46 @@ function normalizeSite(site: string): string {
   return s;
 }
 
+const SITE_ORDER = [
+  'UTL1',
+  'UTL2',
+  'UTL2A',
+  'UTL2B',
+  'UTL3',
+  'UTL3A',
+  'UTL3B',
+  'UTL3T',
+] as const;
+
+function getSiteOrderIndex(site: string): number {
+  if (!site) return 999;
+  const norm = normalizeSite(site).toUpperCase();
+  const idx = (SITE_ORDER as readonly string[]).indexOf(norm);
+  return idx !== -1 ? idx : 999;
+}
+
+function sortSites(sites: string[]): string[] {
+  if (!sites || sites.length <= 1) return sites ? [...sites] : [];
+  return [...sites].sort((a, b) => {
+    const idxA = getSiteOrderIndex(a);
+    const idxB = getSiteOrderIndex(b);
+    if (idxA !== idxB) {
+      return idxA - idxB;
+    }
+    return normalizeSite(a).localeCompare(normalizeSite(b));
+  });
+}
+
 function normalizeSites(raw: string): string {
   if (!raw) return '';
-  if (raw.includes('/') || raw.includes(',')) {
-    return raw
-      .split(/[/,]/)
-      .map((s) => normalizeSite(s.trim()))
-      .filter(Boolean)
-      .join('/');
-  }
-  return normalizeSite(raw);
+  const parts = raw
+    .split(/[/,]/)
+    .map((s) => normalizeSite(s.trim()))
+    .filter(Boolean);
+  if (parts.length === 0) return '';
+  const uniqueSites = Array.from(new Set(parts));
+  const sorted = sortSites(uniqueSites);
+  return sorted.join('/');
 }
 
 function normalizeAuditResults(results: any): Record<string, any> {

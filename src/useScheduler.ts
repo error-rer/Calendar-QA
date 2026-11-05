@@ -34,6 +34,7 @@ import {
   normalizeAuditResults,
   normalizeAssignment,
   parseTimestamp,
+  sortSites,
 } from './types';
 import { getHolidayForDate, getHolidayStyle, type HolidayInfo } from './holidays';
 import {
@@ -73,7 +74,7 @@ const parseDateToISO = (str?: string) => {
 
 export const siteColorsOfAssignment = (a: Assignment, siteColors: Record<string, string>): string[] => {
   const siteStr = a.site1 || a.site2 || '';
-  const sites = siteStr.split('/').map((s) => s.trim()).filter(Boolean);
+  const sites = sortSites(siteStr.split(/[/,]/).map((s) => s.trim()).filter(Boolean));
   if (sites.length === 0) return ['#999999'];
   return sites.map((s) => siteColors[s] || siteColors[normalizeSite(s)] || '#999999');
 };
@@ -1866,7 +1867,7 @@ export function useScheduler() {
 
     const fields = {
       sectionType: d.sectionType,
-      site1: d.sectionType === 'customer' ? d.site1 : '',
+      site1: d.sectionType === 'customer' ? normalizeSites(d.site1 || '') : '',
       customer: d.sectionType === 'customer' ? d.customer : '',
       endCustomer: d.sectionType === 'customer' ? d.endCustomer : '',
       targetPackage: d.sectionType === 'customer' ? (d.targetPackage || '') : '',
@@ -1874,7 +1875,7 @@ export function useScheduler() {
       auditCategory: d.sectionType === 'internal' ? (d.auditCategory || '') : '',
       auditor1: d.sectionType === 'customer' ? d.auditor1 : '',
       purpose: d.purpose || '',
-      site2: d.sectionType === 'internal' ? d.site2 : '',
+      site2: d.sectionType === 'internal' ? normalizeSites(d.site2 || '') : '',
       area: d.sectionType === 'internal' ? d.area : '',
       auditor2: d.sectionType === 'internal' ? d.auditor2 : '',
       department1: d.sectionType === 'customer' ? d.department1 : '',

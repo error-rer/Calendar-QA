@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { Assignment, Engineer } from '../types';
-import { normalizeSite } from '../types';
+import { normalizeSite, sortSites } from '../types';
 import { css } from '../ui';
 import { AvailabilityDatePicker } from './AvailabilityDatePicker';
 
@@ -275,7 +275,13 @@ function MultiSiteSelect({
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const selectedSites = value ? value.split('/').map((s) => normalizeSite(s.trim())).filter(Boolean) : [];
+  const selectedSites = useMemo(() => {
+    return value ? sortSites(value.split(/[/,]/).map((s) => normalizeSite(s.trim())).filter(Boolean)) : [];
+  }, [value]);
+
+  const sortedSiteOptions = useMemo(() => {
+    return sortSites(Array.from(new Set(siteOptions.map((s) => normalizeSite(s.trim())).filter(Boolean))));
+  }, [siteOptions]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -295,7 +301,8 @@ function MultiSiteSelect({
     } else {
       next = [...selectedSites, site];
     }
-    onChange(next.join('/'));
+    const sorted = sortSites(next);
+    onChange(sorted.join('/'));
   };
 
   const displayText = selectedSites.length > 0 ? selectedSites.join('/') : 'Select site...';
@@ -353,8 +360,7 @@ function MultiSiteSelect({
             padding: '4px',
           }}
         >
-          {siteOptions.map((rawS) => {
-            const s = normalizeSite(rawS);
+          {sortedSiteOptions.map((s) => {
             const isSel = selectedSites.includes(s);
             return (
               <div
