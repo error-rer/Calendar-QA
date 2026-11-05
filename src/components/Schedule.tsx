@@ -709,7 +709,7 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
 
   const cardColors = getApptCardColors(chip, Date.now(), false);
   const isInc = cardColors.priority === 'incomplete';
-  const barBgColor = isInc ? '#FC0000' : cardColors.accentBg;
+  const barBgColor = isInc ? '#dc2626' : cardColors.accentBg;
   const rowBg = cardColors.priority === 'default' ? '#fff' : cardColors.barBg;
   const hasResults = isAuditResultCompleted(chip);
 
@@ -723,39 +723,39 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
           padding: '10px 14px',
           display: 'flex',
           alignItems: 'center',
-          background: '#fafbf9',
-          borderRight: '1px solid #e8ebe4',
+          background: isInc ? '#dc2626' : '#fafbf9',
+          borderRight: isInc ? '1px solid #b91c1c' : '1px solid #e8ebe4',
           flexShrink: 0,
         }}>
           <span style={{
             fontFamily: "'IBM Plex Mono',monospace",
             fontSize: '12px',
             fontWeight: 700,
-            color: '#15191e',
+            color: isInc ? '#FFFFFF' : '#15191e',
             letterSpacing: '0.2px',
           }}>
             {dateLabel}
           </span>
         </div>
 
-        {/* Color accent bar: Red (#FC0000) for incomplete data, otherwise standard blue / plant accent */}
+        {/* Color accent bar: Red (#dc2626) for incomplete data, otherwise standard blue / plant accent */}
         <div style={{ width: '4px', background: barBgColor, flexShrink: 0, alignSelf: 'stretch' }} />
 
         {/* Main Appointment Content Strip */}
         <div style={{ flex: 1, minWidth: 0, padding: '9px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
           <div onClick={toggleExpand} style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} title="Click to expand embedded details">
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' }}>
-              <div style={css(`font-size:12.5px;font-weight:600;color:${chip.isInternal ? '#10b981' : '#2756d6'}`)}>
-                {renderApptCode(chip.code)}
+              <div style={css(`font-size:12.5px;font-weight:600;color:${isInc ? '#FFFFFF' : (chip.isInternal ? '#10b981' : '#2756d6')}`)}>
+                {renderApptCode(chip.code, isInc ? '#FFFFFF' : undefined)}
               </div>
               {isInc && (
-                <span style={{ fontSize: '10px', fontWeight: 700, color: '#FC0000', background: '#fef2f2', border: '1px solid #fca5a5', padding: '1px 5px', borderRadius: '4px', textTransform: 'uppercase', lineHeight: 1 }}>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: '#dc2626', background: '#FFFFFF', border: '1px solid #fee2e2', padding: '1px 5px', borderRadius: '4px', textTransform: 'uppercase', lineHeight: 1 }}>
                   Incomplete
                 </span>
               )}
             </div>
             {chip.purpose ? (
-              <div style={css('font-size:11px;color:#5c625c;margin-top:2px')}>{chip.purpose}</div>
+              <div style={css(`font-size:11px;color:${isInc ? '#FFFFFF' : '#5c625c'};margin-top:2px`)}>{chip.purpose}</div>
             ) : null}
           </div>
 

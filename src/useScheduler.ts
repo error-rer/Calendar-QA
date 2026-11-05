@@ -23,6 +23,7 @@ import {
   getAssignmentDateFormatted,
   getAssignmentDateRange,
   getMissingFields,
+  isAppointmentFormIncomplete,
   isAppointmentIncomplete,
   isAuditResultCompleted,
   isIncompleteAssignment,
@@ -149,7 +150,7 @@ export function getApptCardColors(
   nowMs: number = Date.now(),
   isChipView: boolean = false
 ): ApptCardColors {
-  const isInc = !!chip.isIncomplete;
+  const isInc = chip.isIncomplete !== undefined ? !!chip.isIncomplete : isAppointmentFormIncomplete(chip);
 
   let onAuditDate = chip.isAuditDate;
   if (chip.fromDate || chip.toDate) {
@@ -175,15 +176,15 @@ export function getApptCardColors(
   const defaultBg = isChipView ? '#f0f2ec' : '#ffffff';
   const defaultBorder = isChipView ? '1px solid #e2e5de' : '1px solid #e4e7e0';
 
-  // Priority 1: INCOMPLETE FORM (Red)
+  // Priority 1: INCOMPLETE FORM (Solid Red - bg-red-600 text-white)
   if (isInc) {
     return {
       priority: 'incomplete',
-      barBg: '#FC0000',
-      cardBorder: '1px solid #b91c1c',
-      accentBg: '#b91c1c',
-      titleColor: '#FFFFFF',
-      purposeColor: '#FFFFFF',
+      barBg: '#dc2626', // solid RED (bg-red-600)
+      cardBorder: '1px solid #b91c1c', // border-red-700
+      accentBg: '#991b1b', // red-800 accent stripe
+      titleColor: '#FFFFFF', // text-white
+      purposeColor: '#FFFFFF', // text-white
       overrideCodeColor: '#FFFFFF',
     };
   }
@@ -3003,7 +3004,7 @@ export function useScheduler() {
         fromDate,
         toDate,
         countTxt: '',
-        dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: isIncomplete ? '#FC0000' : color, flexShrink: 0 }),
+        dotStyle: sx({ width: '3px', height: '14px', borderRadius: '2px', background: isIncomplete ? '#dc2626' : color, flexShrink: 0 }),
         style: sx({ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10.5px', color: isIncomplete ? '#FFFFFF' : '#23282a', fontWeight: 600, minHeight: '18px', lineHeight: '1.2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
         onClick: () => openDayDialog(slot.weekOffset, slot.wd),
       };
