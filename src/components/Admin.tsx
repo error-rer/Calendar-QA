@@ -172,20 +172,20 @@ function EngineersTable({ vm }: { vm: VM }) {
               <div style={css('min-width:0')}>
                 <div style={css('font-size:12.5px;font-weight:600;color:#23282a;text-decoration:none;display:flex;align-items:center;gap:6px')}>
                   <span>{e.name}</span>
-                  {(e.department === 'Non-QA' || e.department === 'QA') && (
+                  {e.department && (e.department === 'QA' || e.department === 'Non-QA') && (
                     <span
                       style={css(
                         `font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;font-family:'IBM Plex Mono',monospace;` +
-                          (e.department === 'Non-QA'
-                            ? 'background:#fef3c7;color:#92400e;border:1px solid #fde68a;'
-                            : 'background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;')
+                          (e.department === 'QA'
+                            ? 'background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;'
+                            : 'background:#f4f4f5;color:#3f3f46;border:1px solid #e4e4e7;')
                       )}
                     >
                       {e.department}
                     </span>
                   )}
                 </div>
-                <div style={css('font-size:10.5px;color:#8a9088')}>{e.site || (e.department !== 'QA' && e.department !== 'Non-QA' ? e.department : 'UTL1')}{e.subDepartments.length > 0 ? ' - ' + e.subDepartments.join(', ') : ''}</div>
+                <div style={css('font-size:10.5px;color:#8a9088')}>{e.site || 'UTL1'}{e.subDepartments.length > 0 ? ' - ' + e.subDepartments.join(', ') : ''}</div>
               </div>
             </div>
           </div>

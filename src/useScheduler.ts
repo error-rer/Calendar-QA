@@ -4079,7 +4079,7 @@ export function useScheduler() {
         name,
         role: 'QMS Host',
         site: computedSiteCodeOptions[0] ? normalizeSite(computedSiteCodeOptions[0]) : 'UTL1',
-        department: 'QA' as Department,
+        department: '' as Department,
         subDepartments: [] as SubDepartment[],
         isMaster: false,
       };
@@ -4102,7 +4102,7 @@ export function useScheduler() {
         }).length;
 
         const engSite = e.site || (e.department && e.department !== 'QA' && e.department !== 'Non-QA' ? e.department : 'UTL1');
-        const engDept = (e.department === 'Non-QA' ? 'Non-QA' : 'QA') as Department;
+        const engDept = (e.department === 'Non-QA' ? 'Non-QA' : e.department === 'QA' ? 'QA' : '') as Department;
 
         return {
           id: e.id,
