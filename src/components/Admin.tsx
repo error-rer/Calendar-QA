@@ -502,15 +502,6 @@ function OptionsPanel({ vm }: { vm: VM }) {
         onReorderCustomer={vm.reorderCustomerDepartmentOptions}
       />
       <TagListEditor
-        title="Department"
-        count={vm.departmentOptions.length}
-        values={vm.departmentOptions}
-        onAdd={vm.addDepartmentOption}
-        onRemove={vm.removeDepartmentOption}
-        onReorder={vm.reorderDepartmentOptions}
-        placeholder="e.g. QA"
-      />
-      <TagListEditor
         title="Customer"
         count={vm.customerOptions.length}
         values={vm.customerOptions}

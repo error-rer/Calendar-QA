@@ -89,7 +89,6 @@ export function EditModal({ vm }: { vm: VM }) {
             assignments={vm.assignments}
             engineers={vm.engineers}
             editingTargetId={ed.targetId}
-            departmentOptions={vm.departmentOptions}
           />
           {ed.warn && (
             <div style={css("font-size:12px;color:#dc2626;background:#fef2f2;border:1px solid #fca5a5;padding:9px 14px;border-radius:8px;text-align:center;font-weight:600;font-family:'Archivo',sans-serif")}>

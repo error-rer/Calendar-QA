@@ -1358,6 +1358,7 @@ export function useScheduler() {
     const auditorPrimary = auditorRaw.split(',')[0].trim() || 'Unassigned';
     const existingEng = S.engineers.find((e) => e.name.toLowerCase() === auditorPrimary.toLowerCase());
     const engId = existingEng ? existingEng.id : 'e' + ids.current.id++;
+    const hostDept: Department | undefined = existingEng?.department === 'Non-QA' ? 'Non-QA' : (existingEng?.department === 'QA' ? 'QA' : undefined);
     const newAssignments: Assignment[] = [];
     const orderId = 'o' + ids.current.id++;
     const seriesId = 's_' + orderId;
@@ -1384,7 +1385,7 @@ export function useScheduler() {
           auditor2: d.sectionType === 'internal' ? d.auditor2 : '',
           department1: d.sectionType === 'customer' ? d.department1 : '',
           department2: d.sectionType === 'internal' ? d.department2 : '',
-          department: d.department || undefined,
+          department: hostDept,
           createdBy: profile.name || 'Jordan Lee',
           createdAt: new Date().toISOString(),
         });
@@ -1748,7 +1749,7 @@ export function useScheduler() {
             name: newAuditorPrimary,
             role: 'QA',
             site: siteToSiteCode(d.sectionType === 'internal' ? d.site2 : d.site1),
-            department: (d.department || 'QA') as Department,
+            department: 'QA' as Department,
             subDepartments: [],
             isMaster: false,
           };
@@ -1758,6 +1759,9 @@ export function useScheduler() {
         }
       }
     }
+
+    const matchedEng = updatedEngineers.find((e) => e.id === finalEngId) || updatedEngineers.find((e) => e.name.toLowerCase() === newAuditorPrimary.toLowerCase());
+    const hostDept: Department | undefined = matchedEng?.department === 'Non-QA' ? 'Non-QA' : (matchedEng?.department === 'QA' ? 'QA' : undefined);
 
     // replace every sibling assignment (same order + eng, i.e. the days that make up
     // this appointment's span) with one entry per slot in the new date range, instead
@@ -1830,7 +1834,7 @@ export function useScheduler() {
       auditor2: d.sectionType === 'internal' ? d.auditor2 : '',
       department1: d.sectionType === 'customer' ? d.department1 : '',
       department2: d.sectionType === 'internal' ? d.department2 : '',
-      department: d.department || undefined,
+      department: hostDept,
       results: reconciledResults,
     };
     const minWeek = Math.min(...siblings.map((x) => x.week));
@@ -1942,7 +1946,7 @@ export function useScheduler() {
       changes.push({ name: 'QMS Host', oldVal: oldAuditor, newVal: newAuditor });
     }
     const oldDepartment = target.department || '';
-    const newDepartment = d.department || '';
+    const newDepartment = hostDept || '';
     if (oldDepartment !== newDepartment) {
       if (oldDepartment && newDepartment) {
         changes.push({ name: 'Department', oldVal: oldDepartment, newVal: newDepartment });
@@ -2011,7 +2015,7 @@ export function useScheduler() {
         isDaySplit: true,
         updatedAt: nowIso,
         ...fields,
-        department: d.department || '',
+        department: hostDept || '',
         results: reconciledResults,
       }).catch(() => {});
 
@@ -2107,7 +2111,7 @@ export function useScheduler() {
     const droppedIds = reuseIds.slice(slots.length);
 
     updated.forEach((a, i) => {
-      if (i < siblings.length) api.updateAssignment(a.id, { eng: a.eng, day: a.day, week: a.week, seriesId: a.seriesId, groupId: a.groupId, createdAt: a.createdAt, updatedAt: a.updatedAt, ...fields, department: d.department || '' }).catch(() => {});
+      if (i < siblings.length) api.updateAssignment(a.id, { eng: a.eng, day: a.day, week: a.week, seriesId: a.seriesId, groupId: a.groupId, createdAt: a.createdAt, updatedAt: a.updatedAt, ...fields, department: hostDept || '' }).catch(() => {});
       else api.createAssignment(a).catch(() => {});
     });
     droppedIds.forEach((id: string) => api.deleteAssignment(id).catch(() => {}));
@@ -2475,6 +2479,9 @@ export function useScheduler() {
       const id = S.engEditingId;
       const existing = S.engineers.find((e) => e.id === id);
       const oldName = existing?.name || '';
+      const oldDept = existing?.department || '';
+      const isDeptChanged = oldDept !== dept;
+      const isNameChanged = oldName && oldName !== newName;
       const updatedEng: Engineer = {
         id,
         name: newName,
@@ -2491,14 +2498,23 @@ export function useScheduler() {
       }
 
       setState((s) => {
-        const nextAssignments = oldName && oldName !== newName
+        const nextAssignments = (isNameChanged || isDeptChanged)
           ? s.assignments.map((a) => {
-              if (a.eng === id || a.auditor1 === oldName || a.auditor2 === oldName) {
-                const patch = {
-                  auditor1: a.auditor1 === oldName ? newName : a.auditor1,
-                  auditor2: a.auditor2 === oldName ? newName : a.auditor2,
-                };
-                api.updateAssignment(a.id, patch).catch(() => {});
+              const matchesHost = a.eng === id || a.auditor1 === oldName || a.auditor2 === oldName || a.auditor1 === newName || a.auditor2 === newName;
+              if (matchesHost) {
+                const patch: Partial<Assignment> = {};
+                if (isNameChanged) {
+                  if (a.auditor1 === oldName) patch.auditor1 = newName;
+                  if (a.auditor2 === oldName) patch.auditor2 = newName;
+                }
+                if (isDeptChanged) {
+                  patch.department = dept || undefined;
+                }
+                api.updateAssignment(a.id, {
+                  ...(patch.auditor1 !== undefined ? { auditor1: patch.auditor1 } : {}),
+                  ...(patch.auditor2 !== undefined ? { auditor2: patch.auditor2 } : {}),
+                  ...(isDeptChanged ? { department: dept || '' } : {}),
+                }).catch(() => {});
                 return { ...a, ...patch };
               }
               return a;
