@@ -1,5 +1,76 @@
+import { useState } from 'react';
 import type { VM } from '../useScheduler';
 import { css, HButton, HInput } from '../ui';
+
+function CheckboxPill({
+  label,
+  selected,
+  onClick,
+}: {
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '7px',
+        padding: '7px 10px',
+        borderRadius: '8px',
+        cursor: 'pointer',
+        border: '1px solid ' + (selected ? '#60a5fa' : hovered ? '#d4d4d8' : '#e4e4e7'),
+        background: selected ? '#eff6ff' : '#ffffff',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        outline: 'none',
+        transition: 'all 0.12s ease',
+      }}
+    >
+      <span
+        style={{
+          width: '15px',
+          height: '15px',
+          borderRadius: '4px',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '9px',
+          color: '#ffffff',
+          background: selected ? '#2563eb' : '#ffffff',
+          border: '1px solid ' + (selected ? '#2563eb' : '#d4d4d8'),
+          fontWeight: 700,
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          cursor: 'pointer',
+        }}
+      >
+        {selected ? '✓' : ''}
+      </span>
+      <span
+        style={{
+          fontFamily: "'IBM Plex Mono', monospace",
+          fontSize: '10px',
+          fontWeight: 600,
+          color: selected ? '#1d4ed8' : '#27272a',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          cursor: 'pointer',
+        }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
 
 export function EngineerModal({ vm }: { vm: VM }) {
   if (!vm.engFormOpen) return null;
@@ -47,15 +118,12 @@ export function EngineerModal({ vm }: { vm: VM }) {
                 <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:5px;user-select:none")}>INTERNAL AUDIT</div>
                 <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px')}>
                   {internalOpts.map((c) => (
-                    <div
+                    <CheckboxPill
                       key={c.code}
-                      onMouseDown={(e) => e.preventDefault()}
+                      label={c.name}
+                      selected={c.selected}
                       onClick={c.onClick}
-                      style={c.style}
-                    >
-                      <span style={c.boxStyle}>{c.check}</span>
-                      <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#5b7fd6;user-select:none;cursor:pointer")}>{c.name}</span>
-                    </div>
+                    />
                   ))}
                 </div>
               </div>
@@ -63,15 +131,12 @@ export function EngineerModal({ vm }: { vm: VM }) {
                 <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:5px;user-select:none")}>CUSTOMER AUDIT</div>
                 <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px')}>
                   {customerOpts.map((c) => (
-                    <div
+                    <CheckboxPill
                       key={c.code}
-                      onMouseDown={(e) => e.preventDefault()}
+                      label={c.name}
+                      selected={c.selected}
                       onClick={c.onClick}
-                      style={c.style}
-                    >
-                      <span style={c.boxStyle}>{c.check}</span>
-                      <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#5b7fd6;user-select:none;cursor:pointer")}>{c.name}</span>
-                    </div>
+                    />
                   ))}
                 </div>
               </div>
@@ -85,9 +150,10 @@ export function EngineerModal({ vm }: { vm: VM }) {
                 const current = (f.department || '').trim();
                 const on = current.toLowerCase() === dept.toLowerCase();
                 return (
-                  <div
+                  <CheckboxPill
                     key={dept}
-                    onMouseDown={(e) => e.preventDefault()}
+                    label={dept}
+                    selected={on}
                     onClick={() => {
                       if (on) {
                         f.onDepartment(undefined);
@@ -95,15 +161,7 @@ export function EngineerModal({ vm }: { vm: VM }) {
                         f.onDepartment(dept);
                       }
                     }}
-                    style={css(`display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:8px;cursor:pointer;border:1px solid ${on ? '#9bb0e8' : '#e2e5de'};background:${on ? '#eef2fd' : '#fff'};user-select:none;outline:none;transition:all 0.12s ease`)}
-                  >
-                    <span
-                      style={css(`width:15px;height:15px;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;background:${on ? '#2756d6' : '#fff'};border:1px solid ${on ? '#2756d6' : '#cdd2c9'};font-weight:700;user-select:none;cursor:pointer`)}
-                    >
-                      {on ? '✓' : ''}
-                    </span>
-                    <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:${on ? '#2756d6' : '#5c625c'};user-select:none;cursor:pointer`)}>{dept}</span>
-                  </div>
+                  />
                 );
               })}
             </div>

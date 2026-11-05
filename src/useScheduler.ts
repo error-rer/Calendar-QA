@@ -3736,8 +3736,8 @@ export function useScheduler() {
   // ---- create-engineer modal VM ----
   const ef = S.engForm;
   const certPick = (on: boolean) => ({
-    style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '7px 10px', borderRadius: '8px', cursor: 'pointer', border: '1px solid ' + (on ? '#9bb0e8' : '#e2e5de'), background: on ? '#eef2fd' : '#fff', userSelect: 'none', WebkitUserSelect: 'none', outline: 'none' }),
-    boxStyle: sx({ width: '15px', height: '15px', borderRadius: '4px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#fff', background: on ? '#2756d6' : '#fff', border: '1px solid ' + (on ? '#2756d6' : '#cdd2c9'), userSelect: 'none', WebkitUserSelect: 'none', cursor: 'pointer' }),
+    style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '7px 10px', borderRadius: '8px', cursor: 'pointer', border: '1px solid ' + (on ? '#60a5fa' : '#e4e4e7'), background: on ? '#eff6ff' : '#ffffff', userSelect: 'none', WebkitUserSelect: 'none', outline: 'none' }),
+    boxStyle: sx({ width: '15px', height: '15px', borderRadius: '4px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#ffffff', background: on ? '#2563eb' : '#ffffff', border: '1px solid ' + (on ? '#2563eb' : '#d4d4d8'), userSelect: 'none', WebkitUserSelect: 'none', cursor: 'pointer' }),
     check: on ? '✓' : '',
   });
   const engForm = {
@@ -3749,8 +3749,8 @@ export function useScheduler() {
     sites: S.siteCodeOptions.map((d) => ({ label: d, onClick: () => setEngForm({ site: d }), style: segMd((ef.site || ef.department) === d) })),
     departments: S.siteCodeOptions.map((d) => ({ label: d, onClick: () => setEngForm({ site: d }), style: segMd((ef.site || ef.department) === d) })),
     subDepartmentOptions: [
-      ...S.internalDepartmentOptions.map((c) => ({ code: c, name: c, group: 'Internal Audit' as const, onClick: () => toggleEngSubDept(c as SubDepartment), ...certPick(ef.subDepartments.includes(c as SubDepartment)) })),
-      ...S.customerDepartmentOptions.map((c) => ({ code: c, name: c, group: 'Customer Audit' as const, onClick: () => toggleEngSubDept(c as SubDepartment), ...certPick(ef.subDepartments.includes(c as SubDepartment)) })),
+      ...S.internalDepartmentOptions.map((c) => ({ code: c, name: c, group: 'Internal Audit' as const, selected: ef.subDepartments.includes(c as SubDepartment), onClick: () => toggleEngSubDept(c as SubDepartment), ...certPick(ef.subDepartments.includes(c as SubDepartment)) })),
+      ...S.customerDepartmentOptions.map((c) => ({ code: c, name: c, group: 'Customer Audit' as const, selected: ef.subDepartments.includes(c as SubDepartment), onClick: () => toggleEngSubDept(c as SubDepartment), ...certPick(ef.subDepartments.includes(c as SubDepartment)) })),
     ],
     canSubmit: !!ef.name.trim(),
     submit: () => submitEngForm(),
