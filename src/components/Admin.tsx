@@ -178,7 +178,7 @@ function EngineersTable({ vm }: { vm: VM }) {
                         `font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;font-family:'IBM Plex Mono',monospace;` +
                           (e.department === 'QA'
                             ? 'background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;'
-                            : 'background:#f4f4f5;color:#3f3f46;border:1px solid #e4e4e7;')
+                            : 'background:#fef3c7;color:#92400e;border:1px solid #fde68a;')
                       )}
                     >
                       {e.department}
