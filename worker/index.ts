@@ -55,7 +55,16 @@ function normalizeAuditResults(results: any): Record<string, any> {
 }
 
 function engineerOut(r: any) {
-  return { id: r.id, name: r.name, role: r.role, department: r.department, subDepartments: JSON.parse(r.sub_departments || '[]') };
+  const dept = (r.host_department === 'Non-QA' || r.department === 'Non-QA') ? 'Non-QA' : 'QA';
+  const site = r.site || (r.department && r.department !== 'QA' && r.department !== 'Non-QA' ? r.department : 'UTL1');
+  return {
+    id: r.id,
+    name: r.name,
+    role: r.role,
+    site,
+    department: dept,
+    subDepartments: JSON.parse(r.sub_departments || '[]'),
+  };
 }
 
 function assignmentOut(r: any) {
@@ -70,6 +79,7 @@ function assignmentOut(r: any) {
     site1: normalizeSites(r.site1 || ''), customer: r.customer, endCustomer: r.end_customer, auditor1: r.auditor1, purpose: r.purpose,
     targetPackage: r.target_package || '', customerNames: r.customer_names || '', auditCategory: r.audit_category || '',
     site2: normalizeSites(r.site2 || ''), area: r.area, auditor2: r.auditor2, department1: r.department1, department2: r.department2,
+    department: (r.department === 'Non-QA' ? 'Non-QA' : 'QA') as any,
     major: r.major, minor: r.minor, ofi: r.ofi, request: r.request, utl1: r.utl1, utl2: r.utl2, utl3: r.utl3,
     results: normalizeAuditResults(parsedResults),
     createdAt: r.created_at || (r.created_at_num ? String(r.created_at_num) : undefined),
@@ -90,6 +100,9 @@ async function ensureAssignmentColumns(DB: D1Database) {
     await DB.prepare('ALTER TABLE assignments ADD COLUMN audit_category TEXT NOT NULL DEFAULT ""').run();
   } catch {}
   try {
+    await DB.prepare('ALTER TABLE assignments ADD COLUMN department TEXT NOT NULL DEFAULT "QA"').run();
+  } catch {}
+  try {
     await DB.prepare('ALTER TABLE assignments ADD COLUMN results TEXT NOT NULL DEFAULT "{}"').run();
   } catch {}
   try {
@@ -97,6 +110,12 @@ async function ensureAssignmentColumns(DB: D1Database) {
   } catch {}
   try {
     await DB.prepare('ALTER TABLE assignments ADD COLUMN updated_at TEXT NOT NULL DEFAULT ""').run();
+  } catch {}
+  try {
+    await DB.prepare('ALTER TABLE engineers ADD COLUMN site TEXT NOT NULL DEFAULT "UTL1"').run();
+  } catch {}
+  try {
+    await DB.prepare('ALTER TABLE engineers ADD COLUMN host_department TEXT NOT NULL DEFAULT "QA"').run();
   } catch {}
   try {
     await DB.prepare("UPDATE options SET value = 'UTL1' WHERE category = 'site_code' AND value = 'U1'").run();
@@ -127,6 +146,8 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
   const body = method === 'GET' || method === 'HEAD' ? null : await request.json().catch(() => null);
 
   try {
+    await ensureAssignmentColumns(DB);
+
     // --- GET /api/state (full data dump for initial load) ---
     if (method === 'GET' && path === 'state') {
       const [engineers, plants, activePlantsRows, orders, assignments, comments, activity, optionsRows] = await Promise.all([
@@ -146,6 +167,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       const purposeOptions: string[] = [];
       const customerDepartmentOptions: string[] = [];
       const internalDepartmentOptions: string[] = [];
+      const departmentOptions: string[] = [];
       const siteCodeOptions: string[] = [];
       const siteColors: Record<string, string> = {};
       const customerOptions: string[] = [];
@@ -158,6 +180,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
         if (row.category === 'purpose') purposeOptions.push(row.value);
         else if (row.category === 'customer_department') customerDepartmentOptions.push(row.value);
         else if (row.category === 'internal_department') internalDepartmentOptions.push(row.value);
+        else if (row.category === 'department') departmentOptions.push(row.value);
         else if (row.category === 'site_code') {
           const norm = normalizeSite(row.value);
           if (!siteCodeOptions.includes(norm)) siteCodeOptions.push(norm);
@@ -194,6 +217,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
         purposeOptions,
         customerDepartmentOptions,
         internalDepartmentOptions,
+        departmentOptions: departmentOptions.length > 0 ? departmentOptions : ['QA', 'Non-QA'],
         siteCodeOptions,
         siteColors,
         customerOptions,
@@ -211,17 +235,21 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       return json((results as any[]).map(engineerOut));
     }
     if (method === 'POST' && path === 'engineers') {
-      const { id, name, role, department, subDepartments } = body || {};
+      const { id, name, role, site, department, subDepartments } = body || {};
       const sd = JSON.stringify(subDepartments || []);
-      await DB.prepare('INSERT INTO engineers (id, name, role, department, sub_departments) VALUES (?, ?, ?, ?, ?)')
-        .bind(id, name || '', role || '', department || 'UTL1', sd).run();
-      return json({ id, name, role, department, subDepartments: subDepartments || [] }, 201);
+      const hostDept = department === 'Non-QA' ? 'Non-QA' : 'QA';
+      const engSite = site || 'UTL1';
+      await DB.prepare('INSERT INTO engineers (id, name, role, department, site, host_department, sub_departments) VALUES (?, ?, ?, ?, ?, ?, ?)')
+        .bind(id, name || '', role || '', hostDept, engSite, hostDept, sd).run();
+      return json({ id, name, role, site: engSite, department: hostDept, subDepartments: subDepartments || [] }, 201);
     }
     const engMatch = path.match(/^engineers\/(.+)$/);
     if (engMatch && method === 'PUT') {
-      const { name, role, department, subDepartments } = body || {};
-      await DB.prepare('UPDATE engineers SET name = ?, role = ?, department = ?, sub_departments = ? WHERE id = ?')
-        .bind(name || '', role || '', department || 'UTL1', JSON.stringify(subDepartments || []), engMatch[1]).run();
+      const { name, role, site, department, subDepartments } = body || {};
+      const hostDept = department === 'Non-QA' ? 'Non-QA' : 'QA';
+      const engSite = site || 'UTL1';
+      await DB.prepare('UPDATE engineers SET name = ?, role = ?, department = ?, site = ?, host_department = ?, sub_departments = ? WHERE id = ?')
+        .bind(name || '', role || '', hostDept, engSite, hostDept, JSON.stringify(subDepartments || []), engMatch[1]).run();
       return json({ ok: true });
     }
     if (engMatch && method === 'DELETE') {
@@ -298,14 +326,16 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
     if (method === 'POST' && path === 'assignments') {
       await ensureAssignmentColumns(DB);
       const d = body || {};
+      const dept = d.department === 'Non-QA' ? 'Non-QA' : 'QA';
       await DB.prepare(
-        `INSERT INTO assignments (id, eng, order_id, day, week, site1, customer, end_customer, auditor1, purpose, target_package, customer_names, audit_category, site2, area, auditor2, department1, department2, results, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO assignments (id, eng, order_id, day, week, site1, customer, end_customer, auditor1, purpose, target_package, customer_names, audit_category, site2, area, auditor2, department1, department2, department, results, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
         d.id, d.eng || '', d.order || '', d.day ?? 0, d.week ?? 0,
         d.site1 || '', d.customer || '', d.endCustomer || '', d.auditor1 || '', d.purpose || '',
         d.targetPackage || '', d.customerNames || '', d.auditCategory || '',
         d.site2 || '', d.area || '', d.auditor2 || '', d.department1 || '', d.department2 || '',
+        dept,
         typeof d.results === 'string' ? d.results : JSON.stringify(d.results || {}),
         d.createdAt ? String(d.createdAt) : '',
         d.updatedAt ? String(d.updatedAt) : '',
@@ -323,13 +353,14 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       await ensureAssignmentColumns(DB);
       await DB.prepare(
         `UPDATE assignments SET eng = ?, order_id = ?, day = ?, week = ?, site1 = ?, customer = ?, end_customer = ?, auditor1 = ?, purpose = ?,
-           target_package = ?, customer_names = ?, audit_category = ?, site2 = ?, area = ?, auditor2 = ?, department1 = ?, department2 = ?, results = ?,
+           target_package = ?, customer_names = ?, audit_category = ?, site2 = ?, area = ?, auditor2 = ?, department1 = ?, department2 = ?, department = ?, results = ?,
            created_at = ?, updated_at = ? WHERE id = ?`,
       ).bind(
         d.eng ?? existing.eng, d.order ?? existing.order_id, d.day ?? existing.day, d.week ?? existing.week,
         d.site1 ?? existing.site1, d.customer ?? existing.customer, d.endCustomer ?? existing.end_customer, d.auditor1 ?? existing.auditor1, d.purpose ?? existing.purpose,
         d.targetPackage ?? existing.target_package ?? '', d.customerNames ?? existing.customer_names ?? '', d.auditCategory ?? existing.audit_category ?? '',
         d.site2 ?? existing.site2, d.area ?? existing.area, d.auditor2 ?? existing.auditor2, d.department1 ?? existing.department1, d.department2 ?? existing.department2,
+        d.department !== undefined ? d.department : (existing.department ?? 'QA'),
         d.results !== undefined ? (typeof d.results === 'string' ? d.results : JSON.stringify(d.results)) : (existing.results ?? '{}'),
         d.createdAt !== undefined ? String(d.createdAt) : (existing.created_at ?? ''),
         d.updatedAt !== undefined ? String(d.updatedAt) : (existing.updated_at ?? ''),

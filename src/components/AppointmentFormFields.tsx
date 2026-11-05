@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import type { Assignment, Engineer } from '../types';
+import type { Assignment, Department, Engineer } from '../types';
 import { normalizeSite } from '../types';
 import { css } from '../ui';
 import { AvailabilityDatePicker } from './AvailabilityDatePicker';
@@ -258,8 +258,77 @@ export interface AppointmentFormValues {
   area: string;
   auditor2: string;
   department2: string;
+  department?: Department;
   dateFrom: string;
   dateTo: string;
+}
+
+function DepartmentPillSelector({
+  value,
+  onChange,
+  options = ['QA', 'Non-QA'],
+}: {
+  value?: string;
+  onChange: (val: Department) => void;
+  options?: string[];
+}) {
+  const current = value || 'QA';
+  const effectiveOptions = options && options.length > 0 ? options : ['QA', 'Non-QA'];
+
+  return (
+    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+      {effectiveOptions.map((opt) => {
+        const on = current.toLowerCase() === opt.toLowerCase();
+        return (
+          <div
+            key={opt}
+            onClick={() => onChange(opt as Department)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '7px',
+              padding: '7px 14px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              border: '1px solid ' + (on ? '#9bb0e8' : '#e2e5de'),
+              background: on ? '#eef2fd' : '#fff',
+              userSelect: 'none',
+              transition: 'all 0.12s ease',
+            }}
+          >
+            <span
+              style={{
+                width: '15px',
+                height: '15px',
+                borderRadius: '4px',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '9px',
+                color: '#fff',
+                background: on ? '#2756d6' : '#fff',
+                border: '1px solid ' + (on ? '#2756d6' : '#cdd2c9'),
+                fontWeight: 700,
+              }}
+            >
+              {on ? '✓' : ''}
+            </span>
+            <span
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: '11px',
+                fontWeight: 600,
+                color: on ? '#2756d6' : '#5c625c',
+              }}
+            >
+              {opt}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function MultiSiteSelect({
@@ -1824,6 +1893,7 @@ export function AppointmentFormFields({
   auditCategoryOptions = [],
   addAuditCategoryOption,
   removeAuditCategoryOption,
+  departmentOptions = ['QA', 'Non-QA'],
   isDateLocked,
 }: {
   idPrefix: string;
@@ -1858,6 +1928,7 @@ export function AppointmentFormFields({
   auditCategoryOptions?: string[];
   addAuditCategoryOption?: (val: string) => void;
   removeAuditCategoryOption?: (val: string) => void;
+  departmentOptions?: string[];
   isDateLocked?: boolean;
 }) {
   const id = (name: string) => `${idPrefix}-${name}`;
@@ -2163,7 +2234,16 @@ export function AppointmentFormFields({
               <MultiAuditorSelect
                 id={id('auditor1')}
                 value={v.auditor1}
-                onChange={(auditor1) => onChange({ auditor1 })}
+                onChange={(auditor1) => {
+                  const primary = auditor1.split(',')[0].trim();
+                  const matched = engineers.find((e) => e.name.toLowerCase() === primary.toLowerCase());
+                  if (matched && matched.department) {
+                    const hostDept = matched.department === 'Non-QA' ? 'Non-QA' : 'QA';
+                    onChange({ auditor1, department: hostDept });
+                  } else {
+                    onChange({ auditor1 });
+                  }
+                }}
                 suggestions={auditorSuggestions}
                 onAddNew={(_name) => { if (removeAuditorOption) { /* addAuditor handled by save */ } }}
                 onRemoveOption={removeAuditorOption}
@@ -2200,6 +2280,16 @@ export function AppointmentFormFields({
                   editingTargetId={editingTargetId}
                 />
               )}
+            </div>
+
+            {/* DEPARTMENT */}
+            <div style={{ gridColumn: '1 / -1', marginTop: '6px', paddingTop: '10px', borderTop: '1px solid #eef1ea' }}>
+              <label style={lbl}>DEPARTMENT</label>
+              <DepartmentPillSelector
+                value={v.department}
+                onChange={(dept) => onChange({ department: dept })}
+                options={departmentOptions}
+              />
             </div>
           </div>
         </div>
@@ -2270,7 +2360,16 @@ export function AppointmentFormFields({
               <MultiAuditorSelect
                 id={id('auditor2')}
                 value={v.auditor2}
-                onChange={(auditor2) => onChange({ auditor2 })}
+                onChange={(auditor2) => {
+                  const primary = auditor2.split(',')[0].trim();
+                  const matched = engineers.find((e) => e.name.toLowerCase() === primary.toLowerCase());
+                  if (matched && matched.department) {
+                    const hostDept = matched.department === 'Non-QA' ? 'Non-QA' : 'QA';
+                    onChange({ auditor2, department: hostDept });
+                  } else {
+                    onChange({ auditor2 });
+                  }
+                }}
                 suggestions={auditorSuggestions}
                 onAddNew={(_name) => { if (removeAuditorOption) { /* addAuditor handled by save */ } }}
                 onRemoveOption={removeAuditorOption}
@@ -2309,6 +2408,16 @@ export function AppointmentFormFields({
                   editingTargetId={editingTargetId}
                 />
               )}
+            </div>
+
+            {/* DEPARTMENT */}
+            <div style={{ gridColumn: '1 / -1', marginTop: '6px', paddingTop: '10px', borderTop: '1px solid #eef1ea' }}>
+              <label style={lbl}>DEPARTMENT</label>
+              <DepartmentPillSelector
+                value={v.department}
+                onChange={(dept) => onChange({ department: dept })}
+                options={departmentOptions}
+              />
             </div>
           </div>
         </div>

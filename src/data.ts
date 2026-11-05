@@ -20,6 +20,7 @@ export const dayLabels = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
 export const initialPurposeOptions = ['site qualification', 'system audit', 'product qualification', 'pre-audit', 'annual audit', 'process control', 'gemba walk', 'QMS audit'];
 export const initialCustomerDepartmentOptions = ['ESD Audit', 'QS Audit', 'IATF16949/ISO9001', 'ISO14001/ISO45001', 'RBA'];
 export const initialInternalDepartmentOptions = ['QMS', 'EHS', 'ESD'];
+export const initialDepartmentOptions = ['QA', 'Non-QA'];
 export const initialSiteCodeOptions = ['UTL1', 'UTL2', 'UTL2A', 'UTL2B', 'UTL3', 'UTL3A', 'UTL3T'];
 // red for U1, green shades for U2 family, blue shades for U3 family
 export const initialSiteColors: Record<string, string> = {
@@ -75,15 +76,15 @@ export function initialState(): State {
     loginPass: 'directorqa',
     userMenuOpen: false,
     createOpen: false,
-    createDraft: { order: '', eng: '', day: 0, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' },
+    createDraft: { order: '', eng: '', day: 0, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '', department: 'QA' },
     editOpen: false,
-    editDraft: { targetId: '', sectionType: 'customer', dateFrom: '', dateTo: '', site1: '', customer: '', endCustomer: '', purpose: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department1: '', site2: '', area: '', auditor2: '', department2: '' },
+    editDraft: { targetId: '', sectionType: 'customer', dateFrom: '', dateTo: '', site1: '', customer: '', endCustomer: '', purpose: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department1: '', site2: '', area: '', auditor2: '', department2: '', department: 'QA' },
     editScopePrompt: null,
     resultsModalOpen: false,
     resultsTargetId: null,
     engFormOpen: false,
     engEditingId: null,
-    engForm: { name: '', role: '', department: 'UTL1', subDepartments: [] },
+    engForm: { name: '', role: '', site: 'UTL1', department: 'QA', subDepartments: [] },
     weekOffset: 0,
     activePlants: snapshot.activePlants || { QMS: true, EHS: true, ESD: true },
     selected: null,
@@ -98,6 +99,7 @@ export function initialState(): State {
     purposeOptions: snapshot.purposeOptions || initialPurposeOptions.slice(),
     customerDepartmentOptions: snapshot.customerDepartmentOptions || initialCustomerDepartmentOptions.slice(),
     internalDepartmentOptions: snapshot.internalDepartmentOptions || initialInternalDepartmentOptions.slice(),
+    departmentOptions: snapshot.departmentOptions || initialDepartmentOptions.slice(),
     siteCodeOptions: snapshot.siteCodeOptions ? Array.from(new Set(snapshot.siteCodeOptions.map((s: string) => normalizeSite(s)))) : initialSiteCodeOptions.slice(),
     siteColors: (() => {
       const base: Record<string, string> = { ...initialSiteColors, ...(snapshot.siteColors || {}) };
@@ -119,6 +121,7 @@ export function initialState(): State {
       initialSiteCodeOptions.forEach((s) => { map['siteCodeOptions:' + s.toLowerCase()] = true; });
       initialCustomerDepartmentOptions.forEach((d) => { map['customerDepartmentOptions:' + d.toLowerCase()] = true; });
       initialInternalDepartmentOptions.forEach((d) => { map['internalDepartmentOptions:' + d.toLowerCase()] = true; });
+      initialDepartmentOptions.forEach((d) => { map['departmentOptions:' + d.toLowerCase()] = true; });
       initialPurposeOptions.forEach((p) => { map['purposeOptions:' + p.toLowerCase()] = true; });
       (snapshot.customerOptions || []).forEach((c: string) => { map['customerOptions:' + c.toLowerCase()] = true; });
       (snapshot.endCustomerOptions || []).forEach((c: string) => { map['endCustomerOptions:' + c.toLowerCase()] = true; });

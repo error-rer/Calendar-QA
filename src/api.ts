@@ -14,6 +14,7 @@ export interface ApiState {
   purposeOptions?: string[];
   customerDepartmentOptions?: string[];
   internalDepartmentOptions?: string[];
+  departmentOptions?: string[];
   siteCodeOptions?: string[];
   siteColors?: Record<string, string>;
   customerOptions?: string[];
@@ -36,9 +37,9 @@ async function req<T>(url: string, opts?: RequestInit): Promise<T> {
 export const api = {
   fetchState: () => req<ApiState>('/state'),
 
-  createEngineer: (data: { id: string; name: string; role: string; department: string; subDepartments: string[] }) =>
+  createEngineer: (data: { id: string; name: string; role: string; site?: string; department: string; subDepartments: string[] }) =>
     req('/engineers', { method: 'POST', body: JSON.stringify(data) }),
-  updateEngineer: (id: string, data: { name: string; role: string; department: string; subDepartments: string[] }) =>
+  updateEngineer: (id: string, data: { name: string; role: string; site?: string; department: string; subDepartments: string[] }) =>
     req('/engineers/' + id, { method: 'PUT', body: JSON.stringify(data) }),
   deleteEngineer: (id: string) => req('/engineers/' + id, { method: 'DELETE' }),
 

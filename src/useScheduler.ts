@@ -546,7 +546,7 @@ export function useScheduler() {
   const plantById = (id: string) => S.plants.find((p) => p.id === id) || { id: '', name: id || 'Unknown', loc: '', code: (id || '?').slice(0, 3).toUpperCase(), color: S.siteColors[id] || '#999', active: true };
   const initials = (name: string) =>
     name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
-  const siteToDept = (site: string): Department => (site.startsWith('UTL3') || site.startsWith('U3') ? 'UTL3' : site.startsWith('UTL2') || site.startsWith('U2') ? 'UTL2' : 'UTL1');
+  const siteToSiteCode = (site: string): string => (site.startsWith('UTL3') || site.startsWith('U3') ? 'UTL3' : site.startsWith('UTL2') || site.startsWith('U2') ? 'UTL2' : 'UTL1');
   /** "CS" for Customer appointments, "IA" for Internal Audit. */
   const apptAbbr = (a: Assignment) => (a.site2 || a.auditor2 || a.department2 || a.area ? 'IA' : 'CS');
   /** Returns Customer name with CS prefix for Customer Audit or Area/topic with IA prefix for Internal Audit. */
@@ -1316,7 +1316,7 @@ export function useScheduler() {
       createOpen: true,
       userMenuOpen: false,
       sidebarOpen: false,
-      createDraft: { order: '', eng: '', day: 0, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' },
+      createDraft: { order: '', eng: '', day: 0, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '', department: 'QA' },
     });
   };
   const openCreateAt = (engId: string, day: number) => {
@@ -1324,7 +1324,7 @@ export function useScheduler() {
     const targetDate = new Date(baseDate);
     targetDate.setDate(baseDate.getDate() + S.weekOffset * 7 + day);
     if (getHolidayForDate(targetDate)) return;
-    setState({ createOpen: true, userMenuOpen: false, createDraft: { order: '', eng: engId, day, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '' } });
+    setState({ createOpen: true, userMenuOpen: false, createDraft: { order: '', eng: engId, day, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '', department: 'QA' } });
   };
   const openCreateWithDate = (dateIso?: string) => {
     const d = dateIso || '';
@@ -1339,7 +1339,7 @@ export function useScheduler() {
       createDraft: {
         order: '', eng: '', day: 0,
         dateFrom: d, dateTo: d,
-        sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: ''
+        sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '', department: 'QA'
       },
     });
   };
@@ -1383,6 +1383,7 @@ export function useScheduler() {
           auditor2: d.sectionType === 'internal' ? d.auditor2 : '',
           department1: d.sectionType === 'customer' ? d.department1 : '',
           department2: d.sectionType === 'internal' ? d.department2 : '',
+          department: (d.department || 'QA') as Department,
           createdBy: profile.name || 'Jordan Lee',
           createdAt: new Date().toISOString(),
         });
@@ -1394,7 +1395,7 @@ export function useScheduler() {
       customer: d.customer || '', product: d.endCustomer || d.area || '',
       plant: d.sectionType === 'internal' ? (d.department2 || normalizeSites(d.site2 || '') || '') : (normalizeSites(d.site1 || '') || ''), purpose: d.purpose || '',
     };
-    const newEngineer = { id: engId, name: auditorPrimary, role: 'QA', department: siteToDept(d.sectionType === 'internal' ? d.site2 : d.site1), subDepartments: [], isMaster: false };
+    const newEngineer = { id: engId, name: auditorPrimary, role: 'QA', site: siteToSiteCode(d.sectionType === 'internal' ? d.site2 : d.site1), department: (d.department || 'QA') as Department, subDepartments: [], isMaster: false };
     api.createOrder(newOrder).catch(() => {});
     if (!existingEng) api.createEngineer(newEngineer).catch(() => {});
     const newCustomer = d.sectionType === 'customer' && d.customer ? d.customer.trim() : '';
@@ -1631,6 +1632,7 @@ export function useScheduler() {
         targetPackage: a.targetPackage || '',
         customerNames: a.customerNames || '',
         auditCategory: a.auditCategory || '',
+        department: a.department || 'QA',
         editScope: scope,
         scopeDateStr: singleDateStr,
       },
@@ -1744,7 +1746,8 @@ export function useScheduler() {
             id: newEngId,
             name: newAuditorPrimary,
             role: 'QA',
-            department: siteToDept(d.sectionType === 'internal' ? d.site2 : d.site1),
+            site: siteToSiteCode(d.sectionType === 'internal' ? d.site2 : d.site1),
+            department: (d.department || 'QA') as Department,
             subDepartments: [],
             isMaster: false,
           };
@@ -1826,6 +1829,7 @@ export function useScheduler() {
       auditor2: d.sectionType === 'internal' ? d.auditor2 : '',
       department1: d.sectionType === 'customer' ? d.department1 : '',
       department2: d.sectionType === 'internal' ? d.department2 : '',
+      department: (d.department || 'QA') as Department,
       results: reconciledResults,
     };
     const minWeek = Math.min(...siblings.map((x) => x.week));
@@ -1935,6 +1939,11 @@ export function useScheduler() {
     }
     if (isAuditorChanged) {
       changes.push({ name: 'QMS Host', oldVal: oldAuditor, newVal: newAuditor });
+    }
+    const oldDepartment = target.department || 'QA';
+    const newDepartment = d.department || 'QA';
+    if (oldDepartment !== newDepartment) {
+      changes.push({ name: 'Department', oldVal: oldDepartment, newVal: newDepartment });
     }
 
     const apptRef = formatApptLogRef({
@@ -2411,7 +2420,19 @@ export function useScheduler() {
   const setAdminTab = (t: State['adminTab']) => setState({ adminTab: t });
   // ---- create-engineer modal ----
   const openEngForm = () =>
-    setState({ engFormOpen: true, engEditingId: null, userMenuOpen: false, sidebarOpen: false, engForm: { name: '', role: '', department: (S.siteCodeOptions[0] ? normalizeSite(S.siteCodeOptions[0]) : 'UTL1') as Department, subDepartments: [] } });
+    setState({
+      engFormOpen: true,
+      engEditingId: null,
+      userMenuOpen: false,
+      sidebarOpen: false,
+      engForm: {
+        name: '',
+        role: '',
+        site: S.siteCodeOptions[0] ? normalizeSite(S.siteCodeOptions[0]) : 'UTL1',
+        department: 'QA',
+        subDepartments: [],
+      },
+    });
   const openEditEngForm = (id: string) => {
     const e = S.engineers.find((eng) => eng.id === id);
     if (!e) return;
@@ -2420,7 +2441,13 @@ export function useScheduler() {
       engEditingId: id,
       userMenuOpen: false,
       sidebarOpen: false,
-      engForm: { name: e.name, role: e.role || '', department: (e.department ? normalizeSite(e.department) : 'UTL1') as Department, subDepartments: [...e.subDepartments] },
+      engForm: {
+        name: e.name,
+        role: e.role || '',
+        site: e.site ? normalizeSite(e.site) : (e.department && e.department !== 'QA' && e.department !== 'Non-QA' ? normalizeSite(e.department) : 'UTL1'),
+        department: (e.department === 'Non-QA' ? 'Non-QA' : 'QA') as Department,
+        subDepartments: [...e.subDepartments],
+      },
     });
   };
   const closeEngForm = () => setState({ engFormOpen: false, engEditingId: null });
@@ -2434,11 +2461,20 @@ export function useScheduler() {
     const f = S.engForm;
     const newName = f.name.trim();
     if (!newName) return;
+    const dept = (f.department === 'Non-QA' ? 'Non-QA' : 'QA') as Department;
+    const site = f.site || (S.siteCodeOptions[0] ? normalizeSite(S.siteCodeOptions[0]) : 'UTL1');
     if (S.engEditingId) {
       const id = S.engEditingId;
       const existing = S.engineers.find((e) => e.id === id);
       const oldName = existing?.name || '';
-      const updatedEng = { id, name: newName, role: existing?.role || 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice() };
+      const updatedEng = {
+        id,
+        name: newName,
+        role: existing?.role || 'QA Engineer',
+        site,
+        department: dept,
+        subDepartments: f.subDepartments.slice(),
+      };
       api.updateEngineer(id, updatedEng).catch(() => {});
 
       if (oldName && oldName !== newName) {
@@ -2480,7 +2516,15 @@ export function useScheduler() {
       log('You', `updated QMS host ${newName.split(' ')[0]}`, '#2756d6');
     } else {
       const id = 'e' + ids.current.id++;
-      const newEng = { id, name: newName, role: 'QA Engineer', department: f.department, subDepartments: f.subDepartments.slice(), isMaster: true };
+      const newEng = {
+        id,
+        name: newName,
+        role: 'QA Engineer',
+        site,
+        department: dept,
+        subDepartments: f.subDepartments.slice(),
+        isMaster: true,
+      };
       api.createEngineer(newEng).catch(() => {});
       api.saveOption('auditor', newName).catch(() => {});
       setState((s) => ({
@@ -2515,11 +2559,12 @@ export function useScheduler() {
   };
 
   // ---- appointment option lists (Purpose / Department / Site) ----
-  type OptionListField = 'purposeOptions' | 'customerDepartmentOptions' | 'internalDepartmentOptions' | 'siteCodeOptions' | 'customerOptions' | 'endCustomerOptions' | 'auditorOptions' | 'targetPackageOptions' | 'customerNameOptions' | 'auditCategoryOptions';
+  type OptionListField = 'purposeOptions' | 'customerDepartmentOptions' | 'internalDepartmentOptions' | 'departmentOptions' | 'siteCodeOptions' | 'customerOptions' | 'endCustomerOptions' | 'auditorOptions' | 'targetPackageOptions' | 'customerNameOptions' | 'auditCategoryOptions';
   const fieldToCategory: Record<OptionListField, string> = {
     purposeOptions: 'purpose',
     customerDepartmentOptions: 'customer_department',
     internalDepartmentOptions: 'internal_department',
+    departmentOptions: 'department',
     siteCodeOptions: 'site_code',
     customerOptions: 'customer_name',
     endCustomerOptions: 'end_customer',
@@ -2536,6 +2581,7 @@ export function useScheduler() {
     auditorOptions: 'QMS_HOST',
     customerDepartmentOptions: 'STANDARD',
     internalDepartmentOptions: 'STANDARD',
+    departmentOptions: 'DEPARTMENT',
     purposeOptions: 'PURPOSE',
     targetPackageOptions: 'TARGET_PACKAGE',
     customerNameOptions: 'CUSTOMER_NAME',
@@ -2549,6 +2595,7 @@ export function useScheduler() {
     auditorOptions: 'QMS Host',
     customerDepartmentOptions: 'Customer Audit Standard',
     internalDepartmentOptions: 'Internal Standard',
+    departmentOptions: 'Department',
     purposeOptions: 'Purpose',
     targetPackageOptions: 'Target Package',
     customerNameOptions: 'Customer Name',
@@ -2617,6 +2664,8 @@ export function useScheduler() {
           const depts = (a.department2 || '').split(',').map((s) => s.trim().toLowerCase());
           return depts.includes(vLower) || (a.department2 || '').trim().toLowerCase() === vLower;
         }).length;
+      } else if (field === 'departmentOptions') {
+        linkedCount = S.assignments.filter((a) => (a.department || 'QA').trim().toLowerCase() === vLower).length;
       } else if (field === 'siteCodeOptions') {
         linkedCount = S.assignments.filter((a) => {
           const s1 = (a.site1 || '').split('/').map((x) => x.trim().toLowerCase());
@@ -3634,6 +3683,8 @@ export function useScheduler() {
     sectionType: cd.sectionType,
     purpose: cd.purpose, department1: cd.department1, site1: cd.site1, customer: cd.customer, endCustomer: cd.endCustomer, auditor1: cd.auditor1,
     department2: cd.department2, site2: cd.site2, area: cd.area, auditor2: cd.auditor2,
+    targetPackage: cd.targetPackage, customerNames: cd.customerNames, auditCategory: cd.auditCategory,
+    department: cd.department || 'QA',
     dateFrom: cd.dateFrom ?? '', dateTo: cd.dateTo ?? '',
     onChange: setDraft,
     warn: false, warnText: '',
@@ -3666,10 +3717,13 @@ export function useScheduler() {
     check: on ? '✓' : '',
   });
   const engForm = {
-    name: ef.name, role: ef.role, department: ef.department, subDepartments: ef.subDepartments, inStyle: ofInStyle,
+    name: ef.name, role: ef.role, site: ef.site || 'UTL1', department: ef.department || 'QA', subDepartments: ef.subDepartments, inStyle: ofInStyle,
     onName: (e: React.ChangeEvent<HTMLInputElement>) => setEngForm({ name: e.target.value }),
     onRole: (e: React.ChangeEvent<HTMLInputElement>) => setEngForm({ role: e.target.value }),
-    departments: S.siteCodeOptions.map((d) => ({ label: d, onClick: () => setEngForm({ department: d as Department }), style: segMd(ef.department === d) })),
+    onDepartment: (dept: Department) => setEngForm({ department: dept }),
+    onSite: (site: string) => setEngForm({ site }),
+    sites: S.siteCodeOptions.map((d) => ({ label: d, onClick: () => setEngForm({ site: d }), style: segMd((ef.site || ef.department) === d) })),
+    departments: S.siteCodeOptions.map((d) => ({ label: d, onClick: () => setEngForm({ site: d }), style: segMd((ef.site || ef.department) === d) })),
     subDepartmentOptions: [
       ...S.internalDepartmentOptions.map((c) => ({ code: c, name: c, group: 'Internal Audit' as const, onClick: () => toggleEngSubDept(c as SubDepartment), ...certPick(ef.subDepartments.includes(c as SubDepartment)) })),
       ...S.customerDepartmentOptions.map((c) => ({ code: c, name: c, group: 'Customer Audit' as const, onClick: () => toggleEngSubDept(c as SubDepartment), ...certPick(ef.subDepartments.includes(c as SubDepartment)) })),
@@ -3792,6 +3846,25 @@ export function useScheduler() {
     }
     return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
   }, [S.assignments, S.internalDepartmentOptions, removedSet]);
+
+  const computedDepartmentOptions = useMemo(() => {
+    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
+    const active = S.assignments
+      .map((a) => (a.department || 'QA').trim())
+      .filter((d) => Boolean(d) && !removedSetLower.has(d.toLowerCase()));
+    const baseList = (S.departmentOptions && S.departmentOptions.length > 0 ? S.departmentOptions : ['QA', 'Non-QA'])
+      .map((d) => d.trim())
+      .filter((d) => Boolean(d) && !removedSetLower.has(d.toLowerCase()));
+
+    const uniqueMap = new Map<string, string>();
+    for (const d of [...baseList, ...active]) {
+      const key = d.toLowerCase();
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, d);
+      }
+    }
+    return Array.from(uniqueMap.values());
+  }, [S.assignments, S.departmentOptions, removedSet]);
 
   const computedCustomerOptions = useMemo(() => {
     const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
@@ -3981,7 +4054,8 @@ export function useScheduler() {
         id: 'aud-' + encodeURIComponent(name.toLowerCase()),
         name,
         role: 'QMS Host',
-        department: (computedSiteCodeOptions[0] ? normalizeSite(computedSiteCodeOptions[0]) : 'UTL1') as Department,
+        site: computedSiteCodeOptions[0] ? normalizeSite(computedSiteCodeOptions[0]) : 'UTL1',
+        department: 'QA' as Department,
         subDepartments: [] as SubDepartment[],
         isMaster: false,
       };
@@ -3989,7 +4063,8 @@ export function useScheduler() {
 
     return fullList
       .filter((e) => {
-        if (S.adminFilterSite.length > 0 && !S.adminFilterSite.some((s) => normalizeSite(s) === normalizeSite(e.department))) return false;
+        const engSite = normalizeSite(e.site || (e.department && e.department !== 'QA' && e.department !== 'Non-QA' ? e.department : 'UTL1'));
+        if (S.adminFilterSite.length > 0 && !S.adminFilterSite.some((s) => normalizeSite(s) === engSite)) return false;
         if (S.adminFilterDept.length > 0 && !e.subDepartments.some((d) => S.adminFilterDept.includes(d))) return false;
         return true;
       })
@@ -4002,11 +4077,15 @@ export function useScheduler() {
           return a.eng === e.id || list1.includes(eLower) || list2.includes(eLower) || (eng && eng.name.toLowerCase() === eLower);
         }).length;
 
+        const engSite = e.site || (e.department && e.department !== 'QA' && e.department !== 'Non-QA' ? e.department : 'UTL1');
+        const engDept = (e.department === 'Non-QA' ? 'Non-QA' : 'QA') as Department;
+
         return {
           id: e.id,
           name: e.name,
           role: e.role,
-          department: e.department,
+          site: engSite,
+          department: engDept,
           subDepartments: e.subDepartments,
           initials: initials(e.name),
           avatarStyle: sx({
@@ -4424,12 +4503,17 @@ export function useScheduler() {
     masterCustomerDepartmentOptions: S.customerDepartmentOptions,
     internalDepartmentOptions: computedInternalDepartmentOptions,
     masterInternalDepartmentOptions: S.internalDepartmentOptions,
+    departmentOptions: computedDepartmentOptions,
+    masterDepartmentOptions: S.departmentOptions,
     addPurposeOption: (v: string) => addOption('purposeOptions', v),
     removePurposeOption: (v: string) => removeOption('purposeOptions', v),
     addCustomerDepartmentOption: (v: string) => addOption('customerDepartmentOptions', v),
     removeCustomerDepartmentOption: (v: string) => removeOption('customerDepartmentOptions', v),
     addInternalDepartmentOption: (v: string) => addOption('internalDepartmentOptions', v),
     removeInternalDepartmentOption: (v: string) => removeOption('internalDepartmentOptions', v),
+    addDepartmentOption: (v: string) => addOption('departmentOptions', v),
+    removeDepartmentOption: (v: string) => removeOption('departmentOptions', v),
+    reorderDepartmentOptions: (list: string[]) => reorderOptions('departmentOptions', list),
     siteCodeOptions: computedSiteCodeOptions,
     masterSiteCodeOptions: S.siteCodeOptions,
     customerOptions: computedCustomerOptions,

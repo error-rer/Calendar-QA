@@ -1,4 +1,5 @@
-export type Department = 'UTL1' | 'UTL2' | 'UTL3' | 'U1' | 'U2' | 'U3';
+export type Department = 'QA' | 'Non-QA';
+export type SiteDepartment = 'UTL1' | 'UTL2' | 'UTL3' | 'U1' | 'U2' | 'U3';
 export type SubDepartment = 'QMS' | 'EHS' | 'ESD' | 'ESD Audit' | 'QS Audit';
 
 export interface Plant {
@@ -14,6 +15,7 @@ export interface Engineer {
   id: string;
   name: string;
   role: string;
+  site?: string;
   department: Department;
   subDepartments: SubDepartment[];
   isMaster?: boolean;
@@ -127,6 +129,7 @@ export interface Assignment {
   auditor2?: string;
   department1?: string;
   department2?: string;
+  department?: Department;
   major?: number;
   minor?: number;
   ofi?: number;
@@ -498,6 +501,7 @@ export interface CreateDraft {
   site2: string;
   area: string;
   auditor2: string;
+  department?: Department;
   warn?: boolean;
   warnText?: string;
 }
@@ -520,6 +524,7 @@ export interface EditDraft {
   area: string;
   auditor2: string;
   department2: string;
+  department?: Department;
   warn?: boolean;
   warnText?: string;
   editScope?: 'day' | 'all';
@@ -538,7 +543,7 @@ export interface EditScopePrompt {
 }
 
 export type ActionType = 'CREATE' | 'UPDATE' | 'DELETE' | 'REORDER' | 'MANAGE_ITEM' | 'OTHER';
-export type EntityType = 'APPOINTMENT' | 'CUSTOMER' | 'END_CUSTOMER' | 'AUDITOR' | 'QMS_HOST' | 'SITE' | 'STANDARD' | 'PURPOSE' | 'TARGET_PACKAGE' | 'CUSTOMER_NAME' | 'AUDIT_CATEGORY';
+export type EntityType = 'APPOINTMENT' | 'CUSTOMER' | 'END_CUSTOMER' | 'AUDITOR' | 'QMS_HOST' | 'SITE' | 'STANDARD' | 'DEPARTMENT' | 'PURPOSE' | 'TARGET_PACKAGE' | 'CUSTOMER_NAME' | 'AUDIT_CATEGORY';
 
 export interface ActivityUser {
   name: string;
@@ -564,6 +569,7 @@ export type AdminTab = 'engineers' | 'options';
 export interface EngineerForm {
   name: string;
   role: string;
+  site?: string;
   department: Department;
   subDepartments: SubDepartment[];
 }
@@ -620,6 +626,7 @@ export interface State {
   purposeOptions: string[];
   customerDepartmentOptions: string[];
   internalDepartmentOptions: string[];
+  departmentOptions: string[];
   siteCodeOptions: string[];
   siteColors: Record<string, string>;
   customerOptions: string[];

@@ -49,6 +49,7 @@ export function CreateModal({ vm }: { vm: VM }) {
             removedOptions={vm.removedOptions}
             assignments={vm.assignments}
             engineers={vm.engineers}
+            departmentOptions={vm.departmentOptions}
           />
 
           {create.warn && (

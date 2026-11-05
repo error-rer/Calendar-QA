@@ -169,10 +169,20 @@ function EngineersTable({ vm }: { vm: VM }) {
             <div onClick={() => vm.openEditEngineer(e.id)} style={css('display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer;flex:1')}>
               <div style={e.avatarStyle}>{e.initials}</div>
               <div style={css('min-width:0')}>
-                <div style={css('font-size:12.5px;font-weight:600;color:#23282a;text-decoration:none')}>
-                  {e.name}
+                <div style={css('font-size:12.5px;font-weight:600;color:#23282a;text-decoration:none;display:flex;align-items:center;gap:6px')}>
+                  <span>{e.name}</span>
+                  <span
+                    style={css(
+                      `font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;font-family:'IBM Plex Mono',monospace;` +
+                        (e.department === 'Non-QA'
+                          ? 'background:#fef3c7;color:#92400e;border:1px solid #fde68a;'
+                          : 'background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;')
+                    )}
+                  >
+                    {e.department === 'Non-QA' ? 'Non-QA' : 'QA'}
+                  </span>
                 </div>
-                <div style={css('font-size:10.5px;color:#8a9088')}>{e.department}{e.subDepartments.length > 0 ? ' - ' + e.subDepartments.join(', ') : ''}</div>
+                <div style={css('font-size:10.5px;color:#8a9088')}>{e.site || (e.department !== 'QA' && e.department !== 'Non-QA' ? e.department : 'UTL1')}{e.subDepartments.length > 0 ? ' - ' + e.subDepartments.join(', ') : ''}</div>
               </div>
             </div>
           </div>
@@ -484,6 +494,15 @@ function OptionsPanel({ vm }: { vm: VM }) {
         vm={vm}
         onReorderInternal={vm.reorderInternalDepartmentOptions}
         onReorderCustomer={vm.reorderCustomerDepartmentOptions}
+      />
+      <TagListEditor
+        title="Department"
+        count={vm.departmentOptions.length}
+        values={vm.departmentOptions}
+        onAdd={vm.addDepartmentOption}
+        onRemove={vm.removeDepartmentOption}
+        onReorder={vm.reorderDepartmentOptions}
+        placeholder="e.g. QA"
       />
       <TagListEditor
         title="Customer"
