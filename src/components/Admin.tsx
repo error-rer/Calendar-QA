@@ -129,14 +129,184 @@ function AdminFilterDropdown({ label, count, selected, items, onToggle }: { labe
   );
 }
 
+function DepartmentFilterDropdown({
+  selected,
+  onSelect,
+}: {
+  selected: 'All' | 'QA' | 'Non-QA';
+  onSelect: (val: 'All' | 'QA' | 'Non-QA') => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const active = selected !== 'All';
+
+  return (
+    <div style={css('position:relative')}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        style={css(
+          'display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:7px;border:1px solid ' +
+            (active ? '#2756d6' : '#dde0d9') +
+            ';background:' +
+            (active ? '#eef2fd' : '#fff') +
+            ';font-size:11.5px;font-weight:' +
+            (active ? '600' : '500') +
+            ';color:' +
+            (active ? '#2756d6' : '#4a504a') +
+            ";cursor:pointer;font-family:'Archivo',sans-serif;transition:all .12s ease"
+        )}
+      >
+        <span>{selected === 'All' ? 'Department' : `Department: ${selected}`}</span>
+        {active && (
+          <span
+            role="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect('All');
+            }}
+            title="Clear filter"
+            style={css(
+              'display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#2756d6;color:#fff;font-size:10px;line-height:1;margin-left:2px;cursor:pointer'
+            )}
+          >
+            ×
+          </span>
+        )}
+        <span style={css('font-size:9px;color:' + (active ? '#2756d6' : '#8a9088'))}>▾</span>
+      </button>
+
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} style={css('position:fixed;inset:0;z-index:99')} />
+          <div
+            style={css(
+              'position:absolute;top:100%;right:0;z-index:100;margin-top:4px;background:#fff;border:1px solid #dde0d9;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);min-width:160px;padding:5px'
+            )}
+          >
+            {/* All Departments */}
+            <div
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                onSelect('All');
+                setOpen(false);
+              }}
+              style={css(
+                "display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:5px;cursor:pointer;font-size:11.5px;font-family:'Archivo',sans-serif;color:#3c423d;user-select:none;outline:none;background:" +
+                  (selected === 'All' ? '#eef2fd' : '#fff') +
+                  ';font-weight:' +
+                  (selected === 'All' ? '600' : '400')
+              )}
+            >
+              <div style={css('display:flex;align-items:center;gap:7px')}>
+                <span
+                  style={css(
+                    'width:14px;height:14px;border-radius:3px;border:1px solid ' +
+                      (selected === 'All' ? '#2756d6' : '#cdd2c9') +
+                      ';background:' +
+                      (selected === 'All' ? '#2756d6' : '#fff') +
+                      ';display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex-shrink:0'
+                  )}
+                >
+                  {selected === 'All' ? '✓' : ''}
+                </span>
+                <span>All Departments</span>
+              </div>
+            </div>
+
+            {/* QA */}
+            <div
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                onSelect('QA');
+                setOpen(false);
+              }}
+              style={css(
+                "display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:5px;cursor:pointer;font-size:11.5px;font-family:'Archivo',sans-serif;color:#3c423d;user-select:none;outline:none;background:" +
+                  (selected === 'QA' ? '#eef2fd' : '#fff') +
+                  ';font-weight:' +
+                  (selected === 'QA' ? '600' : '400')
+              )}
+            >
+              <div style={css('display:flex;align-items:center;gap:7px')}>
+                <span
+                  style={css(
+                    'width:14px;height:14px;border-radius:3px;border:1px solid ' +
+                      (selected === 'QA' ? '#2756d6' : '#cdd2c9') +
+                      ';background:' +
+                      (selected === 'QA' ? '#2756d6' : '#fff') +
+                      ';display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex-shrink:0'
+                  )}
+                >
+                  {selected === 'QA' ? '✓' : ''}
+                </span>
+                <span
+                  style={css(
+                    "font-size:10px;font-weight:700;padding:1.5px 6px;border-radius:4px;font-family:'IBM Plex Mono',monospace;background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd"
+                  )}
+                >
+                  QA
+                </span>
+                <span>QA</span>
+              </div>
+            </div>
+
+            {/* Non-QA */}
+            <div
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                onSelect('Non-QA');
+                setOpen(false);
+              }}
+              style={css(
+                "display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:5px;cursor:pointer;font-size:11.5px;font-family:'Archivo',sans-serif;color:#3c423d;user-select:none;outline:none;background:" +
+                  (selected === 'Non-QA' ? '#eef2fd' : '#fff') +
+                  ';font-weight:' +
+                  (selected === 'Non-QA' ? '600' : '400')
+              )}
+            >
+              <div style={css('display:flex;align-items:center;gap:7px')}>
+                <span
+                  style={css(
+                    'width:14px;height:14px;border-radius:3px;border:1px solid ' +
+                      (selected === 'Non-QA' ? '#2756d6' : '#cdd2c9') +
+                      ';background:' +
+                      (selected === 'Non-QA' ? '#2756d6' : '#fff') +
+                      ';display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex-shrink:0'
+                  )}
+                >
+                  {selected === 'Non-QA' ? '✓' : ''}
+                </span>
+                <span
+                  style={css(
+                    "font-size:10px;font-weight:700;padding:1.5px 6px;border-radius:4px;font-family:'IBM Plex Mono',monospace;background:#fef3c7;color:#92400e;border:1px solid #fde68a"
+                  )}
+                >
+                  Non-QA
+                </span>
+                <span>Non-QA</span>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function EngineersTable({ vm }: { vm: VM }) {
+  const [selectedDepartment, setSelectedDepartment] = useState<'All' | 'QA' | 'Non-QA'>('All');
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [dropTargetIdx, setDropTargetIdx] = useState<number | null>(null);
+
+  const filteredEngineers = vm.adminEngineers.filter((e) => {
+    if (selectedDepartment === 'All') return true;
+    return e.department === selectedDepartment;
+  });
 
   return (
     <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.02);overflow:hidden;position:relative;z-index:10')}>
       <div style={css('display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #eef1ea;flex-wrap:wrap;gap:10px;position:relative;z-index:20')}>
-        <div style={css('font-size:13.5px;font-weight:700;color:#15191e')}>QMS Host <span style={css('color:#9aa097;font-weight:500')}>· {vm.adminEngineers.length}</span></div>
+        <div style={css('font-size:13.5px;font-weight:700;color:#15191e')}>QMS Host <span style={css('color:#9aa097;font-weight:500')}>· {filteredEngineers.length}</span></div>
         <div style={css('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
           <AdminFilterDropdown
             label="Site"
@@ -152,10 +322,14 @@ function EngineersTable({ vm }: { vm: VM }) {
             items={vm.adminDeptOptions.map((d) => ({ value: d, label: d }))}
             onToggle={vm.toggleAdminFilterDept}
           />
+          <DepartmentFilterDropdown
+            selected={selectedDepartment}
+            onSelect={setSelectedDepartment}
+          />
           <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New QMS Host</HButton>
         </div>
       </div>
-      {vm.adminEngineers.map((e, idx) => (
+      {filteredEngineers.map((e, idx) => (
         <div
           key={e.id}
           draggable
@@ -172,10 +346,18 @@ function EngineersTable({ vm }: { vm: VM }) {
           onDrop={(evt) => {
             evt.preventDefault();
             if (draggedIdx !== null && dropTargetIdx !== null && draggedIdx !== dropTargetIdx) {
-              const next = [...vm.adminEngineers];
-              const [moved] = next.splice(draggedIdx, 1);
-              next.splice(dropTargetIdx, 0, moved);
-              vm.reorderEngineers(next);
+              const draggedItem = filteredEngineers[draggedIdx];
+              const targetItem = filteredEngineers[dropTargetIdx];
+              if (draggedItem && targetItem) {
+                const next = [...vm.adminEngineers];
+                const from = next.findIndex((item) => item.id === draggedItem.id);
+                const to = next.findIndex((item) => item.id === targetItem.id);
+                if (from !== -1 && to !== -1) {
+                  const [moved] = next.splice(from, 1);
+                  next.splice(to, 0, moved);
+                  vm.reorderEngineers(next);
+                }
+              }
             }
             setDraggedIdx(null);
             setDropTargetIdx(null);
@@ -186,7 +368,7 @@ function EngineersTable({ vm }: { vm: VM }) {
           }}
           style={css(
             'display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:' +
-              (idx === vm.adminEngineers.length - 1 ? 'none' : '1px solid #f1f3ee') +
+              (idx === filteredEngineers.length - 1 ? 'none' : '1px solid #f1f3ee') +
               ';transition:background 0.15s ease, transform 0.15s ease;background:' +
               (dropTargetIdx === idx && draggedIdx !== idx ? '#eef2fd' : '#fff') +
               ';opacity:' +
@@ -243,9 +425,9 @@ function EngineersTable({ vm }: { vm: VM }) {
           </button>
         </div>
       ))}
-      {vm.adminEngineers.length === 0 && (
+      {filteredEngineers.length === 0 && (
         <div style={css('padding:28px;text-align:center;font-size:13px;color:#8a9088;font-style:italic')}>
-          No QMS hosts match the selected site/standard filters.
+          No QMS hosts match the selected filters.
         </div>
       )}
     </div>
