@@ -69,9 +69,10 @@ function AdminFilterDropdown({ label, count, selected, items, onToggle }: { labe
               return (
                 <div
                   key={item.value}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => onToggle(item.value)}
                   style={css(
-                    "display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:5px;cursor:pointer;font-size:11.5px;font-family:'Archivo',sans-serif;color:#3c423d;background:" +
+                    "display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:5px;cursor:pointer;font-size:11.5px;font-family:'Archivo',sans-serif;color:#3c423d;user-select:none;outline:none;background:" +
                       (on ? '#eef2fd' : '#fff') +
                       ';font-weight:' +
                       (on ? '600' : '400')
@@ -83,12 +84,12 @@ function AdminFilterDropdown({ label, count, selected, items, onToggle }: { labe
                         (on ? '#2756d6' : '#cdd2c9') +
                         ';background:' +
                         (on ? '#2756d6' : '#fff') +
-                        ';display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex-shrink:0'
+                        ';display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex-shrink:0;user-select:none;cursor:pointer'
                     )}
                   >
                     {on ? '✓' : ''}
                   </span>
-                  {item.label}
+                  <span style={css('user-select:none;cursor:pointer')}>{item.label}</span>
                 </div>
               );
             })}
@@ -217,6 +218,7 @@ function TagListEditor({ title, count, values, onAdd, onRemove, onReorder, place
           <div
             key={v}
             draggable={!!onReorder}
+            onMouseDown={(e) => { if (!onReorder) e.preventDefault(); }}
             onDragStart={(evt) => {
               if (!onReorder) return;
               setDraggedIdx(idx);
@@ -253,8 +255,8 @@ function TagListEditor({ title, count, values, onAdd, onRemove, onReorder, place
                 ' 5px ' +
                 (colorFor ? '8px' : '10px') +
                 ';font-size:12px;color:#3c423d;user-select:none;cursor:' +
-                (onReorder ? (draggedIdx === idx ? 'grabbing' : 'grab') : 'default') +
-                ';opacity:' +
+                (onReorder ? (draggedIdx === idx ? 'grabbing' : 'grab') : 'pointer') +
+                ';outline:none;opacity:' +
                 (draggedIdx === idx ? '0.4' : '1') +
                 ';box-shadow:' +
                 (draggedIdx === idx ? '0 4px 12px rgba(0,0,0,0.15)' : 'none') +
@@ -263,7 +265,7 @@ function TagListEditor({ title, count, values, onAdd, onRemove, onReorder, place
                 ';transition:transform 0.15s ease, border-color 0.15s ease'
             )}
           >
-            {onReorder && <span style={css('color:#9aa097;font-size:11px;cursor:grab;line-height:1')}>⋮⋮</span>}
+            {onReorder && <span style={css('color:#9aa097;font-size:11px;cursor:grab;line-height:1;user-select:none')}>⋮⋮</span>}
             {colorFor && onColorChange && (
               <input
                 type="color"
@@ -273,8 +275,8 @@ function TagListEditor({ title, count, values, onAdd, onRemove, onReorder, place
                 style={css('width:16px;height:16px;padding:0;border:none;border-radius:50%;cursor:pointer;background:none;flex-shrink:0')}
               />
             )}
-            {v}
-            <button onClick={() => onRemove(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1')}>✕</button>
+            <span style={css('user-select:none;cursor:inherit')}>{v}</span>
+            <button onClick={() => onRemove(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1;user-select:none')}>✕</button>
           </div>
         ))}
         {values.length === 0 && <span style={css('font-size:12px;color:#a6aca2;font-style:italic')}>No options yet.</span>}
@@ -336,6 +338,7 @@ function DepartmentEditor({ vm, onReorderInternal, onReorderCustomer }: { vm: VM
               <div
                 key={v}
                 draggable={!!onReorderInternal}
+                onMouseDown={(e) => { if (!onReorderInternal) e.preventDefault(); }}
                 onDragStart={(evt) => {
                   if (!onReorderInternal) return;
                   setDraggedInternalIdx(idx);
@@ -370,8 +373,8 @@ function DepartmentEditor({ vm, onReorderInternal, onReorderCustomer }: { vm: VM
                     ';border-radius:20px;padding:5px ' +
                     (onReorderInternal ? '8px' : '12px') +
                     ';font-size:12px;color:#3c423d;user-select:none;cursor:' +
-                    (onReorderInternal ? (draggedInternalIdx === idx ? 'grabbing' : 'grab') : 'default') +
-                    ';opacity:' +
+                    (onReorderInternal ? (draggedInternalIdx === idx ? 'grabbing' : 'grab') : 'pointer') +
+                    ';outline:none;opacity:' +
                     (draggedInternalIdx === idx ? '0.4' : '1') +
                     ';box-shadow:' +
                     (draggedInternalIdx === idx ? '0 4px 12px rgba(0,0,0,0.15)' : 'none') +
@@ -380,9 +383,9 @@ function DepartmentEditor({ vm, onReorderInternal, onReorderCustomer }: { vm: VM
                     ';transition:transform 0.15s ease, border-color 0.15s ease'
                 )}
               >
-                {onReorderInternal && <span style={css('color:#9aa097;font-size:11px;cursor:grab;line-height:1')}>⋮⋮</span>}
-                {v}
-                <button onClick={() => vm.removeInternalDepartmentOption(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1')}>✕</button>
+                {onReorderInternal && <span style={css('color:#9aa097;font-size:11px;cursor:grab;line-height:1;user-select:none')}>⋮⋮</span>}
+                <span style={css('user-select:none;cursor:inherit')}>{v}</span>
+                <button onClick={() => vm.removeInternalDepartmentOption(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1;user-select:none')}>✕</button>
               </div>
             ))}
             {vm.internalDepartmentOptions.length === 0 && <span style={css('font-size:12px;color:#a6aca2;font-style:italic')}>No internal audit standards yet.</span>}
@@ -411,6 +414,7 @@ function DepartmentEditor({ vm, onReorderInternal, onReorderCustomer }: { vm: VM
               <div
                 key={v}
                 draggable={!!onReorderCustomer}
+                onMouseDown={(e) => { if (!onReorderCustomer) e.preventDefault(); }}
                 onDragStart={(evt) => {
                   if (!onReorderCustomer) return;
                   setDraggedCustomerIdx(idx);
@@ -445,8 +449,8 @@ function DepartmentEditor({ vm, onReorderInternal, onReorderCustomer }: { vm: VM
                     ';border-radius:20px;padding:5px ' +
                     (onReorderCustomer ? '8px' : '12px') +
                     ';font-size:12px;color:#3c423d;user-select:none;cursor:' +
-                    (onReorderCustomer ? (draggedCustomerIdx === idx ? 'grabbing' : 'grab') : 'default') +
-                    ';opacity:' +
+                    (onReorderCustomer ? (draggedCustomerIdx === idx ? 'grabbing' : 'grab') : 'pointer') +
+                    ';outline:none;opacity:' +
                     (draggedCustomerIdx === idx ? '0.4' : '1') +
                     ';box-shadow:' +
                     (draggedCustomerIdx === idx ? '0 4px 12px rgba(0,0,0,0.15)' : 'none') +
@@ -455,9 +459,9 @@ function DepartmentEditor({ vm, onReorderInternal, onReorderCustomer }: { vm: VM
                     ';transition:transform 0.15s ease, border-color 0.15s ease'
                 )}
               >
-                {onReorderCustomer && <span style={css('color:#9aa097;font-size:11px;cursor:grab;line-height:1')}>⋮⋮</span>}
-                {v}
-                <button onClick={() => vm.removeCustomerDepartmentOption(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1')}>✕</button>
+                {onReorderCustomer && <span style={css('color:#9aa097;font-size:11px;cursor:grab;line-height:1;user-select:none')}>⋮⋮</span>}
+                <span style={css('user-select:none;cursor:inherit')}>{v}</span>
+                <button onClick={() => vm.removeCustomerDepartmentOption(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1;user-select:none')}>✕</button>
               </div>
             ))}
             {vm.customerDepartmentOptions.length === 0 && <span style={css('font-size:12px;color:#a6aca2;font-style:italic')}>No customer audit standards yet.</span>}

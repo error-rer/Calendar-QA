@@ -24,35 +24,53 @@ export function EngineerModal({ vm }: { vm: VM }) {
           </div>
 
           <div>
-            <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:8px')}>Site</label>
+            <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:8px;user-select:none')}>Site</label>
             <div style={css('display:flex;gap:7px')}>
               {f.departments.map((d, i) => (
-                <button key={i} onClick={d.onClick} style={d.style}>{d.label}</button>
+                <button
+                  key={i}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={d.onClick}
+                  style={d.style}
+                >
+                  {d.label}
+                </button>
               ))}
             </div>
           </div>
 
           <div>
-            <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:8px')}>Standard</label>
+            <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:8px;user-select:none')}>Standard</label>
             <div style={css('display:flex;flex-direction:column;gap:12px')}>
               <div>
-                <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:5px")}>INTERNAL AUDIT</div>
+                <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:5px;user-select:none")}>INTERNAL AUDIT</div>
                 <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px')}>
                   {internalOpts.map((c) => (
-                    <div key={c.code} onClick={c.onClick} style={c.style}>
+                    <div
+                      key={c.code}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={c.onClick}
+                      style={c.style}
+                    >
                       <span style={c.boxStyle}>{c.check}</span>
-                      <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#5b7fd6")}>{c.name}</span>
+                      <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#5b7fd6;user-select:none;cursor:pointer")}>{c.name}</span>
                     </div>
                   ))}
                 </div>
               </div>
               <div>
-                <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:5px")}>CUSTOMER AUDIT</div>
+                <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:5px;user-select:none")}>CUSTOMER AUDIT</div>
                 <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px')}>
                   {customerOpts.map((c) => (
-                    <div key={c.code} onClick={c.onClick} style={c.style}>
+                    <div
+                      key={c.code}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={c.onClick}
+                      style={c.style}
+                    >
                       <span style={c.boxStyle}>{c.check}</span>
-                      <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#5b7fd6")}>{c.name}</span>
+                      <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#5b7fd6;user-select:none;cursor:pointer")}>{c.name}</span>
                     </div>
                   ))}
                 </div>
@@ -61,7 +79,7 @@ export function EngineerModal({ vm }: { vm: VM }) {
           </div>
 
           <div>
-            <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:8px')}>Department</label>
+            <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:8px;user-select:none')}>Department</label>
             <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px')}>
               {(['QA', 'Non-QA'] as const).map((dept) => {
                 const current = (f.department || '').trim();
@@ -69,6 +87,7 @@ export function EngineerModal({ vm }: { vm: VM }) {
                 return (
                   <div
                     key={dept}
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
                       if (on) {
                         f.onDepartment(undefined);
@@ -76,14 +95,14 @@ export function EngineerModal({ vm }: { vm: VM }) {
                         f.onDepartment(dept);
                       }
                     }}
-                    style={css(`display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:8px;cursor:pointer;border:1px solid ${on ? '#9bb0e8' : '#e2e5de'};background:${on ? '#eef2fd' : '#fff'};user-select:none;transition:all 0.12s ease`)}
+                    style={css(`display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:8px;cursor:pointer;border:1px solid ${on ? '#9bb0e8' : '#e2e5de'};background:${on ? '#eef2fd' : '#fff'};user-select:none;outline:none;transition:all 0.12s ease`)}
                   >
                     <span
-                      style={css(`width:15px;height:15px;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;background:${on ? '#2756d6' : '#fff'};border:1px solid ${on ? '#2756d6' : '#cdd2c9'};font-weight:700`)}
+                      style={css(`width:15px;height:15px;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;background:${on ? '#2756d6' : '#fff'};border:1px solid ${on ? '#2756d6' : '#cdd2c9'};font-weight:700;user-select:none;cursor:pointer`)}
                     >
                       {on ? '✓' : ''}
                     </span>
-                    <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:${on ? '#2756d6' : '#5c625c'}`)}>{dept}</span>
+                    <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:${on ? '#2756d6' : '#5c625c'};user-select:none;cursor:pointer`)}>{dept}</span>
                   </div>
                 );
               })}

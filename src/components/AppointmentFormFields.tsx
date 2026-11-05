@@ -282,6 +282,7 @@ function DepartmentPillSelector({
         return (
           <div
             key={opt}
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => {
               if (on) {
                 onChange(undefined);
@@ -299,6 +300,8 @@ function DepartmentPillSelector({
               border: '1px solid ' + (on ? '#9bb0e8' : '#e2e5de'),
               background: on ? '#eef2fd' : '#fff',
               userSelect: 'none',
+              WebkitUserSelect: 'none',
+              outline: 'none',
               transition: 'all 0.12s ease',
             }}
           >
@@ -316,6 +319,9 @@ function DepartmentPillSelector({
                 background: on ? '#2756d6' : '#fff',
                 border: '1px solid ' + (on ? '#2756d6' : '#cdd2c9'),
                 fontWeight: 700,
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                cursor: 'pointer',
               }}
             >
               {on ? '✓' : ''}
@@ -326,6 +332,9 @@ function DepartmentPillSelector({
                 fontSize: '11px',
                 fontWeight: 600,
                 color: on ? '#2756d6' : '#5c625c',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                cursor: 'pointer',
               }}
             >
               {opt}
@@ -434,6 +443,7 @@ function MultiSiteSelect({
             return (
               <div
                 key={s}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => toggleSite(s)}
                 style={{
                   padding: '7px 10px',
@@ -448,9 +458,12 @@ function MultiSiteSelect({
                   background: isSel ? '#eef2fd' : '#fff',
                   color: isSel ? '#2756d6' : '#23282a',
                   transition: 'background .1s ease',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  outline: 'none',
                 }}
               >
-                <span>{s}</span>
+                <span style={{ userSelect: 'none', WebkitUserSelect: 'none', cursor: 'pointer' }}>{s}</span>
                 <span
                   style={{
                     width: '14px',
@@ -464,6 +477,9 @@ function MultiSiteSelect({
                     fontSize: '9px',
                     color: '#fff',
                     flexShrink: 0,
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    cursor: 'pointer',
                   }}
                 >
                   {isSel ? '✓' : ''}
@@ -1081,9 +1097,12 @@ function MultiSelectCombobox({
                   color: isSel ? '#2756d6' : '#23282a',
                   transition: 'background .1s ease',
                   marginBottom: '2px',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  outline: 'none',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0, userSelect: 'none', WebkitUserSelect: 'none', cursor: 'pointer' }}>
                   <span
                     style={{
                       width: '14px',
@@ -1097,11 +1116,14 @@ function MultiSelectCombobox({
                       justifyContent: 'center',
                       fontSize: '9px',
                       color: '#fff',
+                      userSelect: 'none',
+                      WebkitUserSelect: 'none',
+                      cursor: 'pointer',
                     }}
                   >
                     {isSel ? '✓' : ''}
                   </span>
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', userSelect: 'none', WebkitUserSelect: 'none', cursor: 'pointer' }}>
                     {name}
                   </span>
                 </div>
@@ -1270,6 +1292,8 @@ function MultiStandardSelect({
               fontFamily: "'Archivo',sans-serif",
               fontWeight: 600,
               color: '#2756d6',
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
             }}
           >
             {name}
@@ -1457,9 +1481,12 @@ function MultiStandardSelect({
                   color: isSel ? '#2756d6' : '#23282a',
                   transition: 'background .1s ease',
                   marginBottom: '2px',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  outline: 'none',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0, userSelect: 'none', WebkitUserSelect: 'none', cursor: 'pointer' }}>
                   <span
                     style={{
                       width: '14px',
@@ -1473,11 +1500,14 @@ function MultiStandardSelect({
                       justifyContent: 'center',
                       fontSize: '9px',
                       color: '#fff',
+                      userSelect: 'none',
+                      WebkitUserSelect: 'none',
+                      cursor: 'pointer',
                     }}
                   >
                     {isSel ? '✓' : ''}
                   </span>
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', userSelect: 'none', WebkitUserSelect: 'none', cursor: 'pointer' }}>
                     {name}
                   </span>
                 </div>
@@ -1796,9 +1826,12 @@ function MultiAuditorSelect({
                   color: isSel ? '#2756d6' : '#23282a',
                   transition: 'background .1s ease',
                   marginBottom: '2px',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  outline: 'none',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0, userSelect: 'none', WebkitUserSelect: 'none', cursor: 'pointer' }}>
                   <span
                     style={{
                       width: '14px',
@@ -1812,11 +1845,14 @@ function MultiAuditorSelect({
                       justifyContent: 'center',
                       fontSize: '9px',
                       color: '#fff',
+                      userSelect: 'none',
+                      WebkitUserSelect: 'none',
+                      cursor: 'pointer',
                     }}
                   >
                     {isSel ? '✓' : ''}
                   </span>
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', userSelect: 'none', WebkitUserSelect: 'none', cursor: 'pointer' }}>
                     {name}
                   </span>
                 </div>
@@ -2121,18 +2157,28 @@ export function AppointmentFormFields({
   return (
     <>
       <div style={css('display:flex;gap:8px;margin-bottom:12px')}>
-        <div onClick={() => onChange({ sectionType: 'customer' })} style={{
-          flex: 1, padding: '9px 0', borderRadius: '8px', border: '1px solid ' + (v.sectionType === 'customer' ? '#15191e' : '#dde0d9'),
-          cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", textAlign: 'center',
-          background: v.sectionType === 'customer' ? '#15191e' : '#fff',
-          color: v.sectionType === 'customer' ? '#fff' : '#5c625c',
-        }}>Customer Audit</div>
-        <div onClick={() => onChange({ sectionType: 'internal' })} style={{
-          flex: 1, padding: '9px 0', borderRadius: '8px', border: '1px solid ' + (v.sectionType === 'internal' ? '#15191e' : '#dde0d9'),
-          cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", textAlign: 'center',
-          background: v.sectionType === 'internal' ? '#15191e' : '#fff',
-          color: v.sectionType === 'internal' ? '#fff' : '#5c625c',
-        }}>Internal Audit</div>
+        <div
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => onChange({ sectionType: 'customer' })}
+          style={{
+            flex: 1, padding: '9px 0', borderRadius: '8px', border: '1px solid ' + (v.sectionType === 'customer' ? '#15191e' : '#dde0d9'),
+            cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", textAlign: 'center',
+            background: v.sectionType === 'customer' ? '#15191e' : '#fff',
+            color: v.sectionType === 'customer' ? '#fff' : '#5c625c',
+            userSelect: 'none', WebkitUserSelect: 'none', outline: 'none',
+          }}
+        >Customer Audit</div>
+        <div
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => onChange({ sectionType: 'internal' })}
+          style={{
+            flex: 1, padding: '9px 0', borderRadius: '8px', border: '1px solid ' + (v.sectionType === 'internal' ? '#15191e' : '#dde0d9'),
+            cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'Archivo',sans-serif", textAlign: 'center',
+            background: v.sectionType === 'internal' ? '#15191e' : '#fff',
+            color: v.sectionType === 'internal' ? '#fff' : '#5c625c',
+            userSelect: 'none', WebkitUserSelect: 'none', outline: 'none',
+          }}
+        >Internal Audit</div>
       </div>
 
       {v.sectionType === 'customer' && (
