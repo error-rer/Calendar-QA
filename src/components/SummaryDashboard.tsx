@@ -657,13 +657,13 @@ const handleExportExcel = async () => {
               <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Total Audits</div>
               <div style={css("font-size:28px;font-weight:800;color:#15191e;margin-top:4px;line-height:1.1;font-family:'Archivo',sans-serif")}>{customerAuditsCount + internalAuditsCount}</div>
             </div>
-            <div style={css('display:flex;align-items:center;gap:6px;margin-top:14px;flex-wrap:wrap')}>
-              <span style={css("display:inline-flex;align-items:center;padding:3px 9px;border-radius:12px;background:#eef2fd;color:#2756d6;font-size:11px;font-weight:700;font-family:'Archivo',sans-serif;border:1px solid #d4def0")}>
-                {customerAuditsCount} Customer
+            <div style={css('display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap;min-height:24px')}>
+              <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:600;font-family:'Archivo',sans-serif;border:1px solid #dbeafe;line-height:1.3")}>
+                {customerAuditsCount} Customer Audit
               </span>
-              <span style={css('color:#a1a79f;font-size:11px')}>·</span>
-              <span style={css("display:inline-flex;align-items:center;padding:3px 9px;border-radius:12px;background:#f3f4f6;color:#4b5563;font-size:11px;font-weight:700;font-family:'Archivo',sans-serif;border:1px solid #e5e7eb")}>
-                {internalAuditsCount} Internal
+              <span style={css('color:#d4d4d8;font-size:12px;user-select:none')}>·</span>
+              <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;background:#f8fafc;color:#334155;font-size:11px;font-weight:600;font-family:'Archivo',sans-serif;border:1px solid #e2e8f0;line-height:1.3")}>
+                {internalAuditsCount} Internal Audit
               </span>
             </div>
           </div>
@@ -674,7 +674,7 @@ const handleExportExcel = async () => {
               <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Total Visits</div>
               <div style={css("font-size:28px;font-weight:800;color:#15191e;margin-top:4px;line-height:1.1;font-family:'Archivo',sans-serif")}>{auditVisitsData.grandTotal}</div>
             </div>
-            <div style={css('display:flex;align-items:center;gap:6px;margin-top:14px')}>
+            <div style={css('display:flex;align-items:center;gap:6px;margin-top:14px;min-height:24px')}>
               <span style={css("font-size:11.5px;color:#71786e;font-family:'Archivo',sans-serif;font-weight:500")}>
                 Customer site-days in {vm.summaryYear}
               </span>
@@ -687,7 +687,7 @@ const handleExportExcel = async () => {
               <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Total Findings</div>
               <div style={css("font-size:28px;font-weight:800;color:#15191e;margin-top:4px;line-height:1.1;font-family:'Archivo',sans-serif")}>{totalFindings}</div>
             </div>
-            <div style={css('display:flex;align-items:center;gap:6px;margin-top:14px')}>
+            <div style={css('display:flex;align-items:center;gap:6px;margin-top:14px;min-height:24px')}>
               <span style={css("font-size:11.5px;color:#71786e;font-family:'Archivo',sans-serif;font-weight:500")}>
                 Across 5 sites (Major, Minor, OFI, OBS, Findings)
               </span>
