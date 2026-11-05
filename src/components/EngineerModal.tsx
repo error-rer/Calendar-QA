@@ -64,19 +64,26 @@ export function EngineerModal({ vm }: { vm: VM }) {
             <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:8px')}>Department</label>
             <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px')}>
               {(['QA', 'Non-QA'] as const).map((dept) => {
-                const on = (f.department || 'QA') === dept;
+                const current = (f.department || '').trim();
+                const on = current.toLowerCase() === dept.toLowerCase();
                 return (
                   <div
                     key={dept}
-                    onClick={() => f.onDepartment(dept)}
-                    style={css(`display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:8px;cursor:pointer;border:1px solid ${on ? '#9bb0e8' : '#e2e5de'};background:${on ? '#eef2fd' : '#fff'}`)}
+                    onClick={() => {
+                      if (on) {
+                        f.onDepartment(undefined);
+                      } else {
+                        f.onDepartment(dept);
+                      }
+                    }}
+                    style={css(`display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:8px;cursor:pointer;border:1px solid ${on ? '#9bb0e8' : '#e2e5de'};background:${on ? '#eef2fd' : '#fff'};user-select:none;transition:all 0.12s ease`)}
                   >
                     <span
-                      style={css(`width:15px;height:15px;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;background:${on ? '#2756d6' : '#fff'};border:1px solid ${on ? '#2756d6' : '#cdd2c9'}`)}
+                      style={css(`width:15px;height:15px;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;background:${on ? '#2756d6' : '#fff'};border:1px solid ${on ? '#2756d6' : '#cdd2c9'};font-weight:700`)}
                     >
                       {on ? '✓' : ''}
                     </span>
-                    <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#5b7fd6")}>{dept}</span>
+                    <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:${on ? '#2756d6' : '#5c625c'}`)}>{dept}</span>
                   </div>
                 );
               })}

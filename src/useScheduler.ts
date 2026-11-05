@@ -6,6 +6,7 @@ import type {
   CreateDraft,
   Department,
   EditDraft,
+  Engineer,
   EngineerForm,
   EntityType,
   Order,
@@ -2436,7 +2437,7 @@ export function useScheduler() {
         name: '',
         role: '',
         site: S.siteCodeOptions[0] ? normalizeSite(S.siteCodeOptions[0]) : 'UTL1',
-        department: 'QA',
+        department: undefined,
         subDepartments: [],
       },
     });
@@ -2452,7 +2453,7 @@ export function useScheduler() {
         name: e.name,
         role: e.role || '',
         site: e.site ? normalizeSite(e.site) : (e.department && e.department !== 'QA' && e.department !== 'Non-QA' ? normalizeSite(e.department) : 'UTL1'),
-        department: (e.department === 'Non-QA' ? 'Non-QA' : 'QA') as Department,
+        department: (e.department === 'Non-QA' ? 'Non-QA' : e.department === 'QA' ? 'QA' : undefined),
         subDepartments: [...e.subDepartments],
       },
     });
@@ -2468,13 +2469,13 @@ export function useScheduler() {
     const f = S.engForm;
     const newName = f.name.trim();
     if (!newName) return;
-    const dept = (f.department === 'Non-QA' ? 'Non-QA' : 'QA') as Department;
+    const dept: Department | '' = f.department === 'Non-QA' ? 'Non-QA' : f.department === 'QA' ? 'QA' : '';
     const site = f.site || (S.siteCodeOptions[0] ? normalizeSite(S.siteCodeOptions[0]) : 'UTL1');
     if (S.engEditingId) {
       const id = S.engEditingId;
       const existing = S.engineers.find((e) => e.id === id);
       const oldName = existing?.name || '';
-      const updatedEng = {
+      const updatedEng: Engineer = {
         id,
         name: newName,
         role: existing?.role || 'QA Engineer',
@@ -2523,7 +2524,7 @@ export function useScheduler() {
       log('You', `updated QMS host ${newName.split(' ')[0]}`, '#2756d6');
     } else {
       const id = 'e' + ids.current.id++;
-      const newEng = {
+      const newEng: Engineer = {
         id,
         name: newName,
         role: 'QA Engineer',
@@ -3724,10 +3725,10 @@ export function useScheduler() {
     check: on ? '✓' : '',
   });
   const engForm = {
-    name: ef.name, role: ef.role, site: ef.site || 'UTL1', department: ef.department || 'QA', subDepartments: ef.subDepartments, inStyle: ofInStyle,
+    name: ef.name, role: ef.role, site: ef.site || 'UTL1', department: ef.department || undefined, subDepartments: ef.subDepartments, inStyle: ofInStyle,
     onName: (e: React.ChangeEvent<HTMLInputElement>) => setEngForm({ name: e.target.value }),
     onRole: (e: React.ChangeEvent<HTMLInputElement>) => setEngForm({ role: e.target.value }),
-    onDepartment: (dept: Department) => setEngForm({ department: dept }),
+    onDepartment: (dept?: Department) => setEngForm({ department: dept || '' }),
     onSite: (site: string) => setEngForm({ site }),
     sites: S.siteCodeOptions.map((d) => ({ label: d, onClick: () => setEngForm({ site: d }), style: segMd((ef.site || ef.department) === d) })),
     departments: S.siteCodeOptions.map((d) => ({ label: d, onClick: () => setEngForm({ site: d }), style: segMd((ef.site || ef.department) === d) })),

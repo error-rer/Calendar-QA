@@ -2293,7 +2293,7 @@ export function AppointmentFormFields({
               <label style={lbl}>DEPARTMENT</label>
               <DepartmentPillSelector
                 value={v.department}
-                onChange={(dept) => onChange({ department: dept })}
+                onChange={(dept) => onChange({ department: dept || '' })}
                 options={departmentOptions}
               />
             </div>
@@ -2421,7 +2421,7 @@ export function AppointmentFormFields({
               <label style={lbl}>DEPARTMENT</label>
               <DepartmentPillSelector
                 value={v.department}
-                onChange={(dept) => onChange({ department: dept })}
+                onChange={(dept) => onChange({ department: dept || '' })}
                 options={departmentOptions}
               />
             </div>

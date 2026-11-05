@@ -55,7 +55,9 @@ function normalizeAuditResults(results: any): Record<string, any> {
 }
 
 function engineerOut(r: any) {
-  const dept = (r.host_department === 'Non-QA' || r.department === 'Non-QA') ? 'Non-QA' : 'QA';
+  const dept = (r.host_department === 'Non-QA' || r.department === 'Non-QA')
+    ? 'Non-QA'
+    : ((r.host_department === 'QA' || r.department === 'QA') ? 'QA' : undefined);
   const site = r.site || (r.department && r.department !== 'QA' && r.department !== 'Non-QA' ? r.department : 'UTL1');
   return {
     id: r.id,
@@ -237,16 +239,16 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
     if (method === 'POST' && path === 'engineers') {
       const { id, name, role, site, department, subDepartments } = body || {};
       const sd = JSON.stringify(subDepartments || []);
-      const hostDept = department === 'Non-QA' ? 'Non-QA' : 'QA';
+      const hostDept = department === 'Non-QA' ? 'Non-QA' : (department === 'QA' ? 'QA' : '');
       const engSite = site || 'UTL1';
       await DB.prepare('INSERT INTO engineers (id, name, role, department, site, host_department, sub_departments) VALUES (?, ?, ?, ?, ?, ?, ?)')
         .bind(id, name || '', role || '', hostDept, engSite, hostDept, sd).run();
-      return json({ id, name, role, site: engSite, department: hostDept, subDepartments: subDepartments || [] }, 201);
+      return json({ id, name, role, site: engSite, department: hostDept || undefined, subDepartments: subDepartments || [] }, 201);
     }
     const engMatch = path.match(/^engineers\/(.+)$/);
     if (engMatch && method === 'PUT') {
       const { name, role, site, department, subDepartments } = body || {};
-      const hostDept = department === 'Non-QA' ? 'Non-QA' : 'QA';
+      const hostDept = department === 'Non-QA' ? 'Non-QA' : (department === 'QA' ? 'QA' : '');
       const engSite = site || 'UTL1';
       await DB.prepare('UPDATE engineers SET name = ?, role = ?, department = ?, site = ?, host_department = ?, sub_departments = ? WHERE id = ?')
         .bind(name || '', role || '', hostDept, engSite, hostDept, JSON.stringify(subDepartments || []), engMatch[1]).run();
