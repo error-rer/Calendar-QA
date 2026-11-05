@@ -58,3 +58,16 @@ textarea,
   user-select: text !important;
   cursor: text !important;
 }
+
+/* Summary Dashboard KPI Grid: 1 col on mobile, 3 cols on medium+ screens */
+.summary-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+@media (min-width: 768px) {
+  .summary-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

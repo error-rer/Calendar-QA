@@ -650,29 +650,48 @@ const handleExportExcel = async () => {
         </div>
 
         {/* Metric Cards Row */}
-        <div style={css('display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:12px;margin-bottom:20px')}>
-          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.02)')}>
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Total Audits</div>
-            <div style={css('font-size:24px;font-weight:700;color:#15191e;margin-top:2px')}>{customerAuditsCount + internalAuditsCount}</div>
-            <div style={css('font-size:11px;color:#8a9088;margin-top:2px')}>Scheduled in {vm.summaryYear}</div>
+        <div className="summary-kpi-grid">
+          {/* Card 1: TOTAL AUDITS */}
+          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:16px;padding:20px 22px;box-shadow:0 1px 3px rgba(0,0,0,0.02);display:flex;flex-direction:column;justify-content:space-between')}>
+            <div>
+              <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Total Audits</div>
+              <div style={css("font-size:28px;font-weight:800;color:#15191e;margin-top:4px;line-height:1.1;font-family:'Archivo',sans-serif")}>{customerAuditsCount + internalAuditsCount}</div>
+            </div>
+            <div style={css('display:flex;align-items:center;gap:6px;margin-top:14px;flex-wrap:wrap')}>
+              <span style={css("display:inline-flex;align-items:center;padding:3px 9px;border-radius:12px;background:#eef2fd;color:#2756d6;font-size:11px;font-weight:700;font-family:'Archivo',sans-serif;border:1px solid #d4def0")}>
+                {customerAuditsCount} Customer
+              </span>
+              <span style={css('color:#a1a79f;font-size:11px')}>·</span>
+              <span style={css("display:inline-flex;align-items:center;padding:3px 9px;border-radius:12px;background:#f3f4f6;color:#4b5563;font-size:11px;font-weight:700;font-family:'Archivo',sans-serif;border:1px solid #e5e7eb")}>
+                {internalAuditsCount} Internal
+              </span>
+            </div>
           </div>
 
-          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.02)')}>
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#2756d6;text-transform:uppercase;letter-spacing:0.5px")}>Customer Audits</div>
-            <div style={css('font-size:24px;font-weight:700;color:#2756d6;margin-top:2px')}>{customerAuditsCount}</div>
-            <div style={css('font-size:11px;color:#8a9088;margin-top:2px')}>Consecutive day visits</div>
+          {/* Card 2: TOTAL VISITS */}
+          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:16px;padding:20px 22px;box-shadow:0 1px 3px rgba(0,0,0,0.02);display:flex;flex-direction:column;justify-content:space-between')}>
+            <div>
+              <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Total Visits</div>
+              <div style={css("font-size:28px;font-weight:800;color:#15191e;margin-top:4px;line-height:1.1;font-family:'Archivo',sans-serif")}>{auditVisitsData.grandTotal}</div>
+            </div>
+            <div style={css('display:flex;align-items:center;gap:6px;margin-top:14px')}>
+              <span style={css("font-size:11.5px;color:#71786e;font-family:'Archivo',sans-serif;font-weight:500")}>
+                Customer site-days in {vm.summaryYear}
+              </span>
+            </div>
           </div>
 
-          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.02)')}>
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:0.5px")}>Internal Audits</div>
-            <div style={css('font-size:24px;font-weight:700;color:#374151;margin-top:2px')}>{internalAuditsCount}</div>
-            <div style={css('font-size:11px;color:#8a9088;margin-top:2px')}>Plant & process audits</div>
-          </div>
-
-          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.02)')}>
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Total Findings</div>
-            <div style={css('font-size:24px;font-weight:700;color:#15191e;margin-top:2px')}>{totalFindings}</div>
-            <div style={css('font-size:11px;color:#8a9088;margin-top:2px')}>Across 5 sites (Major, Minor, OFI, OBS, Findings)</div>
+          {/* Card 3: TOTAL FINDINGS */}
+          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:16px;padding:20px 22px;box-shadow:0 1px 3px rgba(0,0,0,0.02);display:flex;flex-direction:column;justify-content:space-between')}>
+            <div>
+              <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Total Findings</div>
+              <div style={css("font-size:28px;font-weight:800;color:#15191e;margin-top:4px;line-height:1.1;font-family:'Archivo',sans-serif")}>{totalFindings}</div>
+            </div>
+            <div style={css('display:flex;align-items:center;gap:6px;margin-top:14px')}>
+              <span style={css("font-size:11.5px;color:#71786e;font-family:'Archivo',sans-serif;font-weight:500")}>
+                Across 5 sites (Major, Minor, OFI, OBS, Findings)
+              </span>
+            </div>
           </div>
         </div>
 
