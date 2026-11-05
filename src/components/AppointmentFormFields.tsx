@@ -2018,9 +2018,11 @@ export function AppointmentFormFields({
   }, [isOpen, v.sectionType]);
 
   const isCustomerEHS = v.department1.split(',').map((s) => s.trim()).includes('EHS');
-  // Customer site is always restricted to these 5 fixed values (EHS filtering no longer applies)
+  // Customer site is driven by siteOptions configured in Options tab
   void isCustomerEHS; // retained for future use
-  const customerSiteOptions = Array.from(new Set(['UTL1', 'UTL2A', 'UTL2B', 'UTL3A', 'UTL3T', ...(siteOptions || []).map(normalizeSite)]));
+  const customerSiteOptions = siteOptions && siteOptions.length > 0
+    ? Array.from(new Set(siteOptions.map(normalizeSite)))
+    : ['UTL1', 'UTL2A', 'UTL2B', 'UTL3A', 'UTL3T'];
 
   const isInternalEHS = v.department2.split(',').map((s) => s.trim()).includes('EHS');
   const internalSiteOptions = isInternalEHS
@@ -2042,7 +2044,7 @@ export function AppointmentFormFields({
         uniqueMap.set(key, c.trim());
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Array.from(uniqueMap.values());
   }, [assignments, customerOptions, editingTargetId, removedSet]);
 
   const endCustomerSuggestions = useMemo(() => {
@@ -2058,7 +2060,7 @@ export function AppointmentFormFields({
         uniqueMap.set(key, c.trim());
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Array.from(uniqueMap.values());
   }, [assignments, endCustomerOptions, editingTargetId, removedSet]);
 
   const targetPackageSuggestions = useMemo(() => {
@@ -2074,7 +2076,7 @@ export function AppointmentFormFields({
         uniqueMap.set(key, p.trim());
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Array.from(uniqueMap.values());
   }, [assignments, targetPackageOptions, editingTargetId, removedSet]);
 
   const customerNameSuggestions = useMemo(() => {
@@ -2090,7 +2092,7 @@ export function AppointmentFormFields({
         uniqueMap.set(key, n.trim());
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Array.from(uniqueMap.values());
   }, [assignments, customerNameOptions, editingTargetId, removedSet]);
 
   const auditCategorySuggestions = useMemo(() => {
@@ -2106,7 +2108,7 @@ export function AppointmentFormFields({
         uniqueMap.set(key, c.trim());
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Array.from(uniqueMap.values());
   }, [assignments, auditCategoryOptions, editingTargetId, removedSet]);
 
   const customerDepartmentSuggestions = useMemo(() => {
@@ -2122,7 +2124,7 @@ export function AppointmentFormFields({
         uniqueMap.set(key, d.trim());
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Array.from(uniqueMap.values());
   }, [assignments, customerDepartmentOptions, editingTargetId, removedSet]);
 
   const internalDepartmentSuggestions = useMemo(() => {
@@ -2138,7 +2140,7 @@ export function AppointmentFormFields({
         uniqueMap.set(key, d.trim());
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Array.from(uniqueMap.values());
   }, [assignments, internalDepartmentOptions, editingTargetId, removedSet]);
 
   const purposeSuggestions = useMemo(() => {
@@ -2154,7 +2156,7 @@ export function AppointmentFormFields({
         uniqueMap.set(key, p.trim());
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Array.from(uniqueMap.values());
   }, [assignments, purposeOptions, editingTargetId, removedSet]);
 
   const auditorSuggestions = useMemo(() => {
@@ -2184,9 +2186,7 @@ export function AppointmentFormFields({
       }
     }
 
-    return Array.from(uniqueMap.values()).sort((a, b) =>
-      a.localeCompare(b, undefined, { sensitivity: 'base' })
-    );
+    return Array.from(uniqueMap.values());
   }, [assignments, auditorOptions, editingTargetId, removedSet]);
 
   const areaSuggestions = useMemo(() => {

@@ -24,6 +24,7 @@ import {
   getAssignmentDateFormatted,
   getAssignmentDateRange,
   getMissingFields,
+  isAppointmentFormFullyFilled,
   isAppointmentFormIncomplete,
   isAppointmentIncomplete,
   isAuditResultCompleted,
@@ -36,6 +37,7 @@ import {
   normalizeAssignment,
   parseTimestamp,
   sortSites,
+  setConfiguredSiteOrder,
 } from './types';
 import { getHolidayForDate, getHolidayStyle, type HolidayInfo } from './holidays';
 import {
@@ -3563,7 +3565,8 @@ export function useScheduler() {
     return { name: p.name, loc: p.loc, cells };
   }), ...customerAuditRows];
 
-  const siteNames = Array.from(new Set(S.engineers.map((e) => e.site || (e.department && e.department !== 'QA' && e.department !== 'Non-QA' ? e.department : 'UTL1')).filter((s): s is string => Boolean(s))));
+  const rawSiteNames = Array.from(new Set(S.engineers.map((e) => e.site || (e.department && e.department !== 'QA' && e.department !== 'Non-QA' ? e.department : 'UTL1')).filter((s): s is string => Boolean(s))));
+  const siteNames = sortSites(rawSiteNames, S.siteCodeOptions);
   const siteRows = siteNames.map((dn) => {
     const engs = S.engineers.filter((e) => (e.site || (e.department && e.department !== 'QA' && e.department !== 'Non-QA' ? e.department : 'UTL1')) === dn);
     const cells = [0, 1, 2, 3, 4].map((day) => {
@@ -3940,10 +3943,14 @@ export function useScheduler() {
         uniqueMap.set(key, s);
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) =>
-      a.localeCompare(b, undefined, { sensitivity: 'base' })
-    );
+    return Array.from(uniqueMap.values());
   }, [S.assignments, S.siteCodeOptions, removedSet]);
+
+  useEffect(() => {
+    if (computedSiteCodeOptions && computedSiteCodeOptions.length > 0) {
+      setConfiguredSiteOrder(computedSiteCodeOptions);
+    }
+  }, [computedSiteCodeOptions]);
 
   const computedCustomerDepartmentOptions = useMemo(() => {
     const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
@@ -3961,7 +3968,7 @@ export function useScheduler() {
         uniqueMap.set(key, d);
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Array.from(uniqueMap.values());
   }, [S.assignments, S.customerDepartmentOptions, removedSet]);
 
   const computedInternalDepartmentOptions = useMemo(() => {
@@ -3980,7 +3987,7 @@ export function useScheduler() {
         uniqueMap.set(key, d);
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Array.from(uniqueMap.values());
   }, [S.assignments, S.internalDepartmentOptions, removedSet]);
 
   const computedDepartmentOptions = useMemo(() => {
@@ -4018,7 +4025,7 @@ export function useScheduler() {
         uniqueMap.set(key, c);
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Array.from(uniqueMap.values());
   }, [S.assignments, S.customerOptions, removedSet]);
 
   const computedEndCustomerOptions = useMemo(() => {
@@ -4037,7 +4044,7 @@ export function useScheduler() {
         uniqueMap.set(key, c);
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Array.from(uniqueMap.values());
   }, [S.assignments, S.endCustomerOptions, removedSet]);
 
   const computedPurposeOptions = useMemo(() => {
@@ -4056,7 +4063,7 @@ export function useScheduler() {
         uniqueMap.set(key, p);
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Array.from(uniqueMap.values());
   }, [S.assignments, S.purposeOptions, removedSet]);
 
   const computedTargetPackageOptions = useMemo(() => {
@@ -4075,7 +4082,7 @@ export function useScheduler() {
         uniqueMap.set(key, p);
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Array.from(uniqueMap.values());
   }, [S.assignments, S.targetPackageOptions, removedSet]);
 
   const computedCustomerNameOptions = useMemo(() => {
@@ -4094,7 +4101,7 @@ export function useScheduler() {
         uniqueMap.set(key, n);
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Array.from(uniqueMap.values());
   }, [S.assignments, S.customerNameOptions, removedSet]);
 
   const computedAuditCategoryOptions = useMemo(() => {
@@ -4113,7 +4120,7 @@ export function useScheduler() {
         uniqueMap.set(key, c);
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return Array.from(uniqueMap.values());
   }, [S.assignments, S.auditCategoryOptions, removedSet]);
 
   const masterAuditorOptions = useMemo(() => {
@@ -4130,9 +4137,7 @@ export function useScheduler() {
         uniqueMap.set(key, name);
       }
     }
-    return Array.from(uniqueMap.values()).sort((a, b) =>
-      a.localeCompare(b, undefined, { sensitivity: 'base' })
-    );
+    return Array.from(uniqueMap.values());
   }, [S.engineers, S.auditorOptions, removedSet]);
 
   const computedAuditorOptions = useMemo(() => {
@@ -4164,9 +4169,7 @@ export function useScheduler() {
       }
     }
 
-    return Array.from(uniqueMap.values()).sort((a, b) =>
-      a.localeCompare(b, undefined, { sensitivity: 'base' })
-    );
+    return Array.from(uniqueMap.values());
   }, [masterAuditorOptions, S.assignments, removedSet]);
 
   // ---- admin VMs ----
@@ -4364,7 +4367,7 @@ export function useScheduler() {
         res.push(item);
       }
     }
-    return res.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    return res;
   }, [isFilterCS, isFilterIA, computedCustomerDepartmentOptions, computedInternalDepartmentOptions]);
 
   const customerTopicOptions = typeIsIA ? [] : computedCustomerDepartmentOptions;
@@ -4707,3 +4710,11 @@ export function useScheduler() {
 }
 
 export type VM = ReturnType<typeof useScheduler>;
+
+export {
+  isAppointmentFormFullyFilled,
+  isAppointmentFormIncomplete,
+  isAppointmentIncomplete,
+  isIncompleteAssignment,
+  getMissingFields,
+};

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { VM } from '../useScheduler';
 import type { Assignment } from '../types';
-import { isInternalAssignment, calculateCustomerAuditsCount, normalizeSite, normalizeSites } from '../types';
+import { isInternalAssignment, calculateCustomerAuditsCount, normalizeSite, normalizeSites, getSiteOrderIndex } from '../types';
 import { css, HButton } from '../ui';
 
 interface TableRowData {
@@ -294,15 +294,32 @@ export function TableView({ vm }: { vm: VM }) {
       }
     }
 
-    return {
-      customers: Array.from(customers).sort((a, b) => a.localeCompare(b)),
-      standards: Array.from(standards).sort(),
-      auditCategories: Array.from(auditCategories).sort(),
-      targetPackages: Array.from(targetPackages).sort(),
-      customerNames: Array.from(customerNames).sort(),
-      auditors: Array.from(auditors).sort(),
+    const sortByMasterOrder = (items: Iterable<string>, masterOrder?: readonly string[]) => {
+      const arr = Array.from(items);
+      if (!masterOrder || masterOrder.length === 0) {
+        return arr.sort((a, b) => a.localeCompare(b));
+      }
+      const orderMap = new Map<string, number>();
+      masterOrder.forEach((item, index) => {
+        orderMap.set(item.trim().toLowerCase(), index);
+      });
+      return arr.sort((a, b) => {
+        const idxA = orderMap.has(a.trim().toLowerCase()) ? orderMap.get(a.trim().toLowerCase())! : 9999;
+        const idxB = orderMap.has(b.trim().toLowerCase()) ? orderMap.get(b.trim().toLowerCase())! : 9999;
+        if (idxA !== idxB) return idxA - idxB;
+        return a.localeCompare(b);
+      });
     };
-  }, [allRows]);
+
+    return {
+      customers: sortByMasterOrder(customers, vm.customerOptions),
+      standards: sortByMasterOrder(standards, vm.standardFilterOptions),
+      auditCategories: sortByMasterOrder(auditCategories, vm.auditCategoryFilterOptions),
+      targetPackages: sortByMasterOrder(targetPackages, vm.targetPackageFilterOptions),
+      customerNames: sortByMasterOrder(customerNames, vm.customerNameFilterOptions),
+      auditors: sortByMasterOrder(auditors, vm.auditorOptions),
+    };
+  }, [allRows, vm.customerOptions, vm.standardFilterOptions, vm.auditCategoryFilterOptions, vm.targetPackageFilterOptions, vm.customerNameFilterOptions, vm.auditorOptions]);
 
   // Apply Search & Filters
   const filteredRows = useMemo(() => {
@@ -390,6 +407,14 @@ export function TableView({ vm }: { vm: VM }) {
       let cmp = 0;
       if (sortCol === 'date') {
         cmp = a.dateObj.getTime() - b.dateObj.getTime();
+      } else if (sortCol === 'site') {
+        const idxA = getSiteOrderIndex(a.site, vm.siteCodeOptions);
+        const idxB = getSiteOrderIndex(b.site, vm.siteCodeOptions);
+        if (idxA !== idxB) {
+          cmp = idxA - idxB;
+        } else {
+          cmp = (a.site || '').localeCompare(b.site || '');
+        }
       } else {
         const valA = (a[sortCol] || '').toLowerCase();
         const valB = (b[sortCol] || '').toLowerCase();
@@ -397,7 +422,7 @@ export function TableView({ vm }: { vm: VM }) {
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [filteredRows, sortCol, sortDir]);
+  }, [filteredRows, sortCol, sortDir, vm.siteCodeOptions]);
 
   // Apply Pagination
   const totalEntries = sortedRows.length;
@@ -740,7 +765,7 @@ export function TableView({ vm }: { vm: VM }) {
           <TableMultiSelectFilter
             label="Sites"
             allLabel="All Sites"
-            options={CANONICAL_SITES}
+            options={vm.siteCodeOptions && vm.siteCodeOptions.length > 0 ? vm.siteCodeOptions : CANONICAL_SITES}
             selected={selectedSites}
             onChange={(next) => { setSelectedSites(next); setPage(1); }}
           />

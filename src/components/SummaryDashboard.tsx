@@ -120,6 +120,18 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
     UTL3T: true,
   });
 
+  const targetSitesList = useMemo(() => {
+    if (!vm.siteCodeOptions || vm.siteCodeOptions.length === 0) return TARGET_SITES;
+    const configured = vm.siteCodeOptions
+      .map(normalizeToTargetSite)
+      .filter((s): s is TargetSite => s !== null);
+    const uniqueConfigured = Array.from(new Set(configured));
+    for (const s of TARGET_SITES) {
+      if (!uniqueConfigured.includes(s)) uniqueConfigured.push(s);
+    }
+    return uniqueConfigured;
+  }, [vm.siteCodeOptions]);
+
   const allExpanded = TARGET_SITES.every((s) => expandedSites[s]);
 
   const toggleSite = (site: TargetSite) => {
@@ -805,8 +817,8 @@ const handleExportExcel = async () => {
                 <div style={css('text-align:right;color:#2756d6')}>Full Year Total</div>
               </div>
 
-              {/* 5 Sites Rows */}
-              {TARGET_SITES.map((site) => {
+              {/* Sites Rows */}
+              {targetSitesList.map((site) => {
                 const siteColor = vm.siteColors?.[site] || vm.siteColors?.[normalizeToTargetSite(site) || site];
                 const badgeStyle = getSiteBadgeStyle(site, siteColor);
                 const siteTotal = auditVisitsData.siteFullYearTotals[site];
@@ -939,8 +951,8 @@ const handleExportExcel = async () => {
                 <div style={css('text-align:right;color:#2756d6')}>Full Year Total</div>
               </div>
 
-              {/* 5 Collapsible Site Groups */}
-              {TARGET_SITES.map((site) => {
+              {/* Collapsible Site Groups */}
+              {targetSitesList.map((site) => {
                 const isExpanded = expandedSites[site];
                 const siteColor = vm.siteColors?.[site] || vm.siteColors?.[normalizeToTargetSite(site) || site];
                 const badgeStyle = getSiteBadgeStyle(site, siteColor);

@@ -52,6 +52,18 @@ export const SITE_ORDER = [
 
 export type SiteCode = typeof SITE_ORDER[number];
 
+let currentConfiguredSiteOrder: string[] = [...SITE_ORDER];
+
+export function setConfiguredSiteOrder(order: string[]) {
+  if (order && order.length > 0) {
+    currentConfiguredSiteOrder = order.map((s) => normalizeSite(s).toUpperCase());
+  }
+}
+
+export function getConfiguredSiteOrder(): string[] {
+  return currentConfiguredSiteOrder;
+}
+
 /** Standardize site codes: prefix legacy U1..U3T with UTL */
 export function normalizeSite(site: string): string {
   if (!site) return '';
@@ -67,20 +79,23 @@ export function normalizeSite(site: string): string {
   return s;
 }
 
-/** Get index of site in canonical SITE_ORDER */
-export function getSiteOrderIndex(site: string): number {
+/** Get index of site in canonical or configured site order */
+export function getSiteOrderIndex(site: string, orderList?: readonly string[] | string[]): number {
   if (!site) return 999;
   const norm = normalizeSite(site).toUpperCase();
-  const idx = SITE_ORDER.indexOf(norm as any);
+  const list = orderList && orderList.length > 0
+    ? orderList.map((s) => normalizeSite(s).toUpperCase())
+    : currentConfiguredSiteOrder;
+  const idx = list.indexOf(norm);
   return idx !== -1 ? idx : 999;
 }
 
-/** Sort an array of site names according to canonical SITE_ORDER */
-export function sortSites(sites: string[]): string[] {
+/** Sort an array of site names according to canonical or configured SITE_ORDER */
+export function sortSites(sites: string[], orderList?: readonly string[] | string[]): string[] {
   if (!sites || sites.length <= 1) return sites ? [...sites] : [];
   return [...sites].sort((a, b) => {
-    const idxA = getSiteOrderIndex(a);
-    const idxB = getSiteOrderIndex(b);
+    const idxA = getSiteOrderIndex(a, orderList);
+    const idxB = getSiteOrderIndex(b, orderList);
     if (idxA !== idxB) {
       return idxA - idxB;
     }
@@ -89,7 +104,7 @@ export function sortSites(sites: string[]): string[] {
 }
 
 /** Standardize slash/comma-separated multi-site string and sort in canonical site order */
-export function normalizeSites(raw: string): string {
+export function normalizeSites(raw: string, orderList?: readonly string[] | string[]): string {
   if (!raw) return '';
   const parts = raw
     .split(/[/,]/)
@@ -97,7 +112,7 @@ export function normalizeSites(raw: string): string {
     .filter(Boolean);
   if (parts.length === 0) return '';
   const uniqueSites = Array.from(new Set(parts));
-  const sorted = sortSites(uniqueSites);
+  const sorted = sortSites(uniqueSites, orderList);
   return sorted.join('/');
 }
 
@@ -187,6 +202,16 @@ export interface Assignment {
   resultSummary?: string;
   result?: any;
   auditResult?: any;
+  date?: string;
+  startDate?: string;
+  endDate?: string;
+  from?: string;
+  to?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  auditType?: string;
+  leadAuditor?: string;
+  customerName?: string | string[];
 }
 
 export type Appointment = Assignment;
@@ -225,12 +250,16 @@ export function getAppointmentQmsHost(audit: Assignment | any): string {
 
 export function getMissingFields(a: Assignment | any): string[] {
   if (!a) return [];
-  const isInternal = isInternalAssignment(a);
+  const isInternal =
+    isInternalAssignment(a) ||
+    a.auditType === 'Internal Audit' ||
+    a.auditType === 'IA' ||
+    a.sectionType === 'internal';
   const missing: string[] = [];
 
   // 1. Standard (standard, department1 for customer, department2 for internal)
   const rawStandard =
-    a.standard !== undefined
+    a.standard !== undefined && a.standard !== null && a.standard !== ''
       ? a.standard
       : isInternal
       ? (a.department2 || a.department1)
@@ -238,44 +267,104 @@ export function getMissingFields(a: Assignment | any): string[] {
   const hasStandard = Array.isArray(rawStandard)
     ? rawStandard.length > 0 && rawStandard.some((s: any) => Boolean(s && String(s).trim()))
     : Boolean(rawStandard && String(rawStandard).trim());
+  if (!hasStandard) missing.push('Standard');
 
   // 2. Site (site, site1 for customer, site2 for internal)
-  const rawSite = a.site !== undefined ? a.site : (isInternal ? (a.site2 || a.site1) : (a.site1 || a.site2));
+  const rawSite =
+    a.site !== undefined && a.site !== null && a.site !== ''
+      ? a.site
+      : isInternal
+      ? (a.site2 || a.site1)
+      : (a.site1 || a.site2);
   const hasSite = Boolean(rawSite && String(rawSite).trim());
-
-  // 3. Customer (customer for customer audit; area for internal audit)
-  const rawCustomer = isInternal ? (a.area || a.customer) : a.customer;
-  const hasCustomer = Boolean(rawCustomer && String(rawCustomer).trim());
-
-  // 4. Purpose (required for customer audit; not required for internal audit)
-  const rawPurpose = a.purpose !== undefined ? a.purpose : a.apptPurpose;
-  const hasPurpose = isInternal ? true : Boolean(rawPurpose && String(rawPurpose).trim());
-
-  // 5. QMS Host (qmsHost, auditor, auditor1 for customer, auditor2 for internal)
-  const qmsHostStr = getAppointmentQmsHost(a);
-  const hasQmsHost = Boolean(qmsHostStr);
-
-  if (!hasStandard) missing.push('Standard');
   if (!hasSite) missing.push('Site');
-  if (!hasCustomer) missing.push(isInternal ? 'Area' : 'Customer');
-  if (!hasPurpose && !isInternal) missing.push('Purpose');
+
+  // 3. Dates
+  const hasDates = Boolean(
+    a.date ||
+    (a.startDate && a.endDate) ||
+    (a.from && a.to) ||
+    (a.dateFrom && a.dateTo) ||
+    (a.week !== undefined && a.day !== undefined)
+  );
+  if (!hasDates) missing.push('Date Range');
+
+  // 4. QMS Host
+  const qmsHostStr = getAppointmentQmsHost(a);
+  const hasQmsHost = Boolean(qmsHostStr && qmsHostStr.trim());
   if (!hasQmsHost) missing.push('QMS Host');
+
+  if (isInternal) {
+    const rawPurpose = a.purpose !== undefined ? a.purpose : a.apptPurpose;
+    const hasPurpose = Boolean(rawPurpose && String(rawPurpose).trim());
+    const hasArea = Boolean(a.area && String(a.area).trim());
+    const hasAuditCategory = Boolean(a.auditCategory && String(a.auditCategory).trim());
+
+    if (!hasArea && !hasPurpose) missing.push('Area');
+    if (!hasAuditCategory && !hasPurpose && a.auditCategory !== undefined) missing.push('Audit Category');
+    if (a.leadAuditor !== undefined && !String(a.leadAuditor).trim()) missing.push('Lead Auditor');
+  } else {
+    // Customer Audit: MUST fill ALL 8 fields shown in the form:
+    // 1. STANDARD
+    // 2. SITE
+    // 3. CUSTOMER
+    // 4. END CUSTOMER
+    // 5. PURPOSE
+    // 6. TARGET PACKAGE
+    // 7. CUSTOMER NAME
+    // 8. QMS HOST
+    const hasCustomer = Boolean(a.customer && String(a.customer).trim());
+    if (!hasCustomer) missing.push('Customer');
+
+    const hasEndCustomer = Boolean(a.endCustomer && String(a.endCustomer).trim());
+    if (!hasEndCustomer) missing.push('End Customer');
+
+    const rawPurpose = a.purpose !== undefined ? a.purpose : a.apptPurpose;
+    const hasPurpose = Boolean(rawPurpose && String(rawPurpose).trim());
+    if (!hasPurpose) missing.push('Purpose');
+
+    const rawTargetPackage = a.targetPackage;
+    const hasTargetPackage = Array.isArray(rawTargetPackage)
+      ? rawTargetPackage.length > 0 && rawTargetPackage.some((s: any) => Boolean(s && String(s).trim()))
+      : Boolean(rawTargetPackage && String(rawTargetPackage).trim());
+    if (!hasTargetPackage) missing.push('Target Package');
+
+    const rawCustomerName = a.customerName !== undefined ? a.customerName : a.customerNames;
+    const hasCustomerName = Array.isArray(rawCustomerName)
+      ? rawCustomerName.length > 0 && rawCustomerName.some((s: any) => Boolean(s && String(s).trim()))
+      : Boolean(rawCustomerName && String(rawCustomerName).trim());
+    if (!hasCustomerName) missing.push('Customer Name');
+  }
 
   return missing;
 }
 
 /**
  * Validate whether all required fields are filled for an appointment.
- * Returns true if ANY required field is missing, empty, or unassigned.
+ * An appointment MUST have EVERY SINGLE field present on its respective
+ * creation/edit form filled with valid data.
+ * Returns true if the appointment is fully filled, false if ANY field is missing or empty.
  */
-export function isAppointmentFormIncomplete(audit: Appointment | any): boolean {
+export function isAppointmentFormFullyFilled(audit: Appointment | any): boolean {
   if (!audit) return false;
 
-  const isInternal = isInternalAssignment(audit);
+  const isInternal =
+    isInternalAssignment(audit) ||
+    audit.auditType === 'Internal Audit' ||
+    audit.auditType === 'IA' ||
+    audit.sectionType === 'internal';
 
-  // Check basic required fields for Customer Audit / Internal Audit:
+  // Common required fields for all types
+  const rawSite =
+    audit.site !== undefined && audit.site !== null && audit.site !== ''
+      ? audit.site
+      : isInternal
+      ? (audit.site2 || audit.site1)
+      : (audit.site1 || audit.site2);
+  const hasSite = Boolean(rawSite && String(rawSite).trim());
+
   const rawStandard =
-    audit.standard !== undefined
+    audit.standard !== undefined && audit.standard !== null && audit.standard !== ''
       ? audit.standard
       : isInternal
       ? (audit.department2 || audit.department1)
@@ -284,20 +373,79 @@ export function isAppointmentFormIncomplete(audit: Appointment | any): boolean {
     ? rawStandard.length > 0 && rawStandard.some((s: any) => Boolean(s && String(s).trim()))
     : Boolean(rawStandard && String(rawStandard).trim());
 
-  const rawSite = audit.site !== undefined ? audit.site : (isInternal ? (audit.site2 || audit.site1) : (audit.site1 || audit.site2));
-  const hasSite = Boolean(rawSite && String(rawSite).trim());
-
-  const rawCustomer = isInternal ? (audit.area || audit.customer) : audit.customer;
-  const hasCustomer = Boolean(rawCustomer && String(rawCustomer).trim());
-
   const rawPurpose = audit.purpose !== undefined ? audit.purpose : audit.apptPurpose;
-  const hasPurpose = isInternal ? true : Boolean(rawPurpose && String(rawPurpose).trim());
+  const hasPurpose = Boolean(rawPurpose && String(rawPurpose).trim());
 
-  const qmsHostStr = getAppointmentQmsHost(audit);
-  const hasQmsHost = Boolean(qmsHostStr);
+  const rawQmsHost =
+    audit.qmsHost !== undefined && audit.qmsHost !== null && audit.qmsHost !== ''
+      ? audit.qmsHost
+      : getAppointmentQmsHost(audit);
+  const hasQmsHost = Array.isArray(rawQmsHost)
+    ? rawQmsHost.length > 0 && rawQmsHost.some((s: any) => Boolean(s && String(s).trim()))
+    : Boolean(rawQmsHost && String(rawQmsHost).trim());
 
-  // Returns true if ANY required field is missing/empty:
-  return !hasStandard || !hasSite || !hasCustomer || !hasPurpose || !hasQmsHost;
+  const hasDates = Boolean(
+    audit.date ||
+    (audit.startDate && audit.endDate) ||
+    (audit.from && audit.to) ||
+    (audit.dateFrom && audit.dateTo) ||
+    (audit.week !== undefined && audit.day !== undefined)
+  );
+
+  if (isInternal) {
+    // Validate all visible fields for Internal Audit form:
+    // (Site, Standard, Purpose / Area / Audit Category, QMS Host, Lead/Internal Auditor if applicable, Date Range)
+    const hasLeadAuditor = audit.leadAuditor ? Boolean(String(audit.leadAuditor).trim()) : true;
+
+    const hasArea = Boolean(audit.area && String(audit.area).trim());
+    const hasAuditCategory = Boolean(audit.auditCategory && String(audit.auditCategory).trim());
+    const hasInternalContent = hasPurpose || (hasArea && (hasAuditCategory || audit.auditCategory === undefined));
+
+    return hasSite && hasStandard && hasInternalContent && hasQmsHost && hasDates && hasLeadAuditor;
+  }
+
+  // Customer Audit: MUST fill ALL 8 fields shown in the form:
+  // 1. STANDARD
+  // 2. SITE
+  // 3. CUSTOMER
+  // 4. END CUSTOMER
+  // 5. PURPOSE
+  // 6. TARGET PACKAGE
+  // 7. CUSTOMER NAME
+  // 8. QMS HOST
+  const hasCustomer = Boolean(audit.customer && String(audit.customer).trim());
+  const hasEndCustomer = Boolean(audit.endCustomer && String(audit.endCustomer).trim());
+
+  const rawTargetPackage = audit.targetPackage;
+  const hasTargetPackage = Array.isArray(rawTargetPackage)
+    ? rawTargetPackage.length > 0 && rawTargetPackage.some((s: any) => Boolean(s && String(s).trim()))
+    : Boolean(rawTargetPackage && String(rawTargetPackage).trim());
+
+  const rawCustomerName = audit.customerName !== undefined ? audit.customerName : audit.customerNames;
+  const hasCustomerName = Array.isArray(rawCustomerName)
+    ? rawCustomerName.length > 0 && rawCustomerName.some((s: any) => Boolean(s && String(s).trim()))
+    : Boolean(rawCustomerName && String(rawCustomerName).trim());
+
+  return (
+    hasStandard &&
+    hasSite &&
+    hasCustomer &&
+    hasEndCustomer &&
+    hasPurpose &&
+    hasTargetPackage &&
+    hasCustomerName &&
+    hasQmsHost &&
+    hasDates
+  );
+}
+
+/**
+ * Validate whether all required fields are filled for an appointment.
+ * Returns true if ANY required field is missing, empty, or unassigned.
+ */
+export function isAppointmentFormIncomplete(audit: Appointment | any): boolean {
+  if (!audit) return false;
+  return !isAppointmentFormFullyFilled(audit);
 }
 
 export const isAppointmentIncomplete = isAppointmentFormIncomplete;
