@@ -248,8 +248,10 @@ export function TableView({ vm }: { vm: VM }) {
     for (const r of allRows) {
       if (r.auditType === 'Internal Audit') internalCount++;
     }
+    const total = customerCount + internalCount;
     return {
-      total: allRows.length,
+      total,
+      totalRecords: allRows.length,
       customerCount,
       internalCount,
       uniqueSites: filterOptions.sites.length,
@@ -263,8 +265,10 @@ export function TableView({ vm }: { vm: VM }) {
     for (const r of filteredRows) {
       if (r.auditType === 'Internal Audit') internalCount++;
     }
+    const total = customerCount + internalCount;
     return {
-      total: filteredRows.length,
+      total,
+      totalRecords: filteredRows.length,
       customerCount,
       internalCount,
     };
@@ -420,7 +424,7 @@ export function TableView({ vm }: { vm: VM }) {
               Audit Appointments Table
             </div>
             <span style={css('display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;background:#f4f6f1;border:1px solid #dde0d9;font-size:11.5px;font-weight:600;color:#5c625c')}>
-              {allRows.length} total records
+              {hasActiveFilters ? `${filteredStats.total} audits · ${filteredRows.length} scheduled days` : `${stats.total} audits · ${allRows.length} scheduled days`}
             </span>
           </div>
           <div style={css('font-size:12.5px;color:#7a807a;margin-top:3px')}>
@@ -465,13 +469,17 @@ export function TableView({ vm }: { vm: VM }) {
       <div style={css('display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:10px')}>
         <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Total Audits</div>
-          <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>{stats.total}</div>
-          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>{hasActiveFilters ? `Showing ${filteredRows.length} filtered` : 'All scheduled appointments'}</div>
+          <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>
+            {hasActiveFilters ? filteredStats.total : stats.total}
+          </div>
+          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>
+            {hasActiveFilters ? `Showing ${filteredStats.total} of ${stats.total} audits` : 'All scheduled audits'}
+          </div>
         </div>
 
         <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#2756d6;text-transform:uppercase;letter-spacing:0.5px")}>Customer Audits</div>
-          <div style={css('font-size:22px;font-weight:700;color:#2756d6;margin-top:2px')}>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Customer Audits</div>
+          <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>
             {hasActiveFilters ? filteredStats.customerCount : stats.customerCount}
           </div>
           <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>
@@ -480,9 +488,13 @@ export function TableView({ vm }: { vm: VM }) {
         </div>
 
         <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:0.5px")}>Internal Audits</div>
-          <div style={css('font-size:22px;font-weight:700;color:#374151;margin-top:2px')}>{stats.internalCount}</div>
-          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>Plant & process audits</div>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Internal Audits</div>
+          <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>
+            {hasActiveFilters ? filteredStats.internalCount : stats.internalCount}
+          </div>
+          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>
+            {hasActiveFilters ? `Showing ${filteredStats.internalCount} of ${stats.internalCount} audits` : 'Plant & process audits'}
+          </div>
         </div>
 
         <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
