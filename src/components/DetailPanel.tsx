@@ -42,11 +42,13 @@ export function DetailPanel({ vm: _vm }: { vm: VM }) {
                     Customer Name: <span style={css('color:#3c423d')}>{detail.customerNames}</span>
                   </div>
                 ) : null}
-                {detail.auditor1 ? (
-                  <div style={css('font-size:11.5px;color:#5c625c')}>
-                    QMS Host: <span style={css('color:#3c423d')}>{detail.auditor1}</span>
-                  </div>
-                ) : null}
+                <div style={css('font-size:11.5px;color:#5c625c')}>
+                  QMS Host: {detail.auditor1 && detail.auditor1 !== 'Unassigned' ? (
+                    <span style={css('color:#3c423d')}>{detail.auditor1}</span>
+                  ) : (
+                    <span style={css('color:#dc2626;font-style:italic;font-weight:500')}>Unassigned</span>
+                  )}
+                </div>
                 {detail.department1 ? (
                   <div style={css('font-size:11.5px;color:#5c625c')}>
                     Standard: <span style={css('color:#3c423d')}>{detail.department1}</span>
@@ -60,11 +62,13 @@ export function DetailPanel({ vm: _vm }: { vm: VM }) {
                     Area: <span style={css('color:#15191e;font-weight:600')}>{detail.area}</span>
                   </div>
                 ) : null}
-                {detail.auditor2 ? (
-                  <div style={css('font-size:11.5px;color:#5c625c')}>
-                    QMS Host: <span style={css('color:#3c423d')}>{detail.auditor2}</span>
-                  </div>
-                ) : null}
+                <div style={css('font-size:11.5px;color:#5c625c')}>
+                  QMS Host: {detail.auditor2 && detail.auditor2 !== 'Unassigned' ? (
+                    <span style={css('color:#3c423d')}>{detail.auditor2}</span>
+                  ) : (
+                    <span style={css('color:#dc2626;font-style:italic;font-weight:500')}>Unassigned</span>
+                  )}
+                </div>
                 {detail.department2 ? (
                   <div style={css('font-size:11.5px;color:#5c625c')}>
                     Standard: <span style={css('color:#3c423d')}>{detail.department2}</span>

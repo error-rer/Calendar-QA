@@ -201,6 +201,28 @@ export function isInternalAssignment(a: Assignment): boolean {
   );
 }
 
+/**
+ * Retrieve formatted QMS Host(s) string for an appointment.
+ * Returns empty string if unassigned, null, or empty array.
+ */
+export function getAppointmentQmsHost(audit: Assignment | any): string {
+  if (!audit) return '';
+  const isInternal = isInternalAssignment(audit);
+  const raw =
+    audit.qmsHost !== undefined && audit.qmsHost !== null && audit.qmsHost !== ''
+      ? audit.qmsHost
+      : audit.auditor !== undefined && audit.auditor !== null && audit.auditor !== ''
+      ? audit.auditor
+      : isInternal
+      ? (audit.auditor2 || audit.auditor1)
+      : (audit.auditor1 || audit.auditor2);
+  if (!raw) return '';
+  if (Array.isArray(raw)) {
+    return raw.map((s: any) => String(s || '').trim()).filter(Boolean).join(', ');
+  }
+  return String(raw).split(/[,/]/).map((s) => s.trim()).filter(Boolean).join(', ');
+}
+
 export function getMissingFields(a: Assignment | any): string[] {
   if (!a) return [];
   const isInternal = isInternalAssignment(a);
@@ -230,17 +252,8 @@ export function getMissingFields(a: Assignment | any): string[] {
   const hasPurpose = isInternal ? true : Boolean(rawPurpose && String(rawPurpose).trim());
 
   // 5. QMS Host (qmsHost, auditor, auditor1 for customer, auditor2 for internal)
-  const rawQmsHost =
-    a.qmsHost !== undefined
-      ? a.qmsHost
-      : a.auditor !== undefined
-      ? a.auditor
-      : isInternal
-      ? (a.auditor2 || a.auditor1)
-      : (a.auditor1 || a.auditor2);
-  const hasQmsHost = Array.isArray(rawQmsHost)
-    ? rawQmsHost.length > 0 && rawQmsHost.some((h: any) => Boolean(h && String(h).trim()))
-    : Boolean(rawQmsHost && String(rawQmsHost).trim());
+  const qmsHostStr = getAppointmentQmsHost(a);
+  const hasQmsHost = Boolean(qmsHostStr);
 
   if (!hasStandard) missing.push('Standard');
   if (!hasSite) missing.push('Site');
@@ -280,17 +293,8 @@ export function isAppointmentFormIncomplete(audit: Appointment | any): boolean {
   const rawPurpose = audit.purpose !== undefined ? audit.purpose : audit.apptPurpose;
   const hasPurpose = isInternal ? true : Boolean(rawPurpose && String(rawPurpose).trim());
 
-  const rawQmsHost =
-    audit.qmsHost !== undefined
-      ? audit.qmsHost
-      : audit.auditor !== undefined
-      ? audit.auditor
-      : isInternal
-      ? (audit.auditor2 || audit.auditor1)
-      : (audit.auditor1 || audit.auditor2);
-  const hasQmsHost = Array.isArray(rawQmsHost)
-    ? rawQmsHost.length > 0 && rawQmsHost.some((h: any) => Boolean(h && String(h).trim()))
-    : Boolean(rawQmsHost && String(rawQmsHost).trim());
+  const qmsHostStr = getAppointmentQmsHost(audit);
+  const hasQmsHost = Boolean(qmsHostStr);
 
   // Returns true if ANY required field is missing/empty:
   return !hasStandard || !hasSite || !hasCustomer || !hasPurpose || !hasQmsHost;

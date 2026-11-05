@@ -23,6 +23,108 @@ function renderApptCode(code: string, overrideColor?: string) {
   return code;
 }
 
+function renderApptSubtitle(
+  chip: any,
+  isInc?: boolean,
+  color?: string
+) {
+  let host = '';
+  let purp = '';
+
+  if (typeof chip === 'string') {
+    const trimmed = chip.trim();
+    if (!trimmed || trimmed === 'Unassigned') {
+      return (
+        <span
+          className="text-white/90 italic font-medium"
+          style={{
+            color: isInc ? 'rgba(255, 255, 255, 0.9)' : '#71717a',
+            fontStyle: 'italic',
+            fontWeight: 500,
+          }}
+        >
+          Unassigned
+        </span>
+      );
+    }
+    if (trimmed.endsWith(' - Unassigned')) {
+      const p = trimmed.slice(0, -14).trim();
+      return (
+        <span style={{ color }}>
+          {p ? <span>{p} - </span> : null}
+          <span
+            className="text-white/90 italic font-medium"
+            style={{
+              color: isInc ? 'rgba(255, 255, 255, 0.9)' : '#71717a',
+              fontStyle: 'italic',
+              fontWeight: 500,
+            }}
+          >
+            Unassigned
+          </span>
+        </span>
+      );
+    }
+    return <span style={{ color }}>{trimmed}</span>;
+  }
+
+  if (chip && typeof chip === 'object') {
+    host = (
+      chip.qmsHost ||
+      chip.auditor ||
+      chip.engName ||
+      (chip.isInternal ? chip.auditor2 : chip.auditor1) ||
+      chip.auditor1 ||
+      chip.auditor2 ||
+      ''
+    ).trim();
+
+    purp = (
+      chip.rawPurpose ||
+      chip.apptPurpose ||
+      (chip.purpose && host && chip.purpose.includes(host)
+        ? chip.purpose.replace(new RegExp(`\\s*-\\s*${host.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}$`), '')
+        : chip.purpose) ||
+      ''
+    ).trim();
+
+    if (purp.endsWith(' - Unassigned')) {
+      purp = purp.slice(0, -14).trim();
+    } else if (purp === 'Unassigned') {
+      purp = '';
+    }
+  }
+
+  if (!host || host === 'Unassigned') {
+    return (
+      <span style={{ color }}>
+        {purp ? (
+          <>
+            <span>{purp}</span>
+            <span> - </span>
+          </>
+        ) : null}
+        <span
+          className="text-white/90 italic font-medium"
+          style={{
+            color: isInc ? 'rgba(255, 255, 255, 0.9)' : '#71717a',
+            fontStyle: 'italic',
+            fontWeight: 500,
+          }}
+        >
+          Unassigned
+        </span>
+      </span>
+    );
+  }
+
+  return (
+    <span style={{ color }}>
+      {purp ? `${purp} - ${host}` : host}
+    </span>
+  );
+}
+
 function MultiSelect({ label, items, selected, onToggle }: { label: string; items: { value: string; label: string }[]; selected: string[]; onToggle: (v: string) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -183,9 +285,9 @@ function ApptCard({ chip }: { chip: any }) {
             title="Click to expand embedded details"
           >
             <div style={css(`font-size:12.5px;font-weight:600;color:${titleColor}`)}>{renderApptCode(chip.code, isInc ? '#FFFFFF' : undefined)}</div>
-            {chip.purpose ? (
-              <div style={css(`font-size:11px;color:${purposeColor};margin-top:2px`)}>{chip.purpose}</div>
-            ) : null}
+            <div style={css(`font-size:11px;color:${purposeColor};margin-top:2px`)}>
+              {renderApptSubtitle(chip, isInc, purposeColor)}
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
             <button
@@ -269,14 +371,26 @@ function ApptCard({ chip }: { chip: any }) {
                 {chip.apptPurpose && <div>Purpose: <span style={css('color:#3c423d')}>{chip.apptPurpose}</span></div>}
                 {chip.targetPackage && <div>Target Package: <span style={css('color:#3c423d')}>{chip.targetPackage}</span></div>}
                 {chip.customerNames && <div>Customer Name: <span style={css('color:#3c423d')}>{chip.customerNames}</span></div>}
-                {chip.auditor && <div>QMS Host: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
+                <div>
+                  QMS Host: {chip.auditor && chip.auditor !== 'Unassigned' ? (
+                    <span style={css('color:#3c423d')}>{chip.auditor}</span>
+                  ) : (
+                    <span style={css('color:#dc2626;font-style:italic;font-weight:500')}>Unassigned</span>
+                  )}
+                </div>
                 {chip.department && <div>Standard: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
               </>
             ) : (
               <>
                 {chip.auditCategory && <div>Audit Category: <span style={css('color:#3c423d')}>{chip.auditCategory}</span></div>}
                 {chip.area && <div>Area: <span style={css('color:#15191e;font-weight:600')}>{chip.area}</span></div>}
-                {chip.auditor && <div>QMS Host: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
+                <div>
+                  QMS Host: {chip.auditor && chip.auditor !== 'Unassigned' ? (
+                    <span style={css('color:#3c423d')}>{chip.auditor}</span>
+                  ) : (
+                    <span style={css('color:#dc2626;font-style:italic;font-weight:500')}>Unassigned</span>
+                  )}
+                </div>
                 {chip.department && <div>Standard: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
               </>
             )}
@@ -653,7 +767,9 @@ function TimetableGrid({ vm }: { vm: VM }) {
                       <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:${isInc ? '#ffffff' : '#15191e'}`)}>{renderApptCode(chip.code, isInc ? '#ffffff' : undefined)}</span>
                       <span style={css('flex:1')} />
                     </div>
-                    <div style={css(`font-size:10.5px;color:${isInc ? '#ffffff' : '#5c625c'};margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis`)}>{chip.purpose}</div>
+                    <div style={css(`font-size:10.5px;color:${isInc ? '#ffffff' : '#5c625c'};margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis`)}>
+                      {renderApptSubtitle(chip, isInc, isInc ? '#ffffff' : '#5c625c')}
+                    </div>
                   </div>
                 );
               })}
@@ -682,7 +798,9 @@ function MobileTimetable({ vm }: { vm: VM }) {
                       <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:${isInc ? '#ffffff' : '#15191e'}`)}>{renderApptCode(chip.code, isInc ? '#ffffff' : undefined)}</span>
                       <span style={css('flex:1')} />
                     </div>
-                    <div style={css(`font-size:10.5px;color:${isInc ? '#ffffff' : '#5c625c'};margin-top:2px`)}>{chip.purpose}</div>
+                    <div style={css(`font-size:10.5px;color:${isInc ? '#ffffff' : '#5c625c'};margin-top:2px`)}>
+                      {renderApptSubtitle(chip, isInc, isInc ? '#ffffff' : '#5c625c')}
+                    </div>
                   </div>
                 );
               })}
@@ -754,9 +872,9 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
                 </span>
               )}
             </div>
-            {chip.purpose ? (
-              <div style={css(`font-size:11px;color:${isInc ? '#FFFFFF' : '#5c625c'};margin-top:2px`)}>{chip.purpose}</div>
-            ) : null}
+            <div style={css(`font-size:11px;color:${isInc ? '#FFFFFF' : '#5c625c'};margin-top:2px`)}>
+              {renderApptSubtitle(chip, isInc, isInc ? '#FFFFFF' : '#5c625c')}
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -823,14 +941,26 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
                 {chip.apptPurpose && <div>Purpose: <span style={css('color:#3c423d')}>{chip.apptPurpose}</span></div>}
                 {chip.targetPackage && <div>Target Package: <span style={css('color:#3c423d')}>{chip.targetPackage}</span></div>}
                 {chip.customerNames && <div>Customer Name: <span style={css('color:#3c423d')}>{chip.customerNames}</span></div>}
-                {chip.auditor && <div>QMS Host: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
+                <div>
+                  QMS Host: {chip.auditor && chip.auditor !== 'Unassigned' ? (
+                    <span style={css('color:#3c423d')}>{chip.auditor}</span>
+                  ) : (
+                    <span style={css('color:#dc2626;font-style:italic;font-weight:500')}>Unassigned</span>
+                  )}
+                </div>
                 {chip.department && <div>Standard: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
               </>
             ) : (
               <>
                 {chip.auditCategory && <div>Audit Category: <span style={css('color:#3c423d')}>{chip.auditCategory}</span></div>}
                 {chip.area && <div>Area: <span style={css('color:#15191e;font-weight:600')}>{chip.area}</span></div>}
-                {chip.auditor && <div>QMS Host: <span style={css('color:#3c423d')}>{chip.auditor}</span></div>}
+                <div>
+                  QMS Host: {chip.auditor && chip.auditor !== 'Unassigned' ? (
+                    <span style={css('color:#3c423d')}>{chip.auditor}</span>
+                  ) : (
+                    <span style={css('color:#dc2626;font-style:italic;font-weight:500')}>Unassigned</span>
+                  )}
+                </div>
                 {chip.department && <div>Standard: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
               </>
             )}
@@ -1755,9 +1885,9 @@ function WeekCalendar({ vm }: { vm: VM }) {
                     <div style={{ width: '3px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
                     <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: '11.5px', fontWeight: 600, color: titleColor }}>{renderApptCode(chip.customer, cardColors.priority === 'incomplete' ? '#FFFFFF' : undefined)}</div>
-                      {chip.purpose ? (
-                        <div style={{ fontSize: '10px', color: purposeColor, marginTop: '1px' }}>{chip.purpose}</div>
-                      ) : null}
+                      <div style={{ fontSize: '10px', color: purposeColor, marginTop: '1px' }}>
+                        {renderApptSubtitle(chip, cardColors.priority === 'incomplete', purposeColor)}
+                      </div>
                     </div>
                   </div>
                 );
@@ -1800,9 +1930,9 @@ function WeekCalendar({ vm }: { vm: VM }) {
             <div style={{ width: '3px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
             <div style={{ padding: '6px 8px', minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: '11.5px', fontWeight: 600, color: titleColor }}>{renderApptCode(sp.customer, cardColors.priority === 'incomplete' ? '#FFFFFF' : undefined)}</div>
-              {sp.purpose ? (
-                <div style={{ fontSize: '10px', color: purposeColor, marginTop: '1px' }}>{sp.purpose}</div>
-              ) : null}
+              <div style={{ fontSize: '10px', color: purposeColor, marginTop: '1px' }}>
+                {renderApptSubtitle(sp, cardColors.priority === 'incomplete', purposeColor)}
+              </div>
             </div>
           </div>
         );
@@ -1892,7 +2022,7 @@ function MobileSiteDept({ vm }: { vm: VM }) {
                   <div style={css('min-width:0;flex:1')}>
                     <div style={css(`font-size:11.5px;font-weight:600;color:${isInc ? '#ffffff' : '#23282a'}`)}>{chip.name}</div>
                     <div style={css(`font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:${isInc ? '#ffffff' : '#7a807a'}`)}>{renderApptCode(chip.code, isInc ? '#ffffff' : undefined)}</div>
-                    <div style={css(`font-size:9.5px;color:${isInc ? '#ffffff' : '#a6aca2'}`)}>{chip.purpose}</div>
+                    <div style={css(`font-size:9.5px;color:${isInc ? '#ffffff' : '#a6aca2'}`)}>{renderApptSubtitle(chip, isInc, isInc ? '#ffffff' : '#a6aca2')}</div>
                   </div>
                 </div>
               );
@@ -1927,7 +2057,7 @@ function MobilePerson({ vm }: { vm: VM }) {
                     <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:${isInc ? '#ffffff' : '#15191e'}`)}>{renderApptCode(chip.code, isInc ? '#ffffff' : undefined)}</span>
                     <span style={css('flex:1')} />
                   </div>
-                  <div style={css(`font-size:10.5px;color:${isInc ? '#ffffff' : '#5c625c'};margin-top:2px`)}>{chip.purpose}</div>
+                  <div style={css(`font-size:10.5px;color:${isInc ? '#ffffff' : '#5c625c'};margin-top:2px`)}>{renderApptSubtitle(chip, isInc, isInc ? '#ffffff' : '#5c625c')}</div>
                 </div>
               );
             })}
@@ -1964,7 +2094,7 @@ function MobileSite({ vm }: { vm: VM }) {
                   <div style={css('min-width:0;flex:1')}>
                     <div style={css(`font-size:11.5px;font-weight:600;color:${isInc ? '#ffffff' : '#23282a'}`)}>{chip.name}</div>
                     <div style={css(`font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:${isInc ? '#ffffff' : '#7a807a'}`)}>{renderApptCode(chip.code, isInc ? '#ffffff' : undefined)}</div>
-                    <div style={css(`font-size:9.5px;color:${isInc ? '#ffffff' : '#a6aca2'}`)}>{chip.purpose}</div>
+                    <div style={css(`font-size:9.5px;color:${isInc ? '#ffffff' : '#a6aca2'}`)}>{renderApptSubtitle(chip, isInc, isInc ? '#ffffff' : '#a6aca2')}</div>
                   </div>
                 </div>
               );
@@ -2070,9 +2200,9 @@ function MonthGrid({ vm }: { vm: VM }) {
                       <div style={{ width: '3px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
                       <div style={{ padding: '3px 5px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
                         <div style={{ fontSize: '10.5px', fontWeight: 600, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code, cardColors.priority === 'incomplete' ? '#FFFFFF' : undefined)}</div>
-                        {ch.purpose ? (
-                          <div style={{ fontSize: '9.5px', color: purposeColor, marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
-                        ) : null}
+                        <div style={{ fontSize: '9.5px', color: purposeColor, marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {renderApptSubtitle(ch, cardColors.priority === 'incomplete', purposeColor)}
+                        </div>
                       </div>
                     </div>
                   );
@@ -2177,9 +2307,9 @@ function MonthMobile({ vm }: { vm: VM }) {
                       <div style={{ width: '2px', background: accentBg, flexShrink: 0, alignSelf: 'stretch' }} />
                       <div style={{ padding: '2px 4px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
                         <div style={{ fontSize: '8px', fontWeight: 600, color: titleColor, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{renderApptCode(ch.code, cardColors.priority === 'incomplete' ? '#FFFFFF' : undefined)}</div>
-                        {ch.purpose ? (
-                          <div style={{ fontSize: '7.5px', color: purposeColor, marginTop: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ch.purpose}</div>
-                        ) : null}
+                        <div style={{ fontSize: '7.5px', color: purposeColor, marginTop: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {renderApptSubtitle(ch, cardColors.priority === 'incomplete', purposeColor)}
+                        </div>
                       </div>
                     </div>
                   );

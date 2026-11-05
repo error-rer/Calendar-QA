@@ -20,6 +20,7 @@ import {
   formatApptLogRef,
   formatDMY,
   formatDateRange,
+  getAppointmentQmsHost,
   getAssignmentDateFormatted,
   getAssignmentDateRange,
   getMissingFields,
@@ -51,11 +52,6 @@ import { api } from './api';
 
 /** Identity tag that supplies a contextual CSSProperties type to a style literal. */
 const sx = (o: CSSProperties): CSSProperties => o;
-const formatAuditors = (auditorStr?: string) => {
-  const str = (auditorStr || '').trim();
-  if (!str) return '';
-  return str.split(',').map((s) => s.trim()).filter(Boolean).join(', ');
-};
 
 const parseDateToISO = (str?: string) => {
   if (!str) return '';
@@ -245,6 +241,9 @@ interface MonthChip {
   id?: string;
   code: string;
   purpose: string;
+  rawPurpose?: string;
+  qmsHost?: string;
+  auditor?: string;
   engName: string;
   color?: string;
   colors?: string[];
@@ -2829,11 +2828,14 @@ export function useScheduler() {
     const accentStyle = getAccentStyle(colors, 3);
     const isInternal = isInternalAssignment(a);
     const isIncomplete = isIncompleteAssignment(a);
-    const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
+    const auditorName = getAppointmentQmsHost(a);
     const mainName = isInternal ? (a.area || '') : (a.customer || '');
     const site = normalizeSites((isInternal ? a.site2 : a.site1) || '');
     const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
-    const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : (auditorName || '');
+    const rawPurpose = (a.purpose || a.apptPurpose || '').trim();
+    const chipPurpose = rawPurpose
+      ? (auditorName ? `${rawPurpose} - ${auditorName}` : `${rawPurpose} - Unassigned`)
+      : (auditorName || 'Unassigned');
     const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
     const isAuditDate = isTodayWithinAssignmentRange(fromDate, toDate, today);
     const cardColors = getApptCardColors({
@@ -2860,6 +2862,7 @@ export function useScheduler() {
     return {
       aid: a.id, code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, style: base,
       isIncomplete,
+      rawPurpose, qmsHost: auditorName, auditor: auditorName,
       onClick: () => select(a.id),
       onDragStart: (e: React.DragEvent) => { e.stopPropagation(); setState({ drag: { kind: 'assign', id: a.id } }); },
       onDragEnd: () => setState({ drag: null, overCell: null }),
@@ -2875,11 +2878,14 @@ export function useScheduler() {
     const accentStyle = getAccentStyle(colors, 3);
     const isInternal = isInternalAssignment(a);
     const isIncomplete = isIncompleteAssignment(a);
-    const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
+    const auditorName = getAppointmentQmsHost(a);
     const mainName = isInternal ? (a.area || '') : (a.customer || '');
     const site = normalizeSites((isInternal ? a.site2 : a.site1) || '');
     const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
-    const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : (auditorName || '');
+    const rawPurpose = (a.purpose || a.apptPurpose || '').trim();
+    const chipPurpose = rawPurpose
+      ? (auditorName ? `${rawPurpose} - ${auditorName}` : `${rawPurpose} - Unassigned`)
+      : (auditorName || 'Unassigned');
     const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
     const isAuditDate = isTodayWithinAssignmentRange(fromDate, toDate, today);
     const cardColors = getApptCardColors({
@@ -2899,6 +2905,7 @@ export function useScheduler() {
     return {
       aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, plantCode: pl ? pl.code : '?',
       isIncomplete,
+      rawPurpose, qmsHost: auditorName, auditor: auditorName,
       style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: barBg, border: borderStyle, ...accentStyle, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', color: isIncomplete ? '#ffffff' : undefined }),
       avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: isIncomplete ? '#b91c1c' : '#f1f3ee', color: isIncomplete ? '#ffffff' : '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       onClick: () => select(a.id),
@@ -2980,13 +2987,22 @@ export function useScheduler() {
       const isIncomplete = isIncompleteAssignment(a);
       const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
       const isAuditDate = isTodayWithinAssignmentRange(fromDate, toDate, today);
-      const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
-      const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : auditorName;
+      const auditorName = getAppointmentQmsHost(a);
+      const rawPurpose = (a.purpose || a.apptPurpose || '').trim();
+      const chipPurpose = rawPurpose
+        ? (auditorName ? `${rawPurpose} - ${auditorName}` : `${rawPurpose} - Unassigned`)
+        : (auditorName || 'Unassigned');
       const colors = siteColorsOfAssignment(a, S.siteColors);
       const color = colors[0] || (pl ? pl.color : '#999');
       return {
         id: a.id,
-        code: formatApptDisplayTitle(a, o), purpose: chipPurpose, engName: auditorName, color, colors,
+        code: formatApptDisplayTitle(a, o),
+        purpose: chipPurpose,
+        rawPurpose,
+        qmsHost: auditorName,
+        auditor: auditorName,
+        engName: auditorName,
+        color, colors,
         isInternal,
         isIncomplete,
         createdAt: a.createdAt,
@@ -3224,8 +3240,11 @@ export function useScheduler() {
     const pl = plantById(o.plant);
     const isInternal = isInternalAssignment(a);
     const site = normalizeSites((isInternal ? a.site2 : a.site1) || '');
-    const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
-    const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : (auditorName || '');
+    const auditorName = getAppointmentQmsHost(a);
+    const rawPurpose = (a.purpose || a.apptPurpose || '').trim();
+    const chipPurpose = rawPurpose
+      ? (auditorName ? `${rawPurpose} - ${auditorName}` : `${rawPurpose} - Unassigned`)
+      : (auditorName || 'Unassigned');
     const colors = siteColorsOfAssignment(a, S.siteColors);
     const color = colors[0] || (pl ? pl.color : '#999');
     const notesList = (S.comments[a.id] || []).map((m) => ({
@@ -3271,13 +3290,15 @@ export function useScheduler() {
       id: a.id,
       code: formatApptDisplayTitle(a, o),
       purpose: chipPurpose,
+      rawPurpose,
+      qmsHost: auditorName,
       engName: auditorName,
       color, colors, isInternal, isIncomplete,
       site,
       customer: a.customer || '',
       endCustomer: a.endCustomer || '',
       area: a.area || '',
-      auditor: (isInternal ? a.auditor2 : a.auditor1) || '',
+      auditor: auditorName,
       auditor1: a.auditor1 || '',
       auditor2: a.auditor2 || '',
       department: (isInternal ? a.department2 : a.department1) || '',
@@ -3586,12 +3607,16 @@ export function useScheduler() {
     const isIncomplete = isIncompleteAssignment(a);
     const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
     const isAuditDate = isTodayWithinAssignmentRange(fromDate, toDate, today);
-    const auditorName = formatAuditors(isInternal ? a.auditor2 : a.auditor1);
-    const chipPurpose = a.purpose ? (auditorName ? `${a.purpose} - ${auditorName}` : a.purpose) : (auditorName || '');
+    const auditorName = getAppointmentQmsHost(a);
+    const rawPurpose = (a.purpose || a.apptPurpose || '').trim();
+    const chipPurpose = rawPurpose
+      ? (auditorName ? `${rawPurpose} - ${auditorName}` : `${rawPurpose} - Unassigned`)
+      : (auditorName || 'Unassigned');
     return {
       ...a,
       _customer: formatApptDisplayTitle(a, ord),
       _purpose: chipPurpose,
+      _rawPurpose: rawPurpose,
       _auditor: auditorName,
       _qa: eng ? eng.name : '',
       _color: color,
@@ -3640,6 +3665,7 @@ export function useScheduler() {
     return {
       ids: g.ids, startDay: g.startDay, span: g.endDay - g.startDay + 1, gridRow: row,
       id: c.id, site1: c.site1 || '', customer: c._customer, purpose: c._purpose,
+      rawPurpose: c._rawPurpose, qmsHost: c._auditor, auditor: c._auditor,
       auditor1: c._auditor, color: c._color, colors: c._colors, selected: sel,
       area: c.area || '', auditor2: c.auditor2 || '', isInternal: c._isInternal,
       isIncomplete: c._isIncomplete,
@@ -3665,6 +3691,7 @@ export function useScheduler() {
     const mergedIds = new Set(weekMergedSpans.flatMap((s) => s.ids));
     const chips = weekCalendarChips.filter((c) => c.day === day && !mergedIds.has(c.id)).map((c) => ({
       id: c.id, site1: c.site1 || '', customer: c._customer, purpose: c._purpose,
+      rawPurpose: c._rawPurpose, qmsHost: c._auditor, auditor: c._auditor,
       auditor1: c._auditor, qa: c._qa, color: c._color, colors: c._colors, onClick: c._onClick, selected: c._sel,
       area: c.area || '', auditor2: c.auditor2 || '', isInternal: c._isInternal,
       isIncomplete: c._isIncomplete,
