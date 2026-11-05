@@ -19,13 +19,80 @@ const CATEGORIES = [
 
 type CategoryKey = typeof CATEGORIES[number]['key'];
 
-const SITE_CONFIG: Record<TargetSite, { label: string; badgeBg: string; text: string; border: string; dot: string }> = {
-  UTL1: { label: 'UTL1', badgeBg: '#fee2e2', text: '#b91c1c', border: '#fecaca', dot: '#dc2626' },
-  UTL2A: { label: 'UTL2A', badgeBg: '#ecfdf5', text: '#047857', border: '#a7f3d0', dot: '#10b981' },
-  UTL2B: { label: 'UTL2B', badgeBg: '#f0fdf4', text: '#15803d', border: '#bbf7d0', dot: '#16a34a' },
-  UTL3A: { label: 'UTL3A', badgeBg: '#f0f9ff', text: '#0369a1', border: '#bae6fd', dot: '#0284c7' },
-  UTL3T: { label: 'UTL3T', badgeBg: '#eef2ff', text: '#4338ca', border: '#c7d2fe', dot: '#4f46e5' },
+function hexToRgba(hex: string, alpha: number): string {
+  if (!hex) return `rgba(100, 116, 139, ${alpha})`;
+  let c = hex.trim().replace(/^#/, '');
+  if (c.length === 3) {
+    c = c.split('').map((ch) => ch + ch).join('');
+  }
+  if (c.length === 6) {
+    const num = parseInt(c, 16);
+    if (!isNaN(num)) {
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+  }
+  if (c.length === 8) {
+    const num = parseInt(c.slice(0, 6), 16);
+    if (!isNaN(num)) {
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+  }
+  if (hex.startsWith('rgb')) {
+    return hex.replace(/rgb\((.*?)\)/, `rgba($1, ${alpha})`).replace(/rgba\((.*?),\s*[\d.]+\)/, `rgba($1, ${alpha})`);
+  }
+  return hex;
+}
+
+const DEFAULT_SITE_PALETTE: Record<string, { bg: string; text: string; border: string }> = {
+  UTL1: { bg: '#fff1f2', text: '#be123c', border: '#fecdd3' }, // soft red / rose
+  UTL2A: { bg: '#ecfdf5', text: '#047857', border: '#a7f3d0' }, // soft emerald
+  UTL2B: { bg: '#f0fdfa', text: '#0f766e', border: '#99f6e4' }, // soft green / teal
+  UTL3A: { bg: '#f0f9ff', text: '#0369a1', border: '#bae6fd' }, // soft blue / sky
+  UTL3T: { bg: '#eef2ff', text: '#4338ca', border: '#c7d2fe' }, // soft indigo / purple
 };
+
+interface SiteOptionLike {
+  color?: string;
+  [key: string]: unknown;
+}
+
+function getSiteBadgeStyle(
+  site: string,
+  siteColorOrConfig?: string | SiteOptionLike
+): React.CSSProperties {
+  const customColor =
+    typeof siteColorOrConfig === 'string'
+      ? siteColorOrConfig
+      : siteColorOrConfig?.color;
+
+  if (customColor && customColor.trim()) {
+    const color = customColor.trim();
+    return {
+      backgroundColor: hexToRgba(color, 0.12),
+      borderColor: hexToRgba(color, 0.32),
+      color: color,
+    };
+  }
+
+  const norm = normalizeToTargetSite(site) || site.trim().toUpperCase();
+  const fallback = DEFAULT_SITE_PALETTE[norm] || {
+    bg: '#f4f4f5',
+    text: '#3f3f46',
+    border: '#e4e4e7',
+  };
+
+  return {
+    backgroundColor: fallback.bg,
+    borderColor: fallback.border,
+    color: fallback.text,
+  };
+}
 
 function normalizeToTargetSite(siteKey: string): TargetSite | null {
   const s = siteKey.trim().toUpperCase().replace(/[\s-_]/g, '');
@@ -740,7 +807,8 @@ const handleExportExcel = async () => {
 
               {/* 5 Sites Rows */}
               {TARGET_SITES.map((site) => {
-                const conf = SITE_CONFIG[site];
+                const siteColor = vm.siteColors?.[site] || vm.siteColors?.[normalizeToTargetSite(site) || site];
+                const badgeStyle = getSiteBadgeStyle(site, siteColor);
                 const siteTotal = auditVisitsData.siteFullYearTotals[site];
 
                 return (
@@ -751,7 +819,23 @@ const handleExportExcel = async () => {
                     onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
                   >
                     <div style={css('display:flex;align-items:center;gap:8px')}>
-                      <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;background:${conf.badgeBg};color:${conf.text};border:1px solid ${conf.border}`)}>
+                      <span
+                        style={{
+                          ...badgeStyle,
+                          fontFamily: "'IBM Plex Mono', monospace",
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          borderWidth: '1px',
+                          borderStyle: 'solid',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          lineHeight: '1.2',
+                          userSelect: 'none',
+                          transition: 'background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease',
+                        }}
+                      >
                         {site}
                       </span>
                     </div>
@@ -858,7 +942,8 @@ const handleExportExcel = async () => {
               {/* 5 Collapsible Site Groups */}
               {TARGET_SITES.map((site) => {
                 const isExpanded = expandedSites[site];
-                const conf = SITE_CONFIG[site];
+                const siteColor = vm.siteColors?.[site] || vm.siteColors?.[normalizeToTargetSite(site) || site];
+                const badgeStyle = getSiteBadgeStyle(site, siteColor);
                 const siteTotal = matrixData.siteFullYearTotals[site].total;
 
                 return (
@@ -882,7 +967,23 @@ const handleExportExcel = async () => {
                             </svg>
                           )}
                         </span>
-                        <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;background:${conf.badgeBg};color:${conf.text};border:1px solid ${conf.border}`)}>
+                        <span
+                          style={{
+                            ...badgeStyle,
+                            fontFamily: "'IBM Plex Mono', monospace",
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            borderWidth: '1px',
+                            borderStyle: 'solid',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            lineHeight: '1.2',
+                            userSelect: 'none',
+                            transition: 'background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease',
+                          }}
+                        >
                           {site}
                         </span>
                       </div>
