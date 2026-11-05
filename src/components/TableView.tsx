@@ -23,16 +23,180 @@ interface TableRowData {
 
 type SortColumn = 'date' | 'auditType' | 'customer' | 'site' | 'standard' | 'auditCategory' | 'purpose' | 'targetPackage' | 'customerNames' | 'auditor';
 
+const CANONICAL_SITES = ['UTL1', 'UTL2', 'UTL2A', 'UTL2B', 'UTL3', 'UTL3A', 'UTL3T'];
+
+function TableMultiSelectFilter({
+  label,
+  allLabel,
+  options,
+  selected,
+  onChange,
+}: {
+  label: string;
+  allLabel: string;
+  options: string[];
+  selected: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const active = selected.length > 0;
+
+  let displayLabel = allLabel;
+  if (selected.length === 1) {
+    displayLabel = selected[0];
+  } else if (selected.length > 1) {
+    displayLabel = `${label} (${selected.length})`;
+  }
+
+  const handleToggle = (opt: string) => {
+    if (selected.includes(opt)) {
+      onChange(selected.filter((x) => x !== opt));
+    } else {
+      onChange([...selected, opt]);
+    }
+  };
+
+  const handleSelectAll = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange([...options]);
+  };
+
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange([]);
+  };
+
+  return (
+    <div style={css('position:relative')}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        style={css(
+          'display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;border:1px solid ' +
+            (active ? '#2756d6' : '#dde0d9') +
+            ';background:' +
+            (active ? '#eef2fd' : '#fff') +
+            ';font-size:12px;font-weight:' +
+            (active ? '600' : '500') +
+            ';color:' +
+            (active ? '#2756d6' : '#23282a') +
+            ";cursor:pointer;font-family:'Archivo',sans-serif;transition:all .12s ease;white-space:nowrap"
+        )}
+      >
+        <span
+          title={displayLabel}
+          style={css('max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}
+        >
+          {displayLabel}
+        </span>
+        {active && (
+          <span
+            role="button"
+            onClick={handleClear}
+            title="Clear filter"
+            style={css(
+              'display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#2756d6;color:#fff;font-size:10px;line-height:1;margin-left:2px;cursor:pointer'
+            )}
+          >
+            ×
+          </span>
+        )}
+        <span style={css('font-size:9px;color:' + (active ? '#2756d6' : '#8a9088'))}>▾</span>
+      </button>
+
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} style={css('position:fixed;inset:0;z-index:99')} />
+          <div
+            style={css(
+              'position:absolute;top:100%;left:0;z-index:100;margin-top:4px;background:#fff;border:1px solid #dde0d9;border-radius:9px;box-shadow:0 6px 20px rgba(0,0,0,.15);min-width:180px;max-width:280px;overflow:hidden'
+            )}
+          >
+            {/* Quick Actions Header: Select All | Clear */}
+            <div
+              style={css(
+                'display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:#f8f9f7;border-bottom:1px solid #edf0ea;font-size:11px'
+              )}
+            >
+              <button
+                type="button"
+                onClick={handleSelectAll}
+                style={css(
+                  "background:none;border:none;color:#2756d6;font-size:11px;font-weight:600;cursor:pointer;padding:2px 4px;font-family:'Archivo',sans-serif"
+                )}
+              >
+                Select All
+              </button>
+              <span style={css('color:#d4d8d1')}>|</span>
+              <button
+                type="button"
+                onClick={handleClear}
+                style={css(
+                  "background:none;border:none;color:#7a807a;font-size:11px;font-weight:600;cursor:pointer;padding:2px 4px;font-family:'Archivo',sans-serif"
+                )}
+              >
+                Clear
+              </button>
+            </div>
+
+            {/* Options list */}
+            <div style={css('max-height:220px;overflow-y:auto;padding:4px')}>
+              {options.length === 0 ? (
+                <div style={css('padding:10px;text-align:center;color:#8a9088;font-size:11.5px;font-style:italic')}>
+                  No options
+                </div>
+              ) : (
+                options.map((opt) => {
+                  const isChecked = selected.includes(opt);
+                  return (
+                    <div
+                      key={opt}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => handleToggle(opt)}
+                      style={css(
+                        "display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:5px;cursor:pointer;font-size:11.5px;font-family:'Archivo',sans-serif;color:#23282a;user-select:none;transition:background .1s ease;" +
+                          (isChecked ? 'background:#eef2fd;font-weight:600;' : 'background:#fff;font-weight:400;')
+                      )}
+                    >
+                      <span
+                        style={css(
+                          'width:14px;height:14px;border-radius:3px;border:1px solid ' +
+                            (isChecked ? '#2756d6' : '#cdd2c9') +
+                            ';background:' +
+                            (isChecked ? '#2756d6' : '#fff') +
+                            ';display:flex;align-items:center;justify-content:center;font-size:9.5px;color:#fff;flex-shrink:0'
+                        )}
+                      >
+                        {isChecked ? '✓' : ''}
+                      </span>
+                      <span
+                        title={opt}
+                        style={css('white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px')}
+                      >
+                        {opt}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function TableView({ vm }: { vm: VM }) {
   // Filters state
   const [search, setSearch] = useState('');
   const [auditTypeFilter, setAuditTypeFilter] = useState<'ALL' | 'Customer Audit' | 'Internal Audit'>('ALL');
-  const [siteFilter, setSiteFilter] = useState('ALL');
-  const [standardFilter, setStandardFilter] = useState('ALL');
-  const [auditCategoryFilter, setAuditCategoryFilter] = useState('ALL');
-  const [targetPackageFilter, setTargetPackageFilter] = useState('ALL');
-  const [customerFilter, setCustomerFilter] = useState('ALL');
-  const [auditorFilter, setAuditorFilter] = useState('ALL');
+  const [selectedSites, setSelectedSites] = useState<string[]>([]);
+  const [selectedStandards, setSelectedStandards] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedPackages, setSelectedPackages] = useState<string[]>([]);
+  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+  const [selectedHosts, setSelectedHosts] = useState<string[]>([]);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -107,7 +271,6 @@ export function TableView({ vm }: { vm: VM }) {
   // Collect unique filter options from live data
   const filterOptions = useMemo(() => {
     const customers = new Set<string>();
-    const sites = new Set<string>();
     const standards = new Set<string>();
     const auditCategories = new Set<string>();
     const targetPackages = new Set<string>();
@@ -116,11 +279,10 @@ export function TableView({ vm }: { vm: VM }) {
 
     for (const r of allRows) {
       if (r.customer && r.customer.trim()) customers.add(r.customer.trim());
-      if (r.site) sites.add(r.site);
       if (r.standard) {
         r.standard.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => standards.add(s));
       }
-      if (r.auditCategory) auditCategories.add(r.auditCategory);
+      if (r.auditCategory && r.auditCategory.trim()) auditCategories.add(r.auditCategory.trim());
       if (r.targetPackage) {
         r.targetPackage.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => targetPackages.add(s));
       }
@@ -134,7 +296,6 @@ export function TableView({ vm }: { vm: VM }) {
 
     return {
       customers: Array.from(customers).sort((a, b) => a.localeCompare(b)),
-      sites: Array.from(sites).sort(),
       standards: Array.from(standards).sort(),
       auditCategories: Array.from(auditCategories).sort(),
       targetPackages: Array.from(targetPackages).sort(),
@@ -167,47 +328,46 @@ export function TableView({ vm }: { vm: VM }) {
         return false;
       }
 
-      // Site filter
-      if (siteFilter !== 'ALL' && r.site !== siteFilter && normalizeSite(r.site) !== normalizeSite(siteFilter)) {
-        return false;
+      // Site filter (matching any individual site part of composite rows against canonical sites)
+      if (selectedSites.length > 0) {
+        const rowSites = (r.site || '').split(/[/,]/).map((s) => s.trim()).filter(Boolean);
+        const matchesSite = rowSites.some((s) => selectedSites.includes(s) || selectedSites.some((sel) => sel.toLowerCase() === s.toLowerCase()));
+        if (!matchesSite) return false;
       }
 
-      // Standard filter
-      if (standardFilter !== 'ALL') {
-        const rowStds = r.standard.split(',').map((s) => s.trim().toLowerCase());
-        if (!rowStds.includes(standardFilter.toLowerCase())) {
-          return false;
-        }
+      // Standard filter (multi-select)
+      if (selectedStandards.length > 0) {
+        const rowStds = (r.standard || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+        const matchesStandard = rowStds.some((s) => selectedStandards.map((x) => x.toLowerCase()).includes(s));
+        if (!matchesStandard) return false;
       }
 
-      // Audit Category filter
-      if (auditCategoryFilter !== 'ALL') {
-        if ((r.auditCategory || '').trim().toLowerCase() !== auditCategoryFilter.trim().toLowerCase()) {
-          return false;
-        }
+      // Audit Category filter (multi-select)
+      if (selectedCategories.length > 0) {
+        const cat = (r.auditCategory || '').trim().toLowerCase();
+        const matchesCategory = selectedCategories.map((c) => c.toLowerCase()).includes(cat);
+        if (!matchesCategory) return false;
       }
 
-      // Target Package filter
-      if (targetPackageFilter !== 'ALL') {
-        const rowPkgs = r.targetPackage.split(',').map((s) => s.trim().toLowerCase());
-        if (!rowPkgs.includes(targetPackageFilter.toLowerCase())) {
-          return false;
-        }
+      // Target Package filter (multi-select)
+      if (selectedPackages.length > 0) {
+        const rowPkgs = (r.targetPackage || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+        const matchesPackage = rowPkgs.some((p) => selectedPackages.map((x) => x.toLowerCase()).includes(p));
+        if (!matchesPackage) return false;
       }
 
-      // Customer (Company) filter
-      if (customerFilter !== 'ALL') {
-        if ((r.customer || '').trim().toLowerCase() !== customerFilter.trim().toLowerCase()) {
-          return false;
-        }
+      // Customer (Company) filter (multi-select)
+      if (selectedCustomers.length > 0) {
+        const cust = (r.customer || '').trim().toLowerCase();
+        const matchesCustomer = selectedCustomers.map((c) => c.toLowerCase()).includes(cust);
+        if (!matchesCustomer) return false;
       }
 
-      // Auditor filter
-      if (auditorFilter !== 'ALL') {
-        const rowAuds = r.auditor.split(',').map((s) => s.trim().toLowerCase());
-        if (!rowAuds.includes(auditorFilter.toLowerCase())) {
-          return false;
-        }
+      // Auditor / QMS Host filter (multi-select)
+      if (selectedHosts.length > 0) {
+        const rowAuds = (r.auditor || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+        const matchesHost = rowAuds.some((a) => selectedHosts.map((x) => x.toLowerCase()).includes(a));
+        if (!matchesHost) return false;
       }
 
       // Date range filter
@@ -222,7 +382,7 @@ export function TableView({ vm }: { vm: VM }) {
 
       return true;
     });
-  }, [allRows, search, auditTypeFilter, siteFilter, standardFilter, auditCategoryFilter, targetPackageFilter, customerFilter, auditorFilter, dateFrom, dateTo]);
+  }, [allRows, search, auditTypeFilter, selectedSites, selectedStandards, selectedCategories, selectedPackages, selectedCustomers, selectedHosts, dateFrom, dateTo]);
 
   // Apply Sorting
   const sortedRows = useMemo(() => {
@@ -261,7 +421,9 @@ export function TableView({ vm }: { vm: VM }) {
       if (r.auditor) {
         r.auditor.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => allAuditors.add(s));
       }
-      if (r.site) allSites.add(r.site);
+      if (r.site) {
+        r.site.split(/[/,]/).map((s) => s.trim()).filter(Boolean).forEach((s) => allSites.add(s));
+      }
     }
     const total = customerCount + internalCount;
     return {
@@ -284,7 +446,9 @@ export function TableView({ vm }: { vm: VM }) {
       if (r.auditor) {
         r.auditor.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => filteredAuditors.add(s));
       }
-      if (r.site) filteredSites.add(r.site);
+      if (r.site) {
+        r.site.split(/[/,]/).map((s) => s.trim()).filter(Boolean).forEach((s) => filteredSites.add(s));
+      }
     }
     const total = customerCount + internalCount;
     return {
@@ -300,24 +464,24 @@ export function TableView({ vm }: { vm: VM }) {
   const hasActiveFilters =
     search.trim() !== '' ||
     auditTypeFilter !== 'ALL' ||
-    siteFilter !== 'ALL' ||
-    standardFilter !== 'ALL' ||
-    auditCategoryFilter !== 'ALL' ||
-    targetPackageFilter !== 'ALL' ||
-    customerFilter !== 'ALL' ||
-    auditorFilter !== 'ALL' ||
+    selectedSites.length > 0 ||
+    selectedStandards.length > 0 ||
+    selectedCategories.length > 0 ||
+    selectedPackages.length > 0 ||
+    selectedCustomers.length > 0 ||
+    selectedHosts.length > 0 ||
     dateFrom !== '' ||
     dateTo !== '';
 
   const handleResetFilters = () => {
     setSearch('');
     setAuditTypeFilter('ALL');
-    setSiteFilter('ALL');
-    setStandardFilter('ALL');
-    setAuditCategoryFilter('ALL');
-    setTargetPackageFilter('ALL');
-    setCustomerFilter('ALL');
-    setAuditorFilter('ALL');
+    setSelectedSites([]);
+    setSelectedStandards([]);
+    setSelectedCategories([]);
+    setSelectedPackages([]);
+    setSelectedCustomers([]);
+    setSelectedHosts([]);
     setDateFrom('');
     setDateTo('');
     setPage(1);
@@ -572,77 +736,59 @@ export function TableView({ vm }: { vm: VM }) {
             })}
           </div>
 
-          {/* Site Filter Dropdown */}
-          <select
-            value={siteFilter}
-            onChange={(e) => { setSiteFilter(e.target.value); setPage(1); }}
-            style={css("border:1px solid #dde0d9;background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;color:#23282a;outline:none;font-family:'Archivo',sans-serif;cursor:pointer")}
-          >
-            <option value="ALL">All Sites</option>
-            {filterOptions.sites.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+          {/* Site Filter Multi-Select */}
+          <TableMultiSelectFilter
+            label="Sites"
+            allLabel="All Sites"
+            options={CANONICAL_SITES}
+            selected={selectedSites}
+            onChange={(next) => { setSelectedSites(next); setPage(1); }}
+          />
 
-          {/* Standard Filter Dropdown */}
-          <select
-            value={standardFilter}
-            onChange={(e) => { setStandardFilter(e.target.value); setPage(1); }}
-            style={css("border:1px solid #dde0d9;background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;color:#23282a;outline:none;font-family:'Archivo',sans-serif;cursor:pointer")}
-          >
-            <option value="ALL">All Standards</option>
-            {filterOptions.standards.map((std) => (
-              <option key={std} value={std}>{std}</option>
-            ))}
-          </select>
+          {/* Standard Filter Multi-Select */}
+          <TableMultiSelectFilter
+            label="Standards"
+            allLabel="All Standards"
+            options={filterOptions.standards}
+            selected={selectedStandards}
+            onChange={(next) => { setSelectedStandards(next); setPage(1); }}
+          />
 
-          {/* Audit Category Filter Dropdown */}
-          <select
-            value={auditCategoryFilter}
-            onChange={(e) => { setAuditCategoryFilter(e.target.value); setPage(1); }}
-            style={css("border:1px solid #dde0d9;background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;color:#23282a;outline:none;font-family:'Archivo',sans-serif;cursor:pointer")}
-          >
-            <option value="ALL">All Audit Categories</option>
-            {filterOptions.auditCategories.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
+          {/* Audit Category Filter Multi-Select */}
+          <TableMultiSelectFilter
+            label="Categories"
+            allLabel="All Audit Categories"
+            options={filterOptions.auditCategories}
+            selected={selectedCategories}
+            onChange={(next) => { setSelectedCategories(next); setPage(1); }}
+          />
 
-          {/* Target Package Filter Dropdown */}
-          <select
-            value={targetPackageFilter}
-            onChange={(e) => { setTargetPackageFilter(e.target.value); setPage(1); }}
-            style={css("border:1px solid #dde0d9;background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;color:#23282a;outline:none;font-family:'Archivo',sans-serif;cursor:pointer")}
-          >
-            <option value="ALL">All Target Packages</option>
-            {filterOptions.targetPackages.map((pkg) => (
-              <option key={pkg} value={pkg}>{pkg}</option>
-            ))}
-          </select>
+          {/* Target Package Filter Multi-Select */}
+          <TableMultiSelectFilter
+            label="Packages"
+            allLabel="All Target Packages"
+            options={filterOptions.targetPackages}
+            selected={selectedPackages}
+            onChange={(next) => { setSelectedPackages(next); setPage(1); }}
+          />
 
-          {/* Customer Filter Dropdown */}
-          <select
-            value={customerFilter}
-            onChange={(e) => { setCustomerFilter(e.target.value); setPage(1); }}
-            style={css("border:1px solid #dde0d9;background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;color:#23282a;outline:none;font-family:'Archivo',sans-serif;cursor:pointer")}
-          >
-            <option value="ALL">All Customers</option>
-            {filterOptions.customers.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+          {/* Customer Filter Multi-Select */}
+          <TableMultiSelectFilter
+            label="Customers"
+            allLabel="All Customers"
+            options={filterOptions.customers}
+            selected={selectedCustomers}
+            onChange={(next) => { setSelectedCustomers(next); setPage(1); }}
+          />
 
-          {/* Auditor Filter Dropdown */}
-          <select
-            value={auditorFilter}
-            onChange={(e) => { setAuditorFilter(e.target.value); setPage(1); }}
-            style={css("border:1px solid #dde0d9;background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;color:#23282a;outline:none;font-family:'Archivo',sans-serif;cursor:pointer")}
-          >
-            <option value="ALL">All QMS Hosts</option>
-            {filterOptions.auditors.map((aud) => (
-              <option key={aud} value={aud}>{aud}</option>
-            ))}
-          </select>
+          {/* QMS Host Filter Multi-Select */}
+          <TableMultiSelectFilter
+            label="QMS Hosts"
+            allLabel="All QMS Hosts"
+            options={filterOptions.auditors}
+            selected={selectedHosts}
+            onChange={(next) => { setSelectedHosts(next); setPage(1); }}
+          />
         </div>
 
         {/* Date Range & Reset Row */}
