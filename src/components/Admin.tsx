@@ -3,6 +3,12 @@ import type { VM } from '../useScheduler';
 import { css, HButton } from '../ui';
 
 export function Admin({ vm }: { vm: VM }) {
+  const hosts = vm.engineers || [];
+  const totalHosts = hosts.length;
+  const qaCount = hosts.filter((h) => h.department === 'QA').length;
+  const nonQaCount = hosts.filter((h) => h.department === 'Non-QA').length;
+  const unassignedCount = totalHosts - qaCount - nonQaCount;
+
   return (
     <main className="scrl" style={vm.adminMainStyle}>
       <div style={vm.adminWrapStyle}>
@@ -11,14 +17,33 @@ export function Admin({ vm }: { vm: VM }) {
           <div style={css('font-size:13px;color:#7a807a;margin-top:3px')}>QMS Hosts and appointment form options. Changes apply to the live schedule.</div>
         </div>
 
-        <div style={vm.adminStatGridStyle}>
-          {vm.adminStats.map((s, i) => (
-            <div key={i} style={css('background:#fff;border:1px solid #e2e5de;border-radius:11px;padding:14px 16px')}>
-              <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.5px")}>{s.label}</div>
-              <div style={css('font-size:25px;font-weight:700;letter-spacing:-.5px;margin-top:5px')}>{s.value}</div>
-              <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>{s.sub}</div>
+        {/* Consolidated Single Header Card: UTL Auditors */}
+        <div style={css('margin-bottom:20px;max-width:380px')}>
+          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.02)')}>
+            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>
+              UTL Auditors
             </div>
-          ))}
+            <div style={css("font-size:28px;font-weight:800;color:#15191e;margin-top:4px;line-height:1.1;font-family:'Archivo',sans-serif")}>
+              {totalHosts}
+            </div>
+            <div style={css('display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;user-select:none')}>
+              <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;font-size:11.5px;font-weight:600;font-family:'Archivo',sans-serif;background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd")}>
+                {qaCount} QA
+              </span>
+              <span style={css('color:#d4d4d8;font-size:13px')}>·</span>
+              <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;font-size:11.5px;font-weight:600;font-family:'Archivo',sans-serif;background:#fef3c7;color:#92400e;border:1px solid #fde68a")}>
+                {nonQaCount} Non-QA
+              </span>
+              {unassignedCount > 0 && (
+                <>
+                  <span style={css('color:#d4d4d8;font-size:13px')}>·</span>
+                  <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;font-size:11px;font-weight:500;font-family:'Archivo',sans-serif;background:#f4f4f5;color:#71717a;border:1px solid #e4e4e7")}>
+                    {unassignedCount} Unassigned
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
         <div style={css('display:flex;background:#fff;border:1px solid #e0e3dc;border-radius:9px;padding:2px;gap:2px;width:max-content;margin-bottom:16px')}>
@@ -105,9 +130,9 @@ function EngineersTable({ vm }: { vm: VM }) {
   const [dropTargetIdx, setDropTargetIdx] = useState<number | null>(null);
 
   return (
-    <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:12px;position:relative;z-index:10')}>
-      <div style={css('display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid #eef1ea;flex-wrap:wrap;gap:10px;position:relative;z-index:20')}>
-        <div style={css('font-size:13px;font-weight:700')}>QMS Host <span style={css('color:#9aa097;font-weight:500')}>· {vm.adminEngineers.length}</span></div>
+    <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.02);overflow:hidden;position:relative;z-index:10')}>
+      <div style={css('display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #eef1ea;flex-wrap:wrap;gap:10px;position:relative;z-index:20')}>
+        <div style={css('font-size:13.5px;font-weight:700;color:#15191e')}>QMS Host <span style={css('color:#9aa097;font-weight:500')}>· {vm.adminEngineers.length}</span></div>
         <div style={css('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
           <AdminFilterDropdown
             label="Site"
@@ -123,7 +148,7 @@ function EngineersTable({ vm }: { vm: VM }) {
             items={vm.adminDeptOptions.map((d) => ({ value: d, label: d }))}
             onToggle={vm.toggleAdminFilterDept}
           />
-          <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New QMS Host</HButton>
+          <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New QMS Host</HButton>
         </div>
       </div>
       {vm.adminEngineers.map((e, idx) => (
@@ -156,7 +181,9 @@ function EngineersTable({ vm }: { vm: VM }) {
             setDropTargetIdx(null);
           }}
           style={css(
-            'display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #f2f4ee;transition:background 0.15s ease, transform 0.15s ease;background:' +
+            'display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:' +
+              (idx === vm.adminEngineers.length - 1 ? 'none' : '1px solid #f1f3ee') +
+              ';transition:background 0.15s ease, transform 0.15s ease;background:' +
               (dropTargetIdx === idx && draggedIdx !== idx ? '#eef2fd' : '#fff') +
               ';opacity:' +
               (draggedIdx === idx ? '0.4' : '1') +
@@ -164,20 +191,26 @@ function EngineersTable({ vm }: { vm: VM }) {
               (draggedIdx === idx ? '0 4px 12px rgba(0,0,0,0.12)' : 'none') +
               ';cursor:grab'
           )}
+          onMouseEnter={(evt) => {
+            if (dropTargetIdx !== idx) evt.currentTarget.style.background = '#f9faf7';
+          }}
+          onMouseLeave={(evt) => {
+            if (dropTargetIdx !== idx) evt.currentTarget.style.background = '#fff';
+          }}
         >
-          <div style={css('display:flex;align-items:center;gap:10px;min-width:0;flex:1')}>
-            <span style={css('color:#a6aca2;font-size:12px;cursor:grab;user-select:none;line-height:1;padding:2px;flex-shrink:0')}>⋮⋮</span>
-            <div onClick={() => vm.openEditEngineer(e.id)} style={css('display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer;flex:1')}>
+          <div style={css('display:flex;align-items:center;gap:12px;min-width:0;flex:1')}>
+            <span style={css('color:#9aa097;font-size:13px;cursor:grab;user-select:none;line-height:1;padding:4px 6px;margin-left:-4px;flex-shrink:0')}>⋮⋮</span>
+            <div onClick={() => vm.openEditEngineer(e.id)} style={css('display:flex;align-items:center;gap:12px;min-width:0;cursor:pointer;flex:1')}>
               <div style={e.avatarStyle}>{e.initials}</div>
               <div style={css('min-width:0')}>
-                <div style={css('font-size:12.5px;font-weight:600;color:#23282a;text-decoration:none;display:flex;align-items:center;gap:6px')}>
+                <div style={css('font-size:13px;font-weight:600;color:#15191e;text-decoration:none;display:flex;align-items:center;gap:8px')}>
                   <span>{e.name}</span>
                   {e.department && (e.department === 'QA' || e.department === 'Non-QA') && (
                     <span
                       style={css(
-                        `font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;font-family:'IBM Plex Mono',monospace;` +
+                        `font-size:10.5px;font-weight:700;padding:2px 7.5px;border-radius:5px;font-family:'IBM Plex Mono',monospace;line-height:1.2;user-select:none;` +
                           (e.department === 'QA'
-                            ? 'background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;'
+                            ? 'background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;'
                             : 'background:#fef3c7;color:#92400e;border:1px solid #fde68a;')
                       )}
                     >
@@ -185,15 +218,29 @@ function EngineersTable({ vm }: { vm: VM }) {
                     </span>
                   )}
                 </div>
-                <div style={css('font-size:10.5px;color:#8a9088')}>{e.site || 'UTL1'}{e.subDepartments.length > 0 ? ' - ' + e.subDepartments.join(', ') : ''}</div>
+                <div style={css('font-size:11px;color:#8a9088;margin-top:2px')}>{e.site || 'UTL1'}{e.subDepartments.length > 0 ? ' · ' + e.subDepartments.join(', ') : ''}</div>
               </div>
             </div>
           </div>
-          <button onClick={e.onDelete} style={css('background:none;border:none;cursor:pointer;color:#bcc1b8;font-size:13px;padding:4px 8px;flex-shrink:0')}>✕</button>
+          <button
+            onClick={e.onDelete}
+            title="Remove QMS Host"
+            style={css("background:none;border:none;cursor:pointer;color:#9aa097;font-size:16px;padding:6px 10px;border-radius:6px;transition:all 0.12s;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0")}
+            onMouseEnter={(evt) => {
+              evt.currentTarget.style.color = '#ef4444';
+              evt.currentTarget.style.background = '#fef2f2';
+            }}
+            onMouseLeave={(evt) => {
+              evt.currentTarget.style.color = '#9aa097';
+              evt.currentTarget.style.background = 'none';
+            }}
+          >
+            ×
+          </button>
         </div>
       ))}
       {vm.adminEngineers.length === 0 && (
-        <div style={css('padding:24px;text-align:center;font-size:12.5px;color:#8a9088;font-style:italic')}>
+        <div style={css('padding:28px;text-align:center;font-size:13px;color:#8a9088;font-style:italic')}>
           No QMS hosts match the selected site/standard filters.
         </div>
       )}
