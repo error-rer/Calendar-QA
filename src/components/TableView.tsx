@@ -31,7 +31,7 @@ export function TableView({ vm }: { vm: VM }) {
   const [standardFilter, setStandardFilter] = useState('ALL');
   const [auditCategoryFilter, setAuditCategoryFilter] = useState('ALL');
   const [targetPackageFilter, setTargetPackageFilter] = useState('ALL');
-  const [customerNameFilter, setCustomerNameFilter] = useState('ALL');
+  const [customerFilter, setCustomerFilter] = useState('ALL');
   const [auditorFilter, setAuditorFilter] = useState('ALL');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -106,6 +106,7 @@ export function TableView({ vm }: { vm: VM }) {
 
   // Collect unique filter options from live data
   const filterOptions = useMemo(() => {
+    const customers = new Set<string>();
     const sites = new Set<string>();
     const standards = new Set<string>();
     const auditCategories = new Set<string>();
@@ -114,6 +115,7 @@ export function TableView({ vm }: { vm: VM }) {
     const auditors = new Set<string>();
 
     for (const r of allRows) {
+      if (r.customer && r.customer.trim()) customers.add(r.customer.trim());
       if (r.site) sites.add(r.site);
       if (r.standard) {
         r.standard.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => standards.add(s));
@@ -131,6 +133,7 @@ export function TableView({ vm }: { vm: VM }) {
     }
 
     return {
+      customers: Array.from(customers).sort((a, b) => a.localeCompare(b)),
       sites: Array.from(sites).sort(),
       standards: Array.from(standards).sort(),
       auditCategories: Array.from(auditCategories).sort(),
@@ -177,6 +180,13 @@ export function TableView({ vm }: { vm: VM }) {
         }
       }
 
+      // Audit Category filter
+      if (auditCategoryFilter !== 'ALL') {
+        if ((r.auditCategory || '').trim().toLowerCase() !== auditCategoryFilter.trim().toLowerCase()) {
+          return false;
+        }
+      }
+
       // Target Package filter
       if (targetPackageFilter !== 'ALL') {
         const rowPkgs = r.targetPackage.split(',').map((s) => s.trim().toLowerCase());
@@ -185,10 +195,9 @@ export function TableView({ vm }: { vm: VM }) {
         }
       }
 
-      // Customer Name filter
-      if (customerNameFilter !== 'ALL') {
-        const rowCns = r.customerNames.split(',').map((s) => s.trim().toLowerCase());
-        if (!rowCns.includes(customerNameFilter.toLowerCase())) {
+      // Customer (Company) filter
+      if (customerFilter !== 'ALL') {
+        if ((r.customer || '').trim().toLowerCase() !== customerFilter.trim().toLowerCase()) {
           return false;
         }
       }
@@ -213,7 +222,7 @@ export function TableView({ vm }: { vm: VM }) {
 
       return true;
     });
-  }, [allRows, search, auditTypeFilter, siteFilter, standardFilter, targetPackageFilter, customerNameFilter, auditorFilter, dateFrom, dateTo]);
+  }, [allRows, search, auditTypeFilter, siteFilter, standardFilter, auditCategoryFilter, targetPackageFilter, customerFilter, auditorFilter, dateFrom, dateTo]);
 
   // Apply Sorting
   const sortedRows = useMemo(() => {
@@ -245,8 +254,14 @@ export function TableView({ vm }: { vm: VM }) {
   const stats = useMemo(() => {
     const customerCount = calculateCustomerAuditsCount(allRows);
     let internalCount = 0;
+    const allAuditors = new Set<string>();
+    const allSites = new Set<string>();
     for (const r of allRows) {
       if (r.auditType === 'Internal Audit') internalCount++;
+      if (r.auditor) {
+        r.auditor.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => allAuditors.add(s));
+      }
+      if (r.site) allSites.add(r.site);
     }
     const total = customerCount + internalCount;
     return {
@@ -254,16 +269,22 @@ export function TableView({ vm }: { vm: VM }) {
       totalRecords: allRows.length,
       customerCount,
       internalCount,
-      uniqueSites: filterOptions.sites.length,
-      uniqueAuditors: filterOptions.auditors.length,
+      uniqueSites: allSites.size,
+      uniqueAuditors: allAuditors.size,
     };
-  }, [allRows, filterOptions]);
+  }, [allRows]);
 
   const filteredStats = useMemo(() => {
     const customerCount = calculateCustomerAuditsCount(filteredRows);
     let internalCount = 0;
+    const filteredAuditors = new Set<string>();
+    const filteredSites = new Set<string>();
     for (const r of filteredRows) {
       if (r.auditType === 'Internal Audit') internalCount++;
+      if (r.auditor) {
+        r.auditor.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => filteredAuditors.add(s));
+      }
+      if (r.site) filteredSites.add(r.site);
     }
     const total = customerCount + internalCount;
     return {
@@ -271,6 +292,8 @@ export function TableView({ vm }: { vm: VM }) {
       totalRecords: filteredRows.length,
       customerCount,
       internalCount,
+      uniqueSites: filteredSites.size,
+      uniqueAuditors: filteredAuditors.size,
     };
   }, [filteredRows]);
 
@@ -281,7 +304,7 @@ export function TableView({ vm }: { vm: VM }) {
     standardFilter !== 'ALL' ||
     auditCategoryFilter !== 'ALL' ||
     targetPackageFilter !== 'ALL' ||
-    customerNameFilter !== 'ALL' ||
+    customerFilter !== 'ALL' ||
     auditorFilter !== 'ALL' ||
     dateFrom !== '' ||
     dateTo !== '';
@@ -293,7 +316,7 @@ export function TableView({ vm }: { vm: VM }) {
     setStandardFilter('ALL');
     setAuditCategoryFilter('ALL');
     setTargetPackageFilter('ALL');
-    setCustomerNameFilter('ALL');
+    setCustomerFilter('ALL');
     setAuditorFilter('ALL');
     setDateFrom('');
     setDateTo('');
@@ -470,7 +493,7 @@ export function TableView({ vm }: { vm: VM }) {
         <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Total Audits</div>
           <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>
-            {hasActiveFilters ? filteredStats.total : stats.total}
+            {filteredStats.total}
           </div>
           <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>
             {hasActiveFilters ? `Showing ${filteredStats.total} of ${stats.total} audits` : 'All scheduled audits'}
@@ -480,7 +503,7 @@ export function TableView({ vm }: { vm: VM }) {
         <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Customer Audits</div>
           <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>
-            {hasActiveFilters ? filteredStats.customerCount : stats.customerCount}
+            {filteredStats.customerCount}
           </div>
           <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>
             {hasActiveFilters ? `Showing ${filteredStats.customerCount} of ${stats.customerCount} visits` : 'Consecutive day visits'}
@@ -490,7 +513,7 @@ export function TableView({ vm }: { vm: VM }) {
         <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Internal Audits</div>
           <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>
-            {hasActiveFilters ? filteredStats.internalCount : stats.internalCount}
+            {filteredStats.internalCount}
           </div>
           <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>
             {hasActiveFilters ? `Showing ${filteredStats.internalCount} of ${stats.internalCount} audits` : 'Plant & process audits'}
@@ -499,8 +522,12 @@ export function TableView({ vm }: { vm: VM }) {
 
         <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Active QMS Hosts</div>
-          <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>{stats.uniqueAuditors}</div>
-          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>Across {stats.uniqueSites} plant sites</div>
+          <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>
+            {filteredStats.uniqueAuditors}
+          </div>
+          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>
+            {hasActiveFilters ? `Across ${filteredStats.uniqueSites} plant ${filteredStats.uniqueSites === 1 ? 'site' : 'sites'}` : `Across ${stats.uniqueSites} plant sites`}
+          </div>
         </div>
       </div>
 
@@ -593,15 +620,15 @@ export function TableView({ vm }: { vm: VM }) {
             ))}
           </select>
 
-          {/* Customer Name Filter Dropdown */}
+          {/* Customer Filter Dropdown */}
           <select
-            value={customerNameFilter}
-            onChange={(e) => { setCustomerNameFilter(e.target.value); setPage(1); }}
+            value={customerFilter}
+            onChange={(e) => { setCustomerFilter(e.target.value); setPage(1); }}
             style={css("border:1px solid #dde0d9;background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;color:#23282a;outline:none;font-family:'Archivo',sans-serif;cursor:pointer")}
           >
-            <option value="ALL">All Customer Names</option>
-            {filterOptions.customerNames.map((cn) => (
-              <option key={cn} value={cn}>{cn}</option>
+            <option value="ALL">All Customers</option>
+            {filterOptions.customers.map((c) => (
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
 
