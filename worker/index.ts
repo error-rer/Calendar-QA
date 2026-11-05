@@ -79,7 +79,7 @@ function assignmentOut(r: any) {
     site1: normalizeSites(r.site1 || ''), customer: r.customer, endCustomer: r.end_customer, auditor1: r.auditor1, purpose: r.purpose,
     targetPackage: r.target_package || '', customerNames: r.customer_names || '', auditCategory: r.audit_category || '',
     site2: normalizeSites(r.site2 || ''), area: r.area, auditor2: r.auditor2, department1: r.department1, department2: r.department2,
-    department: (r.department === 'Non-QA' ? 'Non-QA' : 'QA') as any,
+    department: (r.department === 'Non-QA' ? 'Non-QA' : r.department === 'QA' ? 'QA' : undefined) as any,
     major: r.major, minor: r.minor, ofi: r.ofi, request: r.request, utl1: r.utl1, utl2: r.utl2, utl3: r.utl3,
     results: normalizeAuditResults(parsedResults),
     createdAt: r.created_at || (r.created_at_num ? String(r.created_at_num) : undefined),
@@ -326,7 +326,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
     if (method === 'POST' && path === 'assignments') {
       await ensureAssignmentColumns(DB);
       const d = body || {};
-      const dept = d.department === 'Non-QA' ? 'Non-QA' : 'QA';
+      const dept = d.department === 'Non-QA' ? 'Non-QA' : d.department === 'QA' ? 'QA' : '';
       await DB.prepare(
         `INSERT INTO assignments (id, eng, order_id, day, week, site1, customer, end_customer, auditor1, purpose, target_package, customer_names, audit_category, site2, area, auditor2, department1, department2, department, results, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -360,7 +360,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
         d.site1 ?? existing.site1, d.customer ?? existing.customer, d.endCustomer ?? existing.end_customer, d.auditor1 ?? existing.auditor1, d.purpose ?? existing.purpose,
         d.targetPackage ?? existing.target_package ?? '', d.customerNames ?? existing.customer_names ?? '', d.auditCategory ?? existing.audit_category ?? '',
         d.site2 ?? existing.site2, d.area ?? existing.area, d.auditor2 ?? existing.auditor2, d.department1 ?? existing.department1, d.department2 ?? existing.department2,
-        d.department !== undefined ? d.department : (existing.department ?? 'QA'),
+        d.department !== undefined ? (d.department || '') : (existing.department ?? ''),
         d.results !== undefined ? (typeof d.results === 'string' ? d.results : JSON.stringify(d.results)) : (existing.results ?? '{}'),
         d.createdAt !== undefined ? String(d.createdAt) : (existing.created_at ?? ''),
         d.updatedAt !== undefined ? String(d.updatedAt) : (existing.updated_at ?? ''),

@@ -258,7 +258,7 @@ export interface AppointmentFormValues {
   area: string;
   auditor2: string;
   department2: string;
-  department?: Department;
+  department?: Department | '';
   dateFrom: string;
   dateTo: string;
 }
@@ -269,10 +269,10 @@ function DepartmentPillSelector({
   options = ['QA', 'Non-QA'],
 }: {
   value?: string;
-  onChange: (val: Department) => void;
+  onChange: (val: Department | undefined) => void;
   options?: string[];
 }) {
-  const current = value || 'QA';
+  const current = (value || '').trim();
   const effectiveOptions = options && options.length > 0 ? options : ['QA', 'Non-QA'];
 
   return (
@@ -282,7 +282,13 @@ function DepartmentPillSelector({
         return (
           <div
             key={opt}
-            onClick={() => onChange(opt as Department)}
+            onClick={() => {
+              if (on) {
+                onChange(undefined);
+              } else {
+                onChange(opt as Department);
+              }
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',

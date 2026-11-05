@@ -1316,7 +1316,7 @@ export function useScheduler() {
       createOpen: true,
       userMenuOpen: false,
       sidebarOpen: false,
-      createDraft: { order: '', eng: '', day: 0, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '', department: 'QA' },
+      createDraft: { order: '', eng: '', day: 0, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '', department: undefined },
     });
   };
   const openCreateAt = (engId: string, day: number) => {
@@ -1324,7 +1324,7 @@ export function useScheduler() {
     const targetDate = new Date(baseDate);
     targetDate.setDate(baseDate.getDate() + S.weekOffset * 7 + day);
     if (getHolidayForDate(targetDate)) return;
-    setState({ createOpen: true, userMenuOpen: false, createDraft: { order: '', eng: engId, day, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '', department: 'QA' } });
+    setState({ createOpen: true, userMenuOpen: false, createDraft: { order: '', eng: engId, day, dateFrom: '', dateTo: '', sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '', department: undefined } });
   };
   const openCreateWithDate = (dateIso?: string) => {
     const d = dateIso || '';
@@ -1339,7 +1339,7 @@ export function useScheduler() {
       createDraft: {
         order: '', eng: '', day: 0,
         dateFrom: d, dateTo: d,
-        sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '', department: 'QA'
+        sectionType: 'customer', purpose: '', department1: '', site1: '', customer: '', endCustomer: '', targetPackage: '', customerNames: '', auditCategory: '', auditor1: '', department2: '', site2: '', area: '', auditor2: '', department: undefined
       },
     });
   };
@@ -1383,7 +1383,7 @@ export function useScheduler() {
           auditor2: d.sectionType === 'internal' ? d.auditor2 : '',
           department1: d.sectionType === 'customer' ? d.department1 : '',
           department2: d.sectionType === 'internal' ? d.department2 : '',
-          department: (d.department || 'QA') as Department,
+          department: d.department || undefined,
           createdBy: profile.name || 'Jordan Lee',
           createdAt: new Date().toISOString(),
         });
@@ -1632,7 +1632,7 @@ export function useScheduler() {
         targetPackage: a.targetPackage || '',
         customerNames: a.customerNames || '',
         auditCategory: a.auditCategory || '',
-        department: a.department || 'QA',
+        department: a.department || undefined,
         editScope: scope,
         scopeDateStr: singleDateStr,
       },
@@ -1829,7 +1829,7 @@ export function useScheduler() {
       auditor2: d.sectionType === 'internal' ? d.auditor2 : '',
       department1: d.sectionType === 'customer' ? d.department1 : '',
       department2: d.sectionType === 'internal' ? d.department2 : '',
-      department: (d.department || 'QA') as Department,
+      department: d.department || undefined,
       results: reconciledResults,
     };
     const minWeek = Math.min(...siblings.map((x) => x.week));
@@ -1940,10 +1940,16 @@ export function useScheduler() {
     if (isAuditorChanged) {
       changes.push({ name: 'QMS Host', oldVal: oldAuditor, newVal: newAuditor });
     }
-    const oldDepartment = target.department || 'QA';
-    const newDepartment = d.department || 'QA';
+    const oldDepartment = target.department || '';
+    const newDepartment = d.department || '';
     if (oldDepartment !== newDepartment) {
-      changes.push({ name: 'Department', oldVal: oldDepartment, newVal: newDepartment });
+      if (oldDepartment && newDepartment) {
+        changes.push({ name: 'Department', oldVal: oldDepartment, newVal: newDepartment });
+      } else if (newDepartment) {
+        changes.push({ name: 'Department', oldVal: '', newVal: newDepartment });
+      } else {
+        changes.push({ name: 'Department', oldVal: oldDepartment, newVal: 'None' });
+      }
     }
 
     const apptRef = formatApptLogRef({
@@ -2004,6 +2010,7 @@ export function useScheduler() {
         isDaySplit: true,
         updatedAt: nowIso,
         ...fields,
+        department: d.department || '',
         results: reconciledResults,
       }).catch(() => {});
 
@@ -2099,7 +2106,7 @@ export function useScheduler() {
     const droppedIds = reuseIds.slice(slots.length);
 
     updated.forEach((a, i) => {
-      if (i < siblings.length) api.updateAssignment(a.id, { eng: a.eng, day: a.day, week: a.week, seriesId: a.seriesId, groupId: a.groupId, createdAt: a.createdAt, updatedAt: a.updatedAt, ...fields }).catch(() => {});
+      if (i < siblings.length) api.updateAssignment(a.id, { eng: a.eng, day: a.day, week: a.week, seriesId: a.seriesId, groupId: a.groupId, createdAt: a.createdAt, updatedAt: a.updatedAt, ...fields, department: d.department || '' }).catch(() => {});
       else api.createAssignment(a).catch(() => {});
     });
     droppedIds.forEach((id: string) => api.deleteAssignment(id).catch(() => {}));
@@ -3451,9 +3458,9 @@ export function useScheduler() {
     return { name: p.name, loc: p.loc, cells };
   }), ...customerAuditRows];
 
-  const siteNames = [...new Set(S.engineers.map((e) => e.department))];
+  const siteNames = Array.from(new Set(S.engineers.map((e) => e.site || (e.department && e.department !== 'QA' && e.department !== 'Non-QA' ? e.department : 'UTL1')).filter((s): s is string => Boolean(s))));
   const siteRows = siteNames.map((dn) => {
-    const engs = S.engineers.filter((e) => e.department === dn);
+    const engs = S.engineers.filter((e) => (e.site || (e.department && e.department !== 'QA' && e.department !== 'Non-QA' ? e.department : 'UTL1')) === dn);
     const cells = [0, 1, 2, 3, 4].map((day) => {
       const extraProps = getGridCellProps(day);
       const chips = wk.filter((a) => {
@@ -3684,7 +3691,7 @@ export function useScheduler() {
     purpose: cd.purpose, department1: cd.department1, site1: cd.site1, customer: cd.customer, endCustomer: cd.endCustomer, auditor1: cd.auditor1,
     department2: cd.department2, site2: cd.site2, area: cd.area, auditor2: cd.auditor2,
     targetPackage: cd.targetPackage, customerNames: cd.customerNames, auditCategory: cd.auditCategory,
-    department: cd.department || 'QA',
+    department: cd.department || undefined,
     dateFrom: cd.dateFrom ?? '', dateTo: cd.dateTo ?? '',
     onChange: setDraft,
     warn: false, warnText: '',

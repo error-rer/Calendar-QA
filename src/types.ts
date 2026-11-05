@@ -16,7 +16,7 @@ export interface Engineer {
   name: string;
   role: string;
   site?: string;
-  department: Department;
+  department?: Department | '';
   subDepartments: SubDepartment[];
   isMaster?: boolean;
 }
@@ -129,7 +129,7 @@ export interface Assignment {
   auditor2?: string;
   department1?: string;
   department2?: string;
-  department?: Department;
+  department?: Department | '';
   major?: number;
   minor?: number;
   ofi?: number;
@@ -501,7 +501,7 @@ export interface CreateDraft {
   site2: string;
   area: string;
   auditor2: string;
-  department?: Department;
+  department?: Department | '';
   warn?: boolean;
   warnText?: string;
 }
@@ -524,7 +524,7 @@ export interface EditDraft {
   area: string;
   auditor2: string;
   department2: string;
-  department?: Department;
+  department?: Department | '';
   warn?: boolean;
   warnText?: string;
   editScope?: 'day' | 'all';
@@ -570,7 +570,7 @@ export interface EngineerForm {
   name: string;
   role: string;
   site?: string;
-  department: Department;
+  department?: Department | '';
   subDepartments: SubDepartment[];
 }
 
