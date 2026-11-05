@@ -17,41 +17,45 @@ export function Admin({ vm }: { vm: VM }) {
           <div style={css('font-size:13px;color:#7a807a;margin-top:3px')}>QMS Hosts and appointment form options. Changes apply to the live schedule.</div>
         </div>
 
-        {/* Consolidated Single Header Card: UTL Auditors */}
-        <div style={css('margin-bottom:20px;max-width:380px')}>
-          <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.02)')}>
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>
-              UTL Auditors
-            </div>
-            <div style={css("font-size:28px;font-weight:800;color:#15191e;margin-top:4px;line-height:1.1;font-family:'Archivo',sans-serif")}>
-              {totalHosts}
-            </div>
-            <div style={css('display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;user-select:none')}>
-              <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;font-size:11.5px;font-weight:600;font-family:'Archivo',sans-serif;background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd")}>
-                {qaCount} QA
-              </span>
-              <span style={css('color:#d4d4d8;font-size:13px')}>·</span>
-              <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;font-size:11.5px;font-weight:600;font-family:'Archivo',sans-serif;background:#fef3c7;color:#92400e;border:1px solid #fde68a")}>
-                {nonQaCount} Non-QA
-              </span>
-              {unassignedCount > 0 && (
-                <>
-                  <span style={css('color:#d4d4d8;font-size:13px')}>·</span>
-                  <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;font-size:11px;font-weight:500;font-family:'Archivo',sans-serif;background:#f4f4f5;color:#71717a;border:1px solid #e4e4e7")}>
-                    {unassignedCount} Unassigned
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div style={css('display:flex;background:#fff;border:1px solid #e0e3dc;border-radius:9px;padding:2px;gap:2px;width:max-content;margin-bottom:16px')}>
+        <div style={css('display:flex;background:#fff;border:1px solid #e0e3dc;border-radius:9px;padding:2px;gap:2px;width:max-content;margin-bottom:18px')}>
           <button onClick={vm.setTabEng} style={vm.tabEngStyle}>QMS Host</button>
           <button onClick={vm.setTabOptions} style={vm.tabOptionsStyle}>Options</button>
         </div>
 
-        {vm.tabEngineers && <EngineersTable vm={vm} />}
+        {vm.tabEngineers && (
+          <>
+            {/* Consolidated Single Header Card: UTL Auditors (Only in QMS Host tab) */}
+            <div style={css('margin-bottom:20px;max-width:380px')}>
+              <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.02)')}>
+                <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>
+                  UTL Auditors
+                </div>
+                <div style={css("font-size:28px;font-weight:800;color:#15191e;margin-top:4px;line-height:1.1;font-family:'Archivo',sans-serif")}>
+                  {totalHosts}
+                </div>
+                <div style={css('display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;user-select:none')}>
+                  <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;font-size:11.5px;font-weight:600;font-family:'Archivo',sans-serif;background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd")}>
+                    {qaCount} QA
+                  </span>
+                  <span style={css('color:#d4d4d8;font-size:13px')}>·</span>
+                  <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;font-size:11.5px;font-weight:600;font-family:'Archivo',sans-serif;background:#fef3c7;color:#92400e;border:1px solid #fde68a")}>
+                    {nonQaCount} Non-QA
+                  </span>
+                  {unassignedCount > 0 && (
+                    <>
+                      <span style={css('color:#d4d4d8;font-size:13px')}>·</span>
+                      <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;font-size:11px;font-weight:500;font-family:'Archivo',sans-serif;background:#f4f4f5;color:#71717a;border:1px solid #e4e4e7")}>
+                        {unassignedCount} Unassigned
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <EngineersTable vm={vm} />
+          </>
+        )}
         {vm.tabOptions && <OptionsPanel vm={vm} />}
       </div>
     </main>
