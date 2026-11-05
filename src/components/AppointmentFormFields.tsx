@@ -15,13 +15,15 @@ interface DateInputFieldProps {
   onChange: (isoVal: string) => void;
   style?: React.CSSProperties;
   disabled?: boolean;
+  tabIndex?: number;
 }
 
-function DateInputField({ id, value, onChange, style, disabled }: DateInputFieldProps) {
+function DateInputField({ id, value, onChange, style, disabled, tabIndex }: DateInputFieldProps) {
   const dayRef = useRef<HTMLInputElement>(null);
   const monthRef = useRef<HTMLInputElement>(null);
   const yearRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
 
   const parseIso = (iso: string) => {
     if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
@@ -154,7 +156,9 @@ function DateInputField({ id, value, onChange, style, disabled }: DateInputField
       id={id}
       ref={containerRef}
       style={{
-        border: '1px solid #dde0d9',
+        border: isFocused ? '1px solid #2756d6' : '1px solid #dde0d9',
+        boxShadow: isFocused ? '0 0 0 3px rgba(39, 86, 214, 0.12)' : 'none',
+        transition: 'border-color .15s ease, box-shadow .15s ease',
         borderRadius: '8px',
         padding: '8px 14px',
         minHeight: '42px',
@@ -190,8 +194,15 @@ function DateInputField({ id, value, onChange, style, disabled }: DateInputField
           maxLength={2}
           value={day}
           disabled={disabled}
+          tabIndex={tabIndex}
           onChange={handleDayChange}
-          onBlur={handleBlur}
+          onFocus={() => setIsFocused(true)}
+          onBlur={(e) => {
+            handleBlur();
+            if (containerRef.current && !containerRef.current.contains(e.relatedTarget as Node)) {
+              setIsFocused(false);
+            }
+          }}
           onKeyDown={(e) => handleKeyDown(e, 'day')}
           style={css(
             `width:24px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:'Archivo',sans-serif;font-weight:600;color:${disabled ? '#6b7280' : '#23282a'};padding:0;height:24px;line-height:24px;cursor:${disabled ? 'not-allowed' : 'text'}`
@@ -207,7 +218,13 @@ function DateInputField({ id, value, onChange, style, disabled }: DateInputField
           value={month}
           disabled={disabled}
           onChange={handleMonthChange}
-          onBlur={handleBlur}
+          onFocus={() => setIsFocused(true)}
+          onBlur={(e) => {
+            handleBlur();
+            if (containerRef.current && !containerRef.current.contains(e.relatedTarget as Node)) {
+              setIsFocused(false);
+            }
+          }}
           onKeyDown={(e) => handleKeyDown(e, 'month')}
           style={css(
             `width:26px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:'Archivo',sans-serif;font-weight:600;color:${disabled ? '#6b7280' : '#23282a'};padding:0;height:24px;line-height:24px;cursor:${disabled ? 'not-allowed' : 'text'}`
@@ -223,7 +240,13 @@ function DateInputField({ id, value, onChange, style, disabled }: DateInputField
           value={year}
           disabled={disabled}
           onChange={handleYearChange}
-          onBlur={handleBlur}
+          onFocus={() => setIsFocused(true)}
+          onBlur={(e) => {
+            handleBlur();
+            if (containerRef.current && !containerRef.current.contains(e.relatedTarget as Node)) {
+              setIsFocused(false);
+            }
+          }}
           onKeyDown={(e) => handleKeyDown(e, 'year')}
           style={css(
             `width:40px;border:none;outline:none;background:transparent;text-align:center;font-size:12.5px;font-family:'Archivo',sans-serif;font-weight:600;color:${disabled ? '#6b7280' : '#23282a'};padding:0;height:24px;line-height:24px;cursor:${disabled ? 'not-allowed' : 'text'}`
@@ -267,13 +290,16 @@ function MultiSiteSelect({
   value,
   onChange,
   siteOptions,
+  tabIndex,
 }: {
   id: string;
   value: string;
   onChange: (val: string) => void;
   siteOptions: string[];
+  tabIndex?: number;
 }) {
   const [open, setOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedSites = useMemo(() => {
     return value ? sortSites(value.split(/[/,]/).map((s) => normalizeSite(s.trim())).filter(Boolean)) : [];
@@ -312,9 +338,19 @@ function MultiSiteSelect({
       <button
         id={id}
         type="button"
+        tabIndex={tabIndex}
         onClick={() => setOpen(!open)}
+        onFocus={() => setIsFocused(true)}
+        onBlur={(e) => {
+          if (containerRef.current && !containerRef.current.contains(e.relatedTarget as Node)) {
+            setIsFocused(false);
+            setOpen(false);
+          }
+        }}
         style={{
-          border: '1px solid #dde0d9',
+          border: isFocused ? '1px solid #2756d6' : '1px solid #dde0d9',
+          boxShadow: isFocused ? '0 0 0 3px rgba(39, 86, 214, 0.12)' : 'none',
+          transition: 'border-color .15s ease, box-shadow .15s ease',
           borderRadius: '8px',
           padding: '8px 14px',
           minHeight: '42px',
@@ -423,6 +459,7 @@ function AutocompleteInput({
   suggestions,
   onAddNew,
   onRemoveOption,
+  tabIndex,
 }: {
   id: string;
   value: string;
@@ -431,8 +468,10 @@ function AutocompleteInput({
   suggestions: string[];
   onAddNew?: (val: string) => void;
   onRemoveOption?: (val: string) => void;
+  tabIndex?: number;
 }) {
   const [open, setOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [removedItems, setRemovedItems] = useState<Set<string>>(new Set());
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -482,7 +521,9 @@ function AutocompleteInput({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          border: '1px solid #dde0d9',
+          border: isFocused ? '1px solid #2756d6' : '1px solid #dde0d9',
+          boxShadow: isFocused ? '0 0 0 3px rgba(39, 86, 214, 0.12)' : 'none',
+          transition: 'border-color .15s ease, box-shadow .15s ease',
           borderRadius: '8px',
           background: '#fff',
           width: '100%',
@@ -499,12 +540,22 @@ function AutocompleteInput({
           ref={inputRef}
           id={id}
           type="text"
+          tabIndex={tabIndex}
           value={value}
           onChange={(e) => {
             onChange(e.target.value);
             setOpen(true);
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            setIsFocused(true);
+            setOpen(true);
+          }}
+          onBlur={(e) => {
+            if (ref.current && !ref.current.contains(e.relatedTarget as Node)) {
+              setIsFocused(false);
+              setOpen(false);
+            }
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -537,6 +588,7 @@ function AutocompleteInput({
         {Boolean(value) && (
           <button
             type="button"
+            tabIndex={-1}
             title="Clear"
             onClick={(e) => {
               e.stopPropagation();
@@ -636,6 +688,7 @@ function AutocompleteInput({
               {onRemoveOption && (
                 <button
                   type="button"
+                  tabIndex={-1}
                   title={`Delete "${item}" from saved options`}
                   onMouseDown={(e) => {
                     e.preventDefault();
@@ -717,6 +770,7 @@ function MultiSelectCombobox({
   emptyText = 'No options found',
   onAddNew,
   onRemoveOption,
+  tabIndex,
 }: {
   id: string;
   value: string;
@@ -727,8 +781,10 @@ function MultiSelectCombobox({
   emptyText?: string;
   onAddNew?: (val: string) => void;
   onRemoveOption?: (val: string) => void;
+  tabIndex?: number;
 }) {
   const [open, setOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [inputVal, setInputVal] = useState('');
   const [removedItems, setRemovedItems] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
@@ -800,7 +856,9 @@ function MultiSelectCombobox({
           setOpen(true);
         }}
         style={{
-          border: '1px solid #dde0d9',
+          border: isFocused ? '1px solid #2756d6' : '1px solid #dde0d9',
+          boxShadow: isFocused ? '0 0 0 3px rgba(39, 86, 214, 0.12)' : 'none',
+          transition: 'border-color .15s ease, box-shadow .15s ease',
           borderRadius: '8px',
           padding: '6px 14px',
           minHeight: '42px',
@@ -837,6 +895,7 @@ function MultiSelectCombobox({
             {name}
             <button
               type="button"
+              tabIndex={-1}
               onMouseDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -863,12 +922,22 @@ function MultiSelectCombobox({
           ref={inputRef}
           id={id}
           type="text"
+          tabIndex={tabIndex}
           value={inputVal}
           onChange={(e) => {
             setInputVal(e.target.value);
             setOpen(true);
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            setIsFocused(true);
+            setOpen(true);
+          }}
+          onBlur={(e) => {
+            if (containerRef.current && !containerRef.current.contains(e.relatedTarget as Node)) {
+              setIsFocused(false);
+              setOpen(false);
+            }
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -895,6 +964,7 @@ function MultiSelectCombobox({
         {selectedItems.length > 0 && (
           <button
             type="button"
+            tabIndex={-1}
             title="Clear all"
             onMouseDown={(e) => {
               e.preventDefault();
@@ -1053,6 +1123,7 @@ function MultiSelectCombobox({
                 {onRemoveOption && (
                   <button
                     type="button"
+                    tabIndex={-1}
                     title={"Delete \"" + name + "\" from saved options"}
                     onMouseDown={(e) => {
                       e.preventDefault();
@@ -1102,6 +1173,8 @@ function MultiStandardSelect({
   suggestions,
   onAddNew,
   onRemoveOption,
+  tabIndex,
+  inputRef,
 }: {
   id: string;
   value: string;
@@ -1109,12 +1182,16 @@ function MultiStandardSelect({
   suggestions: string[];
   onAddNew?: (val: string) => void;
   onRemoveOption?: (val: string) => void;
+  tabIndex?: number;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
 }) {
   const [open, setOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [inputVal, setInputVal] = useState('');
   const [removedItems, setRemovedItems] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const internalInputRef = useRef<HTMLInputElement>(null);
+  const activeInputRef = inputRef || internalInputRef;
 
   const selectedStandards = useMemo(() => {
     return value
@@ -1178,11 +1255,13 @@ function MultiStandardSelect({
       {/* Combobox Input Box with Tags */}
       <div
         onClick={() => {
-          inputRef.current?.focus();
+          activeInputRef.current?.focus();
           setOpen(true);
         }}
         style={{
-          border: '1px solid #dde0d9',
+          border: isFocused ? '1px solid #2756d6' : '1px solid #dde0d9',
+          boxShadow: isFocused ? '0 0 0 3px rgba(39, 86, 214, 0.12)' : 'none',
+          transition: 'border-color .15s ease, box-shadow .15s ease',
           borderRadius: '8px',
           padding: '6px 14px',
           minHeight: '42px',
@@ -1221,6 +1300,7 @@ function MultiStandardSelect({
             {name}
             <button
               type="button"
+              tabIndex={-1}
               onMouseDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1244,15 +1324,25 @@ function MultiStandardSelect({
         ))}
 
         <input
-          ref={inputRef}
+          ref={activeInputRef}
           id={id}
           type="text"
+          tabIndex={tabIndex}
           value={inputVal}
           onChange={(e) => {
             setInputVal(e.target.value);
             setOpen(true);
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            setIsFocused(true);
+            setOpen(true);
+          }}
+          onBlur={(e) => {
+            if (containerRef.current && !containerRef.current.contains(e.relatedTarget as Node)) {
+              setIsFocused(false);
+              setOpen(false);
+            }
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -1279,13 +1369,14 @@ function MultiStandardSelect({
         {selectedStandards.length > 0 && (
           <button
             type="button"
+            tabIndex={-1}
             title="Clear all standards"
             onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               onChange('');
               setInputVal('');
-              inputRef.current?.focus();
+              activeInputRef.current?.focus();
             }}
             style={{
               border: 'none',
@@ -1437,6 +1528,7 @@ function MultiStandardSelect({
                 {onRemoveOption && (
                   <button
                     type="button"
+                    tabIndex={-1}
                     title={"Delete \"" + name + "\" from saved options"}
                     onMouseDown={(e) => {
                       e.preventDefault();
@@ -1486,6 +1578,7 @@ function MultiAuditorSelect({
   suggestions,
   onAddNew,
   onRemoveOption,
+  tabIndex,
 }: {
   id: string;
   value: string;
@@ -1493,8 +1586,10 @@ function MultiAuditorSelect({
   suggestions: string[];
   onAddNew?: (val: string) => void;
   onRemoveOption?: (val: string) => void;
+  tabIndex?: number;
 }) {
   const [open, setOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [inputVal, setInputVal] = useState('');
   const [removedItems, setRemovedItems] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1564,7 +1659,9 @@ function MultiAuditorSelect({
           setOpen(true);
         }}
         style={{
-          border: '1px solid #dde0d9',
+          border: isFocused ? '1px solid #2756d6' : '1px solid #dde0d9',
+          boxShadow: isFocused ? '0 0 0 3px rgba(39, 86, 214, 0.12)' : 'none',
+          transition: 'border-color .15s ease, box-shadow .15s ease',
           borderRadius: '8px',
           padding: '6px 14px',
           minHeight: '42px',
@@ -1601,6 +1698,7 @@ function MultiAuditorSelect({
             {name}
             <button
               type="button"
+              tabIndex={-1}
               onMouseDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1627,12 +1725,22 @@ function MultiAuditorSelect({
           ref={inputRef}
           id={id}
           type="text"
+          tabIndex={tabIndex}
           value={inputVal}
           onChange={(e) => {
             setInputVal(e.target.value);
             setOpen(true);
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            setIsFocused(true);
+            setOpen(true);
+          }}
+          onBlur={(e) => {
+            if (containerRef.current && !containerRef.current.contains(e.relatedTarget as Node)) {
+              setIsFocused(false);
+              setOpen(false);
+            }
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -1782,6 +1890,7 @@ function MultiAuditorSelect({
                 {onRemoveOption && (
                   <button
                     type="button"
+                    tabIndex={-1}
                     title={`Delete "${name}" from saved options`}
                     onMouseDown={(e) => {
                       e.preventDefault();
@@ -1828,6 +1937,7 @@ export function AppointmentFormFields({
   idPrefix,
   values: v,
   onChange,
+  isOpen,
   purposeOptions,
   removePurposeOption,
   removeCustomerOption,
@@ -1862,6 +1972,7 @@ export function AppointmentFormFields({
   idPrefix: string;
   values: AppointmentFormValues;
   onChange: (patch: Partial<AppointmentFormValues>) => void;
+  isOpen?: boolean;
   purposeOptions: string[];
   removePurposeOption?: (val: string) => void;
   removeCustomerOption?: (val: string) => void;
@@ -1894,6 +2005,17 @@ export function AppointmentFormFields({
   isDateLocked?: boolean;
 }) {
   const id = (name: string) => `${idPrefix}-${name}`;
+
+  const standardInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (isOpen !== false) {
+      const timer = setTimeout(() => {
+        standardInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, v.sectionType]);
 
   const isCustomerEHS = v.department1.split(',').map((s) => s.trim()).includes('EHS');
   // Customer site is always restricted to these 5 fixed values (EHS filtering no longer applies)
@@ -2078,6 +2200,7 @@ export function AppointmentFormFields({
     <>
       <div style={css('display:flex;gap:8px;margin-bottom:12px')}>
         <div
+          tabIndex={-1}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => onChange({ sectionType: 'customer' })}
           style={{
@@ -2089,6 +2212,7 @@ export function AppointmentFormFields({
           }}
         >Customer Audit</div>
         <div
+          tabIndex={-1}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => onChange({ sectionType: 'internal' })}
           style={{
@@ -2109,6 +2233,8 @@ export function AppointmentFormFields({
               <label htmlFor={id('department1')} style={lbl}>STANDARD</label>
               <MultiStandardSelect
                 id={id('department1')}
+                tabIndex={1}
+                inputRef={standardInputRef}
                 value={v.department1}
                 onChange={(newDept) => {
                   const currentSites = v.site1.split('/').map((s) => s.trim()).filter(Boolean);
@@ -2126,6 +2252,7 @@ export function AppointmentFormFields({
               <label htmlFor={id('site1')} style={lbl}>SITE</label>
               <MultiSiteSelect
                 id={id('site1')}
+                tabIndex={2}
                 value={v.site1}
                 onChange={(site1) => onChange({ site1 })}
                 siteOptions={customerSiteOptions}
@@ -2137,6 +2264,7 @@ export function AppointmentFormFields({
               <label htmlFor={id('customer')} style={lbl}>CUSTOMER</label>
               <AutocompleteInput
                 id={id('customer')}
+                tabIndex={3}
                 value={v.customer}
                 onChange={(customer) => onChange({ customer })}
                 placeholder="Type or select customer..."
@@ -2149,6 +2277,7 @@ export function AppointmentFormFields({
               <label htmlFor={id('endCustomer')} style={lbl}>END CUSTOMER</label>
               <AutocompleteInput
                 id={id('endCustomer')}
+                tabIndex={4}
                 value={v.endCustomer}
                 onChange={(endCustomer) => onChange({ endCustomer })}
                 placeholder="Type or select end customer..."
@@ -2162,6 +2291,7 @@ export function AppointmentFormFields({
               <label htmlFor={id('purpose')} style={lbl}>PURPOSE</label>
               <AutocompleteInput
                 id={id('purpose')}
+                tabIndex={5}
                 value={v.purpose}
                 onChange={(purpose) => onChange({ purpose })}
                 placeholder="Type or select purpose..."
@@ -2174,6 +2304,7 @@ export function AppointmentFormFields({
               <label htmlFor={id('targetPackage')} style={lbl}>TARGET PACKAGE</label>
               <MultiSelectCombobox
                 id={id('targetPackage')}
+                tabIndex={6}
                 value={v.targetPackage || ''}
                 onChange={(targetPackage) => onChange({ targetPackage })}
                 placeholder="Type or select target package(s)..."
@@ -2190,6 +2321,7 @@ export function AppointmentFormFields({
               <label htmlFor={id('customerNames')} style={lbl}>CUSTOMER NAME</label>
               <MultiSelectCombobox
                 id={id('customerNames')}
+                tabIndex={7}
                 value={v.customerNames || ''}
                 onChange={(customerNames) => onChange({ customerNames })}
                 placeholder="Type or select customer name(s)..."
@@ -2205,6 +2337,7 @@ export function AppointmentFormFields({
               <label htmlFor={id('auditor1')} style={lbl}>QMS HOST</label>
               <MultiAuditorSelect
                 id={id('auditor1')}
+                tabIndex={8}
                 value={v.auditor1}
                 onChange={(auditor1) => onChange({ auditor1 })}
                 suggestions={auditorSuggestions}
@@ -2216,12 +2349,12 @@ export function AppointmentFormFields({
             {/* ROW 5: FROM | TO */}
             <div style={fld}>
               <label htmlFor={id('dateFrom')} style={lbl}>FROM</label>
-              <DateInputField id={id('dateFrom')} value={v.dateFrom} onChange={(dateFrom) => onChange({ dateFrom })} style={inp} disabled={isDateLocked} />
+              <DateInputField id={id('dateFrom')} tabIndex={9} value={v.dateFrom} onChange={(dateFrom) => onChange({ dateFrom })} style={inp} disabled={isDateLocked} />
             </div>
 
             <div style={fld}>
               <label htmlFor={id('dateTo')} style={lbl}>TO</label>
-              <DateInputField id={id('dateTo')} value={v.dateTo} onChange={(dateTo) => onChange({ dateTo })} style={inp} disabled={isDateLocked} />
+              <DateInputField id={id('dateTo')} tabIndex={10} value={v.dateTo} onChange={(dateTo) => onChange({ dateTo })} style={inp} disabled={isDateLocked} />
             </div>
 
             <div style={{ gridColumn: '1 / -1' }}>
@@ -2252,11 +2385,12 @@ export function AppointmentFormFields({
         <div style={css('padding:14px;border:1px solid #e8ebe4;border-radius:10px;background:#fafbf9')}>
           <div style={css('display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px;row-gap:14px;width:100%;box-sizing:border-box')}>
             {/* 1. STANDARD */}
-            {/* 1. STANDARD */}
             <div style={fld}>
               <label htmlFor={id('department2')} style={lbl}>STANDARD</label>
               <MultiStandardSelect
                 id={id('department2')}
+                tabIndex={1}
+                inputRef={standardInputRef}
                 value={v.department2}
                 onChange={(newDept) => {
                   const currentSites = v.site2.split('/').map((s) => normalizeSite(s.trim())).filter(Boolean);
@@ -2275,6 +2409,7 @@ export function AppointmentFormFields({
               <label htmlFor={id('site2')} style={lbl}>SITE</label>
               <MultiSiteSelect
                 id={id('site2')}
+                tabIndex={2}
                 value={v.site2}
                 onChange={(site2) => onChange({ site2 })}
                 siteOptions={internalSiteOptions}
@@ -2286,6 +2421,7 @@ export function AppointmentFormFields({
               <label htmlFor={id('auditCategory')} style={lbl}>AUDIT CATEGORY</label>
               <AutocompleteInput
                 id={id('auditCategory')}
+                tabIndex={3}
                 value={v.auditCategory || ''}
                 onChange={(auditCategory) => onChange({ auditCategory })}
                 placeholder="Type or select audit category..."
@@ -2299,6 +2435,7 @@ export function AppointmentFormFields({
               <label htmlFor={id('area')} style={lbl}>AREA</label>
               <AutocompleteInput
                 id={id('area')}
+                tabIndex={4}
                 value={v.area}
                 onChange={(area) => onChange({ area })}
                 placeholder="Type or select area..."
@@ -2312,6 +2449,7 @@ export function AppointmentFormFields({
               <label htmlFor={id('auditor2')} style={lbl}>QMS HOST</label>
               <MultiAuditorSelect
                 id={id('auditor2')}
+                tabIndex={5}
                 value={v.auditor2}
                 onChange={(auditor2) => onChange({ auditor2 })}
                 suggestions={auditorSuggestions}
@@ -2325,12 +2463,12 @@ export function AppointmentFormFields({
             {/* Row 4: FROM | TO */}
             <div style={fld}>
               <label htmlFor={id('dateFrom2')} style={lbl}>FROM</label>
-              <DateInputField id={id('dateFrom2')} value={v.dateFrom} onChange={(dateFrom) => onChange({ dateFrom })} style={inp} disabled={isDateLocked} />
+              <DateInputField id={id('dateFrom2')} tabIndex={6} value={v.dateFrom} onChange={(dateFrom) => onChange({ dateFrom })} style={inp} disabled={isDateLocked} />
             </div>
 
             <div style={fld}>
               <label htmlFor={id('dateTo2')} style={lbl}>TO</label>
-              <DateInputField id={id('dateTo2')} value={v.dateTo} onChange={(dateTo) => onChange({ dateTo })} style={inp} disabled={isDateLocked} />
+              <DateInputField id={id('dateTo2')} tabIndex={7} value={v.dateTo} onChange={(dateTo) => onChange({ dateTo })} style={inp} disabled={isDateLocked} />
             </div>
 
             <div style={{ gridColumn: '1 / -1' }}>

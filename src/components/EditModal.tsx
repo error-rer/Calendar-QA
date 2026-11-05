@@ -30,7 +30,7 @@ export function EditModal({ vm }: { vm: VM }) {
             </div>
             <div style={css('font-size:11.5px;color:#8a9088;margin-top:1px')}>{vm.weekLabel} - {vm.weekTag}</div>
           </div>
-          <HButton onClick={vm.closeEdit} style={css('width:28px;height:28px;border:1px solid #e2e5de;background:#fff;border-radius:7px;cursor:pointer;color:#6a706a;font-size:14px')} hover={{ background: '#f1f3ee' }}>✕</HButton>
+          <HButton tabIndex={-1} onClick={vm.closeEdit} style={css('width:28px;height:28px;border:1px solid #e2e5de;background:#fff;border-radius:7px;cursor:pointer;color:#6a706a;font-size:14px')} hover={{ background: '#f1f3ee' }}>✕</HButton>
         </div>
 
         <div className="scrl" style={css('overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:20px')}>
@@ -57,6 +57,7 @@ export function EditModal({ vm }: { vm: VM }) {
           )}
           <AppointmentFormFields
             idPrefix="edit"
+            isOpen={vm.editOpen}
             values={ed}
             onChange={vm.setEditDraft}
             isDateLocked={ed.editScope === 'day'}
@@ -98,8 +99,8 @@ export function EditModal({ vm }: { vm: VM }) {
         </div>
 
         <div style={css('padding:14px 18px;display:flex;justify-content:flex-end;gap:9px;border-top:1px solid #eef1ea')}>
-          <HButton onClick={vm.closeEdit} style={css("background:#f4f6f1;border:1px solid #e0e3dc;color:#3c423d;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#eaede6' }}>Cancel</HButton>
-          <button onClick={vm.submitEdit} style={css("background:#15191e;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}>Save changes</button>
+          <HButton tabIndex={ed.sectionType === 'customer' ? 12 : 9} onClick={vm.closeEdit} style={css("background:#f4f6f1;border:1px solid #e0e3dc;color:#3c423d;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#eaede6' }}>Cancel</HButton>
+          <button tabIndex={ed.sectionType === 'customer' ? 11 : 8} onClick={vm.submitEdit} style={css("background:#15191e;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}>Save changes</button>
         </div>
       </div>
     </div>
