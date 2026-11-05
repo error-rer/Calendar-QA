@@ -183,109 +183,40 @@ function DepartmentFilterDropdown({
               'position:absolute;top:100%;right:0;z-index:100;margin-top:4px;background:#fff;border:1px solid #dde0d9;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);min-width:160px;padding:5px'
             )}
           >
-            {/* All Departments */}
-            <div
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                onSelect('All');
-                setOpen(false);
-              }}
-              style={css(
-                "display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:5px;cursor:pointer;font-size:11.5px;font-family:'Archivo',sans-serif;color:#3c423d;user-select:none;outline:none;background:" +
-                  (selected === 'All' ? '#eef2fd' : '#fff') +
-                  ';font-weight:' +
-                  (selected === 'All' ? '600' : '400')
-              )}
-            >
-              <div style={css('display:flex;align-items:center;gap:7px')}>
-                <span
+            {([
+              { value: 'All', label: 'All Departments' },
+              { value: 'QA', label: 'QA' },
+              { value: 'Non-QA', label: 'Non-QA' },
+            ] as const).map((opt) => {
+              const isChecked = selected === opt.value;
+              return (
+                <div
+                  key={opt.value}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    onSelect(opt.value);
+                    setOpen(false);
+                  }}
                   style={css(
-                    'width:14px;height:14px;border-radius:3px;border:1px solid ' +
-                      (selected === 'All' ? '#2756d6' : '#cdd2c9') +
-                      ';background:' +
-                      (selected === 'All' ? '#2756d6' : '#fff') +
-                      ';display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex-shrink:0'
+                    "display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:5px;cursor:pointer;font-size:11.5px;font-family:'Archivo',sans-serif;color:#27272a;user-select:none;outline:none;transition:background .1s ease;" +
+                      (isChecked ? 'background:#eef2fd;font-weight:600;' : 'background:#fff;font-weight:400;')
                   )}
                 >
-                  {selected === 'All' ? '✓' : ''}
-                </span>
-                <span>All Departments</span>
-              </div>
-            </div>
-
-            {/* QA */}
-            <div
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                onSelect('QA');
-                setOpen(false);
-              }}
-              style={css(
-                "display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:5px;cursor:pointer;font-size:11.5px;font-family:'Archivo',sans-serif;color:#3c423d;user-select:none;outline:none;background:" +
-                  (selected === 'QA' ? '#eef2fd' : '#fff') +
-                  ';font-weight:' +
-                  (selected === 'QA' ? '600' : '400')
-              )}
-            >
-              <div style={css('display:flex;align-items:center;gap:7px')}>
-                <span
-                  style={css(
-                    'width:14px;height:14px;border-radius:3px;border:1px solid ' +
-                      (selected === 'QA' ? '#2756d6' : '#cdd2c9') +
-                      ';background:' +
-                      (selected === 'QA' ? '#2756d6' : '#fff') +
-                      ';display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex-shrink:0'
-                  )}
-                >
-                  {selected === 'QA' ? '✓' : ''}
-                </span>
-                <span
-                  style={css(
-                    "font-size:10px;font-weight:700;padding:1.5px 6px;border-radius:4px;font-family:'IBM Plex Mono',monospace;background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd"
-                  )}
-                >
-                  QA
-                </span>
-                <span>QA</span>
-              </div>
-            </div>
-
-            {/* Non-QA */}
-            <div
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                onSelect('Non-QA');
-                setOpen(false);
-              }}
-              style={css(
-                "display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:5px;cursor:pointer;font-size:11.5px;font-family:'Archivo',sans-serif;color:#3c423d;user-select:none;outline:none;background:" +
-                  (selected === 'Non-QA' ? '#eef2fd' : '#fff') +
-                  ';font-weight:' +
-                  (selected === 'Non-QA' ? '600' : '400')
-              )}
-            >
-              <div style={css('display:flex;align-items:center;gap:7px')}>
-                <span
-                  style={css(
-                    'width:14px;height:14px;border-radius:3px;border:1px solid ' +
-                      (selected === 'Non-QA' ? '#2756d6' : '#cdd2c9') +
-                      ';background:' +
-                      (selected === 'Non-QA' ? '#2756d6' : '#fff') +
-                      ';display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex-shrink:0'
-                  )}
-                >
-                  {selected === 'Non-QA' ? '✓' : ''}
-                </span>
-                <span
-                  style={css(
-                    "font-size:10px;font-weight:700;padding:1.5px 6px;border-radius:4px;font-family:'IBM Plex Mono',monospace;background:#fef3c7;color:#92400e;border:1px solid #fde68a"
-                  )}
-                >
-                  Non-QA
-                </span>
-                <span>Non-QA</span>
-              </div>
-            </div>
+                  <span
+                    style={css(
+                      'width:14px;height:14px;border-radius:3px;border:1px solid ' +
+                        (isChecked ? '#2756d6' : '#cdd2c9') +
+                        ';background:' +
+                        (isChecked ? '#2756d6' : '#fff') +
+                        ';display:flex;align-items:center;justify-content:center;font-size:9.5px;color:#fff;flex-shrink:0'
+                    )}
+                  >
+                    {isChecked ? '✓' : ''}
+                  </span>
+                  <span>{opt.label}</span>
+                </div>
+              );
+            })}
           </div>
         </>
       )}
