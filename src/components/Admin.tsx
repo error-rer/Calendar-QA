@@ -389,10 +389,10 @@ function DepartmentEditor({ vm, onReorderInternal, onReorderCustomer }: { vm: VM
 
         <div style={css('border-top:1px solid #eef1ea')} />
 
-        {/* CUSTOMER */}
+        {/* CUSTOMER AUDIT */}
         <div>
           <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#9aa097;letter-spacing:.5px;margin-bottom:8px")}>
-            CUSTOMER <span style={css('color:#9aa097;font-weight:500')}>· {vm.customerDepartmentOptions.length}</span>
+            CUSTOMER AUDIT <span style={css('color:#9aa097;font-weight:500')}>· {vm.customerDepartmentOptions.length}</span>
           </div>
           <div style={css('display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px')}>
             {vm.customerDepartmentOptions.map((v, idx) => (
@@ -448,7 +448,7 @@ function DepartmentEditor({ vm, onReorderInternal, onReorderCustomer }: { vm: VM
                 <button onClick={() => vm.removeCustomerDepartmentOption(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1')}>✕</button>
               </div>
             ))}
-            {vm.customerDepartmentOptions.length === 0 && <span style={css('font-size:12px;color:#a6aca2;font-style:italic')}>No customer standards yet.</span>}
+            {vm.customerDepartmentOptions.length === 0 && <span style={css('font-size:12px;color:#a6aca2;font-style:italic')}>No customer audit standards yet.</span>}
           </div>
           <div style={css('display:flex;gap:8px')}>
             <input

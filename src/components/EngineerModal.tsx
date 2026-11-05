@@ -5,7 +5,7 @@ export function EngineerModal({ vm }: { vm: VM }) {
   if (!vm.engFormOpen) return null;
   const f = vm.engForm;
   const internalOpts = f.subDepartmentOptions.filter((o) => o.group === 'Internal Audit');
-  const customerOpts = f.subDepartmentOptions.filter((o) => o.group === 'Customer');
+  const customerOpts = f.subDepartmentOptions.filter((o) => o.group === 'Customer Audit');
   return (
     <div style={vm.modalOverlayStyle}>
       <div onClick={vm.stop} style={vm.modalCardStyle}>
@@ -47,7 +47,7 @@ export function EngineerModal({ vm }: { vm: VM }) {
                 </div>
               </div>
               <div>
-                <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:5px")}>CUSTOMER</div>
+                <div style={css("font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#9aa097;letter-spacing:.5px;margin-bottom:5px")}>CUSTOMER AUDIT</div>
                 <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px')}>
                   {customerOpts.map((c) => (
                     <div key={c.code} onClick={c.onClick} style={c.style}>

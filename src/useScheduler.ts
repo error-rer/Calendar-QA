@@ -2547,7 +2547,7 @@ export function useScheduler() {
     customerOptions: 'Customer',
     endCustomerOptions: 'End Customer',
     auditorOptions: 'QMS Host',
-    customerDepartmentOptions: 'Customer Standard',
+    customerDepartmentOptions: 'Customer Audit Standard',
     internalDepartmentOptions: 'Internal Standard',
     purposeOptions: 'Purpose',
     targetPackageOptions: 'Target Package',
@@ -3672,7 +3672,7 @@ export function useScheduler() {
     departments: S.siteCodeOptions.map((d) => ({ label: d, onClick: () => setEngForm({ department: d as Department }), style: segMd(ef.department === d) })),
     subDepartmentOptions: [
       ...S.internalDepartmentOptions.map((c) => ({ code: c, name: c, group: 'Internal Audit' as const, onClick: () => toggleEngSubDept(c as SubDepartment), ...certPick(ef.subDepartments.includes(c as SubDepartment)) })),
-      ...S.customerDepartmentOptions.map((c) => ({ code: c, name: c, group: 'Customer' as const, onClick: () => toggleEngSubDept(c as SubDepartment), ...certPick(ef.subDepartments.includes(c as SubDepartment)) })),
+      ...S.customerDepartmentOptions.map((c) => ({ code: c, name: c, group: 'Customer Audit' as const, onClick: () => toggleEngSubDept(c as SubDepartment), ...certPick(ef.subDepartments.includes(c as SubDepartment)) })),
     ],
     canSubmit: !!ef.name.trim(),
     submit: () => submitEngForm(),
@@ -4157,7 +4157,7 @@ export function useScheduler() {
 
   const companyNames = computedCustomerOptions;
   const auditTypes = typeIsIA ? [] : computedPurposeOptions;
-  const apptTypeOptions = [{ value: 'CS', label: 'Customer (CS)' }, { value: 'IA', label: 'Internal Audit (IA)' }];
+  const apptTypeOptions = [{ value: 'CS', label: 'Customer Audit (CS)' }, { value: 'IA', label: 'Internal Audit (IA)' }];
   const hasFilters = !!(
     S.filterEmp.length ||
     S.filterSite.length ||
