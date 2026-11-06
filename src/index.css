@@ -13,56 +13,73 @@ body{font-family:'Archivo',system-ui,sans-serif;color:#15191e;background:#e9ebe6
 input,button,select,textarea{font-family:inherit}
 input::placeholder{color:#8a9088;opacity:1}
 
-/* Prevent text selection and I-beam text cursor across buttons, pills, chips, checkboxes, and tabs */
-button,
-[role="button"],
-.select-none,
-[data-pill],
-[style*="cursor: pointer"],
-[style*="cursor:pointer"],
-.cursor-pointer {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  cursor: pointer;
-  outline: none;
+@layer base {
+  /* Default everything to non-text cursor and prevent accidental text selection */
+  *,
+  *::before,
+  *::after {
+    cursor: default;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* ONLY permit text cursor and text selection inside actual input fields */
+  input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  [contenteditable="true"] {
+    cursor: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+  }
+
+  /* Keep interactive pointers for buttons, links, and clickable items */
+  button,
+  a,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="checkbox"],
+  input[type="radio"],
+  select,
+  label[for],
+  [style*="cursor: pointer"],
+  [style*="cursor:pointer"],
+  .cursor-pointer {
+    cursor: pointer !important;
+  }
+
+  button *,
+  a *,
+  [role="button"] *,
+  label[for] *,
+  select *,
+  [style*="cursor: pointer"] *,
+  [style*="cursor:pointer"] *,
+  .cursor-pointer * {
+    cursor: pointer !important;
+  }
+
+  /* Keep grab / dragging handles functional for drag-and-drop */
+  [style*="cursor: grab"],
+  [style*="cursor:grab"],
+  [draggable="true"] {
+    cursor: grab !important;
+  }
+
+  [style*="cursor: grabbing"],
+  [style*="cursor:grabbing"] {
+    cursor: grabbing !important;
+  }
 }
 
 button:focus-visible,
 [role="button"]:focus-visible {
   outline: 2px solid #2756d6 !important;
   outline-offset: 2px !important;
-}
-
-button *,
-[role="button"] *,
-.select-none *,
-[data-pill] *,
-[style*="cursor: pointer"] *,
-[style*="cursor:pointer"] *,
-.cursor-pointer * {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  cursor: pointer;
-}
-
-/* Ensure text inputs, textareas, and editable fields retain normal text cursor and text selection */
-input[type="text"],
-input[type="email"],
-input[type="number"],
-input[type="password"],
-input[type="search"],
-input:not([type]),
-textarea,
-[contenteditable="true"] {
-  -webkit-user-select: text !important;
-  -moz-user-select: text !important;
-  -ms-user-select: text !important;
-  user-select: text !important;
-  cursor: text !important;
 }
 
 /* Summary Dashboard KPI Grid: 1 col on mobile, 3 cols on medium+ screens */
