@@ -2225,6 +2225,44 @@ export function AppointmentFormFields({
         >Internal Audit</div>
       </div>
 
+      <div
+        className="flex items-center gap-1.5 text-xs text-zinc-400 select-none py-1"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          fontSize: '11.5px',
+          color: '#8a9088',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          padding: '0 2px 2px',
+          margin: '-4px 0 10px 0',
+          fontFamily: "'Archivo',sans-serif",
+        }}
+      >
+        <span
+          className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-semibold text-zinc-500 bg-zinc-100 border border-zinc-200 rounded shadow-xs font-mono"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1px 5px',
+            fontSize: '10px',
+            fontWeight: 600,
+            fontFamily: "'IBM Plex Mono', monospace",
+            color: '#5c625c',
+            background: '#f4f6f1',
+            border: '1px solid #dde0d9',
+            borderRadius: '4px',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+            lineHeight: '1.3',
+          }}
+        >
+          Tab ⇥
+        </span>
+        <span>Tip: Press Tab to navigate to the next field</span>
+      </div>
+
       {v.sectionType === 'customer' && (
         <div style={css('padding:14px;border:1px solid #e8ebe4;border-radius:10px;background:#fafbf9')}>
           <div style={css('display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px;row-gap:14px;width:100%;box-sizing:border-box')}>
