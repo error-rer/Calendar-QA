@@ -439,6 +439,30 @@ export function useScheduler() {
           const customerNameOptions = (s.customerNameOptions && s.customerNameOptions.length ? s.customerNameOptions : (data.customerNameOptions || [])).filter((c) => !removedSet.has(c));
           const auditCategoryOptions = (s.auditCategoryOptions && s.auditCategoryOptions.length ? s.auditCategoryOptions : ((data as any).auditCategoryOptions || [])).filter((c: string) => !removedSet.has(c));
 
+          // Purge orphan customer options (e.g. IFX) that have no active assignments
+          const activeCustomerLower = new Set(
+            mergedAssignments.map((a) => (a.customer || '').trim().toLowerCase()).filter(Boolean)
+          );
+          let nextCustomerOptions = customerOptions;
+          let nextRemovedOptions = s.removedOptions || [];
+          let nextFilterCompany = s.filterCompany || [];
+          let nextMasterCreated = { ...(s.masterCreatedOptions || {}) };
+
+          for (const cust of customerOptions) {
+            const cLower = cust.trim().toLowerCase();
+            if (!activeCustomerLower.has(cLower)) {
+              if (cLower === 'ifx' || !nextMasterCreated['customerOptions:' + cLower]) {
+                nextCustomerOptions = nextCustomerOptions.filter((c) => c.trim().toLowerCase() !== cLower);
+                if (!nextRemovedOptions.some((r) => r.toLowerCase() === cLower)) {
+                  nextRemovedOptions = [...nextRemovedOptions, cust];
+                }
+                nextFilterCompany = nextFilterCompany.filter((f) => f.trim().toLowerCase() !== cLower);
+                delete nextMasterCreated['customerOptions:' + cLower];
+                api.deleteOption('customer_name', cust).catch(() => {});
+              }
+            }
+          }
+
           const mergedState = {
             ...s,
             engineers: mergedEngineers.map((e) => ({ ...e, department: (e.department ? normalizeSite(e.department) : 'UTL1') as Department })),
@@ -455,12 +479,14 @@ export function useScheduler() {
             internalDepartmentOptions,
             siteCodeOptions,
             siteColors,
-            customerOptions,
+            customerOptions: nextCustomerOptions,
             endCustomerOptions,
             targetPackageOptions,
             customerNameOptions,
             auditCategoryOptions,
-            removedOptions: s.removedOptions || [],
+            removedOptions: nextRemovedOptions,
+            filterCompany: nextFilterCompany,
+            masterCreatedOptions: nextMasterCreated,
           };
 
           try {
@@ -483,6 +509,7 @@ export function useScheduler() {
               customerOptions: mergedState.customerOptions,
               endCustomerOptions: mergedState.endCustomerOptions,
               removedOptions: mergedState.removedOptions,
+              masterCreatedOptions: mergedState.masterCreatedOptions,
               activePlants: mergedState.activePlants,
               plants: mergedState.plants,
             }));
@@ -931,12 +958,54 @@ export function useScheduler() {
       setState((s) => {
         const remaining = s.assignments.filter((x) => x.id !== aid);
         const comments = Object.fromEntries(Object.entries(s.comments).filter(([cid]) => cid !== aid));
+
+        const targetCust = (a.customer || '').trim();
+        const custLower = targetCust.toLowerCase();
+        let nextCustomerOptions = s.customerOptions || [];
+        let nextRemovedOptions = s.removedOptions || [];
+        let nextFilterCompany = s.filterCompany || [];
+        let nextMasterCreated = { ...(s.masterCreatedOptions || {}) };
+
+        if (targetCust && !remaining.some((x) => (x.customer || '').trim().toLowerCase() === custLower)) {
+          nextCustomerOptions = nextCustomerOptions.filter((c) => c.trim().toLowerCase() !== custLower);
+          if (!nextRemovedOptions.some((r) => r.toLowerCase() === custLower)) {
+            nextRemovedOptions = [...nextRemovedOptions, targetCust];
+          }
+          nextFilterCompany = nextFilterCompany.filter((f) => f.trim().toLowerCase() !== custLower);
+          delete nextMasterCreated['customerOptions:' + custLower];
+          api.deleteOption('customer_name', targetCust).catch(() => {});
+        }
+
+        const targetOrder = a.order;
+        const isOrderStillUsed = Boolean(targetOrder && remaining.some((x) => x.order === targetOrder));
+        if (targetOrder && !isOrderStillUsed) {
+          api.deleteOrder(targetOrder).catch(() => {});
+        }
+        const remainingOrders = (targetOrder && !isOrderStillUsed) ? s.orders.filter((o) => o.id !== targetOrder) : s.orders;
+
         try {
           localStorage.setItem('calendar_qa_comments', JSON.stringify(comments));
+          const snapshot = {
+            engineers: s.engineers,
+            orders: remainingOrders,
+            assignments: remaining,
+            comments,
+            activity: s.activity,
+            customerOptions: nextCustomerOptions,
+            removedOptions: nextRemovedOptions,
+            masterCreatedOptions: nextMasterCreated,
+          };
+          localStorage.setItem('calendar_qa_snapshot', JSON.stringify(snapshot));
         } catch {}
+
         return {
           assignments: remaining,
+          orders: remainingOrders,
           comments,
+          customerOptions: nextCustomerOptions,
+          removedOptions: nextRemovedOptions,
+          filterCompany: nextFilterCompany,
+          masterCreatedOptions: nextMasterCreated,
           selected: s.selected === aid ? null : s.selected,
           editOpen: s.editOpen && s.editDraft?.targetId === aid ? false : s.editOpen,
         };
@@ -953,12 +1022,23 @@ export function useScheduler() {
 
     // A multi-day appointment is several sibling assignments (same order + eng,
     // one per day) — remove the whole span, not just the single day clicked.
-    const seriesKey = a.seriesId || a.groupId || a.order;
-    const siblings = S.assignments.filter((x) => (x.seriesId && x.seriesId === seriesKey) || (x.groupId && x.groupId === seriesKey) || (x.eng === a.eng && x.order === a.order) || x.id === aid);
+    const targetOrder = a.order;
+    const targetSeries = a.seriesId;
+    const targetGroup = a.groupId;
+    const siblings = S.assignments.filter((x) =>
+      x.id === aid ||
+      (targetOrder && x.order === targetOrder) ||
+      (targetSeries && x.seriesId === targetSeries) ||
+      (targetGroup && x.groupId === targetGroup) ||
+      (x.eng === a.eng && x.order === a.order)
+    );
     const siblingIds = siblings.map((x) => x.id);
 
     // Delete assignments from database via API
     siblingIds.forEach((id) => api.deleteAssignment(id).catch(() => {}));
+    if (targetOrder) {
+      api.deleteOrder(targetOrder).catch(() => {});
+    }
 
     const deletedCustomers = Array.from(new Set(siblings.map((x) => (x.customer || '').trim()).filter(Boolean)));
     const deletedAuditCategories = Array.from(new Set(siblings.map((x) => (x.auditCategory || '').trim()).filter(Boolean)));
@@ -1012,7 +1092,9 @@ export function useScheduler() {
     setState((s) => {
       const siblingSet = new Set(siblingIds);
       const remainingAssignments = s.assignments.filter((x) => !siblingSet.has(x.id));
+      const remainingOrders = targetOrder ? s.orders.filter((o) => o.id !== targetOrder) : s.orders;
       const comments = Object.fromEntries(Object.entries(s.comments).filter(([cid]) => !siblingSet.has(cid)));
+      let nextMasterCreatedOptions = { ...(s.masterCreatedOptions || {}) };
 
       let nextCustomerOptions = s.customerOptions || [];
       let nextAuditCategoryOptions = s.auditCategoryOptions || [];
@@ -1033,22 +1115,20 @@ export function useScheduler() {
       }
       let nextFilterCompany = s.filterCompany || [];
 
-      // Manage Options Cleanup: Prune if only referenced in deleted appointment AND not a master item
+      // Manage Options Cleanup: Prune customer if only referenced in deleted appointment
       for (const cust of deletedCustomers) {
         const custLower = cust.toLowerCase();
         const isCustStillUsed = remainingAssignments.some(
           (x) => (x.customer || '').trim().toLowerCase() === custLower
         );
         if (!isCustStillUsed) {
-          const isMaster = !!(s.masterCreatedOptions && s.masterCreatedOptions['customerOptions:' + custLower]);
-          if (!isMaster) {
-            nextCustomerOptions = nextCustomerOptions.filter((c) => c.trim().toLowerCase() !== custLower);
-            if (!nextRemovedOptions.some((r) => r.toLowerCase() === custLower)) {
-              nextRemovedOptions = [...nextRemovedOptions, cust];
-            }
-            nextFilterCompany = nextFilterCompany.filter((f) => f.trim().toLowerCase() !== custLower);
-            api.deleteOption('customer_name', cust).catch(() => {});
+          nextCustomerOptions = nextCustomerOptions.filter((c) => c.trim().toLowerCase() !== custLower);
+          if (!nextRemovedOptions.some((r) => r.toLowerCase() === custLower)) {
+            nextRemovedOptions = [...nextRemovedOptions, cust];
           }
+          nextFilterCompany = nextFilterCompany.filter((f) => f.trim().toLowerCase() !== custLower);
+          delete nextMasterCreatedOptions['customerOptions:' + custLower];
+          api.deleteOption('customer_name', cust).catch(() => {});
         }
       }
 
@@ -1215,7 +1295,7 @@ export function useScheduler() {
         localStorage.setItem('calendar_qa_comments', JSON.stringify(comments));
         const snapshot = {
           engineers: nextEngineers,
-          orders: s.orders,
+          orders: remainingOrders,
           assignments: remainingAssignments,
           comments,
           activity: s.activity,
@@ -1228,13 +1308,14 @@ export function useScheduler() {
           customerDepartmentOptions: nextCustomerDepartmentOptions,
           internalDepartmentOptions: nextInternalDepartmentOptions,
           removedOptions: nextRemovedOptions,
-          masterCreatedOptions: s.masterCreatedOptions,
+          masterCreatedOptions: nextMasterCreatedOptions,
         };
         localStorage.setItem('calendar_qa_snapshot', JSON.stringify(snapshot));
       } catch {}
 
       return {
         assignments: remainingAssignments,
+        orders: remainingOrders,
         comments,
         engineers: nextEngineers,
         customerOptions: nextCustomerOptions,
@@ -1246,6 +1327,7 @@ export function useScheduler() {
         customerDepartmentOptions: nextCustomerDepartmentOptions,
         internalDepartmentOptions: nextInternalDepartmentOptions,
         removedOptions: nextRemovedOptions,
+        masterCreatedOptions: nextMasterCreatedOptions,
         filterCompany: nextFilterCompany,
         filterSite: nextFilterSite,
         filterAuditType: nextFilterAuditType,
@@ -2243,21 +2325,18 @@ export function useScheduler() {
       if (newSite) newSite.split('/').map((s) => s.trim()).filter(Boolean).forEach(unblacklist);
       newAuditors.forEach(unblacklist);
 
-      // Prune old customer if no longer used and not a master item
+      // Prune old customer if no longer used
       if (oldCustomer && oldCustomer.toLowerCase() !== newCustomer.toLowerCase()) {
         const isOldCustomerStillUsed = nextAssignments.some(
           (a) => (a.customer || '').trim().toLowerCase() === oldCustomer.toLowerCase()
         );
         if (!isOldCustomerStillUsed) {
-          const isMaster = !!(s.masterCreatedOptions && s.masterCreatedOptions['customerOptions:' + oldCustomer.toLowerCase()]);
-          if (!isMaster) {
-            nextCustomerOptions = nextCustomerOptions.filter((c) => c.trim().toLowerCase() !== oldCustomer.toLowerCase());
-            if (!nextRemovedOptions.some((r) => r.toLowerCase() === oldCustomer.toLowerCase())) {
-              nextRemovedOptions = [...nextRemovedOptions, oldCustomer];
-            }
-            nextFilterCompany = nextFilterCompany.filter((f) => f.trim().toLowerCase() !== oldCustomer.toLowerCase());
-            api.deleteOption('customer_name', oldCustomer).catch(() => {});
+          nextCustomerOptions = nextCustomerOptions.filter((c) => c.trim().toLowerCase() !== oldCustomer.toLowerCase());
+          if (!nextRemovedOptions.some((r) => r.toLowerCase() === oldCustomer.toLowerCase())) {
+            nextRemovedOptions = [...nextRemovedOptions, oldCustomer];
           }
+          nextFilterCompany = nextFilterCompany.filter((f) => f.trim().toLowerCase() !== oldCustomer.toLowerCase());
+          api.deleteOption('customer_name', oldCustomer).catch(() => {});
         }
       }
 
@@ -4373,7 +4452,28 @@ export function useScheduler() {
   const customerTopicOptions = typeIsIA ? [] : computedCustomerDepartmentOptions;
   const internalTopicOptions = typeIsCS ? [] : computedInternalDepartmentOptions;
 
-  const companyNames = computedCustomerOptions;
+  const companyNames = useMemo(() => {
+    const activeCustomerSet = new Set<string>();
+    for (const a of S.assignments) {
+      const c = (a.customer || '').trim();
+      if (c && !removedSet.has(c)) {
+        activeCustomerSet.add(c.toLowerCase());
+      }
+    }
+    return computedCustomerOptions.filter((cust) =>
+      activeCustomerSet.has(cust.trim().toLowerCase())
+    );
+  }, [S.assignments, computedCustomerOptions, removedSet]);
+
+  useEffect(() => {
+    if (S.filterCompany.length > 0) {
+      const validCompanyNames = new Set(companyNames.map((c) => c.toLowerCase()));
+      const cleaned = S.filterCompany.filter((f) => validCompanyNames.has(f.toLowerCase()));
+      if (cleaned.length !== S.filterCompany.length) {
+        setState({ filterCompany: cleaned });
+      }
+    }
+  }, [companyNames, S.filterCompany, setState]);
   const auditTypes = typeIsIA ? [] : computedPurposeOptions;
   const apptTypeOptions = [{ value: 'CS', label: 'Customer Audit (CS)' }, { value: 'IA', label: 'Internal Audit (IA)' }];
   const hasFilters = !!(

@@ -47,6 +47,7 @@ export const api = {
 
   createOrder: (data: { id: string; code: string; customer: string; product: string; plant: string; purpose: string }) =>
     req('/orders', { method: 'POST', body: JSON.stringify(data) }),
+  deleteOrder: (id: string) => req('/orders/' + id, { method: 'DELETE' }),
 
   createAssignment: (data: Partial<Assignment> & { id: string; eng: string; order: string }) =>
     req('/assignments', { method: 'POST', body: JSON.stringify(data) }),

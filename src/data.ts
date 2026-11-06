@@ -123,12 +123,6 @@ export function initialState(): State {
       initialInternalDepartmentOptions.forEach((d) => { map['internalDepartmentOptions:' + d.toLowerCase()] = true; });
       initialDepartmentOptions.forEach((d) => { map['departmentOptions:' + d.toLowerCase()] = true; });
       initialPurposeOptions.forEach((p) => { map['purposeOptions:' + p.toLowerCase()] = true; });
-      (snapshot.customerOptions || []).forEach((c: string) => { map['customerOptions:' + c.toLowerCase()] = true; });
-      (snapshot.endCustomerOptions || []).forEach((c: string) => { map['endCustomerOptions:' + c.toLowerCase()] = true; });
-      (snapshot.auditorOptions || []).forEach((a: string) => { map['auditorOptions:' + a.toLowerCase()] = true; });
-      (snapshot.targetPackageOptions || []).forEach((t: string) => { map['targetPackageOptions:' + t.toLowerCase()] = true; });
-      (snapshot.customerNameOptions || []).forEach((c: string) => { map['customerNameOptions:' + c.toLowerCase()] = true; });
-      (snapshot.auditCategoryOptions || []).forEach((c: string) => { map['auditCategoryOptions:' + c.toLowerCase()] = true; });
       return map;
     })(),
     plants: snapshot.plants || initialPlants.map((p) => ({ ...p })),

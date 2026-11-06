@@ -439,8 +439,8 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
     if (method === 'DELETE' && path === 'options') {
       const { category, value } = body || {};
       if (category && value) {
-        await DB.prepare('DELETE FROM options WHERE category = ? AND value = ?')
-          .bind(category, value).run();
+        await DB.prepare('DELETE FROM options WHERE category = ? AND (value = ? OR LOWER(value) = LOWER(?))')
+          .bind(category, value, value).run();
       }
       return json({ ok: true });
     }
