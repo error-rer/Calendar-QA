@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { Assignment, Engineer } from '../types';
 import { normalizeSite, sortSites } from '../types';
+import { initialSiteCodeOptions } from '../data';
 import { css } from '../ui';
 import { AvailabilityDatePicker } from './AvailabilityDatePicker';
 
@@ -2040,7 +2041,7 @@ export function AppointmentFormFields({
   void isCustomerEHS; // retained for future use
   const customerSiteOptions = siteOptions && siteOptions.length > 0
     ? Array.from(new Set(siteOptions.map(normalizeSite)))
-    : ['UTL1', 'UTL2A', 'UTL2B', 'UTL3A', 'UTL3T'];
+    : initialSiteCodeOptions.map(normalizeSite);
 
   const isInternalEHS = v.department2.split(',').map((s) => s.trim()).includes('EHS');
   const internalSiteOptions = isInternalEHS

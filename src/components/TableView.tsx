@@ -23,8 +23,6 @@ interface TableRowData {
 
 type SortColumn = 'date' | 'auditType' | 'customer' | 'site' | 'standard' | 'auditCategory' | 'purpose' | 'targetPackage' | 'customerNames' | 'auditor';
 
-const CANONICAL_SITES = ['UTL1', 'UTL2', 'UTL2A', 'UTL2B', 'UTL3', 'UTL3A', 'UTL3T'];
-
 function TableMultiSelectFilter({
   label,
   allLabel,
@@ -841,7 +839,7 @@ export function TableView({ vm }: { vm: VM }) {
           <TableMultiSelectFilter
             label="Sites"
             allLabel="All Sites"
-            options={vm.siteCodeOptions && vm.siteCodeOptions.length > 0 ? vm.siteCodeOptions : CANONICAL_SITES}
+            options={vm.siteCodeOptions || []}
             selected={selectedSites}
             onChange={(next) => { setSelectedSites(next); setPage(1); }}
           />

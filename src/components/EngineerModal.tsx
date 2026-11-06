@@ -146,7 +146,7 @@ export function EngineerModal({ vm }: { vm: VM }) {
           <div>
             <label style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:8px;user-select:none')}>Department</label>
             <div style={css('display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px')}>
-              {(['QA', 'Non-QA'] as const).map((dept) => {
+              {(vm.departmentOptions && vm.departmentOptions.length > 0 ? vm.departmentOptions : ['QA', 'Non-QA']).map((dept) => {
                 const current = (f.department || '').trim();
                 const on = current.toLowerCase() === dept.toLowerCase();
                 return (
@@ -158,7 +158,7 @@ export function EngineerModal({ vm }: { vm: VM }) {
                       if (on) {
                         f.onDepartment(undefined);
                       } else {
-                        f.onDepartment(dept);
+                        f.onDepartment(dept as any);
                       }
                     }}
                   />
