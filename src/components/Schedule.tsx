@@ -36,11 +36,11 @@ function renderApptSubtitle(
     if (!trimmed || trimmed === 'Unassigned') {
       return (
         <span
-          className="text-white/90 italic font-medium"
+          className="font-normal text-white/90"
           style={{
             color: isInc ? 'rgba(255, 255, 255, 0.9)' : '#71717a',
-            fontStyle: 'italic',
-            fontWeight: 500,
+            fontStyle: 'normal',
+            fontWeight: 400,
           }}
         >
           Unassigned
@@ -53,11 +53,11 @@ function renderApptSubtitle(
         <span style={{ color }}>
           {p ? <span>{p} - </span> : null}
           <span
-            className="text-white/90 italic font-medium"
+            className="font-normal text-white/90"
             style={{
               color: isInc ? 'rgba(255, 255, 255, 0.9)' : '#71717a',
-              fontStyle: 'italic',
-              fontWeight: 500,
+              fontStyle: 'normal',
+              fontWeight: 400,
             }}
           >
             Unassigned
@@ -105,11 +105,11 @@ function renderApptSubtitle(
           </>
         ) : null}
         <span
-          className="text-white/90 italic font-medium"
+          className="font-normal text-white/90"
           style={{
             color: isInc ? 'rgba(255, 255, 255, 0.9)' : '#71717a',
-            fontStyle: 'italic',
-            fontWeight: 500,
+            fontStyle: 'normal',
+            fontWeight: 400,
           }}
         >
           Unassigned
@@ -375,7 +375,7 @@ function ApptCard({ chip }: { chip: any }) {
                   QMS Host: {chip.auditor && chip.auditor !== 'Unassigned' ? (
                     <span style={css('color:#3c423d')}>{chip.auditor}</span>
                   ) : (
-                    <span style={css('color:#dc2626;font-style:italic;font-weight:500')}>Unassigned</span>
+                    <span style={css('color:#dc2626;font-style:normal;font-weight:500')}>Unassigned</span>
                   )}
                 </div>
                 {chip.department && <div>Standard: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
@@ -388,7 +388,7 @@ function ApptCard({ chip }: { chip: any }) {
                   QMS Host: {chip.auditor && chip.auditor !== 'Unassigned' ? (
                     <span style={css('color:#3c423d')}>{chip.auditor}</span>
                   ) : (
-                    <span style={css('color:#dc2626;font-style:italic;font-weight:500')}>Unassigned</span>
+                    <span style={css('color:#dc2626;font-style:normal;font-weight:500')}>Unassigned</span>
                   )}
                 </div>
                 {chip.department && <div>Standard: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
@@ -945,7 +945,7 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
                   QMS Host: {chip.auditor && chip.auditor !== 'Unassigned' ? (
                     <span style={css('color:#3c423d')}>{chip.auditor}</span>
                   ) : (
-                    <span style={css('color:#dc2626;font-style:italic;font-weight:500')}>Unassigned</span>
+                    <span style={css('color:#dc2626;font-style:normal;font-weight:500')}>Unassigned</span>
                   )}
                 </div>
                 {chip.department && <div>Standard: <span style={css('color:#3c423d')}>{chip.department}</span></div>}
@@ -958,7 +958,7 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
                   QMS Host: {chip.auditor && chip.auditor !== 'Unassigned' ? (
                     <span style={css('color:#3c423d')}>{chip.auditor}</span>
                   ) : (
-                    <span style={css('color:#dc2626;font-style:italic;font-weight:500')}>Unassigned</span>
+                    <span style={css('color:#dc2626;font-style:normal;font-weight:500')}>Unassigned</span>
                   )}
                 </div>
                 {chip.department && <div>Standard: <span style={css('color:#3c423d')}>{chip.department}</span></div>}

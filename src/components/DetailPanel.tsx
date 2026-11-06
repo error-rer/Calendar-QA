@@ -46,7 +46,7 @@ export function DetailPanel({ vm: _vm }: { vm: VM }) {
                   QMS Host: {detail.auditor1 && detail.auditor1 !== 'Unassigned' ? (
                     <span style={css('color:#3c423d')}>{detail.auditor1}</span>
                   ) : (
-                    <span style={css('color:#dc2626;font-style:italic;font-weight:500')}>Unassigned</span>
+                    <span style={css('color:#dc2626;font-style:normal;font-weight:500')}>Unassigned</span>
                   )}
                 </div>
                 {detail.department1 ? (
@@ -66,7 +66,7 @@ export function DetailPanel({ vm: _vm }: { vm: VM }) {
                   QMS Host: {detail.auditor2 && detail.auditor2 !== 'Unassigned' ? (
                     <span style={css('color:#3c423d')}>{detail.auditor2}</span>
                   ) : (
-                    <span style={css('color:#dc2626;font-style:italic;font-weight:500')}>Unassigned</span>
+                    <span style={css('color:#dc2626;font-style:normal;font-weight:500')}>Unassigned</span>
                   )}
                 </div>
                 {detail.department2 ? (
