@@ -403,6 +403,14 @@ export function TableView({ vm }: { vm: VM }) {
 
   // Apply Sorting
   const sortedRows = useMemo(() => {
+    const getMasterIndex = (val: string, masterList?: readonly string[] | string[]) => {
+      if (!val) return 9999;
+      if (!masterList || masterList.length === 0) return 9999;
+      const first = val.split(/[,/]/)[0].trim().toLowerCase();
+      const idx = masterList.findIndex((item) => item.trim().toLowerCase() === first);
+      return idx !== -1 ? idx : 9999;
+    };
+
     return [...filteredRows].sort((a, b) => {
       let cmp = 0;
       if (sortCol === 'date') {
@@ -415,6 +423,62 @@ export function TableView({ vm }: { vm: VM }) {
         } else {
           cmp = (a.site || '').localeCompare(b.site || '');
         }
+      } else if (sortCol === 'standard') {
+        const idxA = getMasterIndex(a.standard, vm.standardFilterOptions);
+        const idxB = getMasterIndex(b.standard, vm.standardFilterOptions);
+        if (idxA !== idxB) {
+          cmp = idxA - idxB;
+        } else {
+          cmp = (a.standard || '').localeCompare(b.standard || '');
+        }
+      } else if (sortCol === 'customer') {
+        const idxA = getMasterIndex(a.customer, vm.customerOptions);
+        const idxB = getMasterIndex(b.customer, vm.customerOptions);
+        if (idxA !== idxB) {
+          cmp = idxA - idxB;
+        } else {
+          cmp = (a.customer || '').localeCompare(b.customer || '');
+        }
+      } else if (sortCol === 'auditCategory') {
+        const idxA = getMasterIndex(a.auditCategory, vm.auditCategoryFilterOptions);
+        const idxB = getMasterIndex(b.auditCategory, vm.auditCategoryFilterOptions);
+        if (idxA !== idxB) {
+          cmp = idxA - idxB;
+        } else {
+          cmp = (a.auditCategory || '').localeCompare(b.auditCategory || '');
+        }
+      } else if (sortCol === 'purpose') {
+        const idxA = getMasterIndex(a.purpose, vm.purposeOptions);
+        const idxB = getMasterIndex(b.purpose, vm.purposeOptions);
+        if (idxA !== idxB) {
+          cmp = idxA - idxB;
+        } else {
+          cmp = (a.purpose || '').localeCompare(b.purpose || '');
+        }
+      } else if (sortCol === 'targetPackage') {
+        const idxA = getMasterIndex(a.targetPackage, vm.targetPackageFilterOptions);
+        const idxB = getMasterIndex(b.targetPackage, vm.targetPackageFilterOptions);
+        if (idxA !== idxB) {
+          cmp = idxA - idxB;
+        } else {
+          cmp = (a.targetPackage || '').localeCompare(b.targetPackage || '');
+        }
+      } else if (sortCol === 'customerNames') {
+        const idxA = getMasterIndex(a.customerNames, vm.customerNameFilterOptions);
+        const idxB = getMasterIndex(b.customerNames, vm.customerNameFilterOptions);
+        if (idxA !== idxB) {
+          cmp = idxA - idxB;
+        } else {
+          cmp = (a.customerNames || '').localeCompare(b.customerNames || '');
+        }
+      } else if (sortCol === 'auditor') {
+        const idxA = getMasterIndex(a.auditor, vm.masterAuditorOptions);
+        const idxB = getMasterIndex(b.auditor, vm.masterAuditorOptions);
+        if (idxA !== idxB) {
+          cmp = idxA - idxB;
+        } else {
+          cmp = (a.auditor || '').localeCompare(b.auditor || '');
+        }
       } else {
         const valA = (a[sortCol] || '').toLowerCase();
         const valB = (b[sortCol] || '').toLowerCase();
@@ -422,7 +486,19 @@ export function TableView({ vm }: { vm: VM }) {
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [filteredRows, sortCol, sortDir, vm.siteCodeOptions]);
+  }, [
+    filteredRows,
+    sortCol,
+    sortDir,
+    vm.siteCodeOptions,
+    vm.standardFilterOptions,
+    vm.customerOptions,
+    vm.auditCategoryFilterOptions,
+    vm.purposeOptions,
+    vm.targetPackageFilterOptions,
+    vm.customerNameFilterOptions,
+    vm.masterAuditorOptions,
+  ]);
 
   // Apply Pagination
   const totalEntries = sortedRows.length;

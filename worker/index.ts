@@ -208,7 +208,15 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       const targetPackageOptions: string[] = [];
       const customerNameOptions: string[] = [];
       const auditCategoryOptions: string[] = [];
+      const orderMap: Record<string, string[]> = {};
+
       for (const row of (optionsRows.results as any[] || [])) {
+        if (row.category && row.category.startsWith('_order_')) {
+          try {
+            orderMap[row.category.replace('_order_', '')] = JSON.parse(row.value);
+          } catch {}
+          continue;
+        }
         if (row.category === 'purpose') purposeOptions.push(row.value);
         else if (row.category === 'customer_department') customerDepartmentOptions.push(row.value);
         else if (row.category === 'internal_department') internalDepartmentOptions.push(row.value);
@@ -235,6 +243,19 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
         }
       }
 
+      const applyOrder = (list: string[], cat: string) => {
+        const customOrder = orderMap[cat];
+        if (!customOrder || customOrder.length === 0) return list;
+        const indexMap = new Map<string, number>();
+        customOrder.forEach((val, idx) => indexMap.set(val.trim().toLowerCase(), idx));
+        return [...list].sort((a, b) => {
+          const idxA = indexMap.has(a.trim().toLowerCase()) ? indexMap.get(a.trim().toLowerCase())! : 9999;
+          const idxB = indexMap.has(b.trim().toLowerCase()) ? indexMap.get(b.trim().toLowerCase())! : 9999;
+          if (idxA !== idxB) return idxA - idxB;
+          return 0;
+        });
+      };
+
       return json({
         engineers: (engineers.results as any[]).map(engineerOut),
         plants: plants.results,
@@ -246,18 +267,18 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
           return acc;
         }, {} as Record<string, any[]>),
         activity: activity.results,
-        purposeOptions,
-        customerDepartmentOptions,
-        internalDepartmentOptions,
-        departmentOptions: departmentOptions.length > 0 ? departmentOptions : ['QA', 'Non-QA'],
-        siteCodeOptions,
+        purposeOptions: applyOrder(purposeOptions, 'purpose'),
+        customerDepartmentOptions: applyOrder(customerDepartmentOptions, 'customer_department'),
+        internalDepartmentOptions: applyOrder(internalDepartmentOptions, 'internal_department'),
+        departmentOptions: applyOrder(departmentOptions.length > 0 ? departmentOptions : ['QA', 'Non-QA'], 'department'),
+        siteCodeOptions: applyOrder(siteCodeOptions, 'site_code'),
         siteColors,
-        customerOptions,
-        endCustomerOptions,
-        auditorOptions,
-        targetPackageOptions,
-        customerNameOptions,
-        auditCategoryOptions,
+        customerOptions: applyOrder(customerOptions, 'customer_name'),
+        endCustomerOptions: applyOrder(endCustomerOptions, 'end_customer'),
+        auditorOptions: applyOrder(auditorOptions, 'auditor'),
+        targetPackageOptions: applyOrder(targetPackageOptions, 'target_package'),
+        customerNameOptions: applyOrder(customerNameOptions, 'customer_names'),
+        auditCategoryOptions: applyOrder(auditCategoryOptions, 'audit_category'),
       });
     }
 
@@ -441,6 +462,14 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       if (category && value) {
         await DB.prepare('DELETE FROM options WHERE category = ? AND (value = ? OR LOWER(value) = LOWER(?))')
           .bind(category, value, value).run();
+      }
+      return json({ ok: true });
+    }
+    if (method === 'PUT' && path === 'options/reorder') {
+      const { category, values } = body || {};
+      if (category && Array.isArray(values)) {
+        await DB.prepare("INSERT OR REPLACE INTO options (category, value, meta) VALUES (?, ?, '')")
+          .bind('_order_' + category, JSON.stringify(values)).run();
       }
       return json({ ok: true });
     }

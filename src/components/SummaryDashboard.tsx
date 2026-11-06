@@ -120,19 +120,19 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
     UTL3T: true,
   });
 
-  const targetSitesList = useMemo(() => {
-    if (!vm.siteCodeOptions || vm.siteCodeOptions.length === 0) return TARGET_SITES;
+  const targetSitesList = useMemo<TargetSite[]>(() => {
+    if (!vm.siteCodeOptions || vm.siteCodeOptions.length === 0) return [...TARGET_SITES];
     const configured = vm.siteCodeOptions
       .map(normalizeToTargetSite)
       .filter((s): s is TargetSite => s !== null);
-    const uniqueConfigured = Array.from(new Set(configured));
+    const uniqueConfigured: TargetSite[] = Array.from(new Set(configured));
     for (const s of TARGET_SITES) {
       if (!uniqueConfigured.includes(s)) uniqueConfigured.push(s);
     }
     return uniqueConfigured;
   }, [vm.siteCodeOptions]);
 
-  const allExpanded = TARGET_SITES.every((s) => expandedSites[s]);
+  const allExpanded = targetSitesList.every((s) => expandedSites[s]);
 
   const toggleSite = (site: TargetSite) => {
     setExpandedSites((prev) => ({ ...prev, [site]: !prev[site] }));
@@ -140,13 +140,9 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
 
   const toggleAll = () => {
     const nextState = !allExpanded;
-    setExpandedSites({
-      UTL1: nextState,
-      UTL2A: nextState,
-      UTL2B: nextState,
-      UTL3A: nextState,
-      UTL3T: nextState,
-    });
+    const nextMap: Record<string, boolean> = {};
+    targetSitesList.forEach((s) => { nextMap[s] = nextState; });
+    setExpandedSites(nextMap as Record<TargetSite, boolean>);
   };
 
 // Metric cards: Audits count in selected year
@@ -256,7 +252,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
       UTL3T: { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0, total: 0 },
     };
 
-    for (const site of TARGET_SITES) {
+    for (const site of targetSitesList) {
       for (let m = 0; m < 12; m++) {
         const monthSum =
           siteData[site].major[m] +
@@ -274,7 +270,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
       siteFullYearTotals[site].total = siteMonthlyTotal[site].reduce((a, b) => a + b, 0);
     }
 
-    // Grand totals across all 5 sites
+    // Grand totals across all configured sites
     const grandTotalMonthly: Record<CategoryKey, number[]> = {
       major: Array(12).fill(0),
       minor: Array(12).fill(0),
@@ -288,12 +284,12 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
     for (let m = 0; m < 12; m++) {
       for (const cat of CATEGORIES) {
         let sum = 0;
-        for (const site of TARGET_SITES) {
+        for (const site of targetSitesList) {
           sum += siteData[site][cat.key][m];
         }
         grandTotalMonthly[cat.key][m] = sum;
       }
-      overallMonthlyTotal[m] = TARGET_SITES.reduce((acc, site) => acc + siteMonthlyTotal[site][m], 0);
+      overallMonthlyTotal[m] = targetSitesList.reduce((acc, site) => acc + siteMonthlyTotal[site][m], 0);
     }
 
     const grandTotalFullYear: Record<CategoryKey | 'overall', number> = {
@@ -369,7 +365,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
 
     const monthlyTotals = Array(12).fill(0);
     for (let m = 0; m < 12; m++) {
-      for (const site of TARGET_SITES) {
+      for (const site of targetSitesList) {
         monthlyTotals[m] += siteVisits[site][m];
       }
     }
@@ -382,7 +378,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
       monthlyTotals,
       grandTotal,
     };
-  }, [vm.assignments, vm.summaryYear]);
+  }, [vm.assignments, vm.summaryYear, targetSitesList]);
 
   // Export Audit Visits to Excel
   const handleExportVisitsExcel = async () => {
@@ -398,7 +394,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
     const headerRowIndex = rows.length;
     rows.push(headers);
 
-    for (const site of TARGET_SITES) {
+    for (const site of targetSitesList) {
       rows.push([
         site,
         ...auditVisitsData.siteVisits[site],
@@ -511,7 +507,7 @@ const handleExportExcel = async () => {
     const siteHeaderRowIndices: number[] = [];
     const siteTotalRowIndices: number[] = [];
 
-    for (const site of TARGET_SITES) {
+    for (const site of targetSitesList) {
       siteHeaderRowIndices.push(rows.length);
 
       // Site Header Row
@@ -686,7 +682,7 @@ const handleExportExcel = async () => {
     vRows.push([]);
     const vHeaders = ['Site', ...MONTHS, 'Full Year Total'];
     vRows.push(vHeaders);
-    for (const site of TARGET_SITES) {
+    for (const site of targetSitesList) {
       vRows.push([site, ...auditVisitsData.siteVisits[site], auditVisitsData.siteFullYearTotals[site]]);
     }
     vRows.push(['Total', ...auditVisitsData.monthlyTotals, auditVisitsData.grandTotal]);

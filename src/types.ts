@@ -52,7 +52,20 @@ export const SITE_ORDER = [
 
 export type SiteCode = typeof SITE_ORDER[number];
 
-let currentConfiguredSiteOrder: string[] = [...SITE_ORDER];
+let currentConfiguredSiteOrder: string[] = (() => {
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('calendar_qa_snapshot');
+      if (raw) {
+        const snap = JSON.parse(raw);
+        if (snap.siteCodeOptions && snap.siteCodeOptions.length > 0) {
+          return snap.siteCodeOptions.map((s: string) => normalizeSite(s).toUpperCase());
+        }
+      }
+    } catch {}
+  }
+  return [...SITE_ORDER];
+})();
 
 export function setConfiguredSiteOrder(order: string[]) {
   if (order && order.length > 0) {

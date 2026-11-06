@@ -2777,6 +2777,13 @@ export function useScheduler() {
 
   const reorderOptions = (field: OptionListField, list: string[]) => {
     logActivity('REORDER', entityTypeMap[field] || 'OTHER', `Reordered ${entityNameMap[field] || 'option'} tags`);
+    if (field === 'siteCodeOptions') {
+      setConfiguredSiteOrder(list);
+    }
+    const category = fieldToCategory[field];
+    if (category) {
+      api.saveOptionOrder(category, list).catch(() => {});
+    }
     setState({ [field]: list });
   };
 
@@ -4420,10 +4427,10 @@ export function useScheduler() {
   }, [S.engineers, computedAuditorOptions]);
 
   const availableSiteCodes = S.filterAuditTopic.includes('EHS')
-    ? S.siteCodeOptions.filter((s) => ['UTL1', 'UTL2', 'UTL3', 'U1', 'U2', 'U3'].includes(s)).map(normalizeSite)
-    : S.siteCodeOptions.map(normalizeSite);
+    ? computedSiteCodeOptions.filter((s) => ['UTL1', 'UTL2', 'UTL3', 'U1', 'U2', 'U3'].includes(s))
+    : computedSiteCodeOptions;
   const siteOptions = [{ value: '', label: 'All sites' }, ...availableSiteCodes.map((s) => ({ value: s, label: s }))];
-  const siteColorList = S.siteCodeOptions.map((s) => ({ site: s, color: S.siteColors[s] || '#999' }));
+  const siteColorList = computedSiteCodeOptions.map((s) => ({ site: s, color: S.siteColors[s] || '#999' }));
   // filter dropdowns share the same admin-managed lists as the appointment form
   // (Manage > Options), so adding/removing an option there updates both. When the
   // Type filter narrows to just one type, the Department/Purpose dropdowns narrow

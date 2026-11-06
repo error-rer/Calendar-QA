@@ -66,5 +66,7 @@ export const api = {
     req('/options', { method: 'POST', body: JSON.stringify({ category, value, meta }) }),
   deleteOption: (category: string, value: string) =>
     req('/options', { method: 'DELETE', body: JSON.stringify({ category, value }) }),
+  saveOptionOrder: (category: string, values: string[]) =>
+    req('/options/reorder', { method: 'PUT', body: JSON.stringify({ category, values }) }),
 
 };

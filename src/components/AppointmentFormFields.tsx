@@ -302,11 +302,11 @@ function MultiSiteSelect({
   const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedSites = useMemo(() => {
-    return value ? sortSites(value.split(/[/,]/).map((s) => normalizeSite(s.trim())).filter(Boolean)) : [];
-  }, [value]);
+    return value ? sortSites(value.split(/[/,]/).map((s) => normalizeSite(s.trim())).filter(Boolean), siteOptions) : [];
+  }, [value, siteOptions]);
 
   const sortedSiteOptions = useMemo(() => {
-    return sortSites(Array.from(new Set(siteOptions.map((s) => normalizeSite(s.trim())).filter(Boolean))));
+    return sortSites(Array.from(new Set(siteOptions.map((s) => normalizeSite(s.trim())).filter(Boolean))), siteOptions);
   }, [siteOptions]);
 
   useEffect(() => {
@@ -327,7 +327,7 @@ function MultiSiteSelect({
     } else {
       next = [...selectedSites, site];
     }
-    const sorted = sortSites(next);
+    const sorted = sortSites(next, siteOptions);
     onChange(sorted.join('/'));
   };
 
@@ -1193,11 +1193,29 @@ function MultiStandardSelect({
   const internalInputRef = useRef<HTMLInputElement>(null);
   const activeInputRef = inputRef || internalInputRef;
 
+  const sortStandardsBySuggestions = (items: string[]) => {
+    const orderMap = new Map<string, number>();
+    suggestions.forEach((s, idx) => orderMap.set(s.trim().toLowerCase(), idx));
+    return [...items].sort((a, b) => {
+      const idxA = orderMap.has(a.trim().toLowerCase()) ? orderMap.get(a.trim().toLowerCase())! : 999;
+      const idxB = orderMap.has(b.trim().toLowerCase()) ? orderMap.get(b.trim().toLowerCase())! : 999;
+      if (idxA !== idxB) return idxA - idxB;
+      return a.localeCompare(b);
+    });
+  };
+
   const selectedStandards = useMemo(() => {
-    return value
-      ? value.split(',').map((s) => s.trim()).filter(Boolean)
-      : [];
-  }, [value]);
+    if (!value) return [];
+    const parsed = value.split(',').map((s) => s.trim()).filter(Boolean);
+    const orderMap = new Map<string, number>();
+    suggestions.forEach((s, idx) => orderMap.set(s.trim().toLowerCase(), idx));
+    return [...parsed].sort((a, b) => {
+      const idxA = orderMap.has(a.trim().toLowerCase()) ? orderMap.get(a.trim().toLowerCase())! : 999;
+      const idxB = orderMap.has(b.trim().toLowerCase()) ? orderMap.get(b.trim().toLowerCase())! : 999;
+      if (idxA !== idxB) return idxA - idxB;
+      return a.localeCompare(b);
+    });
+  }, [value, suggestions]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -1217,12 +1235,12 @@ function MultiStandardSelect({
     const next = isAlreadySel
       ? selectedStandards.filter((s) => s.toLowerCase() !== cleanName.toLowerCase())
       : [...selectedStandards, cleanName];
-    onChange(next.join(', '));
+    onChange(sortStandardsBySuggestions(next).join(', '));
   };
 
   const removeStandard = (name: string) => {
     const next = selectedStandards.filter((s) => s.toLowerCase() !== name.toLowerCase());
-    onChange(next.join(', '));
+    onChange(sortStandardsBySuggestions(next).join(', '));
   };
 
   const addCustom = () => {
@@ -1231,7 +1249,7 @@ function MultiStandardSelect({
     const pieces = clean.split(',').map((s) => s.trim()).filter(Boolean);
     const toAdd = pieces.filter((p) => !selectedStandards.some((sel) => sel.toLowerCase() === p.toLowerCase()));
     if (toAdd.length > 0) {
-      onChange([...selectedStandards, ...toAdd].join(', '));
+      onChange(sortStandardsBySuggestions([...selectedStandards, ...toAdd]).join(', '));
       if (onAddNew) {
         toAdd.forEach((p) => {
           if (!suggestions.some((s) => s.toLowerCase() === p.toLowerCase())) {
