@@ -1,11 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import type { VM } from '../useScheduler';
 import type { Assignment, SiteAuditResult } from '../types';
 import { css } from '../ui';
 import { isInternalAssignment, calculateCustomerAuditsCount } from '../types';
 
-const TARGET_SITES = ['UTL1', 'UTL2A', 'UTL2B', 'UTL3A', 'UTL3T'] as const;
-type TargetSite = typeof TARGET_SITES[number];
+export const CANONICAL_SITE_ORDER = ['UTL1', 'UTL2A', 'UTL2B', 'UTL3', 'UTL3A', 'UTL3B', 'UTL3T'] as const;
+export type CanonicalSite = typeof CANONICAL_SITE_ORDER[number];
+type TargetSite = CanonicalSite;
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const;
 
@@ -53,8 +54,10 @@ const DEFAULT_SITE_PALETTE: Record<string, { bg: string; text: string; border: s
   UTL1: { bg: '#fff1f2', text: '#be123c', border: '#fecdd3' }, // soft red / rose
   UTL2A: { bg: '#ecfdf5', text: '#047857', border: '#a7f3d0' }, // soft emerald
   UTL2B: { bg: '#f0fdfa', text: '#0f766e', border: '#99f6e4' }, // soft green / teal
-  UTL3A: { bg: '#f0f9ff', text: '#0369a1', border: '#bae6fd' }, // soft blue / sky
-  UTL3T: { bg: '#eef2ff', text: '#4338ca', border: '#c7d2fe' }, // soft indigo / purple
+  UTL3: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' }, // soft blue
+  UTL3A: { bg: '#f0f9ff', text: '#0369a1', border: '#bae6fd' }, // soft sky
+  UTL3B: { bg: '#f5f3ff', text: '#6d28d9', border: '#ddd6fe' }, // soft violet
+  UTL3T: { bg: '#eef2ff', text: '#4338ca', border: '#c7d2fe' }, // soft indigo
 };
 
 interface SiteOptionLike {
@@ -97,10 +100,12 @@ function getSiteBadgeStyle(
 function normalizeToTargetSite(siteKey: string): TargetSite | null {
   const s = siteKey.trim().toUpperCase().replace(/[\s-_]/g, '');
   if (s === 'UTL1' || s === 'U1') return 'UTL1';
-  if (s === 'UTL2A' || s === 'U2A' || s === 'UTL2' || s === 'U2') return 'UTL2A';
   if (s === 'UTL2B' || s === 'U2B') return 'UTL2B';
-  if (s === 'UTL3A' || s === 'U3A' || s === 'UTL3' || s === 'U3') return 'UTL3A';
+  if (s === 'UTL2A' || s === 'U2A' || s === 'UTL2' || s === 'U2') return 'UTL2A';
+  if (s === 'UTL3B' || s === 'U3B') return 'UTL3B';
   if (s === 'UTL3T' || s === 'U3T') return 'UTL3T';
+  if (s === 'UTL3A' || s === 'U3A') return 'UTL3A';
+  if (s === 'UTL3' || s === 'U3') return 'UTL3';
   return null;
 }
 
@@ -111,25 +116,44 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
     if (!isNaN(n)) vm.setSummaryYear(n);
   };
 
-  // State to track expand/collapse for each of the 5 sites (default all expanded)
+  // Dropdown state for Export Findings to Excel
+  const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
+  const exportDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!exportDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(e.target as Node)) {
+        setExportDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [exportDropdownOpen]);
+
+  // State to track expand/collapse for each canonical site (default all expanded)
   const [expandedSites, setExpandedSites] = useState<Record<TargetSite, boolean>>({
     UTL1: true,
     UTL2A: true,
     UTL2B: true,
+    UTL3: true,
     UTL3A: true,
+    UTL3B: true,
     UTL3T: true,
   });
 
   const targetSitesList = useMemo<TargetSite[]>(() => {
-    if (!vm.siteCodeOptions || vm.siteCodeOptions.length === 0) return [...TARGET_SITES];
+    if (!vm.siteCodeOptions || vm.siteCodeOptions.length === 0) return [...CANONICAL_SITE_ORDER];
     const configured = vm.siteCodeOptions
       .map(normalizeToTargetSite)
       .filter((s): s is TargetSite => s !== null);
     const uniqueConfigured: TargetSite[] = Array.from(new Set(configured));
-    for (const s of TARGET_SITES) {
+    for (const s of CANONICAL_SITE_ORDER) {
       if (!uniqueConfigured.includes(s)) uniqueConfigured.push(s);
     }
-    return uniqueConfigured;
+    return uniqueConfigured.sort(
+      (a, b) => CANONICAL_SITE_ORDER.indexOf(a) - CANONICAL_SITE_ORDER.indexOf(b)
+    );
   }, [vm.siteCodeOptions]);
 
   const allExpanded = targetSitesList.every((s) => expandedSites[s]);
@@ -172,7 +196,9 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
       UTL1: { major: Array(12).fill(0), minor: Array(12).fill(0), ofi: Array(12).fill(0), obs: Array(12).fill(0), findings: Array(12).fill(0) },
       UTL2A: { major: Array(12).fill(0), minor: Array(12).fill(0), ofi: Array(12).fill(0), obs: Array(12).fill(0), findings: Array(12).fill(0) },
       UTL2B: { major: Array(12).fill(0), minor: Array(12).fill(0), ofi: Array(12).fill(0), obs: Array(12).fill(0), findings: Array(12).fill(0) },
+      UTL3: { major: Array(12).fill(0), minor: Array(12).fill(0), ofi: Array(12).fill(0), obs: Array(12).fill(0), findings: Array(12).fill(0) },
       UTL3A: { major: Array(12).fill(0), minor: Array(12).fill(0), ofi: Array(12).fill(0), obs: Array(12).fill(0), findings: Array(12).fill(0) },
+      UTL3B: { major: Array(12).fill(0), minor: Array(12).fill(0), ofi: Array(12).fill(0), obs: Array(12).fill(0), findings: Array(12).fill(0) },
       UTL3T: { major: Array(12).fill(0), minor: Array(12).fill(0), ofi: Array(12).fill(0), obs: Array(12).fill(0), findings: Array(12).fill(0) },
     };
 
@@ -240,7 +266,9 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
       UTL1: Array(12).fill(0),
       UTL2A: Array(12).fill(0),
       UTL2B: Array(12).fill(0),
+      UTL3: Array(12).fill(0),
       UTL3A: Array(12).fill(0),
+      UTL3B: Array(12).fill(0),
       UTL3T: Array(12).fill(0),
     };
 
@@ -248,7 +276,9 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
       UTL1: { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0, total: 0 },
       UTL2A: { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0, total: 0 },
       UTL2B: { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0, total: 0 },
+      UTL3: { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0, total: 0 },
       UTL3A: { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0, total: 0 },
+      UTL3B: { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0, total: 0 },
       UTL3T: { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0, total: 0 },
     };
 
@@ -314,13 +344,15 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
   const totalFindings = matrixData.grandTotalFullYear.overall;
 
   // Export to Excel with custom styles, borders, and structured grouping
-    // Aggregate Audit Visits by Site (UTL1, UTL2A, UTL2B, UTL3A, UTL3T) and Month (0..11)
+    // Aggregate Audit Visits by Site (UTL1, UTL2A, UTL2B, UTL3, UTL3A, UTL3B, UTL3T) and Month (0..11)
   const auditVisitsData = useMemo(() => {
     const siteVisits: Record<TargetSite, number[]> = {
       UTL1: Array(12).fill(0),
       UTL2A: Array(12).fill(0),
       UTL2B: Array(12).fill(0),
+      UTL3: Array(12).fill(0),
       UTL3A: Array(12).fill(0),
+      UTL3B: Array(12).fill(0),
       UTL3T: Array(12).fill(0),
     };
 
@@ -359,7 +391,9 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
       UTL1: siteVisits.UTL1.reduce((a, b) => a + b, 0),
       UTL2A: siteVisits.UTL2A.reduce((a, b) => a + b, 0),
       UTL2B: siteVisits.UTL2B.reduce((a, b) => a + b, 0),
+      UTL3: siteVisits.UTL3.reduce((a, b) => a + b, 0),
       UTL3A: siteVisits.UTL3A.reduce((a, b) => a + b, 0),
+      UTL3B: siteVisits.UTL3B.reduce((a, b) => a + b, 0),
       UTL3T: siteVisits.UTL3T.reduce((a, b) => a + b, 0),
     };
 
@@ -491,78 +525,129 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
     XLSX.writeFile(workbook, `audit-visits-${vm.summaryYear}.xlsx`);
   };
 
-const handleExportExcel = async () => {
+  const handleExportFindingsExcel = async (
+    mode: 'all' | 'summary' | 'single',
+    selectedSite?: TargetSite
+  ) => {
     // @ts-ignore
     const XLSX = (await import('xlsx-js-style')).default || (await import('xlsx-js-style'));
 
-    const headers = ['', ...MONTHS, 'Full Year Total'];
+    const headers = ['Site / Finding Category', ...MONTHS, 'Full Year Total'];
     const rows: (string | number)[][] = [];
-
-    rows.push([`UTAC - Audit Findings by Site (Year ${vm.summaryYear})`]);
-    rows.push([]);
-
-    const headerRowIndex = rows.length;
-    rows.push(headers);
 
     const siteHeaderRowIndices: number[] = [];
     const siteTotalRowIndices: number[] = [];
+    let grandHeaderIdx = -1;
+    let overallTotalIdx = -1;
 
-    for (const site of targetSitesList) {
-      siteHeaderRowIndices.push(rows.length);
+    let filename = '';
+    let sheetName = '';
 
-      // Site Header Row
-      rows.push([
-        site,
-        ...Array(12).fill(''),
-        '',
-      ]);
+    if (mode === 'all') {
+      filename = `Audit_Findings_All_Sites_${vm.summaryYear}.xlsx`;
+      sheetName = `Findings All Sites ${vm.summaryYear}`;
+      rows.push([`UTAC - Audit Findings by Site - All Sites (Year ${vm.summaryYear})`]);
+      rows.push([]);
+      rows.push(headers);
 
-      // Category Sub-rows
+      for (const site of CANONICAL_SITE_ORDER) {
+        siteHeaderRowIndices.push(rows.length);
+        rows.push([site, ...Array(12).fill(''), '']);
+
+        for (const cat of CATEGORIES) {
+          rows.push([
+            `    ${cat.label}`,
+            ...matrixData.siteData[site][cat.key],
+            matrixData.siteFullYearTotals[site][cat.key],
+          ]);
+        }
+
+        siteTotalRowIndices.push(rows.length);
+        rows.push([
+          `Total ${site}`,
+          ...matrixData.siteMonthlyTotal[site],
+          matrixData.siteFullYearTotals[site].total,
+        ]);
+
+        rows.push([]);
+      }
+
+      grandHeaderIdx = rows.length;
+      rows.push(['Grand Total Across All Sites', ...Array(12).fill(''), '']);
+
       for (const cat of CATEGORIES) {
         rows.push([
-          `    ${cat.label}`,
-          ...matrixData.siteData[site][cat.key],
-          matrixData.siteFullYearTotals[site][cat.key],
+          `    Total ${cat.label}`,
+          ...matrixData.grandTotalMonthly[cat.key],
+          matrixData.grandTotalFullYear[cat.key],
         ]);
       }
 
-      // Site Total sub-row
-      siteTotalRowIndices.push(rows.length);
+      overallTotalIdx = rows.length;
       rows.push([
-        `    ${site} Total`,
-        ...matrixData.siteMonthlyTotal[site],
-        matrixData.siteFullYearTotals[site].total,
+        'Overall Grand Total',
+        ...matrixData.overallMonthlyTotal,
+        matrixData.grandTotalFullYear.overall,
       ]);
+    } else if (mode === 'summary') {
+      filename = `Audit_Findings_Summary_${vm.summaryYear}.xlsx`;
+      sheetName = `Findings Summary ${vm.summaryYear}`;
+      rows.push([`UTAC - Audit Findings Summary by Site (Year ${vm.summaryYear})`]);
+      rows.push([]);
+      rows.push(headers);
+
+      for (const site of CANONICAL_SITE_ORDER) {
+        siteTotalRowIndices.push(rows.length);
+        rows.push([
+          `Total ${site}`,
+          ...matrixData.siteMonthlyTotal[site],
+          matrixData.siteFullYearTotals[site].total,
+        ]);
+      }
 
       rows.push([]);
-    }
 
-    // Grand Total Section
-    const grandHeaderIdx = rows.length;
-    rows.push(['Grand Total Across All Sites', ...Array(12).fill(''), '']);
-
-    for (const cat of CATEGORIES) {
+      overallTotalIdx = rows.length;
       rows.push([
-        `    Total ${cat.label}`,
-        ...matrixData.grandTotalMonthly[cat.key],
-        matrixData.grandTotalFullYear[cat.key],
+        'Overall Grand Total',
+        ...matrixData.overallMonthlyTotal,
+        matrixData.grandTotalFullYear.overall,
+      ]);
+    } else if (mode === 'single' && selectedSite) {
+      filename = `Audit_Findings_${selectedSite}_${vm.summaryYear}.xlsx`;
+      sheetName = `${selectedSite} ${vm.summaryYear}`;
+      rows.push([`UTAC - Audit Findings - ${selectedSite} (Year ${vm.summaryYear})`]);
+      rows.push([]);
+      rows.push(headers);
+
+      siteHeaderRowIndices.push(rows.length);
+      rows.push([selectedSite, ...Array(12).fill(''), '']);
+
+      for (const cat of CATEGORIES) {
+        rows.push([
+          `    ${cat.label}`,
+          ...matrixData.siteData[selectedSite][cat.key],
+          matrixData.siteFullYearTotals[selectedSite][cat.key],
+        ]);
+      }
+
+      siteTotalRowIndices.push(rows.length);
+      rows.push([
+        `Total ${selectedSite}`,
+        ...matrixData.siteMonthlyTotal[selectedSite],
+        matrixData.siteFullYearTotals[selectedSite].total,
       ]);
     }
 
-    const overallTotalIdx = rows.length;
-    rows.push([
-      'Overall Monthly Total',
-      ...matrixData.overallMonthlyTotal,
-      matrixData.grandTotalFullYear.overall,
-    ]);
-
     const worksheet = XLSX.utils.aoa_to_sheet(rows);
+    const headerRowIndex = 2;
 
     // Style Title Cell
     const titleCell = XLSX.utils.encode_cell({ r: 0, c: 0 });
     if (worksheet[titleCell]) {
       worksheet[titleCell].s = {
         font: { name: 'Calibri', sz: 14, bold: true, color: { rgb: '0F172A' } },
+        alignment: { horizontal: 'left', vertical: 'center' },
       };
     }
 
@@ -621,45 +706,70 @@ const handleExportExcel = async () => {
     }
 
     // Style Grand Total Header
-    for (let col = 0; col < headers.length; col++) {
-      const cellAddress = XLSX.utils.encode_cell({ r: grandHeaderIdx, c: col });
-      if (worksheet[cellAddress]) {
-        worksheet[cellAddress].s = {
-          font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: '0F172A' } },
-          alignment: { horizontal: 'left', vertical: 'center' },
-          fill: { fgColor: { rgb: 'E2E8F0' } },
-          border: {
-            top: { style: 'medium', color: { rgb: '475569' } },
-            bottom: { style: 'thin', color: { rgb: '94A3B8' } },
-          },
-        };
+    if (grandHeaderIdx >= 0) {
+      for (let col = 0; col < headers.length; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: grandHeaderIdx, c: col });
+        if (worksheet[cellAddress]) {
+          worksheet[cellAddress].s = {
+            font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: '0F172A' } },
+            alignment: { horizontal: 'left', vertical: 'center' },
+            fill: { fgColor: { rgb: 'E2E8F0' } },
+            border: {
+              top: { style: 'medium', color: { rgb: '475569' } },
+              bottom: { style: 'thin', color: { rgb: '94A3B8' } },
+            },
+          };
+        }
       }
     }
 
     // Style Overall Monthly Total
-    for (let col = 0; col < headers.length; col++) {
-      const cellAddress = XLSX.utils.encode_cell({ r: overallTotalIdx, c: col });
-      if (worksheet[cellAddress]) {
-        worksheet[cellAddress].s = {
-          font: { name: 'Calibri', sz: 11, bold: true, color: col === headers.length - 1 ? { rgb: '2563EB' } : { rgb: '0F172A' } },
-          alignment: { horizontal: col === 0 ? 'left' : 'right', vertical: 'center' },
-          fill: { fgColor: { rgb: 'E2E8F0' } },
-          border: {
-            top: { style: 'medium', color: { rgb: '475569' } },
-            bottom: { style: 'double', color: { rgb: '0F172A' } },
-          },
-        };
+    if (overallTotalIdx >= 0) {
+      for (let col = 0; col < headers.length; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: overallTotalIdx, c: col });
+        if (worksheet[cellAddress]) {
+          worksheet[cellAddress].s = {
+            font: {
+              name: 'Calibri',
+              sz: 11,
+              bold: true,
+              color: col === headers.length - 1 ? { rgb: '2563EB' } : { rgb: '0F172A' },
+            },
+            alignment: { horizontal: col === 0 ? 'left' : 'right', vertical: 'center' },
+            fill: { fgColor: { rgb: 'E2E8F0' } },
+            border: {
+              top: { style: 'medium', color: { rgb: '475569' } },
+              bottom: { style: 'double', color: { rgb: '0F172A' } },
+            },
+          };
+        }
       }
     }
 
     // Style all standard data rows
     for (let r = headerRowIndex + 1; r < rows.length; r++) {
-      if (siteHeaderRowIndices.includes(r) || siteTotalRowIndices.includes(r) || r === grandHeaderIdx || r === overallTotalIdx) continue;
+      if (
+        siteHeaderRowIndices.includes(r) ||
+        siteTotalRowIndices.includes(r) ||
+        r === grandHeaderIdx ||
+        r === overallTotalIdx
+      ) {
+        continue;
+      }
+      if (!rows[r] || rows[r].length === 0) continue;
+
       for (let col = 0; col < headers.length; col++) {
         const cellAddress = XLSX.utils.encode_cell({ r, c: col });
         if (worksheet[cellAddress] && !worksheet[cellAddress].s) {
+          const val = worksheet[cellAddress].v;
+          const isNum = typeof val === 'number';
           worksheet[cellAddress].s = {
-            font: { name: 'Calibri', sz: 10, color: { rgb: '334155' } },
+            font: {
+              name: 'Calibri',
+              sz: 10,
+              bold: col === headers.length - 1 && isNum && val > 0,
+              color: isNum && val === 0 ? { rgb: '94A3B8' } : { rgb: '334155' },
+            },
             alignment: { horizontal: col === 0 ? 'left' : 'right', vertical: 'center' },
             border: {
               bottom: { style: 'hair', color: { rgb: 'E2E8F0' } },
@@ -672,25 +782,12 @@ const handleExportExcel = async () => {
     worksheet['!cols'] = [
       { wch: 30 },
       ...Array.from({ length: 12 }, () => ({ wch: 9 })),
-      { wch: 15 },
+      { wch: 16 },
     ];
 
     const workbook = XLSX.utils.book_new();
-    // Generate Visits Worksheet
-    const vRows: (string | number)[][] = [];
-    vRows.push([`UTAC - Customer Audit Visits by Site (Year ${vm.summaryYear})`]);
-    vRows.push([]);
-    const vHeaders = ['Site', ...MONTHS, 'Full Year Total'];
-    vRows.push(vHeaders);
-    for (const site of targetSitesList) {
-      vRows.push([site, ...auditVisitsData.siteVisits[site], auditVisitsData.siteFullYearTotals[site]]);
-    }
-    vRows.push(['Total', ...auditVisitsData.monthlyTotals, auditVisitsData.grandTotal]);
-    const visitsWorksheet = XLSX.utils.aoa_to_sheet(vRows);
-    visitsWorksheet['!cols'] = [{ wch: 18 }, ...Array.from({ length: 12 }, () => ({ wch: 9 })), { wch: 15 }];
-    XLSX.utils.book_append_sheet(workbook, visitsWorksheet, `Visits ${vm.summaryYear}`);
-    XLSX.utils.book_append_sheet(workbook, worksheet, `Findings ${vm.summaryYear}`);
-    XLSX.writeFile(workbook, `annual-audit-findings-${vm.summaryYear}.xlsx`);
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName.slice(0, 31));
+    XLSX.writeFile(workbook, filename);
   };
 
   const gridCols = '220px repeat(12, minmax(48px, 1fr)) 96px';
@@ -900,7 +997,7 @@ const handleExportExcel = async () => {
                 Audit Findings by Site
               </div>
               <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8a9088;margin-top:2px")}>
-                5 Sites (UTL1, UTL2A, UTL2B, UTL3A, UTL3T) · 12 Months · Year {vm.summaryYear}
+                {targetSitesList.length} Sites ({targetSitesList.join(', ')}) · 12 Months · Year {vm.summaryYear}
               </div>
             </div>
 
@@ -919,19 +1016,142 @@ const handleExportExcel = async () => {
                 {allExpanded ? 'Collapse All' : 'Expand All'}
               </button>
 
-              <button
-                onClick={handleExportExcel}
-                style={css('display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:7px;border:1px solid #10b981;background:#f0fdf4;cursor:pointer;font-size:12px;font-weight:600;color:#047857;font-family:\'Archivo\',sans-serif')}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <polyline points="14 2 14 8 20 8" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <line x1="8" y1="13" x2="16" y2="13" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <line x1="8" y1="17" x2="16" y2="17" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <polyline points="10 9 9 9 8 9" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Export to Excel
-              </button>
+              {/* Export to Excel Dropdown Menu */}
+              <div ref={exportDropdownRef} style={css('position:relative;display:inline-block')}>
+                <button
+                  type="button"
+                  onClick={() => setExportDropdownOpen((prev) => !prev)}
+                  style={css(
+                    'display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:7px;border:1px solid #10b981;background:#f0fdf4;cursor:pointer;font-size:12px;font-weight:600;color:#047857;font-family:\'Archivo\',sans-serif;transition:all 0.15s ease'
+                  )}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#dcfce7';
+                    e.currentTarget.style.borderColor = '#059669';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#f0fdf4';
+                    e.currentTarget.style.borderColor = '#10b981';
+                  }}
+                  aria-haspopup="true"
+                  aria-expanded={exportDropdownOpen}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <polyline points="14 2 14 8 20 8" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <line x1="8" y1="13" x2="16" y2="13" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <line x1="8" y1="17" x2="16" y2="17" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <polyline points="10 9 9 9 8 9" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>Export to Excel</span>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#047857"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{
+                      transform: exportDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.15s ease',
+                    }}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+
+                {exportDropdownOpen && (
+                  <div
+                    style={css(
+                      'position:absolute;right:0;top:calc(100% + 4px);z-index:50;min-width:260px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 10px 25px -5px rgba(0,0,0,0.1),0 8px 10px -6px rgba(0,0,0,0.1);padding:6px;font-family:\'Archivo\',sans-serif'
+                    )}
+                  >
+                    {/* Option 1: Full Matrix */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExportDropdownOpen(false);
+                        handleExportFindingsExcel('all');
+                      }}
+                      style={css(
+                        'width:100%;text-align:left;display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:6px;border:none;background:transparent;cursor:pointer;font-size:12.5px;font-weight:600;color:#1e293b;transition:background 0.12s'
+                      )}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#f8fafc')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginTop: '2px', flexShrink: 0 }}>
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="3" y1="9" x2="21" y2="9"/>
+                        <line x1="3" y1="15" x2="21" y2="15"/>
+                        <line x1="9" y1="3" x2="9" y2="21"/>
+                        <line x1="15" y1="3" x2="15" y2="21"/>
+                      </svg>
+                      <div>
+                        <div>Export All Sites (Full Matrix)</div>
+                        <div style={css('font-size:11px;font-weight:400;color:#64748b;margin-top:1px')}>
+                          Complete 12-month report across all 7 sites
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Option 2: Summary Only */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExportDropdownOpen(false);
+                        handleExportFindingsExcel('summary');
+                      }}
+                      style={css(
+                        'width:100%;text-align:left;display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:6px;border:none;background:transparent;cursor:pointer;font-size:12.5px;font-weight:600;color:#1e293b;transition:background 0.12s'
+                      )}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#f8fafc')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginTop: '2px', flexShrink: 0 }}>
+                        <line x1="8" y1="6" x2="21" y2="6"/>
+                        <line x1="8" y1="12" x2="21" y2="12"/>
+                        <line x1="8" y1="18" x2="21" y2="18"/>
+                        <line x1="3" y1="6" x2="3.01" y2="6"/>
+                        <line x1="3" y1="12" x2="3.01" y2="12"/>
+                        <line x1="3" y1="18" x2="3.01" y2="18"/>
+                      </svg>
+                      <div>
+                        <div>Export Summary Only</div>
+                        <div style={css('font-size:11px;font-weight:400;color:#64748b;margin-top:1px')}>
+                          Subtotals per site &amp; overall grand total
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Divider Line */}
+                    <div style={css('height:1px;background:#e2e8f0;margin:6px 0')} />
+                    <div style={css('padding:4px 10px 2px;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px')}>
+                      Individual Sites
+                    </div>
+
+                    {/* Individual Sites list */}
+                    {targetSitesList.map((site) => (
+                      <button
+                        key={site}
+                        type="button"
+                        onClick={() => {
+                          setExportDropdownOpen(false);
+                          handleExportFindingsExcel('single', site);
+                        }}
+                        style={css(
+                          'width:100%;text-align:left;display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;border:none;background:transparent;cursor:pointer;font-size:12px;font-weight:500;color:#334155;transition:background 0.12s'
+                        )}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = '#f1f5f9')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        <span style={css('display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981')} />
+                        <span>Export {site} only</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
