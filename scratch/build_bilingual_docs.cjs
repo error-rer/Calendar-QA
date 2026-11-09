@@ -1,0 +1,1801 @@
+const fs = require('fs');
+const path = require('path');
+
+// Helper to generate common CSS
+function getCommonCss() {
+  return `
+    :root {
+      --primary: #0f9d8c;
+      --primary-dark: #0b7a6d;
+      --primary-light: #e6f7f5;
+      --accent: #2f6df0;
+      --accent-dark: #1e4eb8;
+      --accent-light: #edf2fe;
+      --warning: #d97706;
+      --warning-light: #fef3c7;
+      --danger: #dc2626;
+      --danger-light: #fee2e2;
+      --success: #16a34a;
+      --success-light: #dcfce7;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --bg-body: #f8fafc;
+      --bg-card: #ffffff;
+      --border: #e2e8f0;
+      --border-dark: #cbd5e1;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Sarabun", "Noto Sans Thai", Helvetica, Arial, sans-serif;
+      color: var(--text-main);
+      background-color: var(--bg-body);
+      line-height: 1.6;
+      font-size: 15px;
+      overflow-x: hidden;
+    }
+
+    /* Layout Structure */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-logo {
+      height: 38px;
+      width: auto;
+      border-radius: var(--radius-sm);
+      object-fit: contain;
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 10px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border-radius: 9999px;
+      border: 1px solid rgba(15, 157, 140, 0.2);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .lang-switch-group {
+      display: inline-flex;
+      align-items: center;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .lang-btn {
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-radius: 4px;
+      transition: all 0.15s ease;
+    }
+    .lang-btn:hover {
+      color: var(--text-main);
+    }
+    .lang-btn.active {
+      background: #ffffff;
+      color: var(--primary-dark);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .btn-header {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-outline {
+      background: #fff;
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover {
+      background: #f1f5f9;
+      border-color: var(--border-dark);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border: 1px solid transparent;
+    }
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    /* Container Grid */
+    .docs-container {
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr);
+      min-height: calc(100vh - 63px);
+    }
+
+    /* Sidebar Navigation */
+    .docs-sidebar {
+      position: sticky;
+      top: 63px;
+      height: calc(100vh - 63px);
+      overflow-y: auto;
+      padding: 24px 18px;
+      background: #ffffff;
+      border-right: 1px solid var(--border);
+    }
+
+    .search-box {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 8px 12px 8px 32px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      outline: none;
+      background: #f8fafc;
+      transition: all 0.2s;
+    }
+    .search-input:focus {
+      background: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(15, 157, 140, 0.15);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .nav-group-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      margin: 18px 0 8px 8px;
+    }
+
+    .nav-links {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 12px;
+      font-size: 13.5px;
+      color: #334155;
+      text-decoration: none;
+      border-radius: var(--radius-sm);
+      transition: all 0.15s;
+    }
+
+    .nav-link:hover {
+      background: #f1f5f9;
+      color: var(--primary-dark);
+    }
+
+    .nav-link.active {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-weight: 600;
+    }
+
+    .nav-link .badge {
+      margin-left: auto;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 9999px;
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    /* Main Content */
+    .docs-content {
+      padding: 40px 60px 100px 60px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .hero-banner {
+      background: linear-gradient(135deg, #09473f 0%, #0f9d8c 50%, #2f6df0 100%);
+      color: #fff;
+      padding: 44px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 40px;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-banner::after {
+      content: "";
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero-title {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-subtitle {
+      font-size: 16.5px;
+      opacity: 0.92;
+      max-width: 850px;
+      margin-bottom: 24px;
+      font-weight: 400;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .hero-tag {
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(4px);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    /* Content Typography */
+    h2 {
+      font-size: 23px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 50px 0 20px 0;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border);
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    h3 {
+      font-size: 17.5px;
+      font-weight: 600;
+      color: #1e293b;
+      margin: 32px 0 14px 0;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    p {
+      margin-bottom: 16px;
+      color: #334155;
+    }
+
+    ul, ol {
+      margin-bottom: 20px;
+      padding-left: 24px;
+      color: #334155;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    strong {
+      color: #0f172a;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      background: #f1f5f9;
+      color: #0f766e;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+    }
+
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 18px;
+      border-radius: var(--radius-md);
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 24px;
+      border: 1px solid #1e293b;
+      box-shadow: var(--shadow);
+    }
+
+    /* Card Components */
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 26px;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
+    }
+    .feature-card:hover {
+      box-shadow: var(--shadow);
+      border-color: #cbd5e1;
+    }
+
+    .card-header-flex {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 18.5px;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Screenshot Showcases */
+    .screenshot-container {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin: 20px 0;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .screenshot-img {
+      max-width: 100%;
+      height: auto;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      cursor: zoom-in;
+      transition: transform 0.2s ease;
+      border: 1px solid #e2e8f0;
+    }
+    .screenshot-img:hover {
+      transform: scale(1.008);
+    }
+
+    .screenshot-caption {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 10px;
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    /* Diagram Styling */
+    .diagram-wrapper {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      margin: 28px 0;
+      box-shadow: var(--shadow);
+      overflow-x: auto;
+    }
+
+    .diagram-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 18px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Key-Value Tables */
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0 28px 0;
+      font-size: 14px;
+      background: #fff;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+    }
+
+    .spec-table th {
+      background: #f8fafc;
+      text-align: left;
+      padding: 12px 16px;
+      font-weight: 600;
+      color: #334155;
+      border-bottom: 2px solid var(--border);
+      font-size: 13px;
+    }
+
+    .spec-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      color: #334155;
+      vertical-align: top;
+    }
+
+    .spec-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .spec-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    /* Alerts and Callouts */
+    .callout {
+      border-left: 4px solid var(--primary);
+      background: var(--primary-light);
+      padding: 16px 20px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin: 20px 0;
+      font-size: 14.5px;
+    }
+
+    .callout.danger {
+      border-left-color: var(--danger);
+      background: var(--danger-light);
+      color: #991b1b;
+    }
+
+    .callout.warning {
+      border-left-color: var(--warning);
+      background: var(--warning-light);
+      color: #92400e;
+    }
+
+    .callout.info {
+      border-left-color: var(--accent);
+      background: var(--accent-light);
+      color: #1e40af;
+    }
+
+    /* Grid Displays */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 20px;
+      margin: 24px 0;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .stat-box {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+      font-size: 26px;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 6px 0 4px 0;
+    }
+
+    .stat-desc {
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+
+    /* Pills and Badges */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 9999px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+    .pill-red {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+    }
+    .pill-yellow {
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+    .pill-green {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #86efac;
+    }
+    .pill-blue {
+      background: #dbeafe;
+      color: #1d4ed8;
+      border: 1px solid #93c5fd;
+    }
+    .pill-teal {
+      background: #ccfbf1;
+      color: #0f766e;
+      border: 1px solid #5eead4;
+    }
+
+    /* Modal / Lightbox */
+    .lightbox-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+    }
+    .lightbox-modal.active {
+      display: flex;
+    }
+    .lightbox-content {
+      max-width: 95vw;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: var(--radius-md);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 24px;
+      right: 32px;
+      font-size: 32px;
+      color: #fff;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    @media (max-width: 1024px) {
+      .docs-container {
+        grid-template-columns: 1fr;
+      }
+      .docs-sidebar {
+        display: none;
+      }
+      .docs-content {
+        padding: 24px 20px;
+      }
+    }
+  `;
+}
+
+// Generate Thai HTML Document
+function generateThaiDoc() {
+  return `<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>คู่มือสถาปัตยกรรมระบบและฟังก์ชันการทำงาน — UTAC QA Calendar</title>
+  <style>
+    ${getCommonCss()}
+  </style>
+</head>
+<body>
+
+  <!-- Sticky Top Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <img src="images/utac-logo.jpg" alt="UTAC Logo" class="brand-logo" onerror="if(!this.dataset.retried){this.dataset.retried=true;this.src='docs/images/utac-logo.jpg';}">
+      <div>
+        <div class="brand-title">UTAC QA Calendar &amp; Audit Management</div>
+      </div>
+      <span class="brand-badge">v2.4 Production • Cloudflare Edge</span>
+    </div>
+    <div class="header-actions">
+      <!-- Language Switcher -->
+      <div class="lang-switch-group">
+        <a href="app-architecture-and-features.html" class="lang-btn">🇺🇸 English</a>
+        <a href="app-architecture-and-features-th.html" class="lang-btn active">🇹🇭 ภาษาไทย</a>
+      </div>
+      <a href="#system-architecture" class="btn-header btn-outline">สถาปัตยกรรม</a>
+      <a href="#feature-schedule" class="btn-header btn-outline">ฟีเจอร์</a>
+      <a href="#api-spec" class="btn-header btn-outline">REST API</a>
+      <a href="javascript:window.print()" class="btn-header btn-primary">พิมพ์ / บันทึก PDF</a>
+    </div>
+  </header>
+
+  <!-- Docs Grid Container -->
+  <div class="docs-container">
+
+    <!-- Sidebar Navigation -->
+    <aside class="docs-sidebar">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="docSearch" class="search-input" placeholder="ค้นหาฟังก์ชันและข้อมูลระบบ...">
+      </div>
+
+      <div class="nav-group-title">ภาพรวมระบบ</div>
+      <ul class="nav-links">
+        <li><a href="#executive-summary" class="nav-link">1. บทสรุปผู้บริหารและเป้าหมาย <span class="badge">Goal</span></a></li>
+        <li><a href="#technology-stack" class="nav-link">2. เทคโนโลยีที่ใช้และโครงสร้าง</a></li>
+      </ul>
+
+      <div class="nav-group-title">สถาปัตยกรรมระบบ</div>
+      <ul class="nav-links">
+        <li><a href="#system-architecture" class="nav-link">3. ผังโครงสร้างระดับ Edge และ Cloud</a></li>
+        <li><a href="#data-lifecycle" class="nav-link">4. วงจรชีวิตข้อมูลและการบันทึก 2 ชั้น</a></li>
+        <li><a href="#database-schema" class="nav-link">5. โครงสร้างฐานข้อมูล D1 SQLite</a></li>
+        <li><a href="#master-order-architecture" class="nav-link">6. สถาปัตยกรรมเรียงลำดับสากล (Master-Order)</a></li>
+        <li><a href="#compliance-lifecycle" class="nav-link">7. ผังสถานะความสมบูรณ์การนัดหมาย</a></li>
+      </ul>
+
+      <div class="nav-group-title">ฟังก์ชันหลักของระบบ</div>
+      <ul class="nav-links">
+        <li><a href="#feature-schedule" class="nav-link">8. ปฏิทินกำหนดการและการแสดงผล</a></li>
+        <li><a href="#feature-validation" class="nav-link">9. ฟอร์มนัดหมายและกฎความถูกต้อง</a></li>
+        <li><a href="#feature-results" class="nav-link">10. การบันทึกผลการตรวจประเมิน</a></li>
+        <li><a href="#feature-table" class="nav-link">11. ตารางข้อมูลความเร็วสูง (Table View)</a></li>
+        <li><a href="#feature-summary" class="nav-link">12. แดชบอร์ดสรุปผลผู้บริหาร (KPI)</a></li>
+        <li><a href="#feature-engineers" class="nav-link">13. จัดการทีมผู้ตรวจและตัวเลือก</a></li>
+        <li><a href="#feature-activity" class="nav-link">14. ประวัติบันทึกกิจกรรม (Audit Trail)</a></li>
+        <li><a href="#feature-sheets" class="nav-link">15. การซิงค์ Google Sheets อัตโนมัติ</a></li>
+      </ul>
+
+      <div class="nav-group-title">ข้อกำหนดทางเทคนิค</div>
+      <ul class="nav-links">
+        <li><a href="#api-spec" class="nav-link">16. รายการ REST API Endpoints</a></li>
+        <li><a href="#site-normalization" class="nav-link">17. การแปลงรหัสโรงงาน (Site Normalization)</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="docs-content">
+
+      <!-- Hero Banner -->
+      <section class="hero-banner">
+        <div class="hero-title">เอกสารสถาปัตยกรรมระบบและคู่มือการใช้งานฟีเจอร์</div>
+        <div class="hero-subtitle">
+          แพลตฟอร์มระดับองค์กรสำหรับการวางแผนตารางงาน คุณภาพการผลิต การตรวจประเมินแบบหลายโรงงาน การติดตามข้อบกพร่อง และการบริหารจัดการมาตรฐานคุณภาพสำหรับโรงงานประกอบและทดสอบสารกึ่งตัวนำของ UTAC
+        </div>
+        <div class="hero-tags">
+          <span class="hero-tag">React 19 SPA</span>
+          <span class="hero-tag">Cloudflare Workers Edge Serverless</span>
+          <span class="hero-tag">Cloudflare D1 Distributed SQLite</span>
+          <span class="hero-tag">Dual-Layer Persistence (แคชเครื่อง + คลาวด์)</span>
+          <span class="hero-tag">Dynamic Master-Order Engine</span>
+          <span class="hero-tag">Google Sheets Two-Way Webhook Sync</span>
+        </div>
+      </section>
+
+      <!-- 1. Executive Summary -->
+      <section id="executive-summary">
+        <h2>1. บทสรุปผู้บริหารและเป้าหมายของระบบ (Executive Summary &amp; Purpose)</h2>
+        <div class="feature-card">
+          <p>
+            ระบบ <strong>UTAC QA Calendar</strong> ได้รับการพัฒนาขึ้นมาเพื่อทดแทนสเปรดชีตแบบเดิมที่กระจัดกระจายและขาดความต่อเนื่อง โดยทำหน้าที่เป็นศูนย์กลางหนึ่งเดียวในการวางแผน การลงพื้นที่ตรวจประเมิน และการวิเคราะห์ผลการตรวจคุณภาพครอบคลุมโรงงานผลิตของ UTAC ทั้ง 7 แห่ง:
+            <code>UTL1</code>, <code>UTL2</code>, <code>UTL2A</code>, <code>UTL2B</code>, <code>UTL3</code>, <code>UTL3A</code>, และ <code>UTL3T</code>
+          </p>
+          <p>
+            ระบบผสานการทำงานร่วมกันระหว่าง <strong>Customer Audits (การตรวจประเมินโดยลูกค้าภายนอก)</strong> และ <strong>Internal Audits (การตรวจประเมินระบบคุณภาพภายใน)</strong> ตามมาตรฐานสากล เช่น ISO 9001, IATF 16949, ISO 14001, ISO 45001, ESD, EHS และ VDA 6.3 พร้อมกลไกตรวจสอบความถูกต้องเข้มงวด 100% และการจำลองข้อมูลไปยังคลาวด์อัตโนมัติ
+          </p>
+
+          <div class="grid-3">
+            <div class="stat-box">
+              <div class="stat-label">ขอบเขตการใช้งาน</div>
+              <div class="stat-value">7 โรงงาน</div>
+              <div class="stat-desc">เชื่อมโยงตารางงาน UTL1, UTL2, UTL2A, UTL2B, UTL3, UTL3A, UTL3T</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">ความเร็วในการตอบสนอง</div>
+              <div class="stat-value">&lt; 40 มิลลิวินาที</div>
+              <div class="stat-desc">ขับเคลื่อนด้วยโครงข่าย Cloudflare Serverless Edge และฐานข้อมูล D1</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">ความเข้มงวดของข้อมูล</div>
+              <div class="stat-value">100% Strict</div>
+              <div class="stat-desc">แจ้งเตือนสีแดงทันทีหากกรอกข้อมูลไม่ครบทุกช่องที่กำหนด</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Tech Stack -->
+      <section id="technology-stack">
+        <h2>2. เทคโนโลยีที่ใช้และโครงสร้างสถาปัตยกรรม (Technology Stack)</h2>
+        <div class="feature-card">
+          <table class="spec-table">
+            <thead>
+              <tr>
+                <th>ระดับชั้น (Layer)</th>
+                <th>เทคโนโลยีที่ใช้งาน</th>
+                <th>บทบาททางสถาปัตยกรรมและรายละเอียดการทำงาน</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>ส่วนหน้าเว็บ (Frontend Core)</strong></td>
+                <td>React 19, TypeScript, Vite</td>
+                <td>รองรับ Concurrent Rendering, การตรวจสอบ Type ที่รัดกุม, สถาปัตยกรรม Micro-components และการพัฒนาที่รวดเร็วด้วย Vite</td>
+              </tr>
+              <tr>
+                <td><strong>การจัดการสถานะ (State Management)</strong></td>
+                <td>Custom ViewModel Hook (<code>useScheduler.ts</code>)</td>
+                <td>เป็น Single Source of Truth ควบคุมข้อมูลตารางนัดหมายทั้งหมด, การอัปเดตแบบ Optimistic, ระบบกรองข้อมูลหลายมิติ และการคำนวณสถิติ</td>
+              </tr>
+              <tr>
+                <td><strong>หน่วยความจำแคชในเครื่อง (Local Cache)</strong></td>
+                <td>Dual-Layer LocalStorage Snapshot</td>
+                <td>โหลดข้อมูลขึ้นหน้าจอทันทีจาก <code>localStorage['calendar_qa_snapshot']</code> ในระดับเสี้ยววินาที ทำให้ใช้งานแบบออฟไลน์ได้และหน้าจอไม่กระตุกระหว่างรอเชื่อมต่อเซิร์ฟเวอร์</td>
+              </tr>
+              <tr>
+                <td><strong>เซิร์ฟเวอร์ Edge (API Gateway)</strong></td>
+                <td>Cloudflare Workers (<code>worker/index.ts</code>)</td>
+                <td>ประมวลผลบน V8 Isolates กระจายอยู่กว่า 300 ดาต้าเซ็นเตอร์ทั่วโลก รองรับ CORS อัตโนมัติ, ตรวจสอบโครงสร้างตาราง D1 และตอบสนองเร็วกว่า 40ms</td>
+              </tr>
+              <tr>
+                <td><strong>ฐานข้อมูลกระจายตัว (Database)</strong></td>
+                <td>Cloudflare D1 (Serverless SQLite)</td>
+                <td>ฐานข้อมูลเชิงสัมพันธ์แบบกระจายศูนย์ รองรับ ACID Transactions, Foreign Keys, การจัดเก็บผลตรวจแบบ JSON และระบบ Database Migrations</td>
+              </tr>
+              <tr>
+                <td><strong>การเชื่อมต่อภายนอกและเอกสาร</strong></td>
+                <td><code>xlsx-js-style</code> &amp; Google Sheets Webhook</td>
+                <td>สร้างไฟล์รายงาน Excel พร้อมการจัดฟอร์แมตสีและเส้นตารางสวยงาม และระบบส่งข้อมูล Real-time ไปยัง Google Spreadsheet ประจำบริษัท</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 3. System Architecture Diagram -->
+      <section id="system-architecture">
+        <h2>3. ผังโครงสร้างระดับ Edge และ Cloud (System Topology Diagram)</h2>
+        <p>แผนภาพแสดงสถาปัตยกรรมการเชื่อมต่อระหว่างเบราว์เซอร์ของผู้ใช้, Cloudflare Edge API, ฐานข้อมูลกระจายตัว D1 และระบบภายนอก Google Workspace:</p>
+
+        <div class="diagram-wrapper">
+          <div class="diagram-title">System Architecture &amp; Boundary Flow</div>
+          <svg viewBox="0 0 960 480" width="100%" height="480" style="display:block; margin:0 auto; font-family:-apple-system, sans-serif;">
+            <defs>
+              <linearGradient id="clientGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#0f9d8c"/>
+                <stop offset="100%" stop-color="#0b7a6d"/>
+              </linearGradient>
+              <linearGradient id="edgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#2f6df0"/>
+                <stop offset="100%" stop-color="#1e4eb8"/>
+              </linearGradient>
+              <linearGradient id="dbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#f59e0b"/>
+                <stop offset="100%" stop-color="#d97706"/>
+              </linearGradient>
+              <linearGradient id="extGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#10b981"/>
+                <stop offset="100%" stop-color="#059669"/>
+              </linearGradient>
+              <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+                <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.1"/>
+              </filter>
+              <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b"/>
+              </marker>
+              <marker id="arrowTeal" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#0f9d8c"/>
+              </marker>
+              <marker id="arrowBlue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#2f6df0"/>
+              </marker>
+            </defs>
+
+            <!-- Background boundary cards -->
+            <rect x="20" y="20" width="280" height="440" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="6,4" />
+            <text x="35" y="45" font-size="12" font-weight="700" fill="#64748b" letter-spacing="1">CLIENT BROWSER RUNTIME</text>
+
+            <rect x="340" y="20" width="280" height="440" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="6,4" />
+            <text x="355" y="45" font-size="12" font-weight="700" fill="#64748b" letter-spacing="1">CLOUDFLARE EDGE NETWORK</text>
+
+            <rect x="660" y="20" width="280" height="440" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="6,4" />
+            <text x="675" y="45" font-size="12" font-weight="700" fill="#64748b" letter-spacing="1">PERSISTENCE &amp; INTEGRATIONS</text>
+
+            <!-- CLIENT BOXES -->
+            <g filter="url(#shadow)">
+              <rect x="40" y="70" width="240" height="100" rx="10" fill="url(#clientGrad)" />
+              <text x="55" y="100" font-size="15" font-weight="700" fill="#ffffff">React 19 SPA (Client UI)</text>
+              <text x="55" y="122" font-size="12" fill="#e6f7f5">• Schedule, Table &amp; Summary Views</text>
+              <text x="55" y="139" font-size="12" fill="#e6f7f5">• Strict Full-Form Validation</text>
+              <text x="55" y="156" font-size="12" fill="#e6f7f5">• Dynamic Master-Order Sorting</text>
+            </g>
+
+            <g filter="url(#shadow)">
+              <rect x="40" y="200" width="240" height="110" rx="10" fill="#ffffff" stroke="#0f9d8c" stroke-width="2" />
+              <text x="55" y="228" font-size="14" font-weight="700" fill="#0f766e">useScheduler ViewModel</text>
+              <text x="55" y="248" font-size="11.5" fill="#475569">• In-Memory Reactive State Tree</text>
+              <text x="55" y="266" font-size="11.5" fill="#475569">• Optimistic Mutation Pipeline</text>
+              <text x="55" y="284" font-size="11.5" fill="#475569">• Multi-Facility Filter Engines</text>
+              <text x="55" y="302" font-size="11.5" fill="#475569">• Statistics &amp; Rollup Reducers</text>
+            </g>
+
+            <g filter="url(#shadow)">
+              <rect x="40" y="340" width="240" height="90" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" />
+              <text x="55" y="368" font-size="14" font-weight="700" fill="#334155">LocalStorage Snapshot</text>
+              <text x="55" y="390" font-size="11.5" fill="#64748b">คีย์: calendar_qa_snapshot</text>
+              <text x="55" y="408" font-size="11.5" fill="#64748b">โหลดข้อมูลทันทีไม่ต้องรอเน็ตเวิร์ก</text>
+            </g>
+
+            <!-- CLOUDFLARE WORKER BOXES -->
+            <g filter="url(#shadow)">
+              <rect x="360" y="70" width="240" height="130" rx="10" fill="url(#edgeGrad)" />
+              <text x="375" y="100" font-size="15" font-weight="700" fill="#ffffff">Cloudflare Workers API</text>
+              <text x="375" y="122" font-size="12" fill="#dbeafe">• Edge V8 Isolate Serverless</text>
+              <text x="375" y="139" font-size="12" fill="#dbeafe">• บริการไฟล์เว็บ SPA แบบ CDN</text>
+              <text x="375" y="156" font-size="12" fill="#dbeafe">• REST Endpoints (/api/*)</text>
+              <text x="375" y="173" font-size="12" fill="#dbeafe">• ระบบตรวจสอบโครงสร้างฐานข้อมูล</text>
+              <text x="375" y="190" font-size="12" fill="#dbeafe">• ตอบสนองรวดเร็วระดับโลก</text>
+            </g>
+
+            <g filter="url(#shadow)">
+              <rect x="360" y="230" width="240" height="200" rx="10" fill="#ffffff" stroke="#2f6df0" stroke-width="2" />
+              <text x="375" y="258" font-size="14" font-weight="700" fill="#1e40af">Edge REST Router</text>
+              <text x="375" y="280" font-size="11.5" fill="#475569">GET  /api/state (ดึงสถานะทั้งหมด)</text>
+              <text x="375" y="300" font-size="11.5" fill="#475569">POST /api/assignments (สร้างนัดหมาย)</text>
+              <text x="375" y="320" font-size="11.5" fill="#475569">PUT  /api/assignments/:id (แก้ไข)</text>
+              <text x="375" y="340" font-size="11.5" fill="#475569">DEL  /api/assignments/:id (ลบ Cascade)</text>
+              <text x="375" y="360" font-size="11.5" fill="#475569">PUT  /api/options/reorder (เรียงลำดับ)</text>
+              <text x="375" y="380" font-size="11.5" fill="#475569">POST /api/google-sheets/sync</text>
+              <text x="375" y="405" font-size="11" font-weight="600" fill="#0f9d8c">Zero-Cold-Start Execution</text>
+            </g>
+
+            <!-- DATABASE & EXTERNAL BOXES -->
+            <g filter="url(#shadow)">
+              <rect x="680" y="70" width="240" height="190" rx="10" fill="url(#dbGrad)" />
+              <text x="695" y="100" font-size="15" font-weight="700" fill="#ffffff">Cloudflare D1 (SQLite)</text>
+              <text x="695" y="122" font-size="12" fill="#fef3c7">• assignments (ตารางนัดหมาย &amp; ผลตรวจ)</text>
+              <text x="695" y="139" font-size="12" fill="#fef3c7">• orders (ข้อมูลคำขอตรวจสอบ)</text>
+              <text x="695" y="156" font-size="12" fill="#fef3c7">• engineers (รายชื่อผู้ตรวจ &amp; แผนก)</text>
+              <text x="695" y="173" font-size="12" fill="#fef3c7">• plants &amp; active_plants</text>
+              <text x="695" y="190" font-size="12" fill="#fef3c7">• options (ลำดับตัวเลือก _order_)</text>
+              <text x="695" y="207" font-size="12" fill="#fef3c7">• comments (บันทึกข้อความร่วม)</text>
+              <text x="695" y="224" font-size="12" fill="#fef3c7">• activity (ประวัติบันทึกการทำงาน)</text>
+              <text x="695" y="246" font-size="11" font-weight="600" fill="#ffffff">ACID Storage &amp; Foreign Keys</text>
+            </g>
+
+            <g filter="url(#shadow)">
+              <rect x="680" y="290" width="240" height="140" rx="10" fill="url(#extGrad)" />
+              <text x="695" y="320" font-size="15" font-weight="700" fill="#ffffff">Google Sheets Integration</text>
+              <text x="695" y="342" font-size="12" fill="#ecfdf5">• Apps Script Webhook API</text>
+              <text x="695" y="359" font-size="12" fill="#ecfdf5">• ซิงค์อัตโนมัติเมื่อสร้าง/แก้ไข/ลบ</text>
+              <text x="695" y="376" font-size="12" fill="#ecfdf5">• sync_all ซิงค์ทั้งระบบด้วยคลิกเดียว</text>
+              <text x="695" y="393" font-size="12" fill="#ecfdf5">• ส่งออกตารางกลางของบริษัท</text>
+              <text x="695" y="415" font-size="11" font-weight="600" fill="#ffffff">Two-Way Enterprise Bridge</text>
+            </g>
+
+            <!-- CONNECTOR ARROWS -->
+            <path d="M 160 170 L 160 200" stroke="#0f9d8c" stroke-width="2" marker-end="url(#arrowTeal)" />
+            <path d="M 160 310 L 160 340" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)" />
+            <path d="M 280 255 L 360 255" stroke="#2f6df0" stroke-width="2" marker-end="url(#arrowBlue)" />
+            <path d="M 360 275 L 280 275" stroke="#2f6df0" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arrowBlue)" />
+            <path d="M 600 160 L 680 160" stroke="#d97706" stroke-width="2" marker-end="url(#arrow)" />
+            <path d="M 680 180 L 600 180" stroke="#d97706" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arrow)" />
+            <path d="M 600 360 L 680 360" stroke="#10b981" stroke-width="2" marker-end="url(#arrow)" />
+          </svg>
+        </div>
+      </section>
+
+      <!-- 4. Data Lifecycle -->
+      <section id="data-lifecycle">
+        <h2>4. วงจรชีวิตข้อมูลและการบันทึก 2 ชั้น (Data Lifecycle &amp; Dual-Persistence)</h2>
+        <div class="feature-card">
+          <p>
+            เพื่อให้มั่นใจว่าระบบจะตอบสนองทันทีโดยไม่มีการรอคอย และสามารถทำงานได้อย่างราบรื่นในพื้นที่โรงงานผลิตที่มีสัญญาณเครือข่ายไม่เสถียร ระบบจึงใช้สถาปัตยกรรม <strong>Dual-Layer Persistence</strong>:
+          </p>
+
+          <ol>
+            <li>
+              <strong>การโหลดข้อมูลทันที (Layer 1 - Local Snapshot):</strong>
+              เมื่อเปิดเว็บเบราว์เซอร์ โมดูล <code>useScheduler</code> จะอ่านข้อมูลจาก <code>localStorage['calendar_qa_snapshot']</code> ทันที ทำให้ตารางปฏิทิน รายชื่อวิศวกร และลำดับตัวเลือกแสดงผลทันทีโดยไม่ต้องรอผลตอบกลับจากเซิร์ฟเวอร์
+            </li>
+            <li>
+              <strong>การเชื่อมต่อเบื้องหลัง (Layer 2 - Edge Remote Sync):</strong>
+              พร้อมกันนั้น ระบบจะส่งคำขอ <code>GET /api/state</code> ไปยัง Cloudflare Worker เพื่อนำข้อมูลล่าสุดจากฐานข้อมูล D1 มาปรับให้สอดคล้องกันแบบเรียลไทม์
+            </li>
+            <li>
+              <strong>การอัปเดตแบบฉับไว (Optimistic Updates):</strong>
+              เมื่อมีการสร้าง แก้ไข หรือลบนัดหมาย ระบบจะอัปเดตหน้าจอทันที เขียนทับลง Local Snapshot แล้วส่งคำสั่งไปยัง Cloudflare Worker และ D1 ในเบื้องหลัง
+            </li>
+            <li>
+              <strong>การแจ้งเตือนไปยัง Google Sheets:</strong>
+              เมื่อฐานข้อมูลบันทึกสำเร็จ ระบบจะแปลงข้อมูลเป็นแถวตารางและยิง Webhook ไปยัง Google Sheets ทันที
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- 5. Database Schema -->
+      <section id="database-schema">
+        <h2>5. โครงสร้างฐานข้อมูลเชิงสัมพันธ์ Cloudflare D1 SQLite</h2>
+        <div class="feature-card">
+          <p>
+            ฐานข้อมูลหลักเลือกใช้ <strong>Cloudflare D1</strong> ซึ่งเป็น SQLite แบบกระจายศูนย์ ออกแบบโครงสร้างตารางเพื่อประสิทธิภาพในการแสดงผลปฏิทินที่รวดเร็ว พร้อมคงความสมบูรณ์ของข้อมูลด้วย Foreign Keys:
+          </p>
+
+          <table class="spec-table">
+            <thead>
+              <tr>
+                <th>ชื่อตาราง (Table)</th>
+                <th>คีย์หลัก (PK)</th>
+                <th>คีย์นอก (FK)</th>
+                <th>คำอธิบายโครงสร้างและคอลัมน์สำคัญ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>assignments</code></td>
+                <td><code>id</code></td>
+                <td><code>eng &rarr; engineers(id)</code><br><code>order_id &rarr; orders(id)</code></td>
+                <td>
+                  ช่องตารางนัดหมายรายวัน: <code>week</code>, <code>day</code>, <code>site1</code>, <code>site2</code>, <code>customer</code>, <code>end_customer</code>, <code>auditor1</code>, <code>auditor2</code>, <code>department</code>, <code>purpose</code>, <code>target_package</code>, <code>audit_category</code>, <code>results</code> (บันทึกผลการตรวจแยกตามโรงงานในรูปแบบ JSON), <code>created_at</code>, <code>updated_at</code>
+                </td>
+              </tr>
+              <tr>
+                <td><code>orders</code></td>
+                <td><code>id</code></td>
+                <td>ไม่มี</td>
+                <td>หัวข้องานตรวจประเมิน: <code>customer</code>, <code>product</code>, <code>plant</code>, <code>purpose</code></td>
+              </tr>
+              <tr>
+                <td><code>engineers</code></td>
+                <td><code>id</code></td>
+                <td>ไม่มี</td>
+                <td>ทะเบียนวิศวกรผู้ตรวจ: <code>name</code>, <code>role</code>, <code>department</code> (QA / Non-QA), <code>site</code> (โรงงานหลักเริ่มต้น UTL1), <code>sub_departments</code> (กลุ่มแผนก QMS, EHS, ESD)</td>
+              </tr>
+              <tr>
+                <td><code>plants</code></td>
+                <td><code>id</code></td>
+                <td>ไม่มี</td>
+                <td>กลุ่มสายงานตรวจ: <code>name</code>, <code>loc</code>, <code>code</code>, <code>color</code> (QMS=#2f6df0, EHS=#0f9d8c, ESD=#c2620c)</td>
+              </tr>
+              <tr>
+                <td><code>active_plants</code></td>
+                <td><code>plant_id</code></td>
+                <td><code>plant_id &rarr; plants(id)</code></td>
+                <td>สวิตช์เปิด/ปิดการแสดงแถวในปฏิทิน (<code>active: 0|1</code>)</td>
+              </tr>
+              <tr>
+                <td><code>options</code></td>
+                <td><code>category</code> + <code>value</code></td>
+                <td>ไม่มี</td>
+                <td>
+                  ทะเบียนตัวเลือกส่วนกลาง: <code>site_code</code>, <code>customer_name</code>, <code>end_customer</code>, <code>department</code>, <code>purpose</code>, <code>target_package</code>, และบันทึกการจัดเรียงลำดับใน <code>_order_&lt;category&gt;</code>
+                </td>
+              </tr>
+              <tr>
+                <td><code>comments</code></td>
+                <td><code>id</code></td>
+                <td><code>assignment_id &rarr; assignments(id)</code></td>
+                <td>ข้อความโน้ตและบันทึกการประสานงานภายในงานตรวจ</td>
+              </tr>
+              <tr>
+                <td><code>activity</code></td>
+                <td><code>id</code></td>
+                <td>ไม่มี</td>
+                <td>ประวัติการดำเนินงาน (Audit Trail) บันทึกทุกการสร้าง แก้ไข หรือลบข้อมูล พร้อมผู้ทำรายการและเวลา</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 6. Universal Master-Order Architecture -->
+      <section id="master-order-architecture">
+        <h2>6. สถาปัตยกรรมเรียงลำดับสากล (Universal Master-Order Architecture)</h2>
+        <div class="feature-card">
+          <p>
+            แต่เดิม การเรียงลำดับของโรงงานหรือลูกค้าอาจขึ้นกับค่าคงที่ในโค้ด ในระบบเวอร์ชันปัจจุบัน <strong>ลำดับที่กำหนดในแท็บ "Options" จะทำหน้าที่เป็น Single Source of Truth สำหรับทั้งแอปพลิเคชัน</strong>:
+          </p>
+
+          <div class="callout info">
+            <strong>หลักการ Single Source of Truth:</strong>
+            เมื่อผู้ดูแลระบบสลับตำแหน่งหรือลากจัดลำดับ (Drag &amp; Drop) ในแท็บ Options ข้อมูลลำดับจะถูกบันทึกลง D1 ทันทีในคีย์ <code>_order_&lt;category&gt;</code> และส่งผลสะท้อนไปยังทุกหน้าจอโดยอัตโนมัติ:
+            <ul>
+              <li>ลำดับรายการใน Dropdown และช่องเลือกแบบพิมพ์ค้นหา (Combobox)</li>
+              <li>เมนูกรองข้อมูลในหน้า Table View และ Calendar</li>
+              <li>การเรียงตัวอักษรของโรงงานผสม เช่น <code>UTL1/UTL2/UTL3</code></li>
+              <li>หัวคอลัมน์และแถวตารางในหน้า Summary Dashboard ประจำปี</li>
+              <li>การจัดเรียงเมื่อคลิกหัวตารางใน Table View</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="diagram-wrapper">
+          <div class="diagram-title">Universal Master-Order Dynamic Propagation Pipeline</div>
+          <svg viewBox="0 0 920 320" width="100%" height="320" style="display:block; margin:0 auto; font-family:-apple-system, sans-serif;">
+            <defs>
+              <marker id="pipeArrowTh" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#0f9d8c"/>
+              </marker>
+              <linearGradient id="pipeGradTh" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#0f9d8c"/>
+                <stop offset="100%" stop-color="#2f6df0"/>
+              </linearGradient>
+            </defs>
+
+            <!-- Source Stage 1 -->
+            <g>
+              <rect x="30" y="110" width="180" height="100" rx="10" fill="#ffffff" stroke="#0f9d8c" stroke-width="2"/>
+              <text x="45" y="140" font-size="13" font-weight="700" fill="#0f766e">1. แท็บ Options (UI)</text>
+              <text x="45" y="160" font-size="11" fill="#475569">• ผู้ดูแลระบบลากสลับลำดับ</text>
+              <text x="45" y="178" font-size="11" fill="#475569">• จัดลำดับโรงงาน / ลูกค้า</text>
+              <text x="45" y="196" font-size="11" font-weight="600" fill="#0f9d8c">Single Source of Truth</text>
+            </g>
+
+            <!-- Stage 2: API & D1 -->
+            <g>
+              <rect x="260" y="110" width="190" height="100" rx="10" fill="#ffffff" stroke="#2f6df0" stroke-width="2"/>
+              <text x="275" y="138" font-size="13" font-weight="700" fill="#1e40af">2. บันทึกลง Cloudflare D1</text>
+              <text x="275" y="158" font-size="11" fill="#475569">• PUT /api/options/reorder</text>
+              <text x="275" y="176" font-size="11" fill="#475569">• options._order_&lt;cat&gt;</text>
+              <text x="275" y="194" font-size="11" fill="#475569">• บันทึกเป็น JSON Array</text>
+            </g>
+
+            <!-- Stage 3: Reactive State -->
+            <g>
+              <rect x="500" y="110" width="170" height="100" rx="10" fill="url(#pipeGradTh)"/>
+              <text x="515" y="138" font-size="13" font-weight="700" fill="#ffffff">3. ปรับสถานะในหน่วยความจำ</text>
+              <text x="515" y="158" font-size="11" fill="#e6f7f5">• useScheduler Hook</text>
+              <text x="515" y="176" font-size="11" fill="#e6f7f5">• บันทึกลง Local Snapshot</text>
+              <text x="515" y="194" font-size="11" fill="#e6f7f5">• อัปเดตไปยังทุกคอมโพเนนต์</text>
+            </g>
+
+            <!-- Downstream Consumers (Stage 4) -->
+            <!-- Consumer A -->
+            <g>
+              <rect x="720" y="20" width="180" height="55" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+              <text x="732" y="42" font-size="11.5" font-weight="700" fill="#1e293b">Dropdown &amp; Combobox</text>
+              <text x="732" y="58" font-size="10" fill="#64748b">รายการตัวเลือกในฟอร์ม</text>
+            </g>
+
+            <!-- Consumer B -->
+            <g>
+              <rect x="720" y="90" width="180" height="55" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+              <text x="732" y="112" font-size="11.5" font-weight="700" fill="#1e293b">เมนูกรองข้อมูล (Filters)</text>
+              <text x="732" y="128" font-size="10" fill="#64748b">ตัวกรองใน Table &amp; Calendar</text>
+            </g>
+
+            <!-- Consumer C -->
+            <g>
+              <rect x="720" y="160" width="180" height="55" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+              <text x="732" y="182" font-size="11.5" font-weight="700" fill="#1e293b">การเรียงคอลัมน์ในตาราง</text>
+              <text x="732" y="198" font-size="10" fill="#64748b">เรียงตาม Site และลูกค้า</text>
+            </g>
+
+            <!-- Consumer D -->
+            <g>
+              <rect x="720" y="230" width="180" height="55" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+              <text x="732" y="252" font-size="11.5" font-weight="700" fill="#1e293b">Summary Dashboard</text>
+              <text x="732" y="268" font-size="10" fill="#64748b">แถวเมทริกซ์ 12 เดือนของ Site</text>
+            </g>
+
+            <!-- Flow Arrows -->
+            <path d="M 210 160 L 260 160" stroke="#0f9d8c" stroke-width="2" marker-end="url(#pipeArrowTh)"/>
+            <path d="M 450 160 L 500 160" stroke="#0f9d8c" stroke-width="2" marker-end="url(#pipeArrowTh)"/>
+
+            <!-- Branches from 3 to Consumers -->
+            <path d="M 670 140 L 695 140 L 695 48 L 720 48" stroke="#0f9d8c" stroke-width="1.5" marker-end="url(#pipeArrowTh)"/>
+            <path d="M 670 150 L 695 150 L 695 118 L 720 118" stroke="#0f9d8c" stroke-width="1.5" marker-end="url(#pipeArrowTh)"/>
+            <path d="M 670 165 L 695 165 L 695 188 L 720 188" stroke="#0f9d8c" stroke-width="1.5" marker-end="url(#pipeArrowTh)"/>
+            <path d="M 670 175 L 695 175 L 695 258 L 720 258" stroke="#0f9d8c" stroke-width="1.5" marker-end="url(#pipeArrowTh)"/>
+          </svg>
+        </div>
+      </section>
+
+      <!-- 7. Compliance Lifecycle Diagram -->
+      <section id="compliance-lifecycle">
+        <h2>7. ผังสถานะความสมบูรณ์ของการนัดหมาย (Compliance Lifecycle State Machine)</h2>
+        <p>แผนภาพแสดงวงจรสถานะของบัตรนัดหมายตรวจประเมิน ตั้งแต่การสร้าง, การแจ้งเตือนข้อมูลไม่ครบ, จนถึงการบันทึกผลสำเร็จ:</p>
+
+        <div class="diagram-wrapper">
+          <div class="diagram-title">Appointment Compliance Lifecycle State Machine</div>
+          <svg viewBox="0 0 920 300" width="100%" height="300" style="display:block; margin:0 auto; font-family:-apple-system, sans-serif;">
+            <defs>
+              <marker id="smArrowTh" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b"/>
+              </marker>
+              <marker id="smArrowRedTh" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#dc2626"/>
+              </marker>
+              <marker id="smArrowGreenTh" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#16a34a"/>
+              </marker>
+              <marker id="smArrowYellowTh" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#d97706"/>
+              </marker>
+            </defs>
+
+            <!-- State 1: Incomplete -->
+            <g>
+              <rect x="30" y="30" width="190" height="100" rx="10" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+              <text x="45" y="58" font-size="14" font-weight="700" fill="#991b1b">1. ฉบับร่าง / ข้อมูลไม่ครบ</text>
+              <text x="45" y="78" font-size="11" fill="#b91c1c">• ขาดช่องข้อมูลที่จำเป็น</text>
+              <text x="45" y="94" font-size="11" fill="#b91c1c">• แสดงแบนเนอร์สีแดงทึบ</text>
+              <text x="45" y="110" font-size="11" font-weight="700" fill="#dc2626">bg-red-600 Flagged</text>
+            </g>
+
+            <!-- State 2: Scheduled -->
+            <g>
+              <rect x="290" y="30" width="190" height="100" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>
+              <text x="305" y="58" font-size="14" font-weight="700" fill="#0369a1">2. นัดหมายสมบูรณ์</text>
+              <text x="305" y="78" font-size="11" fill="#0284c7">• กรอกครบ 8 ช่องข้อมูล</text>
+              <text x="305" y="94" font-size="11" fill="#0284c7">• รูปแบบบัตรปกติ</text>
+              <text x="305" y="110" font-size="11" fill="#0369a1">• วันที่ในอนาคต</text>
+            </g>
+
+            <!-- State 3: Missing Results -->
+            <g>
+              <rect x="550" y="30" width="190" height="100" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+              <text x="565" y="58" font-size="14" font-weight="700" fill="#92400e">3. เลยกำหนดตรวจ</text>
+              <text x="565" y="78" font-size="11" fill="#b45309">• วันที่ผ่านไปแล้วในอดีต</text>
+              <text x="565" y="94" font-size="11" fill="#b45309">• "ยังไม่ได้ลงผลตรวจ"</text>
+              <text x="565" y="110" font-size="11" font-weight="700" fill="#d97706">ป้ายเตือนสีเหลือง</text>
+            </g>
+
+            <!-- State 4: Completed -->
+            <g>
+              <rect x="420" y="175" width="210" height="100" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+              <text x="435" y="203" font-size="14" font-weight="700" fill="#15803d">4. เสร็จสมบูรณ์ (Completed)</text>
+              <text x="435" y="223" font-size="11" fill="#16a34a">• ลงผลตรวจแล้ว (Maj/Min/OFI)</text>
+              <text x="435" y="239" font-size="11" fill="#16a34a">• ติ๊กเสร็จสมบูรณ์ในโมดอล</text>
+              <text x="435" y="255" font-size="11" font-weight="700" fill="#15803d">สถานะสีเขียวเรียบร้อย</text>
+            </g>
+
+            <!-- Arrows -->
+            <path d="M 220 80 L 290 80" stroke="#0284c7" stroke-width="2" marker-end="url(#smArrowTh)"/>
+            <text x="228" y="72" font-size="10" fill="#64748b">กรอกครบทุกช่อง</text>
+
+            <path d="M 480 80 L 550 80" stroke="#d97706" stroke-width="2" marker-end="url(#smArrowYellowTh)"/>
+            <text x="488" y="72" font-size="10" fill="#64748b">เลยกำหนดวัน</text>
+
+            <path d="M 645 130 L 645 225 L 630 225" stroke="#16a34a" stroke-width="2" marker-end="url(#smArrowGreenTh)"/>
+            <text x="655" y="180" font-size="10" fill="#15803d">บันทึกผลตรวจ</text>
+
+            <path d="M 385 130 L 385 225 L 420 225" stroke="#16a34a" stroke-width="2" marker-end="url(#smArrowGreenTh)"/>
+            <text x="295" y="180" font-size="10" fill="#15803d">บันทึกผลล่วงหน้า</text>
+
+            <path d="M 385 30 C 385 10, 125 10, 125 30" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#smArrowRedTh)"/>
+            <text x="205" y="16" font-size="10" fill="#dc2626">แก้ไขแล้วเว้นช่องว่าง</text>
+          </svg>
+        </div>
+      </section>
+
+      <!-- 8. FEATURE 1: Schedule Calendar -->
+      <section id="feature-schedule">
+        <h2>8. เจาะลึกฟีเจอร์ที่ 1: ตารางปฏิทินแบบ Timeline และการแสดงผลหลายมุมมอง</h2>
+        <div class="feature-card">
+          <div class="card-header-flex">
+            <div class="card-title">📅 ปฏิทินแสดงผลอัจฉริยะ (<code>Schedule.tsx</code>)</div>
+            <span class="pill pill-teal">โมดูลหลัก</span>
+          </div>
+
+          <p>
+            หน้าจอ Calendar มอบมุมมองแบบ Gantt Timeline ที่มีความหนาแน่นของข้อมูลสูง ช่วยให้ทีม QA และผู้บริหารสามารถวางแผนงานตรวจประเมินได้อย่างชัดเจนทั้งแบบรายวันและงานตรวจที่ยาวหลายวัน
+          </p>
+
+          <h3>ก. การจัดกลุ่มแถว 3 มิติ (Multi-Dimensional Grouping)</h3>
+          <ul>
+            <li><strong>Group by Person (จัดกลุ่มตามผู้ตรวจ):</strong> แถวแต่ละแถวจะแทนวิศวกร QA หรือ Lead Auditor แต่ละคน เพื่อดูภาระงาน การมอบหมายงาน และความพร้อมในแต่ละสัปดาห์</li>
+            <li><strong>Group by Plant (จัดกลุ่มตามสายงาน):</strong> จัดกลุ่มตามแผนกดำเนินงาน (<code>QMS</code>, <code>EHS</code>, <code>ESD</code>) เพื่อตรวจเช็คความครอบคลุมของสายงาน</li>
+            <li><strong>Group by Site (จัดกลุ่มตามโรงงาน):</strong> จัดกลุ่มตามโรงงานผลิต (<code>UTL1</code>, <code>UTL2</code>, <code>UTL2A</code>, <code>UTL2B</code>, <code>UTL3</code>, <code>UTL3A</code>, <code>UTL3T</code>) เพื่อดูความถี่การเข้าตรวจของแต่ละโรงงาน</li>
+          </ul>
+
+          <h3>ข. ตรรกะงานตรวจหลายวันและการเชื่อมต่อข้ามวัน (Multi-Day Span)</h3>
+          <p>
+            งานตรวจประเมินที่กินเวลาต่อเนื่องหลายวันจะถูกวาดเป็นแถบเส้นเชื่อม (Pill Bar) ยาวต่อเนื่อง และหากเป็นงานที่แยกผู้ตรวจในแต่ละวัน ระบบจะเชื่อมโยงเป็นกลุ่มเดียวกันอย่างแม่นยำ
+          </p>
+
+          <h3>ค. ระบบสีเตือนความถูกต้องและมาตรฐานคุณภาพเข้มงวด</h3>
+
+          <div class="grid-3">
+            <div class="stat-box" style="border-top: 4px solid var(--danger);">
+              <div class="stat-label" style="color:var(--danger)">แบนเนอร์สีแดงทึบ (Solid Red)</div>
+              <div class="stat-value" style="font-size:18px; color:var(--danger)">ข้อมูลไม่ครบถ้วน</div>
+              <div class="stat-desc">แสดงสีแดงทึบ (<code>#dc2626</code>) พร้อมเครื่องหมายตกใจทันที หากขาดข้อมูลจำเป็นแม้แต่ช่องเดียว</div>
+            </div>
+
+            <div class="stat-box" style="border-top: 4px solid var(--warning);">
+              <div class="stat-label" style="color:var(--warning)">ป้ายเตือนสีเหลือง (Yellow Badge)</div>
+              <div class="stat-value" style="font-size:18px; color:var(--warning)">ยังไม่บันทึกผลตรวจ</div>
+              <div class="stat-desc">แสดงขึ้นเมื่อวันตรวจได้ผ่านพ้นไปแล้ว แต่ยังไม่มีการบันทึกตัวเลขข้อบกพร่อง (Major, Minor, OFI, Obs)</div>
+            </div>
+
+            <div class="stat-box" style="border-top: 4px solid var(--primary);">
+              <div class="stat-label" style="color:var(--primary)">บัตรสีมาตรฐาน / เขียว</div>
+              <div class="stat-value" style="font-size:18px; color:var(--primary)">ข้อมูลถูกต้องสมบูรณ์</div>
+              <div class="stat-desc">กรอกข้อมูลครบถ้วนทุกช่อง และได้บันทึกผลการตรวจเรียบร้อยแล้ว หรือเป็นงานตรวจที่ยังไม่ถึงกำหนด</div>
+            </div>
+          </div>
+
+          <div class="screenshot-container">
+            <img src="images/media_1787198022238.png" alt="UTAC QA Schedule Calendar Grid" class="screenshot-img" onclick="openLightbox(this.src)" onerror="if(!this.dataset.retried){this.dataset.retried=true;this.src='docs/images/media_1787198022238.png';}">
+            <div class="screenshot-caption">ภาพที่ 1: ตารางปฏิทินงานตรวจประเมิน แสดงช่วงเวลาหลายวัน, รายชื่อวิศวกรผู้ตรวจ, หัวแถบวันที่ และสถานะการตรวจ</div>
+          </div>
+
+          <div class="screenshot-container">
+            <img src="images/media_1791272351200.png" alt="Appointment Card and Warning Banners" class="screenshot-img" onclick="openLightbox(this.src)" onerror="if(!this.dataset.retried){this.dataset.retried=true;this.src='docs/images/media_1791272351200.png';}">
+            <div class="screenshot-caption">ภาพที่ 2: บัตรนัดหมายแสดงแบนเนอร์เตือนและหน้าต่าง Tooltip ลอยแสดงรายละเอียดเมื่อนำเมาส์ไปชี้</div>
+          </div>
+
+          <h3>ง. หน้าต่าง Tooltip ลอยแสดงรายละเอียดเมื่อชี้เมาส์ (Hover Tooltip)</h3>
+          <p>
+            เมื่อเลื่อนเมาส์ไปชี้ที่บัตรนัดหมาย จะปรากฏกล่อง Tooltip ลอยแนบกับตัวบัตรทันที เพื่อแสดงชื่อลูกค้า, โรงงาน, มาตรฐาน, วัตถุประสงค์, ขอบเขตการตรวจ, วิศวกรผู้ดูแล และข้อบกพร่อง โดยไม่ต้องกดเปิดหน้าต่างแก้ไข
+          </p>
+        </div>
+      </section>
+
+      <!-- 9. FEATURE 2: Appointment Modal & Strict Rules -->
+      <section id="feature-validation">
+        <h2>9. เจาะลึกฟีเจอร์ที่ 2: หน้าต่างบันทึกนัดหมายและการตรวจสอบข้อมูลเข้มงวด</h2>
+        <div class="feature-card">
+          <div class="card-header-flex">
+            <div class="card-title">📝 ฟอร์มบันทึกนัดหมายและกลไกความถูกต้อง (<code>AppointmentFormFields.tsx</code>)</div>
+            <span class="pill pill-blue">Validation Core</span>
+          </div>
+
+          <p>
+            หน้าต่างสร้างและแก้ไขการนัดหมายถูกออกแบบแยกชัดเจนระหว่าง Customer Audit และ Internal Audit:
+          </p>
+
+          <div class="grid-2">
+            <div>
+              <h3>ฟอร์ม Customer Audit (ต้องกรอกครบ 8 ช่อง)</h3>
+              <ol>
+                <li><strong>Standard:</strong> มาตรฐานการตรวจ (ISO 9001, IATF 16949, Customer Specific ฯลฯ)</li>
+                <li><strong>Site:</strong> โรงงานที่เข้าตรวจ (เรียงตามลำดับ Master อัตโนมัติ)</li>
+                <li><strong>Customer:</strong> ช่องพิมพ์ค้นหาชื่อลูกค้าพร้อมระบบ Auto-suggest</li>
+                <li><strong>End Customer:</strong> ลูกค้าปลายทาง (แยกลิสต์กับลูกค้าหลัก)</li>
+                <li><strong>Purpose:</strong> วัตถุประสงค์ (Certification, Surveillance ฯลฯ)</li>
+                <li><strong>Target Package:</strong> แพ็กเกจไอซีที่ตรวจ (QFN, BGA, WLCSP ฯลฯ)</li>
+                <li><strong>Scope:</strong> ขอบเขตการตรวจและสายการผลิตที่เน้นย้ำ</li>
+                <li><strong>QMS Host:</strong> วิศวกร QA ผู้รับผิดชอบดูแลลูกค้า</li>
+              </ol>
+            </div>
+            <div>
+              <h3>ฟอร์ม Internal Audit</h3>
+              <ol>
+                <li><strong>Standard:</strong> มาตรฐานหรือข้อกำหนดภายใน</li>
+                <li><strong>Site:</strong> โรงงานหรืออาคารที่เข้าประเมิน</li>
+                <li><strong>Purpose:</strong> วัตถุประสงค์การตรวจภายในหรือ Gap Analysis</li>
+                <li><strong>Lead Auditor:</strong> หัวหน้าทีมผู้ตรวจประเมินที่มีใบรับรอง</li>
+                <li><strong>Internal Auditor / Host:</strong> ทีมผู้ตรวจร่วมหรือตัวแทนรับการตรวจ</li>
+                <li><strong>Scope:</strong> ขอบเขตกระบวนการที่ประเมิน</li>
+                <li><strong>Date Range:</strong> วันเริ่มต้นและวันสิ้นสุดการตรวจ</li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="callout warning">
+            <strong>คำใบ้คีย์บอร์ดนำทาง (Keyboard Shortcut Hint):</strong>
+            เพื่อเพิ่มความรวดเร็วในการบันทึกข้อมูลหน้างาน ระบบมีป้ายแนะนำคีย์ลัด:
+            <br>
+            <code>Tab ⇥ Tip: กด Tab เพื่อเลื่อนไปกรอกช่องถัดไป (Press Tab to jump to the next field)</code> ช่วยให้ผู้ใช้งานสามารถเลื่อนกรอกได้ครบทั้ง 8 ช่องอย่างรวดเร็วโดยไม่ต้องยกมือออกจากแป้นพิมพ์
+          </div>
+
+          <div class="screenshot-container">
+            <img src="images/media_1787183247656.png" alt="Appointment Modal Form Drawer" class="screenshot-img" style="max-height:450px;" onclick="openLightbox(this.src)" onerror="if(!this.dataset.retried){this.dataset.retried=true;this.src='docs/images/media_1787183247656.png';}">
+            <div class="screenshot-caption">ภาพที่ 3: หน้าต่างโมดอลสร้างการนัดหมาย แสดงแท็บสลับประเภท ช่องกรอกข้อมูล และป้ายคีย์ลัด Tab</div>
+          </div>
+
+          <div class="screenshot-container">
+            <img src="images/media_1791357143561.png" alt="Searchable Customer Combobox" class="screenshot-img" onclick="openLightbox(this.src)" onerror="if(!this.dataset.retried){this.dataset.retried=true;this.src='docs/images/media_1791357143561.png';}">
+            <div class="screenshot-caption">ภาพที่ 4: ช่องพิมพ์ค้นหาชื่อลูกค้า (Combobox) กรองผลลัพธ์ขณะพิมพ์ทันที</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 10. FEATURE 3: Audit Results Recording -->
+      <section id="feature-results">
+        <h2>10. เจาะลึกฟีเจอร์ที่ 3: การบันทึกผลการตรวจประเมินและข้อบกพร่อง</h2>
+        <div class="feature-card">
+          <div class="card-header-flex">
+            <div class="card-title">📊 บันทึกข้อบกพร่องแยกตามโรงงาน (<code>AuditResultsModal.tsx</code>)</div>
+            <span class="pill pill-green">Audit Closure</span>
+          </div>
+
+          <p>
+            เมื่องานตรวจเสร็จสิ้น วิศวกรจะเปิดหน้าต่าง Audit Results เพื่อลงผลตัวเลขข้อบกพร่อง โดยในกรณีของงานตรวจแบบหลายโรงงานพร้อมกัน (เช่น <code>UTL1/UTL2/UTL3</code>) ระบบจะเปิดให้บันทึกผลแยกตามแต่ละโรงงานอย่างอิสระ:
+          </p>
+
+          <table class="spec-table">
+            <thead>
+              <tr>
+                <th>ระดับข้อบกพร่อง</th>
+                <th>นิยามตามมาตรฐานสากล</th>
+                <th>ผลกระทบต่อสถานะของงานตรวจ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong style="color:var(--danger)">Major Non-Conformance (Major NC)</strong></td>
+                <td>ข้อบกพร่องรุนแรงที่ส่งผลต่อระบบคุณภาพหรือผิดข้อกำหนดลูกค้าโดยตรง ต้องส่งแผนแก้ไข (CAPA) ภายใน 30 วัน</td>
+                <td>ระบบจะติดแท็กเตือนข้อบกพร่องระดับวิกฤต</td>
+              </tr>
+              <tr>
+                <td><strong style="color:var(--warning)">Minor Non-Conformance (Minor NC)</strong></td>
+                <td>ข้อบกพร่องเล็กน้อยที่ไม่ส่งผลกระทบต่อคุณภาพผลิตภัณฑ์โดยตรง</td>
+                <td>งานตรวจถือว่าผ่านเมื่อส่งแผนการแก้ไขเบื้องต้น</td>
+              </tr>
+              <tr>
+                <td><strong style="color:var(--accent)">Opportunity for Improvement (OFI)</strong></td>
+                <td>ข้อเสนอแนะในการปรับปรุงเพื่อยกระดับประสิทธิภาพกระบวนการ</td>
+                <td>บันทึกเก็บไว้สำหรับการติดตามพัฒนาการ</td>
+              </tr>
+              <tr>
+                <td><strong style="color:#059669">Observations (Obs)</strong></td>
+                <td>ข้อสังเกตหน้างานที่ผู้ตรวจพบเห็นระหว่างเดินสายการผลิต</td>
+                <td>ใช้เป็นข้อมูลอ้างอิงในการตรวจครั้งถัดไป</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 11. FEATURE 4: Dynamic Table View -->
+      <section id="feature-table">
+        <h2>11. เจาะลึกฟีเจอร์ที่ 4: ตารางข้อมูลความเร็วสูง (Dynamic Table View)</h2>
+        <div class="feature-card">
+          <div class="card-header-flex">
+            <div class="card-title">📋 ตารางจัดการข้อมูลเชิงลึก (<code>TableView.tsx</code>)</div>
+            <span class="pill pill-teal">Analytics Grid</span>
+          </div>
+
+          <p>
+            หน้าจอ Table View ออกแบบมาเพื่อการค้นหา การกรองข้อมูลแบบกลุ่ม และการส่งออกข้อมูลการตรวจประเมิน:
+          </p>
+
+          <h3>จุดเด่นสำคัญของตาราง:</h3>
+          <ul>
+            <li><strong>ช่องค้นหา Real-Time:</strong> ค้นหาข้อความได้ทันทีในทุกคอลัมน์ (ลูกค้า, ลูกค้าปลายทาง, โรงงาน, มาตรฐาน, ผู้ตรวจ, วัตถุประสงค์, ขอบเขต)</li>
+            <li><strong>ตัดรายชื่อลูกค้าที่ไม่มีงานออกอัตโนมัติ (Customer Pruning):</strong> ป้องกันปัญหา "ลูกค้าผี" ค้างใน Dropdown (เช่น ลูกค้า "IFX" ที่เคยค้างในระบบแม้ลบนัดหมายไปแล้ว) โดยระบบจะดึงเฉพาะลูกค้าที่มีนัดหมายในระบบจริงเท่านั้น</li>
+            <li><strong>เรียงคอลัมน์ตามลำดับ Master:</strong> เมื่อคลิกหัวคอลัมน์ Site ระบบจะเรียงตามลำดับที่ตั้งไว้ในแท็บ Options (<code>UTL1 &rarr; UTL2 &rarr; UTL2A &rarr; UTL2B &rarr; UTL3 &rarr; UTL3A &rarr; UTL3T</code>) แทนการเรียงตามตัวอักษร A-Z ทั่วไป</li>
+            <li><strong>การลบแบบ Cascade ปลอดภัย:</strong> เมื่อลบนัดหมาย ระบบจะลบช่องวันที่เชื่อมโยงกันทั้งหมด และทำความสะอาดตัวเลือกที่ไม่ได้ใช้จาก D1 อัตโนมัติ</li>
+            <li><strong>ส่งออก Excel และ CSV:</strong> ส่งออกชุดข้อมูลพร้อมผลตรวจและข้อมูลครบถ้วนในคลิกเดียว</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 12. FEATURE 5: Executive Summary Dashboard -->
+      <section id="feature-summary">
+        <h2>12. เจาะลึกฟีเจอร์ที่ 5: แดชบอร์ดสรุปผลประจำปีสำหรับผู้บริหาร</h2>
+        <div class="feature-card">
+          <div class="card-header-flex">
+            <div class="card-title">📈 เมทริกซ์สรุปผลรายปีและตัวชี้วัด KPI (<code>SummaryDashboard.tsx</code>)</div>
+            <span class="pill pill-blue">Executive Management</span>
+          </div>
+
+          <p>
+            แดชบอร์ดสรุปผลจะประมวลผลข้อมูลการตรวจประเมินทั้งปีออกมาเป็นตารางเมทริกซ์แยกตาม 12 เดือนในปฏิทิน:
+          </p>
+
+          <div class="grid-2">
+            <div>
+              <h3>เมทริกซ์การตรวจแยกตามโรงงาน (Site Breakdown)</h3>
+              <p>
+                แสดงจำนวนการตรวจประเมินในแต่ละเดือนตลอดทั้งปีสำหรับโรงงานทั้ง 7 แห่ง (<code>UTL1</code> ถึง <code>UTL3T</code>) พร้อมร้อยละของงานที่เสร็จสิ้นและสัดส่วนข้อบกพร่อง
+              </p>
+            </div>
+            <div>
+              <h3>เมทริกซ์แยกตามมาตรฐานและประเภทงาน</h3>
+              <p>
+                แสดงสัดส่วนระหว่าง Customer Audits และ Internal Audits แยกตามมาตรฐาน ISO 9001, IATF 16949, ESD, EHS และ VDA 6.3
+              </p>
+            </div>
+          </div>
+
+          <h3>การส่งออกไฟล์ Excel รูปแบบบริษัทผ่าน <code>xlsx-js-style</code></h3>
+          <p>
+            ปุ่ม "Export Excel" จะสร้างไฟล์งาน Excel ที่มีการจัดรูปแบบสีหัวตาราง, ฟอนต์ตัวหนา, ขอบตารางชัดเจน และสูตรคำนวณผลรวมอัตโนมัติตรงตามฟอร์มรายงานของฝ่ายบริหาร
+          </p>
+
+          <div class="screenshot-container">
+            <img src="images/media_1787296549043.png" alt="Annual Summary Dashboard Matrix" class="screenshot-img" onclick="openLightbox(this.src)" onerror="if(!this.dataset.retried){this.dataset.retried=true;this.src='docs/images/media_1787296549043.png';}">
+            <div class="screenshot-caption">ภาพที่ 5: หน้าจอเมทริกซ์สรุปผลรายปี แสดงสถิติการตรวจประเมินแยกตามโรงงาน 12 เดือนและตัวเลขสรุป KPI</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 13. FEATURE 6: Manage Engineers & Options -->
+      <section id="feature-engineers">
+        <h2>13. เจาะลึกฟีเจอร์ที่ 6: จัดการทีมผู้ตรวจและตัวเลือกระบบ</h2>
+        <div class="feature-card">
+          <div class="card-header-flex">
+            <div class="card-title">⚙️ จัดการระบบและตัวเลือกกลาง (<code>Admin.tsx</code>, <code>EngineerModal.tsx</code>)</div>
+            <span class="pill pill-teal">Administration</span>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <h3>ทำเนียบวิศวกรผู้ตรวจประเมิน</h3>
+              <ul>
+                <li><strong>โปรไฟล์วิศวกร:</strong> ชื่อ, ตำแหน่ง, โรงงานประจำสังกัด</li>
+                <li><strong>แผนกงาน (Department):</strong> ตัวเลือกชัดเจนระหว่าง <code>QA</code> และ <code>Non-QA</code></li>
+                <li><strong>แท็กสายงาน (Plant Tags):</strong> กำหนดความเชี่ยวชาญ <code>QMS</code>, <code>EHS</code>, <code>ESD</code>, <code>ESD Audit</code>, <code>QS Audit</code></li>
+                <li><strong>สถานะ Lead Auditor:</strong> ระบุคุณสมบัติการเป็นหัวหน้าผู้ตรวจ</li>
+                <li><strong>สวิตช์เปิด/ปิดการแสดงผล:</strong> ซ่อนวิศวกรจากตารางได้โดยไม่ลบประวัติงานเดิม</li>
+              </ul>
+            </div>
+            <div>
+              <h3>แท็บ Options (การจัดเรียงลำดับสากล)</h3>
+              <ul>
+                <li><strong>หมวดหมู่ที่จัดการ:</strong> Sites, Customers, End Customers, Standards, Purposes, Target Packages, Departments</li>
+                <li><strong>ลากจัดลำดับได้อิสระ:</strong> ลากสลับตำแหน่งเพื่อกำหนดลำดับการแสดงผลในแอปพลิเคชัน</li>
+                <li><strong>ส่งผลทั่วทั้งระบบทันที:</strong> ยิง API <code>PUT /api/options/reorder</code> บันทึกลง D1 และอัปเดต Local Snapshot ทันทีโดยไม่ต้องโหลดหน้าเว็บใหม่</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="screenshot-container">
+            <img src="images/media_1791339415396.png" alt="Manage Auditors &amp; Engineers Dashboard" class="screenshot-img" onclick="openLightbox(this.src)" onerror="if(!this.dataset.retried){this.dataset.retried=true;this.src='docs/images/media_1791339415396.png';}">
+            <div class="screenshot-caption">ภาพที่ 6: หน้าจัดการวิศวกรผู้ตรวจ แสดงรายชื่อ แท็กสายงาน และแผนกสังกัด</div>
+          </div>
+
+          <div class="screenshot-container">
+            <img src="images/media_1793860638249_8e0cf800.png" alt="QA and Non-QA Department Toggle" class="screenshot-img" onclick="openLightbox(this.src)" onerror="if(!this.dataset.retried){this.dataset.retried=true;this.src='docs/images/media_1793860638249_8e0cf800.png';}">
+            <div class="screenshot-caption">ภาพที่ 7: ตัวเลือกกำหนดสังกัดแผนก QA หรือ Non-QA สำหรับผู้ตรวจประเมิน</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 14. FEATURE 7: Audit Trail & Activity Logging -->
+      <section id="feature-activity">
+        <h2>14. เจาะลึกฟีเจอร์ที่ 7: ประวัติและบันทึกกิจกรรมการทำงาน (Audit Trail)</h2>
+        <div class="feature-card">
+          <div class="card-header-flex">
+            <div class="card-title">📜 ประวัติการทำงานที่ไม่สามารถแก้ไขย้อนหลังได้ (<code>HistoryView.tsx</code>)</div>
+            <span class="pill pill-blue">Compliance</span>
+          </div>
+
+          <p>
+            เพื่อรักษาความโปร่งใสและปฏิบัติตามข้อกำหนดของระบบคุณภาพ ทุกการกระทำในระบบจะถูกบันทึกไว้ในตาราง <code>activity</code> ของ Cloudflare D1:
+          </p>
+
+          <ul>
+            <li><strong>ประเภทกิจกรรม:</strong> สร้างนัดหมาย, แก้ไขนัดหมาย, บันทึกผลตรวจ, ลบนัดหมาย, แก้ไขข้อมูลวิศวกร, ปรับลำดับตัวเลือก</li>
+            <li><strong>ผู้ดำเนินรายการ:</strong> แสดงชื่อหรือรหัสผู้ใช้งานที่ทำรายการ</li>
+            <li><strong>เวลาที่ทำรายการ:</strong> แสดงเวลาแบบเปรียบเทียบ (เช่น "2 hours ago") และวันเวลามาตรฐาน ISO 8601</li>
+            <li><strong>รายละเอียดเป้าหมาย:</strong> ระบุชื่อลูกค้า โรงงานที่ได้รับผลกระทบ และรหัสนัดหมาย</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 15. FEATURE 8: Google Sheets Cloud Sync -->
+      <section id="feature-sheets">
+        <h2>15. เจาะลึกฟีเจอร์ที่ 8: การซิงค์ข้อมูลกับ Google Sheets แบบ Real-Time</h2>
+        <div class="feature-card">
+          <div class="card-header-flex">
+            <div class="card-title">🔄 การเชื่อมต่อคลาวด์กับ Google Workspace (<code>worker/index.ts</code>)</div>
+            <span class="pill pill-green">Integration</span>
+          </div>
+
+          <p>
+            ระบบมีสะพานเชื่อมต่อแบบ Serverless เชื่อมต่อโดยตรงระหว่าง Cloudflare Worker และ Google Apps Script Webhooks:
+          </p>
+
+          <ol>
+            <li><strong>ซิงค์อัตโนมัติตามเหตุการณ์:</strong> เมื่อมีการสร้าง แก้ไข หรือลบนัดหมาย ระบบจะส่งข้อมูลแบบ JSON ไปยัง Google Spreadsheet กลางทันที</li>
+            <li><strong>ปุ่มซิงค์ทั้งหมด (Sync All):</strong> มีปุ่มสั่งซิงค์ข้อมูลทั้งฐานข้อมูลไปยัง Google Sheets อีกครั้งในคลิกเดียวเพื่อความแม่นยำ</li>
+          </ol>
+
+          <div class="screenshot-container">
+            <img src="images/media_1792603542297_a651cef6.png" alt="Google Sheets Sync Status Bar" class="screenshot-img" onclick="openLightbox(this.src)" onerror="if(!this.dataset.retried){this.dataset.retried=true;this.src='docs/images/media_1792603542297_a651cef6.png';}">
+            <div class="screenshot-caption">ภาพที่ 8: แถบสถานะการเชื่อมต่อ Google Sheets พร้อมเวลาที่ซิงค์สำเร็จล่าสุด</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 16. REST API Reference -->
+      <section id="api-spec">
+        <h2>16. ข้อกำหนด REST API Endpoints ของระบบ</h2>
+        <div class="feature-card">
+          <p>Endpoints ทั้งหมดให้บริการผ่าน Cloudflare Workers ภายใต้พาธ <code>/api/*</code> ในรูปแบบ JSON:</p>
+
+          <table class="spec-table">
+            <thead>
+              <tr>
+                <th>Method &amp; Route</th>
+                <th>ข้อมูลที่ส่ง (Payload)</th>
+                <th>หน้าที่และผลลัพธ์การทำงาน</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>GET /api/state</code></td>
+                <td>ไม่มี</td>
+                <td>ส่งคืนสถานะระบบทั้งหมด: วิศวกร, โรงงาน, คำขอนัดหมาย, ผลตรวจ, โน้ต, ประวัติกิจกรรม และตัวเลือกที่จัดเรียงแล้ว</td>
+              </tr>
+              <tr>
+                <td><code>POST /api/assignments</code></td>
+                <td>JSON ของนัดหมาย</td>
+                <td>สร้างรายการในตาราง <code>assignments</code> และบันทึกประวัติลง <code>activity</code></td>
+              </tr>
+              <tr>
+                <td><code>PUT /api/assignments/:id</code></td>
+                <td>JSON ข้อมูลที่แก้ไข</td>
+                <td>อัปเดตข้อมูลนัดหมายหรือผลการตรวจ พร้อมบันทึกเวลาอัปเดต</td>
+              </tr>
+              <tr>
+                <td><code>DELETE /api/assignments/:id</code></td>
+                <td>ไม่มี</td>
+                <td>ลบนัดหมายและวันตรวจที่เกี่ยวข้องแบบ Cascade พร้อมทำความสะอาดตัวเลือกลูกค้าที่ไม่ได้ใช้งาน</td>
+              </tr>
+              <tr>
+                <td><code>PUT /api/options/reorder</code></td>
+                <td><code>{ category, order: string[] }</code></td>
+                <td>บันทึกลำดับใหม่ลงใน <code>_order_&lt;category&gt;</code> ของ D1 และอัปเดตการแสดงผลทันที</td>
+              </tr>
+              <tr>
+                <td><code>POST /api/google-sheets/sync</code></td>
+                <td><code>{ action: 'sync_all' | 'sync_one', ... }</code></td>
+                <td>ส่งข้อมูลแถวตารางไปยัง Google Apps Script Webhook เพื่ออัปเดต Google Sheet</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 17. Multi-Site Normalization -->
+      <section id="site-normalization">
+        <h2>17. การแปลงรหัสโรงงานให้เป็นมาตรฐานเดียวกัน (Multi-Site Normalization)</h2>
+        <div class="feature-card">
+          <p>
+            เพื่อขจัดความไม่สอดคล้องของรหัสโรงงานในอดีต ระบบจะแปลงรหัสโรงงานทั้งหมดให้อยู่ในรูปแบบนำหน้าด้วย <code>UTL</code> ตามตารางนี้:
+          </p>
+
+          <table class="spec-table">
+            <thead>
+              <tr>
+                <th>ข้อความโรงงานขาเข้า</th>
+                <th>รหัสมาตรฐานที่แปลงได้</th>
+                <th>ลำดับความสำคัญในการเรียง</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><code>U1</code> หรือ <code>UTL1</code></td><td><code>UTL1</code></td><td>1</td></tr>
+              <tr><td><code>U2</code> หรือ <code>UTL2</code></td><td><code>UTL2</code></td><td>2</td></tr>
+              <tr><td><code>U2A</code> หรือ <code>UTL2A</code></td><td><code>UTL2A</code></td><td>3</td></tr>
+              <tr><td><code>U2B</code> หรือ <code>UTL2B</code></td><td><code>UTL2B</code></td><td>4</td></tr>
+              <tr><td><code>U3</code> หรือ <code>UTL3</code></td><td><code>UTL3</code></td><td>5</td></tr>
+              <tr><td><code>U3A</code> หรือ <code>UTL3A</code></td><td><code>UTL3A</code></td><td>6</td></tr>
+              <tr><td><code>U3B</code> หรือ <code>UTL3B</code></td><td><code>UTL3B</code></td><td>7</td></tr>
+              <tr><td><code>U3T</code> หรือ <code>UTL3T</code></td><td><code>UTL3T</code></td><td>8</td></tr>
+            </tbody>
+          </table>
+
+          <p>
+            หากมีหลายโรงงานคั่นด้วยเครื่องหมายทับ เช่น <code>UTL3/UTL1</code> ระบบจะทำการแยกคำ ตัดค่าซ้ำ และจัดเรียงใหม่ตามลำดับสากลเป็น <code>UTL1/UTL3</code>
+          </p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Lightbox Modal for Screenshots -->
+  <div id="lightboxModal" class="lightbox-modal" onclick="closeLightbox()">
+    <span class="lightbox-close">&times;</span>
+    <img id="lightboxImg" class="lightbox-content" src="" alt="ภาพขยาย">
+  </div>
+
+  <script>
+    function openLightbox(src) {
+      const modal = document.getElementById('lightboxModal');
+      const img = document.getElementById('lightboxImg');
+      img.src = src;
+      modal.classList.add('active');
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightboxModal').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeLightbox();
+    });
+
+    const searchInput = document.getElementById('docSearch');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        const links = document.querySelectorAll('.nav-links .nav-link');
+        links.forEach(link => {
+          const text = link.textContent.toLowerCase();
+          const li = link.parentElement;
+          if (!query || text.includes(query)) {
+            li.style.display = '';
+          } else {
+            li.style.display = 'none';
+          }
+        });
+      });
+    }
+
+    window.addEventListener('scroll', () => {
+      const sections = document.querySelectorAll('main section');
+      const scrollPos = window.scrollY + 120;
+
+      sections.forEach(sec => {
+        const id = sec.getAttribute('id');
+        if (!id) return;
+        const link = document.querySelector('.nav-links a[href="#' + id + '"]');
+        if (link) {
+          if (sec.offsetTop <= scrollPos && (sec.offsetTop + sec.offsetHeight) > scrollPos) {
+            document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+            link.classList.add('active');
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
+`;
+}
+
+// Generate English HTML with language switcher in header
+function generateEnglishDoc() {
+  const englishFile = path.join(__dirname, '../docs/app-architecture-and-features.html');
+  let content = fs.readFileSync(englishFile, 'utf8');
+
+  // Insert Language Switcher into English header if not already present
+  if (!content.includes('lang-switch-group')) {
+    const langSwitchHtml = `
+      <!-- Language Switcher -->
+      <div class="lang-switch-group">
+        <a href="app-architecture-and-features.html" class="lang-btn active">🇺🇸 English</a>
+        <a href="app-architecture-and-features-th.html" class="lang-btn">🇹🇭 ภาษาไทย</a>
+      </div>`;
+    content = content.replace('<div class="header-actions">', '<div class="header-actions">' + langSwitchHtml);
+    content = content.replace('/* Layout Structure */', `
+    .lang-switch-group {
+      display: inline-flex;
+      align-items: center;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .lang-btn {
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-radius: 4px;
+      transition: all 0.15s ease;
+    }
+    .lang-btn:hover {
+      color: var(--text-main);
+    }
+    .lang-btn.active {
+      background: #ffffff;
+      color: var(--primary-dark);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* Layout Structure */`);
+  }
+
+  return content;
+}
+
+// Write all files
+const thaiDoc = generateThaiDoc();
+const englishDoc = generateEnglishDoc();
+
+// Write Thai docs
+fs.writeFileSync(path.join(__dirname, '../docs/app-architecture-and-features-th.html'), thaiDoc, 'utf8');
+fs.writeFileSync(path.join(__dirname, '../app-architecture-and-features-th.html'), thaiDoc, 'utf8');
+
+// Write updated English docs with switcher
+fs.writeFileSync(path.join(__dirname, '../docs/app-architecture-and-features.html'), englishDoc, 'utf8');
+fs.writeFileSync(path.join(__dirname, '../docs/index.html'), englishDoc, 'utf8');
+fs.writeFileSync(path.join(__dirname, '../app-architecture-and-features.html'), englishDoc, 'utf8');
+
+console.log('Bilingual documentation files (English & Thai) successfully generated!');
