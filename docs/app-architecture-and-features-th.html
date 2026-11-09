@@ -1663,6 +1663,176 @@
         </div>
       </section>
 
+    
+      <!-- 18. ตารางตรวจสอบสถานะฟังก์ชันทั้งหมดในระบบ -->
+      <section id="feature-status-matrix">
+        <h2>18. ตารางตรวจสอบสถานะฟังก์ชันทั้งหมดในระบบ (Comprehensive Feature Inventory &amp; UI Status Matrix)</h2>
+        <p>
+          ส่วนนี้รวบรวมการตรวจสอบเชิงเทคนิคของทุกฟังก์ชัน, ข้อมูล, API Endpoints และหน้าต่างการทำงานในโค้ดเบสของ UTAC QA Calendar โดยจำแนกสถานะการแสดงผลและการใช้งานจริงบนหน้าเว็บ (UI Availability) ไว้อย่างชัดเจน:
+        </p>
+
+        <!-- Status Legend -->
+        <div class="grid-3" style="margin-bottom: 24px;">
+          <div class="stat-box" style="border-left: 4px solid #16a34a;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+              <span class="pill pill-green">เปิดใช้งานใน UI (Active in UI)</span>
+            </div>
+            <div class="stat-desc">ใช้งานได้สมบูรณ์ มีปุ่มและหน้าจอแสดงผลในเมนูหลักของระบบ สามารถคลิกใช้งานได้ตามปกติ</div>
+          </div>
+          <div class="stat-box" style="border-left: 4px solid #d97706;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+              <span class="pill pill-yellow">ปิดตามเงื่อนไข (Disabled in UI / Conditional)</span>
+            </div>
+            <div class="stat-desc">มีโค้ดในหน้าจอ UI แต่ถูกล็อก (Disabled) หรือซ่อนตามเงื่อนไขเฉพาะ (เช่น เมื่อแก้ไขนัดหมายแบบแยกวันเดียว)</div>
+          </div>
+          <div class="stat-box" style="border-left: 4px solid #c2410c;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+              <span class="pill pill-orange">ไม่ได้แสดงผลใน UI (Dormant / Unrendered in UI)</span>
+            </div>
+            <div class="stat-desc">เขียนโค้ดและสร้าง API ไว้พร้อมใช้งาน แต่ยังไม่ได้นำ Component มาวางแสดงผลในหน้าจอของเวอร์ชันนี้</div>
+          </div>
+          <div class="stat-box" style="border-left: 4px solid #1d4ed8;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+              <span class="pill pill-blue">เฉพาะหลังบ้าน (Backend-Only / API Service)</span>
+            </div>
+            <div class="stat-desc">ฟังก์ชันทำงานบน Cloudflare Worker หรือสร้างอัตโนมัติในฐานข้อมูล ไม่มีหน้าจอจัดการแยกต่างหาก</div>
+          </div>
+          <div class="stat-box" style="border-left: 4px solid #6b21a8;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+              <span class="pill pill-purple">ไม่แสดงในฟอร์ม UI (Omitted from UI Form)</span>
+            </div>
+            <div class="stat-desc">มีฟิลด์ข้อมูลในฐานข้อมูลและฟังก์ชันตรวจสอบ แต่ไม่ได้ใส่ช่องกรอกในหน้าต่างโมดอลเพื่อให้ผู้ใช้แก้ไข</div>
+          </div>
+          <div class="stat-box" style="border-left: 4px solid #dc2626;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+              <span class="pill pill-red">ระบบเดิม / ซ่อนจาก UI (Legacy / Filtered from UI)</span>
+            </div>
+            <div class="stat-desc">รองรับในโค้ดเพื่อแปลงข้อมูลประวัติศาสตร์ในอดีต แต่ถูกซ่อนไม่ให้ปรากฏในเมนูดรอปดาวน์ของ UI ปัจจุบัน</div>
+          </div>
+        </div>
+
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th style="width: 22%;">ฟังก์ชัน / ระบบงาน</th>
+              <th style="width: 20%;">ไฟล์โค้ดและส่วนประกอบ</th>
+              <th style="width: 18%;">สถานะบน UI</th>
+              <th style="width: 40%;">คำอธิบายและเหตุผลในการทำงาน</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>ปฏิทินไทม์ไลน์แบบโต้ตอบ</strong></td>
+              <td><code>src/components/Schedule.tsx</code></td>
+              <td><span class="pill pill-green">Active in UI</span></td>
+              <td>ตารางปฏิทิน 365 วัน พร้อมระบบจัดกลุ่ม 6 มิติ, การซูมปรับสเกล และ Tooltip ลอยอัจฉริยะ</td>
+            </tr>
+            <tr>
+              <td><strong>ฟอร์มนัดหมาย Customer Audit</strong></td>
+              <td><code>src/components/AppointmentFormFields.tsx</code></td>
+              <td><span class="pill pill-green">Active in UI</span></td>
+              <td>ฟอร์มบันทึกนัดหมายลูกค้า ตรวจสอบความถูกต้องครบทั้ง 8 ช่อง พร้อมแบนเนอร์สีแดงแจ้งเตือนทันที</td>
+            </tr>
+            <tr>
+              <td><strong>ฟอร์มนัดหมาย Internal Audit</strong></td>
+              <td><code>src/components/AppointmentFormFields.tsx</code></td>
+              <td><span class="pill pill-green">Active in UI</span></td>
+              <td>ฟอร์มตรวจประเมินภายใน ตรวจสอบครบทั้ง 6 ช่อง: Standard, Site, Audit Category, Area, QMS Host, และ Date Range</td>
+            </tr>
+            <tr>
+              <td><strong>ช่องเลือกวันที่เมื่อแก้ไขแบบวันเดียว</strong></td>
+              <td><code>AppointmentFormFields.tsx</code> (<code>isDateLocked</code>)</td>
+              <td><span class="pill pill-yellow">Disabled in UI / Conditional</span></td>
+              <td>เมื่อผู้ใช้เลือกแก้ไขเฉพาะวันใดวันหนึ่ง ช่องเลือกวันที่จะถูกล็อก (<code>disabled={true}</code>) และปฏิทิน <code>AvailabilityDatePicker</code> จะถูกซ่อน พร้อมแสดงแถบล็อกแนะนำให้เลือก "แก้ไขทั้งนัดหมาย" หากต้องการเปลี่ยนวัน</td>
+            </tr>
+            <tr>
+              <td><strong>ระบบโน้ตและแสดงความคิดเห็น</strong></td>
+              <td><code>src/components/DetailPanel.tsx</code><br><code>worker/index.ts</code> (<code>/api/comments</code>)<br>D1 table <code>comments</code></td>
+              <td><span class="pill pill-orange">Dormant / Unrendered in UI</span></td>
+              <td>มีตารางในฐานข้อมูล D1, API หลังบ้าน (<code>POST</code>, <code>DELETE /api/comments</code>) และหน้าต่าง <code>DetailPanel.tsx</code> สมบูรณ์ แต่ไม่ได้ถูก Mount ในหน้าจอหลักของ UI ปัจจุบัน ทำให้ผู้ใช้ยังไม่เห็นช่องพิมพ์คอมเมนต์บนหน้าจอ</td>
+            </tr>
+            <tr>
+              <td><strong>ฟังก์ชันคัดลอกนัดหมาย (Duplicate)</strong></td>
+              <td><code>src/useScheduler.ts</code> (<code>duplicate(aid)</code>)</td>
+              <td><span class="pill pill-orange">Dormant / Unrendered in UI</span></td>
+              <td>มีโค้ดโคลนนิ่งนัดหมายไปยังวันถัดไปพร้อมบันทึก Audit Trail ใน State แต่ไม่มีปุ่มคลิกเรียกใช้งานในหน้าโมดอลหรือตาราง</td>
+            </tr>
+            <tr>
+              <td><strong>ปุ่มสลับเรียงลำดับการค้นหา เก่าสุด/ใหม่สุด</strong></td>
+              <td><code>src/useScheduler.ts</code> (<code>searchSort</code>)</td>
+              <td><span class="pill pill-orange">Dormant / Unrendered in UI</span></td>
+              <td>State และฟังก์ชันกรองข้อมูลรองรับการเรียงตาม <code>oldest</code> หรือ <code>newest</code> แต่ในแถบค้นหาบนหน้า UI มีเพียงช่องพิมพ์ข้อความ ไม่มีปุ่มคลิกสลับ</td>
+            </tr>
+            <tr>
+              <td><strong>หน้าจอจัดการ Orders แยกต่างหาก</strong></td>
+              <td><code>worker/index.ts</code> (<code>/api/orders</code>)<br>D1 table <code>orders</code></td>
+              <td><span class="pill pill-blue">Backend-Only / API Service</span></td>
+              <td>รหัส Order (เช่น <code>NEW-001</code>) ถูกสร้างขึ้นอัตโนมัติในพื้นหลังเพื่อเป็นตู้เก็บนัดหมาย ไม่มีเมนูหน้าจอหรือแบบฟอร์ม CRUD ของ Orders ใน UI</td>
+            </tr>
+            <tr>
+              <td><strong>API จัดการและเปิดปิดสถานะโรงงานเดิม</strong></td>
+              <td><code>worker/index.ts</code> (<code>/api/plants/:id/toggle</code>)<br>D1 table <code>plants</code></td>
+              <td><span class="pill pill-blue">Backend-Only / Legacy</span></td>
+              <td>มี Route และตารางรองรับการ Toggle สถานะ Plants แต่ใน UI ปัจจุบัน การจัดการโรงงานและแผนกทั้งหมดถูกย้ายไปควบคุมผ่านแท็กตัวเลือกไดนามิกในแถบ Options</td>
+            </tr>
+            <tr>
+              <td><strong>บริการซิงค์ข้อมูล Google Sheets แบบ Real-Time</strong></td>
+              <td><code>worker/index.ts</code> (<code>/api/google-sheets/*</code>)<br>D1 table <code>options</code></td>
+              <td><span class="pill pill-blue">Backend-Only / Webhook Service</span></td>
+              <td>ระบบซิงค์ทำงานผ่าน Cloudflare Worker และคอนฟิกผ่านตัวแปร <code>GOOGLE_SHEETS_WEBHOOK_URL</code> โดยไม่มีปุ่มหรือหน้าต่างคอนฟิกใน UI หน้าบ้าน</td>
+            </tr>
+            <tr>
+              <td><strong>แฟล็กสิทธิ์ <code>isMaster</code> ของผู้ตรวจประเมิน</strong></td>
+              <td><code>src/types.ts</code> (<code>Engineer.isMaster</code>)<br><code>src/components/EngineerModal.tsx</code></td>
+              <td><span class="pill pill-purple">Omitted from UI Form</span></td>
+              <td>มีอยู่ใน Data Model และตัวกรองระบบ (<code>e.isMaster !== false</code>) แต่หน้าต่าง <code>EngineerModal.tsx</code> ไม่มีช่อง Checkbox ให้ผู้ดูแลระบบกดติ๊ก โดยจะถือว่าเป็น Master โดยปริยาย</td>
+            </tr>
+            <tr>
+              <td><strong>ช่องกรอก Lead Auditor แยกเดี่ยว</strong></td>
+              <td><code>src/types.ts</code> (<code>Assignment.leadAuditor</code>)</td>
+              <td><span class="pill pill-purple">Omitted from UI Form</span></td>
+              <td>มีในสคีมาข้อมูลและตัวตรวจสอบ แต่ในหน้าแบบฟอร์มนัดหมายถูกรวมเข้ากับ <code>MultiAuditorSelect</code> (เลือก QMS Host หลายคน) จึงไม่มีช่องข้อความ Lead Auditor แยก</td>
+            </tr>
+            <tr>
+              <td><strong>รหัสโรงงานแบบเดิม (<code>U1..U3T</code>)</strong></td>
+              <td><code>src/types.ts</code> (<code>normalizeSite()</code>)<br><code>worker/index.ts</code></td>
+              <td><span class="pill pill-red">Legacy / Filtered from UI</span></td>
+              <td>ฟังก์ชันแปลงรหัสอัตโนมัติเป็น <code>UTL1..UTL4</code> ทำงานเพื่อรองรับข้อมูลย้อนหลัง แต่ถูกคัดกรองออกจากดรอปดาวน์และแท็กตัวเลือกทั้งหมดใน UI</td>
+            </tr>
+            <tr>
+              <td><strong>บันทึกผลการตรวจและข้อบกพร่อง</strong></td>
+              <td><code>src/components/AuditResultsModal.tsx</code></td>
+              <td><span class="pill pill-green">Active in UI</span></td>
+              <td>โมดอลบันทึกผลการตรวจ Major, Minor, OFI, ข้อสังเกต และการเปลี่ยนสถานะเป็นตรวจเสร็จสิ้น</td>
+            </tr>
+            <tr>
+              <td><strong>ตารางข้อมูลความเร็วสูงและการกรองหลายคอลัมน์</strong></td>
+              <td><code>src/components/TableView.tsx</code></td>
+              <td><span class="pill pill-green">Active in UI</span></td>
+              <td>ตารางข้อมูลประสิทธิภาพสูง พร้อมการกรองละเอียด, การแบ่งหน้า (Pagination) และป้ายสถานะความสมบูรณ์</td>
+            </tr>
+            <tr>
+              <td><strong>แดชบอร์ด KPI ผู้บริหารและส่งออก Excel</strong></td>
+              <td><code>src/components/SummaryDashboard.tsx</code></td>
+              <td><span class="pill pill-green">Active in UI</span></td>
+              <td>เมทริกซ์สรุปผลแยกตามโรงงานและประเภทตรวจ พร้อมปุ่มดาวน์โหลดไฟล์ Excel (.xlsx) ที่จัดรูปแบบสวยงาม</td>
+            </tr>
+            <tr>
+              <td><strong>การจัดเรียงตัวเลือกระบบแบบลากวาง (Drag-and-Drop)</strong></td>
+              <td><code>src/components/Admin.tsx</code></td>
+              <td><span class="pill pill-green">Active in UI</span></td>
+              <td>จัดเรียงลำดับ Sites, Standards, Customers, Departments แบบลากวาง พร้อมบันทึกและแสดงผลตามลำดับทันทีทั้งระบบ</td>
+            </tr>
+            <tr>
+              <td><strong>บันทึกประวัติการทำงาน (Audit Trail)</strong></td>
+              <td><code>src/components/HistoryView.tsx</code></td>
+              <td><span class="pill pill-green">Active in UI</span></td>
+              <td>ระบบบันทึกเหตุการณ์ตามลำดับเวลา บันทึกการสร้าง, อัปเดต, ลบ และการลงผลตรวจ</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
     </main>
   </div>
 

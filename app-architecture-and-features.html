@@ -711,22 +711,23 @@
 
       <div class="nav-group-title">Architecture</div>
       <ul class="nav-links">
-        <li><a href="#system-architecture" class="nav-link">System Topology Diagram</a></li>
-        <li><a href="#data-lifecycle" class="nav-link">Data Flow & Persistence</a></li>
-        <li><a href="#database-schema" class="nav-link">D1 SQLite Relational Schema</a></li>
-        <li><a href="#master-order-architecture" class="nav-link">Universal Master-Order Engine</a></li>
+        <li><a href="#system-architecture" class="nav-link">3. System Topology Diagram</a></li>
+        <li><a href="#data-lifecycle" class="nav-link">4. Data Lifecycle & Persistence</a></li>
+        <li><a href="#database-schema" class="nav-link">5. D1 SQLite Relational Schema</a></li>
+        <li><a href="#master-order-architecture" class="nav-link">6. Universal Master-Order Engine</a></li>
+        <li><a href="#compliance-lifecycle" class="nav-link">7. Compliance State Machine</a></li>
       </ul>
 
       <div class="nav-group-title">Core Features</div>
       <ul class="nav-links">
-        <li><a href="#feature-schedule" class="nav-link">1. Timeline Calendar & Views</a></li>
-        <li><a href="#feature-validation" class="nav-link">2. Appointment Modal & Rules</a></li>
-        <li><a href="#feature-results" class="nav-link">3. Audit Findings Recording</a></li>
-        <li><a href="#feature-table" class="nav-link">4. Dynamic Table View</a></li>
-        <li><a href="#feature-summary" class="nav-link">5. KPI Executive Dashboard</a></li>
-        <li><a href="#feature-engineers" class="nav-link">6. Manage Engineers & Options</a></li>
-        <li><a href="#feature-activity" class="nav-link">7. Audit Trail & History Log</a></li>
-        <li><a href="#feature-sheets" class="nav-link">8. Google Sheets Cloud Sync</a></li>
+        <li><a href="#feature-schedule" class="nav-link">8. Timeline Calendar & Views</a></li>
+        <li><a href="#feature-validation" class="nav-link">9. Appointment Modal & Rules</a></li>
+        <li><a href="#feature-results" class="nav-link">10. Audit Findings Recording</a></li>
+        <li><a href="#feature-table" class="nav-link">11. Dynamic Table View</a></li>
+        <li><a href="#feature-summary" class="nav-link">12. KPI Executive Dashboard</a></li>
+        <li><a href="#feature-engineers" class="nav-link">13. Manage Engineers & Options</a></li>
+        <li><a href="#feature-activity" class="nav-link">14. Audit Trail & History Log</a></li>
+        <li><a href="#feature-sheets" class="nav-link">15. Google Sheets Cloud Sync</a></li>
       </ul>
 
       <div class="nav-group-title">Specifications</div>
@@ -1177,7 +1178,16 @@
 
       <!-- Appointment Compliance Lifecycle Diagram -->
       <div class="diagram-wrapper">
-        <div class="diagram-title">Appointment Compliance Lifecycle State Machine</div>
+        
+
+      <!-- FEATURE 1: Schedule Calendar -->
+      
+      <!-- 7. Compliance Lifecycle Diagram -->
+      <section id="compliance-lifecycle">
+        <h2>7. Compliance Lifecycle State Machine</h2>
+        <p>Architectural state machine diagram illustrating the complete appointment compliance lifecycle from draft creation through validation flagging, elapsed status, and defect resolution:</p>
+        <div class="diagram-wrapper">
+          <div class="diagram-title">Appointment Compliance Lifecycle State Machine</div>
         <svg viewBox="0 0 920 300" width="100%" height="300" style="display:block; margin:0 auto; font-family:-apple-system, sans-serif;">
           <defs>
             <marker id="smArrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -1247,10 +1257,11 @@
           <text x="205" y="16" font-size="10" fill="#dc2626">Field cleared upon edit</text>
         </svg>
       </div>
+      </section>
 
       <!-- FEATURE 1: Schedule Calendar -->
       <section id="feature-schedule">
-        <h2>7. Feature Deep-Dive: Timeline Calendar &amp; Multi-Views</h2>
+        <h2>8. Feature Deep-Dive: Timeline Calendar &amp; Multi-Views</h2>
         <div class="feature-card">
           <div class="card-header-flex">
             <div class="card-title">📅 Interactive Calendar Grid (<code>Schedule.tsx</code>)</div>
@@ -1316,7 +1327,7 @@
 
       <!-- FEATURE 2: Appointment Modal & Strict Rules -->
       <section id="feature-validation">
-        <h2>8. Feature Deep-Dive: Appointment Modal &amp; Strict Validation</h2>
+        <h2>9. Feature Deep-Dive: Appointment Modal &amp; Strict Validation</h2>
         <div class="feature-card">
           <div class="card-header-flex">
             <div class="card-title">📝 Appointment Form &amp; Strict Quality Engine</div>
@@ -1376,7 +1387,7 @@
 
       <!-- FEATURE 3: Audit Results Recording -->
       <section id="feature-results">
-        <h2>9. Feature Deep-Dive: Audit Findings Recording</h2>
+        <h2>10. Feature Deep-Dive: Audit Findings Recording</h2>
         <div class="feature-card">
           <div class="card-header-flex">
             <div class="card-title">📊 Multi-Site Findings Tracker (<code>AuditResultsModal.tsx</code>)</div>
@@ -1423,7 +1434,7 @@
 
       <!-- FEATURE 4: Dynamic Table View -->
       <section id="feature-table">
-        <h2>10. Feature Deep-Dive: Dynamic Table View</h2>
+        <h2>11. Feature Deep-Dive: Dynamic Table View</h2>
         <div class="feature-card">
           <div class="card-header-flex">
             <div class="card-title">📋 High-Density Operational Table (<code>TableView.tsx</code>)</div>
@@ -1447,7 +1458,7 @@
 
       <!-- FEATURE 5: Executive Summary Dashboard -->
       <section id="feature-summary">
-        <h2>11. Feature Deep-Dive: Annual Summary Dashboard</h2>
+        <h2>12. Feature Deep-Dive: Annual Summary Dashboard</h2>
         <div class="feature-card">
           <div class="card-header-flex">
             <div class="card-title">📈 Annual QA Matrix &amp; KPI Dashboard (<code>SummaryDashboard.tsx</code>)</div>
@@ -1487,7 +1498,7 @@
 
       <!-- FEATURE 6: Manage Engineers & Options -->
       <section id="feature-engineers">
-        <h2>12. Feature Deep-Dive: Engineer Roster &amp; Options Management</h2>
+        <h2>13. Feature Deep-Dive: Engineer Roster &amp; Options Management</h2>
         <div class="feature-card">
           <div class="card-header-flex">
             <div class="card-title">⚙️ Admin Configuration (<code>Admin.tsx</code>, <code>EngineerModal.tsx</code>)</div>
@@ -1529,7 +1540,7 @@
 
       <!-- FEATURE 7: Audit Trail & Activity Logging -->
       <section id="feature-activity">
-        <h2>13. Feature Deep-Dive: Audit Trail &amp; Historical Log</h2>
+        <h2>14. Feature Deep-Dive: Audit Trail &amp; Historical Log</h2>
         <div class="feature-card">
           <div class="card-header-flex">
             <div class="card-title">📜 Immutable Activity Trail (<code>HistoryView.tsx</code>)</div>
@@ -1551,7 +1562,7 @@
 
       <!-- FEATURE 8: Google Sheets Cloud Sync -->
       <section id="feature-sheets">
-        <h2>14. Feature Deep-Dive: Real-Time Google Sheets Cloud Sync</h2>
+        <h2>15. Feature Deep-Dive: Real-Time Google Sheets Cloud Sync</h2>
         <div class="feature-card">
           <div class="card-header-flex">
             <div class="card-title">🔄 Google Workspace Cloud Bridge (<code>worker/index.ts</code>)</div>
@@ -1576,7 +1587,7 @@
 
       <!-- REST API Reference -->
       <section id="api-spec">
-        <h2>15. REST API Endpoint Specification</h2>
+        <h2>16. REST API Endpoint Specification</h2>
         <div class="feature-card">
           <p>All endpoints are served by Cloudflare Workers at <code>/api/*</code> and return JSON responses with CORS headers.</p>
 
@@ -1626,7 +1637,7 @@
 
       <!-- Multi-Site Normalization -->
       <section id="site-normalization">
-        <h2>16. Multi-Site Normalization &amp; Formatting</h2>
+        <h2>17. Multi-Site Normalization &amp; Formatting</h2>
         <div class="feature-card">
           <p>
             To eliminate legacy inconsistencies across the system, all site codes are normalized to standard <code>UTL</code> prefixes using the following rule set:
@@ -1656,6 +1667,176 @@
             Multi-site strings separated by slashes or commas (e.g., <code>UTL3/UTL1</code>) are parsed, de-duplicated, and sorted in canonical order: <code>UTL1/UTL3</code>.
           </p>
         </div>
+      </section>
+
+    
+      <!-- 18. Comprehensive Feature Inventory & UI Status -->
+      <section id="feature-status-matrix">
+        <h2>18. Comprehensive Feature Inventory &amp; UI Status Matrix</h2>
+        <p>
+          This section provides an exhaustive technical audit of all features, capabilities, endpoints, and data fields in the UTAC QA Calendar codebase, explicitly classifying their operational availability in the frontend User Interface (UI):
+        </p>
+
+        <!-- Status Legend -->
+        <div class="grid-3" style="margin-bottom: 24px;">
+          <div class="stat-box" style="border-left: 4px solid #16a34a;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+              <span class="pill pill-green">Active in UI</span>
+            </div>
+            <div class="stat-desc">Fully accessible, interactive, and actively rendered in the main web UI navigation and views.</div>
+          </div>
+          <div class="stat-box" style="border-left: 4px solid #d97706;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+              <span class="pill pill-yellow">Disabled in UI / Conditional</span>
+            </div>
+            <div class="stat-desc">Rendered in the UI component tree but locked, disabled, or hidden under specific workflows (e.g. single-day edit mode).</div>
+          </div>
+          <div class="stat-box" style="border-left: 4px solid #c2410c;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+              <span class="pill pill-orange">Dormant / Unrendered in UI</span>
+            </div>
+            <div class="stat-desc">Code, data model, and API fully written and functional, but the component is not currently mounted or exposed in the UI.</div>
+          </div>
+          <div class="stat-box" style="border-left: 4px solid #1d4ed8;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+              <span class="pill pill-blue">Backend-Only / API Service</span>
+            </div>
+            <div class="stat-desc">Cloudflare Worker API or database logic executed via webhook/API/background without a dedicated frontend screen.</div>
+          </div>
+          <div class="stat-box" style="border-left: 4px solid #6b21a8;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+              <span class="pill pill-purple">Omitted from UI Form</span>
+            </div>
+            <div class="stat-desc">Property exists in database schema and validator logic, but omitted from user-facing modal dialogs or forms.</div>
+          </div>
+          <div class="stat-box" style="border-left: 4px solid #dc2626;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+              <span class="pill pill-red">Legacy / Filtered from UI</span>
+            </div>
+            <div class="stat-desc">Maintained strictly for backward compatibility with older database records; hidden from UI dropdown options.</div>
+          </div>
+        </div>
+
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th style="width: 22%;">Feature / Capability</th>
+              <th style="width: 20%;">Code Location &amp; Artifact</th>
+              <th style="width: 18%;">UI Status</th>
+              <th style="width: 40%;">Description &amp; Operational Rationale</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Interactive Timeline Calendar</strong></td>
+              <td><code>src/components/Schedule.tsx</code></td>
+              <td><span class="pill pill-green">Active in UI</span></td>
+              <td>Full 365-day horizontal timeline grid with 6-way grouping, zoom controls, and floating anchored tooltips.</td>
+            </tr>
+            <tr>
+              <td><strong>Customer Audit Modal Form</strong></td>
+              <td><code>src/components/AppointmentFormFields.tsx</code></td>
+              <td><span class="pill pill-green">Active in UI</span></td>
+              <td>Interactive creation/editing strictly validating all 8 mandatory fields with red incompleteness banners.</td>
+            </tr>
+            <tr>
+              <td><strong>Internal Audit Modal Form</strong></td>
+              <td><code>src/components/AppointmentFormFields.tsx</code></td>
+              <td><span class="pill pill-green">Active in UI</span></td>
+              <td>Internal Audit workflow enforcing all 6 fields: Standard, Site, Audit Category, Area, QMS Host, and Date Range.</td>
+            </tr>
+            <tr>
+              <td><strong>Date Range Picker in Single-Day Edit</strong></td>
+              <td><code>AppointmentFormFields.tsx</code> (<code>isDateLocked</code>)</td>
+              <td><span class="pill pill-yellow">Disabled in UI / Conditional</span></td>
+              <td>When an appointment is split into single-day scope, the Date inputs are disabled (<code>disabled={true}</code>) and <code>AvailabilityDatePicker</code> is hidden behind a lock banner instructing users to choose "Edit entire appointment" to reschedule.</td>
+            </tr>
+            <tr>
+              <td><strong>Notes &amp; Discussion Comments</strong></td>
+              <td><code>src/components/DetailPanel.tsx</code><br><code>worker/index.ts</code> (<code>/api/comments</code>)<br>D1 table <code>comments</code></td>
+              <td><span class="pill pill-orange">Dormant / Unrendered in UI</span></td>
+              <td>Full D1 schema, Worker API endpoints (<code>POST</code>, <code>DELETE /api/comments</code>), and drawer component (<code>DetailPanel.tsx</code>) exist in codebase. However, <code>DetailPanel</code> is unmounted in the current UI layout, so comment posting is dormant in the frontend.</td>
+            </tr>
+            <tr>
+              <td><strong>Appointment Duplication Action</strong></td>
+              <td><code>src/useScheduler.ts</code> (<code>duplicate(aid)</code>)</td>
+              <td><span class="pill pill-orange">Dormant / Unrendered in UI</span></td>
+              <td>Logic to duplicate an appointment into the next calendar day exists in scheduler state and activity logger, but is not attached to any action button in the current modal or table interface.</td>
+            </tr>
+            <tr>
+              <td><strong>Oldest/Newest Search Sort Toggle</strong></td>
+              <td><code>src/useScheduler.ts</code> (<code>searchSort</code>)</td>
+              <td><span class="pill pill-orange">Dormant / Unrendered in UI</span></td>
+              <td>State and filtering functions support sorting search results by oldest or newest, but the top search bar UI renders only a text query input without a sort toggle switch.</td>
+            </tr>
+            <tr>
+              <td><strong>Standalone Orders Management Screen</strong></td>
+              <td><code>worker/index.ts</code> (<code>/api/orders</code>)<br>D1 table <code>orders</code></td>
+              <td><span class="pill pill-blue">Backend-Only / API Service</span></td>
+              <td>Audit orders (e.g. <code>NEW-001</code>) are auto-generated as background relational containers when appointments are created. There is no standalone "Orders" management page or manual order CRUD UI.</td>
+            </tr>
+            <tr>
+              <td><strong>Direct Plant Management &amp; Toggle</strong></td>
+              <td><code>worker/index.ts</code> (<code>/api/plants/:id/toggle</code>)<br>D1 table <code>plants</code></td>
+              <td><span class="pill pill-blue">Backend-Only / Legacy</span></td>
+              <td>Cloudflare Worker routes exist to seed and toggle plant visibility, but the modern frontend manages all sites and departments through dynamic tags in the Options tab (<code>options.sites</code>).</td>
+            </tr>
+            <tr>
+              <td><strong>Real-Time Google Sheets Cloud Sync</strong></td>
+              <td><code>worker/index.ts</code> (<code>/api/google-sheets/*</code>)<br>D1 table <code>options</code></td>
+              <td><span class="pill pill-blue">Backend-Only / Webhook Service</span></td>
+              <td>Sync engine is executed via Cloudflare Worker and environment variable <code>GOOGLE_SHEETS_WEBHOOK_URL</code> to push database snapshots on demand, without an in-app configuration UI.</td>
+            </tr>
+            <tr>
+              <td><strong>Engineer <code>isMaster</code> Role Flag</strong></td>
+              <td><code>src/types.ts</code> (<code>Engineer.isMaster</code>)<br><code>src/components/EngineerModal.tsx</code></td>
+              <td><span class="pill pill-purple">Omitted from UI Form</span></td>
+              <td>Present in TypeScript data model and filtered in scheduler logic (<code>e.isMaster !== false</code>), but <code>EngineerModal.tsx</code> does not expose a checkbox or switch for administrators to edit it.</td>
+            </tr>
+            <tr>
+              <td><strong>Separate Lead Auditor Field</strong></td>
+              <td><code>src/types.ts</code> (<code>Assignment.leadAuditor</code>)</td>
+              <td><span class="pill pill-purple">Omitted from UI Form</span></td>
+              <td>Supported in the data schema and completeness validator, but omitted from the appointment form in favor of the consolidated <code>MultiAuditorSelect</code> (auditor1 / auditor2 / hostAuditors).</td>
+            </tr>
+            <tr>
+              <td><strong>Legacy Site Codes (<code>U1..U3T</code>)</strong></td>
+              <td><code>src/types.ts</code> (<code>normalizeSite()</code>)<br><code>worker/index.ts</code></td>
+              <td><span class="pill pill-red">Legacy / Filtered from UI</span></td>
+              <td>Legacy facility codes are automatically translated to canonical <code>UTL1..UTL4</code> for backward compatibility, but are strictly excluded from all user-facing dropdowns and Options tags.</td>
+            </tr>
+            <tr>
+              <td><strong>Audit Findings &amp; Defect Recording</strong></td>
+              <td><code>src/components/AuditResultsModal.tsx</code></td>
+              <td><span class="pill pill-green">Active in UI</span></td>
+              <td>Interactive modal to record Major, Minor, OFI, Remarks, and completion status.</td>
+            </tr>
+            <tr>
+              <td><strong>Dynamic Table View &amp; Multi-Filtering</strong></td>
+              <td><code>src/components/TableView.tsx</code></td>
+              <td><span class="pill pill-green">Active in UI</span></td>
+              <td>High-performance tabular view with multi-column filtering, pagination, and status indicators.</td>
+            </tr>
+            <tr>
+              <td><strong>Executive KPI Dashboard &amp; Excel Export</strong></td>
+              <td><code>src/components/SummaryDashboard.tsx</code></td>
+              <td><span class="pill pill-green">Active in UI</span></td>
+              <td>Annual breakdown matrix with styled corporate Excel spreadsheet export via <code>xlsx-js-style</code>.</td>
+            </tr>
+            <tr>
+              <td><strong>Universal Drag-and-Drop Options Ordering</strong></td>
+              <td><code>src/components/Admin.tsx</code></td>
+              <td><span class="pill pill-green">Active in UI</span></td>
+              <td>Live drag-and-drop ordering for Sites, Standards, Customers, and Departments reflecting globally across all dropdowns.</td>
+            </tr>
+            <tr>
+              <td><strong>Comprehensive Audit Trail Log</strong></td>
+              <td><code>src/components/HistoryView.tsx</code></td>
+              <td><span class="pill pill-green">Active in UI</span></td>
+              <td>Chronological event stream tracking creations, updates, deletions, and findings.</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
 
     </main>

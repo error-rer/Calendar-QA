@@ -1481,6 +1481,7 @@ export function useScheduler() {
           endCustomer: d.sectionType === 'customer' ? d.endCustomer : '',
           targetPackage: d.sectionType === 'customer' ? (d.targetPackage || '') : '',
           customerNames: d.sectionType === 'customer' ? (d.customerNames || '') : '',
+          auditCategory: d.sectionType === 'internal' ? (d.auditCategory || '') : '',
           auditor1: d.sectionType === 'customer' ? d.auditor1 : '',
           purpose: d.purpose || '',
           site2: d.sectionType === 'internal' ? normalizeSites(d.site2 || '') : '',

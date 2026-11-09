@@ -229,10 +229,12 @@ export interface Assignment {
 
 export type Appointment = Assignment;
 
-export function isInternalAssignment(a: Assignment): boolean {
+export function isInternalAssignment(a: Assignment | any): boolean {
   if (!a) return false;
   return (
     a.sectionType === 'internal' ||
+    a.auditType === 'Internal Audit' ||
+    a.auditType === 'IA' ||
     !!(a.site2 || a.auditor2 || a.department2 || a.area) ||
     (typeof a.id === 'string' && a.id.startsWith('IA')) ||
     (typeof a.order === 'string' && a.order.startsWith('IA'))
@@ -263,11 +265,7 @@ export function getAppointmentQmsHost(audit: Assignment | any): string {
 
 export function getMissingFields(a: Assignment | any): string[] {
   if (!a) return [];
-  const isInternal =
-    isInternalAssignment(a) ||
-    a.auditType === 'Internal Audit' ||
-    a.auditType === 'IA' ||
-    a.sectionType === 'internal';
+  const isInternal = isInternalAssignment(a);
   const missing: string[] = [];
 
   // 1. Standard (standard, department1 for customer, department2 for internal)
@@ -289,43 +287,71 @@ export function getMissingFields(a: Assignment | any): string[] {
       : isInternal
       ? (a.site2 || a.site1)
       : (a.site1 || a.site2);
-  const hasSite = Boolean(rawSite && String(rawSite).trim());
+  const hasSite = Array.isArray(rawSite)
+    ? rawSite.length > 0 && rawSite.some((s: any) => Boolean(s && String(s).trim()))
+    : Boolean(rawSite && String(rawSite).trim());
   if (!hasSite) missing.push('Site');
 
-  // 3. Dates
+  // 3. QMS Host (strictly required for both Customer and Internal Audit; cannot be empty or "Unassigned")
+  const qmsHostStr = getAppointmentQmsHost(a);
+  const hasQmsHost = Boolean(qmsHostStr && qmsHostStr.trim() && qmsHostStr.trim().toLowerCase() !== 'unassigned');
+  if (!hasQmsHost) missing.push('QMS Host');
+
+  // 4. Dates (valid date or date range)
   const hasDates = Boolean(
-    a.date ||
-    (a.startDate && a.endDate) ||
-    (a.from && a.to) ||
-    (a.dateFrom && a.dateTo) ||
-    (a.week !== undefined && a.day !== undefined)
+    (a.date && String(a.date).trim()) ||
+    (a.startDate && a.endDate && String(a.startDate).trim() && String(a.endDate).trim()) ||
+    (a.from && a.to && String(a.from).trim() && String(a.to).trim()) ||
+    (a.dateFrom && a.dateTo && String(a.dateFrom).trim() && String(a.dateTo).trim()) ||
+    (a.week !== undefined && a.day !== undefined && a.week !== null && a.day !== null)
   );
   if (!hasDates) missing.push('Date Range');
 
-  // 4. QMS Host
-  const qmsHostStr = getAppointmentQmsHost(a);
-  const hasQmsHost = Boolean(qmsHostStr && qmsHostStr.trim());
-  if (!hasQmsHost) missing.push('QMS Host');
-
   if (isInternal) {
-    const rawPurpose = a.purpose !== undefined ? a.purpose : a.apptPurpose;
-    const hasPurpose = Boolean(rawPurpose && String(rawPurpose).trim());
-    const hasArea = Boolean(a.area && String(a.area).trim());
-    const hasAuditCategory = Boolean(a.auditCategory && String(a.auditCategory).trim());
+    // Internal Audit STRICT FULL-FORM COMPLETION:
+    // Every single input field belonging to the Internal Audit form MUST be validated:
+    // 1. STANDARD (checked above)
+    // 2. SITE (checked above)
+    // 3. AUDIT CATEGORY
+    const rawAuditCategory =
+      a.auditCategory !== undefined && a.auditCategory !== null && a.auditCategory !== ''
+        ? a.auditCategory
+        : a.category;
+    const hasAuditCategory = Array.isArray(rawAuditCategory)
+      ? rawAuditCategory.length > 0 && rawAuditCategory.some((s: any) => Boolean(s && String(s).trim()))
+      : Boolean(rawAuditCategory && String(rawAuditCategory).trim());
+    if (!hasAuditCategory) missing.push('Audit Category');
 
-    if (!hasArea && !hasPurpose) missing.push('Area');
-    if (!hasAuditCategory && !hasPurpose && a.auditCategory !== undefined) missing.push('Audit Category');
-    if (a.leadAuditor !== undefined && !String(a.leadAuditor).trim()) missing.push('Lead Auditor');
+    // 4. AREA
+    const rawArea = a.area !== undefined && a.area !== null
+      ? a.area
+      : (a.purpose || a.apptPurpose);
+    const hasArea = Array.isArray(rawArea)
+      ? rawArea.length > 0 && rawArea.some((s: any) => Boolean(s && String(s).trim()))
+      : Boolean(rawArea && String(rawArea).trim());
+    if (!hasArea) missing.push('Area');
+
+    // 5. QMS HOST (checked above)
+    // 6. DATE RANGE (checked above)
+
+    // Optional schema checks
+    if (a.leadAuditor !== undefined && a.leadAuditor !== null && !String(a.leadAuditor).trim()) {
+      missing.push('Lead Auditor');
+    }
+    if (a.department !== undefined && a.department !== null && a.department !== '' && !String(a.department).trim()) {
+      missing.push('Department');
+    }
   } else {
     // Customer Audit: MUST fill ALL 8 fields shown in the form:
-    // 1. STANDARD
-    // 2. SITE
+    // 1. STANDARD (checked above)
+    // 2. SITE (checked above)
     // 3. CUSTOMER
     // 4. END CUSTOMER
     // 5. PURPOSE
     // 6. TARGET PACKAGE
     // 7. CUSTOMER NAME
-    // 8. QMS HOST
+    // 8. QMS HOST (checked above)
+    // 9. DATE RANGE (checked above)
     const hasCustomer = Boolean(a.customer && String(a.customer).trim());
     if (!hasCustomer) missing.push('Customer');
 
@@ -360,96 +386,7 @@ export function getMissingFields(a: Assignment | any): string[] {
  */
 export function isAppointmentFormFullyFilled(audit: Appointment | any): boolean {
   if (!audit) return false;
-
-  const isInternal =
-    isInternalAssignment(audit) ||
-    audit.auditType === 'Internal Audit' ||
-    audit.auditType === 'IA' ||
-    audit.sectionType === 'internal';
-
-  // Common required fields for all types
-  const rawSite =
-    audit.site !== undefined && audit.site !== null && audit.site !== ''
-      ? audit.site
-      : isInternal
-      ? (audit.site2 || audit.site1)
-      : (audit.site1 || audit.site2);
-  const hasSite = Boolean(rawSite && String(rawSite).trim());
-
-  const rawStandard =
-    audit.standard !== undefined && audit.standard !== null && audit.standard !== ''
-      ? audit.standard
-      : isInternal
-      ? (audit.department2 || audit.department1)
-      : (audit.department1 || audit.department2) || audit.department;
-  const hasStandard = Array.isArray(rawStandard)
-    ? rawStandard.length > 0 && rawStandard.some((s: any) => Boolean(s && String(s).trim()))
-    : Boolean(rawStandard && String(rawStandard).trim());
-
-  const rawPurpose = audit.purpose !== undefined ? audit.purpose : audit.apptPurpose;
-  const hasPurpose = Boolean(rawPurpose && String(rawPurpose).trim());
-
-  const rawQmsHost =
-    audit.qmsHost !== undefined && audit.qmsHost !== null && audit.qmsHost !== ''
-      ? audit.qmsHost
-      : getAppointmentQmsHost(audit);
-  const hasQmsHost = Array.isArray(rawQmsHost)
-    ? rawQmsHost.length > 0 && rawQmsHost.some((s: any) => Boolean(s && String(s).trim()))
-    : Boolean(rawQmsHost && String(rawQmsHost).trim());
-
-  const hasDates = Boolean(
-    audit.date ||
-    (audit.startDate && audit.endDate) ||
-    (audit.from && audit.to) ||
-    (audit.dateFrom && audit.dateTo) ||
-    (audit.week !== undefined && audit.day !== undefined)
-  );
-
-  if (isInternal) {
-    // Validate all visible fields for Internal Audit form:
-    // (Site, Standard, Purpose / Area / Audit Category, QMS Host, Lead/Internal Auditor if applicable, Date Range)
-    const hasLeadAuditor = audit.leadAuditor ? Boolean(String(audit.leadAuditor).trim()) : true;
-
-    const hasArea = Boolean(audit.area && String(audit.area).trim());
-    const hasAuditCategory = Boolean(audit.auditCategory && String(audit.auditCategory).trim());
-    const hasInternalContent = hasPurpose || (hasArea && (hasAuditCategory || audit.auditCategory === undefined));
-
-    return hasSite && hasStandard && hasInternalContent && hasQmsHost && hasDates && hasLeadAuditor;
-  }
-
-  // Customer Audit: MUST fill ALL 8 fields shown in the form:
-  // 1. STANDARD
-  // 2. SITE
-  // 3. CUSTOMER
-  // 4. END CUSTOMER
-  // 5. PURPOSE
-  // 6. TARGET PACKAGE
-  // 7. CUSTOMER NAME
-  // 8. QMS HOST
-  const hasCustomer = Boolean(audit.customer && String(audit.customer).trim());
-  const hasEndCustomer = Boolean(audit.endCustomer && String(audit.endCustomer).trim());
-
-  const rawTargetPackage = audit.targetPackage;
-  const hasTargetPackage = Array.isArray(rawTargetPackage)
-    ? rawTargetPackage.length > 0 && rawTargetPackage.some((s: any) => Boolean(s && String(s).trim()))
-    : Boolean(rawTargetPackage && String(rawTargetPackage).trim());
-
-  const rawCustomerName = audit.customerName !== undefined ? audit.customerName : audit.customerNames;
-  const hasCustomerName = Array.isArray(rawCustomerName)
-    ? rawCustomerName.length > 0 && rawCustomerName.some((s: any) => Boolean(s && String(s).trim()))
-    : Boolean(rawCustomerName && String(rawCustomerName).trim());
-
-  return (
-    hasStandard &&
-    hasSite &&
-    hasCustomer &&
-    hasEndCustomer &&
-    hasPurpose &&
-    hasTargetPackage &&
-    hasCustomerName &&
-    hasQmsHost &&
-    hasDates
-  );
+  return getMissingFields(audit).length === 0;
 }
 
 /**
