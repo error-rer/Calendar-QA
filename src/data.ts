@@ -72,7 +72,7 @@ export function initialState(): State {
     dayDialog: null,
     monthSelectedDate: null,
     timetableOpenEng: null,
-    loginEmail: 'jordan.lee@nexsil.com',
+    loginEmail: 'jordan.lee',
     loginPass: 'directorqa',
     userMenuOpen: false,
     createOpen: false,
