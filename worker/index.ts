@@ -161,6 +161,39 @@ async function ensureAssignmentColumns(DB: D1Database) {
   migrationChecked = true;
 }
 
+async function hashPassword(password: string, salt: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password + ':' + salt);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+let usersTableChecked = false;
+async function ensureUsersTable(DB: D1Database) {
+  if (usersTableChecked) return;
+  try {
+    await DB.prepare(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        salt TEXT NOT NULL DEFAULT '',
+        name TEXT NOT NULL DEFAULT '',
+        role TEXT NOT NULL DEFAULT 'user',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+    await DB.prepare(`
+      INSERT OR IGNORE INTO users (id, username, password_hash, salt, name, role) VALUES
+      ('usr_jordan', 'jordan.lee', '2d058547072ff2557887cbe75c1633a2cc7fe0c9afc2a243817ea7a4d55f91fe', 'seed_salt', 'Jordan Lee', 'admin'),
+      ('usr_100234', '100234', '2d058547072ff2557887cbe75c1633a2cc7fe0c9afc2a243817ea7a4d55f91fe', 'seed_salt', 'Jordan Lee', 'admin')
+    `).run();
+  } catch {}
+  usersTableChecked = true;
+}
+
 async function handleApi(request: Request, env: Env, path: string): Promise<Response> {
   const method = request.method.toUpperCase();
   const DB = env.DB;
@@ -179,6 +212,82 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
 
   try {
     await ensureAssignmentColumns(DB);
+    await ensureUsersTable(DB);
+
+    // --- auth: register / signup ---
+    if (method === 'POST' && (path === 'auth/register' || path === 'auth/signup')) {
+      const { username, password, name } = body || {};
+      const rawUser = String(username || '').trim();
+      const rawPass = String(password || '');
+
+      if (!rawUser) {
+        return json({ error: 'Employee ID is required.' }, 400);
+      }
+      if (!/^[a-zA-Z0-9._-]+$/.test(rawUser)) {
+        return json({ error: 'Employee ID may only contain letters, numbers, dashes, or dots.' }, 400);
+      }
+      if (!rawPass || rawPass.length < 4) {
+        return json({ error: 'Password must be at least 4 characters long.' }, 400);
+      }
+
+      const existing = await DB.prepare('SELECT id, username FROM users WHERE LOWER(username) = LOWER(?)').bind(rawUser).first();
+      if (existing) {
+        return json({ error: 'Employee ID is already registered.' }, 409);
+      }
+
+      const salt = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+      const passwordHash = await hashPassword(rawPass, salt);
+      const userId = 'usr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+      const displayName = String(name || rawUser).trim();
+
+      await DB.prepare(
+        'INSERT INTO users (id, username, password_hash, salt, name, role) VALUES (?, ?, ?, ?, ?, ?)'
+      ).bind(userId, rawUser, passwordHash, salt, displayName, 'user').run();
+
+      return json({
+        ok: true,
+        user: {
+          id: userId,
+          username: rawUser,
+          name: displayName,
+          role: 'user',
+        },
+      }, 201);
+    }
+
+    // --- auth: login / signin ---
+    if (method === 'POST' && (path === 'auth/login' || path === 'auth/signin')) {
+      const { username, password } = body || {};
+      const rawUser = String(username || '').trim();
+      const rawPass = String(password || '');
+
+      if (!rawUser) {
+        return json({ error: 'Please enter your Employee ID.' }, 400);
+      }
+      if (!rawPass) {
+        return json({ error: 'Please enter your password.' }, 400);
+      }
+
+      const user = await DB.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').bind(rawUser).first<any>();
+      if (!user) {
+        return json({ error: 'Employee ID is not registered. Please sign up first.' }, 401);
+      }
+
+      const testHash = await hashPassword(rawPass, user.salt || '');
+      if (testHash !== user.password_hash) {
+        return json({ error: 'Incorrect password. Please try again.' }, 401);
+      }
+
+      return json({
+        ok: true,
+        user: {
+          id: user.id,
+          username: user.username,
+          name: user.name || user.username,
+          role: user.role || 'user',
+        },
+      });
+    }
 
     // --- GET /api/state (full data dump for initial load) ---
     if (method === 'GET' && path === 'state') {

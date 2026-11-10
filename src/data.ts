@@ -72,6 +72,12 @@ export function initialState(): State {
     dayDialog: null,
     monthSelectedDate: null,
     timetableOpenEng: null,
+    currentUser: {
+      id: 'usr_jordan',
+      username: 'jordan.lee',
+      name: 'Jordan Lee',
+      role: 'admin',
+    },
     loginEmail: 'jordan.lee',
     loginPass: 'directorqa',
     userMenuOpen: false,

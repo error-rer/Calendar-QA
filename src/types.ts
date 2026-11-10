@@ -829,8 +829,16 @@ export interface EngineerForm {
   subDepartments: SubDepartment[];
 }
 
+export interface UserSession {
+  id: string;
+  username: string;
+  name?: string;
+  role?: string;
+}
+
 export interface State {
   authed: boolean;
+  currentUser?: UserSession;
   page: Page;
   view: View;
   adminTab: AdminTab;

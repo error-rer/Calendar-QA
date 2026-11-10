@@ -1,4 +1,5 @@
 import type { Activity, ActivityLog, Assignment, Comment, Engineer, Order, Plant } from './types';
+import { authClient, type AuthResult, type UserRecord } from './utils/authClient';
 
 const BASE = '/api';
 
@@ -69,4 +70,10 @@ export const api = {
   saveOptionOrder: (category: string, values: string[]) =>
     req('/options/reorder', { method: 'PUT', body: JSON.stringify({ category, values }) }),
 
+  register: (employeeId: string, password: string, name?: string): Promise<AuthResult> =>
+    authClient.register(employeeId, password, name),
+  login: (employeeId: string, password: string): Promise<AuthResult> =>
+    authClient.login(employeeId, password),
 };
+
+export type { UserRecord, AuthResult };

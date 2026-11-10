@@ -759,7 +759,15 @@ export function useScheduler() {
   };
 
   // ---- auth / nav ----
-  const signIn = () => setState({ authed: true, weekOffset: todayWeekOffset, monthOffset: todayMonthOffset });
+  const onAuthSuccess = (user?: { id: string; username: string; name?: string; role?: string }) => {
+    setState({
+      authed: true,
+      currentUser: user || { id: 'usr_jordan', username: 'jordan.lee', name: 'Jordan Lee', role: 'admin' },
+      weekOffset: todayWeekOffset,
+      monthOffset: todayMonthOffset,
+    });
+  };
+  const signIn = (user?: { id: string; username: string; name?: string; role?: string }) => onAuthSuccess(user);
   const signOut = () => setState({ authed: false, userMenuOpen: false, selected: null });
   const goSchedule = () => setState({ page: 'schedule', userMenuOpen: false });
   const goTable = () => setState({ page: 'table', userMenuOpen: false, selected: null, sidebarOpen: false });
@@ -4650,12 +4658,15 @@ export function useScheduler() {
 
   return {
     loading,
+    currentUser: S.currentUser,
     isMobile, showLogin: !S.authed, showApp: S.authed, showPresence: !isMobile, showStats: !isMobile, showLoginExtras: !isMobile,
     loginEmail: S.loginEmail, loginPass: S.loginPass,
+    setLoginEmail: (val: string) => setState({ loginEmail: val }),
+    setLoginPass: (val: string) => setState({ loginPass: val }),
     onEmail: (e: React.ChangeEvent<HTMLInputElement>) => setState({ loginEmail: e.target.value }),
     onPass: (e: React.ChangeEvent<HTMLInputElement>) => setState({ loginPass: e.target.value }),
     onLoginKey: (e: React.KeyboardEvent) => { if (e.key === 'Enter') signIn(); },
-    signIn, signOut,
+    signIn, signOut, onAuthSuccess,
     isSchedule: S.page === 'schedule', isTable: S.page === 'table', isAdmin: S.page === 'admin', isProfile: S.page === 'profile', isSummary: S.page === 'summary', isHistory: S.page === 'history',
     goSchedule, goTable, goAdmin, goProfile, goSummary, goHistory,
     navSchedStyle: S.page === 'schedule' ? tabOn : tabOff, navTableStyle: S.page === 'table' ? tabOn : tabOff, navAdminStyle: S.page === 'admin' ? tabOn : tabOff, navSummaryStyle: S.page === 'summary' ? tabOn : tabOff, navHistoryStyle: S.page === 'history' ? tabOn : tabOff,

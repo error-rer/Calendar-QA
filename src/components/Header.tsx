@@ -2,6 +2,12 @@ import type { VM } from '../useScheduler';
 import { css, HButton, HDiv } from '../ui';
 
 export function Header({ vm }: { vm: VM }) {
+  const user = vm.currentUser;
+  const userName = user?.name || user?.username || 'Jordan Lee';
+  const userInitials = (userName.split(' ').map((w) => w[0]).join('') || userName.slice(0, 2)).toUpperCase();
+  const userRole = user?.role === 'admin' ? 'QA Admin' : (user?.role ? user.role : 'QA Planner');
+  const userSubtext = user?.username ? `ID: ${user.username}` : 'jordan.lee@nexsil.com';
+
   return (
     <header style={css('height:58px;flex-shrink:0;display:flex;align-items:center;gap:14px;padding:0 14px 0 16px;background:#fff;border-bottom:1px solid #d8dcd4;z-index:30;position:relative')}>
       <div style={css('display:flex;align-items:center;gap:11px')}>
@@ -53,12 +59,14 @@ export function Header({ vm }: { vm: VM }) {
           style={css('display:flex;align-items:center;gap:9px;cursor:pointer;padding:4px 8px 4px 4px;border-radius:9px')}
           hover={{ background: '#f4f6f1' }}
         >
-          <div style={css("width:30px;height:30px;border-radius:8px;background:#15191e;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;flex-shrink:0")}>JL</div>
+          <div style={css("width:30px;height:30px;border-radius:8px;background:#15191e;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;flex-shrink:0")}>
+            {userInitials}
+          </div>
           {vm.showPresence && (
             <>
               <div style={css('line-height:1.1')}>
-                <div style={css('font-size:12px;font-weight:600;color:#23282a')}>Jordan Lee</div>
-                <div style={css('font-size:10px;color:#8a9088')}>QA Planner</div>
+                <div style={css('font-size:12px;font-weight:600;color:#23282a')}>{userName}</div>
+                <div style={css('font-size:10px;color:#8a9088')}>{userRole}</div>
               </div>
               <span style={css('color:#a6aca2;font-size:10px')}>▾</span>
             </>
@@ -67,8 +75,8 @@ export function Header({ vm }: { vm: VM }) {
         {vm.userMenuOpen && (
           <div style={css('position:absolute;right:0;top:48px;width:212px;background:#fff;border:1px solid #e2e5de;border-radius:11px;box-shadow:0 10px 30px rgba(20,25,30,.13);padding:7px;z-index:40;animation:fadeUp .14s ease')}>
             <div style={css('padding:8px 10px 9px')}>
-              <div style={css('font-size:12.5px;font-weight:600;color:#23282a')}>Jordan Lee</div>
-              <div style={css('font-size:11px;color:#8a9088')}>jordan.lee@nexsil.com</div>
+              <div style={css('font-size:12.5px;font-weight:600;color:#23282a')}>{userName}</div>
+              <div style={css('font-size:11px;color:#8a9088')}>{userSubtext}</div>
             </div>
             <div style={css('height:1px;background:#eef1ea;margin:2px 0')} />
             <HButton onClick={vm.goProfile} style={css("width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:12.5px;color:#3c423d;font-family:'Archivo',sans-serif")} hover={{ background: '#f4f6f1' }}>Your profile</HButton>
