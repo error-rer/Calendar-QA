@@ -289,6 +289,37 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       });
     }
 
+    // --- auth: reset password ---
+    if (method === 'POST' && (path === 'auth/reset-password' || path === 'auth/reset')) {
+      const { userId, username, newPassword, password } = body || {};
+      const rawUser = String(userId || username || '').trim();
+      const rawPass = String(newPassword || password || '');
+
+      if (!rawUser) {
+        return json({ error: 'User ID is required.' }, 400);
+      }
+      if (!rawPass || rawPass.length < 4) {
+        return json({ error: 'New password must be at least 4 characters long.' }, 400);
+      }
+
+      const user = await DB.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').bind(rawUser).first<any>();
+      if (!user) {
+        return json({ error: 'User ID is not registered.' }, 404);
+      }
+
+      const salt = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+      const passwordHash = await hashPassword(rawPass, salt);
+
+      await DB.prepare(
+        'UPDATE users SET password_hash = ?, salt = ? WHERE id = ?'
+      ).bind(passwordHash, salt, user.id).run();
+
+      return json({
+        ok: true,
+        message: 'Password updated successfully.',
+      });
+    }
+
     // --- GET /api/state (full data dump for initial load) ---
     if (method === 'GET' && path === 'state') {
       const [engineers, plants, activePlantsRows, orders, assignments, comments, activity, optionsRows] = await Promise.all([

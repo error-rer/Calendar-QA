@@ -250,4 +250,75 @@ export const authClient = {
       },
     };
   },
+
+  /**
+   * Reset password for an existing User ID
+   */
+  async resetPassword(userId: string, newPassword: string): Promise<{ ok: boolean; message: string }> {
+    const cleanUser = userId.trim();
+    if (!cleanUser) {
+      throw new Error('Please enter your User ID.');
+    }
+    if (!newPassword || newPassword.length < 4) {
+      throw new Error('New password must be at least 4 characters long.');
+    }
+
+    // 1. Attempt Cloudflare D1 backend API first
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: cleanUser, username: cleanUser, newPassword, password: newPassword }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Also update local cache for offline continuity
+        const localUsers = getLocalUsers();
+        const user = localUsers.find((u) => u.username.toLowerCase() === cleanUser.toLowerCase());
+        if (user) {
+          const salt = user.salt || Math.random().toString(36).slice(2, 10);
+          user.salt = salt;
+          user.passwordHash = await hashPassword(newPassword, salt);
+          saveLocalUsers(localUsers);
+        }
+        return { ok: true, message: data.message || 'Password updated successfully.' };
+      }
+
+      if (res.status === 404 || res.status === 400) {
+        let errMsg = 'Password reset failed.';
+        try {
+          const errData = await res.json();
+          errMsg = errData.error || errData.message || errMsg;
+        } catch {
+          const text = await res.text();
+          if (text) errMsg = text;
+        }
+        throw new Error(errMsg);
+      }
+    } catch (err: any) {
+      if (err.message && (err.message.includes('not registered') || err.message.includes('User ID'))) {
+        throw err;
+      }
+      // If network/404 failed, fallback to local storage
+    }
+
+    // 2. Local fallback (Offline / Vite dev without worker running)
+    const localUsers = getLocalUsers();
+    const user = localUsers.find((u) => u.username.toLowerCase() === cleanUser.toLowerCase());
+
+    if (!user) {
+      throw new Error('User ID is not registered.');
+    }
+
+    const salt = user.salt || Math.random().toString(36).slice(2, 10);
+    user.salt = salt;
+    user.passwordHash = await hashPassword(newPassword, salt);
+    saveLocalUsers(localUsers);
+
+    return {
+      ok: true,
+      message: 'Password updated successfully.',
+    };
+  },
 };

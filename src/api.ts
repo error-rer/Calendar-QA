@@ -74,6 +74,8 @@ export const api = {
     authClient.register(userId, password, name),
   login: (userId: string, password: string): Promise<AuthResult> =>
     authClient.login(userId, password),
+  resetPassword: (userId: string, newPassword: string): Promise<{ ok: boolean; message: string }> =>
+    authClient.resetPassword(userId, newPassword),
 };
 
 export type { UserRecord, AuthResult };
