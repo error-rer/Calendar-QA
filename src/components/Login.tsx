@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { VM } from '../useScheduler';
 import { css, HButton, HInput } from '../ui';
 import { authClient, validateUserId } from '../utils/authClient';
@@ -7,12 +7,20 @@ type AuthMode = 'signin' | 'signup' | 'reset';
 
 export function Login({ vm }: { vm: VM }) {
   const [authMode, setAuthMode] = useState<AuthMode>('signin');
-  const [userId, setUserId] = useState(vm.loginEmail || '');
-  const [password, setPassword] = useState(vm.loginPass || '');
+  const [userId, setUserId] = useState('');
+  const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setUserId('');
+    setPassword('');
+    setConfirmPassword('');
+    if (vm.setLoginEmail) vm.setLoginEmail('');
+    if (vm.setLoginPass) vm.setLoginPass('');
+  }, []);
 
   const switchToSignUp = () => {
     setAuthMode('signup');
@@ -201,7 +209,7 @@ export function Login({ vm }: { vm: VM }) {
         <div style={css('width:100%;max-width:360px;animation:fadeUp .35s ease')}>
           {authMode === 'signup' && (
             /* --- Sign Up View --- */
-            <form onSubmit={handleSignUp} noValidate>
+            <form onSubmit={handleSignUp} noValidate autoComplete="off">
               <div style={css('font-size:21px;font-weight:700;letter-spacing:-.3px;margin-bottom:5px')}>
                 Create an account
               </div>
@@ -224,7 +232,7 @@ export function Login({ vm }: { vm: VM }) {
               <HInput
                 id="signup-user-id"
                 type="text"
-                autoComplete="username"
+                autoComplete="off"
                 placeholder="Enter your User ID"
                 value={userId}
                 onChange={(e) => {
@@ -297,7 +305,7 @@ export function Login({ vm }: { vm: VM }) {
 
           {authMode === 'reset' && (
             /* --- Reset Password View --- */
-            <form onSubmit={handleResetPassword} noValidate>
+            <form onSubmit={handleResetPassword} noValidate autoComplete="off">
               <div style={css('font-size:21px;font-weight:700;letter-spacing:-.3px;margin-bottom:5px')}>
                 Reset password
               </div>
@@ -320,7 +328,7 @@ export function Login({ vm }: { vm: VM }) {
               <HInput
                 id="reset-user-id"
                 type="text"
-                autoComplete="username"
+                autoComplete="off"
                 placeholder="Enter your User ID"
                 value={userId}
                 onChange={(e) => {
@@ -393,7 +401,7 @@ export function Login({ vm }: { vm: VM }) {
 
           {authMode === 'signin' && (
             /* --- Sign In View --- */
-            <form onSubmit={handleSignIn} noValidate>
+            <form onSubmit={handleSignIn} noValidate autoComplete="off">
               <div style={css('font-size:21px;font-weight:700;letter-spacing:-.3px;margin-bottom:5px')}>
                 Sign in
               </div>
@@ -425,7 +433,7 @@ export function Login({ vm }: { vm: VM }) {
               <HInput
                 id="login-user-id"
                 type="text"
-                autoComplete="username"
+                autoComplete="off"
                 placeholder="Enter your User ID"
                 value={userId}
                 onChange={(e) => {
@@ -456,7 +464,7 @@ export function Login({ vm }: { vm: VM }) {
               <HInput
                 id="login-pass"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 placeholder="Enter password"
                 value={password}
                 onChange={(e) => {
