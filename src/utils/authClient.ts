@@ -78,29 +78,29 @@ function saveLocalUsers(users: UserRecord[]): void {
 }
 
 /**
- * Validates Employee ID format
- * Must strictly accept numeric or alphanumeric Employee / Staff ID
+ * Validates User ID format
+ * Must strictly accept numeric or alphanumeric User / Staff ID
  */
-export function validateEmployeeId(employeeId: string): { valid: boolean; error?: string } {
-  const trimmed = employeeId.trim();
+export function validateUserId(userId: string): { valid: boolean; error?: string } {
+  const trimmed = userId.trim();
   if (!trimmed) {
-    return { valid: false, error: 'Employee ID is required.' };
+    return { valid: false, error: 'User ID is required.' };
   }
   if (!/^[a-zA-Z0-9._-]+$/.test(trimmed)) {
-    return { valid: false, error: 'Employee ID may only contain numbers and letters (e.g. 100234 or UTAC12345).' };
+    return { valid: false, error: 'User ID may only contain numbers and letters (e.g. 100234 or UTAC12345).' };
   }
   if (trimmed.length < 3) {
-    return { valid: false, error: 'Employee ID must be at least 3 characters long.' };
+    return { valid: false, error: 'User ID must be at least 3 characters long.' };
   }
   return { valid: true };
 }
 
 export const authClient = {
   /**
-   * Register a new account with Employee ID
+   * Register a new account with User ID
    */
-  async register(employeeId: string, password: string, name?: string): Promise<AuthResult> {
-    const check = validateEmployeeId(employeeId);
+  async register(userId: string, password: string, name?: string): Promise<AuthResult> {
+    const check = validateUserId(userId);
     if (!check.valid) {
       throw new Error(check.error);
     }
@@ -108,14 +108,14 @@ export const authClient = {
       throw new Error('Password must be at least 4 characters long.');
     }
 
-    const cleanUser = employeeId.trim();
+    const cleanUser = userId.trim();
 
     // 1. Attempt Cloudflare D1 backend API first
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: cleanUser, password, name }),
+        body: JSON.stringify({ userId: cleanUser, username: cleanUser, password, name }),
       });
 
       if (res.ok) {
@@ -143,7 +143,7 @@ export const authClient = {
       }
     } catch (err: any) {
       // If it's a known business validation error from backend, rethrow it
-      if (err.message && (err.message.includes('already registered') || err.message.includes('Employee ID'))) {
+      if (err.message && (err.message.includes('already registered') || err.message.includes('User ID'))) {
         throw err;
       }
       // Otherwise, if network failed or 404 (local Vite dev mode without worker), fall back to localStorage
@@ -153,7 +153,7 @@ export const authClient = {
     const localUsers = getLocalUsers();
     const exists = localUsers.some((u) => u.username.toLowerCase() === cleanUser.toLowerCase());
     if (exists) {
-      throw new Error('Employee ID is already registered.');
+      throw new Error('User ID is already registered.');
     }
 
     const salt = Math.random().toString(36).slice(2, 10);
@@ -183,12 +183,12 @@ export const authClient = {
   },
 
   /**
-   * Sign In with Employee ID and Password
+   * Sign In with User ID and Password
    */
-  async login(employeeId: string, password: string): Promise<AuthResult> {
-    const cleanUser = employeeId.trim();
+  async login(userId: string, password: string): Promise<AuthResult> {
+    const cleanUser = userId.trim();
     if (!cleanUser) {
-      throw new Error('Please enter your Employee ID.');
+      throw new Error('Please enter your User ID.');
     }
     if (!password) {
       throw new Error('Please enter your password.');
@@ -199,7 +199,7 @@ export const authClient = {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: cleanUser, password }),
+        body: JSON.stringify({ userId: cleanUser, username: cleanUser, password }),
       });
 
       if (res.ok) {
@@ -219,7 +219,7 @@ export const authClient = {
         throw new Error(errMsg);
       }
     } catch (err: any) {
-      if (err.message && (err.message.includes('not registered') || err.message.includes('Incorrect password') || err.message.includes('Employee ID'))) {
+      if (err.message && (err.message.includes('not registered') || err.message.includes('Incorrect password') || err.message.includes('User ID'))) {
         throw err;
       }
       // If network/404 failed, fallback to local storage
@@ -230,7 +230,7 @@ export const authClient = {
     const user = localUsers.find((u) => u.username.toLowerCase() === cleanUser.toLowerCase());
 
     if (!user) {
-      throw new Error('Employee ID is not registered. Please sign up first.');
+      throw new Error('User ID is not registered. Please sign up first.');
     }
 
     if (user.passwordHash && user.salt) {

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import type { VM } from '../useScheduler';
 import { css, HButton, HInput } from '../ui';
-import { authClient, validateEmployeeId } from '../utils/authClient';
+import { authClient, validateUserId } from '../utils/authClient';
 
 export function Login({ vm }: { vm: VM }) {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [employeeId, setEmployeeId] = useState(vm.loginEmail || '');
+  const [userId, setUserId] = useState(vm.loginEmail || '');
   const [password, setPassword] = useState(vm.loginPass || '');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -30,9 +30,9 @@ export function Login({ vm }: { vm: VM }) {
 
   const handleSignIn = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const cleanId = employeeId.trim();
+    const cleanId = userId.trim();
     if (!cleanId) {
-      setError('Please enter your Employee ID.');
+      setError('Please enter your User ID.');
       return;
     }
     if (!password) {
@@ -58,10 +58,10 @@ export function Login({ vm }: { vm: VM }) {
 
   const handleSignUp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const cleanId = employeeId.trim();
-    const idCheck = validateEmployeeId(cleanId);
+    const cleanId = userId.trim();
+    const idCheck = validateUserId(cleanId);
     if (!idCheck.valid) {
-      setError(idCheck.error || 'Please enter a valid Employee ID.');
+      setError(idCheck.error || 'Please enter a valid User ID.');
       return;
     }
 
@@ -151,7 +151,7 @@ export function Login({ vm }: { vm: VM }) {
                 Create an account
               </div>
               <div style={css('font-size:13px;color:#7a807a;margin-bottom:22px')}>
-                Enter your Employee ID to register
+                Enter your User ID to register
               </div>
 
               {error && (
@@ -163,17 +163,17 @@ export function Login({ vm }: { vm: VM }) {
                 </div>
               )}
 
-              <label htmlFor="signup-emp-id" style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>
-                Employee ID
+              <label htmlFor="signup-user-id" style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>
+                User ID
               </label>
               <HInput
-                id="signup-emp-id"
+                id="signup-user-id"
                 type="text"
                 autoComplete="username"
-                placeholder="Enter employee ID (e.g. 100234)"
-                value={employeeId}
+                placeholder="Enter your User ID"
+                value={userId}
                 onChange={(e) => {
-                  setEmployeeId(e.target.value);
+                  setUserId(e.target.value);
                   vm.setLoginEmail(e.target.value);
                   if (error) setError(null);
                 }}
@@ -245,7 +245,7 @@ export function Login({ vm }: { vm: VM }) {
                 Sign in
               </div>
               <div style={css('font-size:13px;color:#7a807a;margin-bottom:22px')}>
-                Enter your Employee ID to sign in
+                Enter your User ID to sign in
               </div>
 
               {success && (
@@ -266,17 +266,17 @@ export function Login({ vm }: { vm: VM }) {
                 </div>
               )}
 
-              <label htmlFor="login-user" style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>
-                Employee ID
+              <label htmlFor="login-user-id" style={css('font-size:11px;font-weight:600;color:#5c625c;display:block;margin-bottom:6px')}>
+                User ID
               </label>
               <HInput
-                id="login-user"
+                id="login-user-id"
                 type="text"
                 autoComplete="username"
-                placeholder="Enter employee ID (e.g. 100234)"
-                value={employeeId}
+                placeholder="Enter your User ID"
+                value={userId}
                 onChange={(e) => {
-                  setEmployeeId(e.target.value);
+                  setUserId(e.target.value);
                   vm.setLoginEmail(e.target.value);
                   if (error) setError(null);
                 }}

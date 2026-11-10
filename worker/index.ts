@@ -216,15 +216,15 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
 
     // --- auth: register / signup ---
     if (method === 'POST' && (path === 'auth/register' || path === 'auth/signup')) {
-      const { username, password, name } = body || {};
-      const rawUser = String(username || '').trim();
+      const { userId, username, password, name } = body || {};
+      const rawUser = String(userId || username || '').trim();
       const rawPass = String(password || '');
 
       if (!rawUser) {
-        return json({ error: 'Employee ID is required.' }, 400);
+        return json({ error: 'User ID is required.' }, 400);
       }
       if (!/^[a-zA-Z0-9._-]+$/.test(rawUser)) {
-        return json({ error: 'Employee ID may only contain letters, numbers, dashes, or dots.' }, 400);
+        return json({ error: 'User ID may only contain letters, numbers, dashes, or dots.' }, 400);
       }
       if (!rawPass || rawPass.length < 4) {
         return json({ error: 'Password must be at least 4 characters long.' }, 400);
@@ -232,22 +232,22 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
 
       const existing = await DB.prepare('SELECT id, username FROM users WHERE LOWER(username) = LOWER(?)').bind(rawUser).first();
       if (existing) {
-        return json({ error: 'Employee ID is already registered.' }, 409);
+        return json({ error: 'User ID is already registered.' }, 409);
       }
 
       const salt = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
       const passwordHash = await hashPassword(rawPass, salt);
-      const userId = 'usr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+      const newUserId = 'usr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
       const displayName = String(name || rawUser).trim();
 
       await DB.prepare(
         'INSERT INTO users (id, username, password_hash, salt, name, role) VALUES (?, ?, ?, ?, ?, ?)'
-      ).bind(userId, rawUser, passwordHash, salt, displayName, 'user').run();
+      ).bind(newUserId, rawUser, passwordHash, salt, displayName, 'user').run();
 
       return json({
         ok: true,
         user: {
-          id: userId,
+          id: newUserId,
           username: rawUser,
           name: displayName,
           role: 'user',
@@ -257,12 +257,12 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
 
     // --- auth: login / signin ---
     if (method === 'POST' && (path === 'auth/login' || path === 'auth/signin')) {
-      const { username, password } = body || {};
-      const rawUser = String(username || '').trim();
+      const { userId, username, password } = body || {};
+      const rawUser = String(userId || username || '').trim();
       const rawPass = String(password || '');
 
       if (!rawUser) {
-        return json({ error: 'Please enter your Employee ID.' }, 400);
+        return json({ error: 'Please enter your User ID.' }, 400);
       }
       if (!rawPass) {
         return json({ error: 'Please enter your password.' }, 400);
@@ -270,7 +270,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
 
       const user = await DB.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').bind(rawUser).first<any>();
       if (!user) {
-        return json({ error: 'Employee ID is not registered. Please sign up first.' }, 401);
+        return json({ error: 'User ID is not registered. Please sign up first.' }, 401);
       }
 
       const testHash = await hashPassword(rawPass, user.salt || '');
