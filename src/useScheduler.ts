@@ -15,7 +15,7 @@ import type {
   SubDepartment,
 } from './types';
 import {
-  calculateCustomerAuditsCount,
+  calculateAuditMetrics,
   formatApptDisplayTitle,
   formatApptLogRef,
   formatDMY,
@@ -726,22 +726,10 @@ export function useScheduler() {
     return !matchesFilters(a, o);
   };
 
-  /** CS = consecutive-day visits per customer; IA key = distinct (Month, Area, Site). */
+  /** Group consecutive-day/multi-day audits into single campaigns; return CS, IA, and reconciled total */
   const summaryCounts = (assignments: Assignment[]) => {
-    const csAppts: { customer?: string; dateObj: Date }[] = [];
-    const iaKeys = new Set<string>();
-    for (const a of assignments) {
-      const o = orderById(a.order);
-      if (!o) continue;
-      const d = new Date(2026, 5, 29 + a.week * 7 + a.day);
-      if (apptAbbr(a) === 'IA') {
-        const ym = d.getFullYear() + '-' + d.getMonth();
-        iaKeys.add(ym + '\u0001' + (a.area || '') + '\u0001' + (a.site2 || o.plant || ''));
-      } else {
-        csAppts.push({ customer: a.customer || o.customer, dateObj: d });
-      }
-    }
-    return { cs: calculateCustomerAuditsCount(csAppts), ia: iaKeys.size };
+    const metrics = calculateAuditMetrics(assignments, orderById);
+    return { cs: metrics.customerCount, ia: metrics.internalCount, total: metrics.totalAppointments };
   };
   /** Assignments (respecting sidebar filters) whose date falls within [start, end]. */
   const assignmentsInRange = (start: Date, end: Date) => {
@@ -3234,8 +3222,6 @@ export function useScheduler() {
       const daysCount = new Date(year, m + 1, 0).getDate();
       const firstWd = (firstDay.getDay() + 6) % 7; // Mon = 0, Sun = 6
 
-      const csMonthAppts: { customer?: string; dateObj: Date }[] = [];
-      const iaKeys = new Set<string>();
       const days = [];
 
       for (let i = 0; i < firstWd; i++) {
@@ -3257,12 +3243,9 @@ export function useScheduler() {
         let intCountOnDay = 0;
 
         for (const a of matchingAppts) {
-          const o = orderById(a.order)!;
           if (apptAbbr(a) === 'IA') {
-            iaKeys.add((a.area || '') + '\u0001' + (a.site2 || o.plant || ''));
             intCountOnDay++;
           } else {
-            csMonthAppts.push({ customer: a.customer || o.customer, dateObj: date });
             custCountOnDay++;
           }
         }
@@ -3286,9 +3269,10 @@ export function useScheduler() {
         });
       }
 
-      const customerAppts = calculateCustomerAuditsCount(csMonthAppts);
-      const internalAppts = iaKeys.size;
-      const totalAppts = customerAppts + internalAppts;
+      const mSummary = summaryCounts(assignmentsInRange(new Date(year, m, 1), new Date(year, m + 1, 0)));
+      const customerAppts = mSummary.cs;
+      const internalAppts = mSummary.ia;
+      const totalAppts = mSummary.total;
 
       monthsData.push({
         monthIndex: m,
@@ -4713,7 +4697,7 @@ export function useScheduler() {
     engForm, engFormOpen: S.engFormOpen, engEditingId: S.engEditingId, openEngForm, openEditEngineer: openEditEngForm, closeEngForm,
     nowTick, assignments: S.assignments, engineers: S.engineers,
     stats: {
-      assignments: isYear ? yearSummary.cs + yearSummary.ia : isMonth ? monthScheduledCount : wk.length,
+      assignments: isYear ? yearSummary.total : isMonth ? monthSummary.total : weekSummary.total,
       weekCustomers,
       monthCustomers,
       yearCustomers,
