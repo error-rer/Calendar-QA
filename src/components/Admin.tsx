@@ -431,16 +431,35 @@ function TagListEditor({ title, count, values, onAdd, onRemove, onReorder, place
           >
             {onReorder && <span style={css('color:#9aa097;font-size:11px;cursor:grab;line-height:1;user-select:none')}>⋮⋮</span>}
             {colorFor && onColorChange && (
-              <input
-                type="color"
-                value={colorFor(v)}
-                onChange={(e) => onColorChange(v, e.target.value)}
+              <label
+                className="cursor-pointer"
                 title={'Edit color for ' + v}
-                style={css('width:16px;height:16px;padding:0;border:none;border-radius:50%;cursor:pointer;background:none;flex-shrink:0')}
-              />
+                draggable={false}
+                onMouseDown={(e) => e.stopPropagation()}
+                onDragStart={(e) => e.preventDefault()}
+                style={css(
+                  'display:inline-flex;align-items:center;justify-content:center;' +
+                  'width:15px;height:15px;border-radius:3.5px;cursor:pointer;' +
+                  'background:' + colorFor(v) + ';' +
+                  'border:1px solid rgba(0,0,0,0.18);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.25);' +
+                  'flex-shrink:0;position:relative;overflow:hidden;user-select:none;'
+                )}
+              >
+                <input
+                  type="color"
+                  className="cursor-pointer"
+                  value={colorFor(v)}
+                  onChange={(e) => onColorChange(v, e.target.value)}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  style={css(
+                    'position:absolute;inset:0;width:100%;height:100%;opacity:0;' +
+                    'cursor:pointer;padding:0;border:none;margin:0;'
+                  )}
+                />
+              </label>
             )}
             <span style={css('user-select:none;cursor:inherit')}>{v}</span>
-            <button onClick={() => onRemove(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1;user-select:none')}>✕</button>
+            <button onClick={() => onRemove(v)} className="cursor-pointer" style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1;user-select:none')}>✕</button>
           </div>
         ))}
         {values.length === 0 && <span style={css('font-size:12px;color:#a6aca2;font-style:italic')}>No options yet.</span>}

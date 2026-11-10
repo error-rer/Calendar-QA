@@ -26,7 +26,7 @@ input::placeholder{color:#8a9088;opacity:1}
   }
 
   /* ONLY permit text cursor and text selection inside actual input fields */
-  input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]),
+  input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="range"]),
   textarea,
   [contenteditable="true"] {
     cursor: text !important;
@@ -44,6 +44,9 @@ input::placeholder{color:#8a9088;opacity:1}
   input[type="submit"],
   input[type="checkbox"],
   input[type="radio"],
+  input[type="color"],
+  input[type="color"]::-webkit-color-swatch-wrapper,
+  input[type="color"]::-webkit-color-swatch,
   select,
   label[for],
   [style*="cursor: pointer"],
@@ -73,6 +76,23 @@ input::placeholder{color:#8a9088;opacity:1}
   [style*="cursor: grabbing"],
   [style*="cursor:grabbing"] {
     cursor: grabbing !important;
+  }
+
+  /* Specificity overrides for clickable elements inside draggable containers */
+  [draggable="true"] button,
+  [draggable="true"] button *,
+  [draggable="true"] .cursor-pointer,
+  [draggable="true"] .cursor-pointer *,
+  [draggable="true"] input[type="color"],
+  [draggable="true"] [style*="cursor: pointer"],
+  [draggable="true"] [style*="cursor:pointer"] {
+    cursor: pointer !important;
+  }
+
+  /* Ensure drag handle explicitly remains grab */
+  [draggable="true"] [style*="cursor: grab"],
+  [draggable="true"] [style*="cursor:grab"] {
+    cursor: grab !important;
   }
 }
 
