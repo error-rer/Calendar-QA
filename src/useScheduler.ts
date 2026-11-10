@@ -106,18 +106,20 @@ export const getAccentStyle = (colors: string[], borderPx = 3): CSSProperties =>
   };
 };
 
+export const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000; // 604,800,000 ms
+
 export function isNewlyCreated(item?: { createdAt?: string | number }, nowMs: number = Date.now()): boolean {
   if (!item || !item.createdAt) return false;
   const t = parseTimestamp(item.createdAt);
   if (t <= 0) return false;
-  return nowMs - t <= 3 * 60 * 1000 && nowMs >= t;
+  return nowMs - t <= SEVEN_DAYS_MS && nowMs >= t;
 }
 
 export function isRecentlyUpdated(item?: { updatedAt?: string | number }, nowMs: number = Date.now()): boolean {
   if (!item || !item.updatedAt) return false;
   const t = parseTimestamp(item.updatedAt);
   if (t <= 0) return false;
-  return nowMs - t <= 3 * 60 * 1000 && nowMs >= t;
+  return nowMs - t <= SEVEN_DAYS_MS && nowMs >= t;
 }
 
 export type ApptPriority = 'incomplete' | 'recently_created' | 'recently_updated' | 'pending_result' | 'default';
@@ -165,8 +167,13 @@ export function getApptCardColors(
   const isPending = !isInc && !!onAuditDate && !isCompleted;
 
   // New / Updated badges only apply when not pending results and not on/past audit date
-  const isNew = !isInc && !onAuditDate && isNewlyCreated(chip, nowMs);
-  const isUpd = !isInc && !onAuditDate && !isNew && isRecentlyUpdated(chip, nowMs);
+  const isCreatedRecent = isNewlyCreated(chip, nowMs);
+  const isUpdatedRecent = isRecentlyUpdated(chip, nowMs);
+  const hasSubsequentUpdate = isUpdatedRecent &&
+    (!chip.createdAt || parseTimestamp(chip.updatedAt) > parseTimestamp(chip.createdAt) + 1000);
+
+  const isNew = !isInc && !onAuditDate && isCreatedRecent && !hasSubsequentUpdate;
+  const isUpd = !isInc && !onAuditDate && (hasSubsequentUpdate || (!isCreatedRecent && isUpdatedRecent));
 
   const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color || '#9aa097'];
   const defaultAccentBg = getAccentBackground(chColors);
@@ -201,7 +208,7 @@ export function getApptCardColors(
     };
   }
 
-  // Priority 3: RECENTLY CREATED (Light Green - 3 Minutes)
+  // Priority 3: RECENTLY CREATED (Light Green - 7 Days)
   if (isNew) {
     return {
       priority: 'recently_created',
@@ -214,7 +221,7 @@ export function getApptCardColors(
     };
   }
 
-  // Priority 4: RECENTLY UPDATED (Light Blue - 3 Minutes)
+  // Priority 4: RECENTLY UPDATED (Light Blue - 7 Days)
   if (isUpd) {
     return {
       priority: 'recently_updated',
@@ -293,7 +300,7 @@ const idNumber = (id: string): number => {
 
 export function useScheduler() {
   const [state, setRaw] = useState<State>(initialState);
-  // Periodic timer (every 15 seconds) to smoothly expire 3-minute timers for newly created/updated appointments
+  // Periodic timer (every 15 seconds) to smoothly expire 7-day timers for newly created/updated appointments
   const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
     const timer = setInterval(() => {

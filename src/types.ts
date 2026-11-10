@@ -555,11 +555,28 @@ export function hasAuditResultsEntered(a?: any): boolean {
   return isAuditResultCompleted(a);
 }
 
+export const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000; // 604,800,000 ms
+
 export function parseTimestamp(val?: string | number): number {
   if (!val) return 0;
   if (typeof val === 'number') return val;
-  const t = new Date(val).getTime();
-  return isNaN(t) ? 0 : t;
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (!trimmed) return 0;
+    if (/^\d{10,}$/.test(trimmed)) {
+      const num = Number(trimmed);
+      if (!isNaN(num)) return num;
+    }
+    // Handle SQLite UTC CURRENT_TIMESTAMP "YYYY-MM-DD HH:MM:SS" -> convert to ISO UTC
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(trimmed)) {
+      const utcIso = trimmed.replace(' ', 'T') + 'Z';
+      const t = new Date(utcIso).getTime();
+      if (!isNaN(t)) return t;
+    }
+    const t = new Date(trimmed).getTime();
+    return isNaN(t) ? 0 : t;
+  }
+  return 0;
 }
 
 export function isTodayWithinAssignmentRange(fromDate?: Date | string, toDate?: Date | string, now: Date = new Date()): boolean {
