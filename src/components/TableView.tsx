@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { VM } from '../useScheduler';
 import type { Assignment } from '../types';
-import { isInternalAssignment, calculateCustomerAuditsCount, normalizeSite, normalizeSites, getSiteOrderIndex } from '../types';
+import { isInternalAssignment, calculateAuditStats, normalizeSite, normalizeSites, getSiteOrderIndex } from '../types';
 import { css, HButton } from '../ui';
 
 interface TableRowData {
@@ -511,12 +511,10 @@ export function TableView({ vm }: { vm: VM }) {
 
   // Stats calculation (Consecutive days per customer counted as 1 visit)
   const stats = useMemo(() => {
-    const customerCount = calculateCustomerAuditsCount(allRows);
-    let internalCount = 0;
+    const auditStats = calculateAuditStats(allRows);
     const allAuditors = new Set<string>();
     const allSites = new Set<string>();
     for (const r of allRows) {
-      if (r.auditType === 'Internal Audit') internalCount++;
       if (r.auditor) {
         r.auditor.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => allAuditors.add(s));
       }
@@ -524,24 +522,21 @@ export function TableView({ vm }: { vm: VM }) {
         r.site.split(/[/,]/).map((s) => s.trim()).filter(Boolean).forEach((s) => allSites.add(s));
       }
     }
-    const total = customerCount + internalCount;
     return {
-      total,
+      total: auditStats.totalAudits,
       totalRecords: allRows.length,
-      customerCount,
-      internalCount,
+      customerCount: auditStats.customerAudits,
+      internalCount: auditStats.internalAudits,
       uniqueSites: allSites.size,
       uniqueAuditors: allAuditors.size,
     };
   }, [allRows]);
 
   const filteredStats = useMemo(() => {
-    const customerCount = calculateCustomerAuditsCount(filteredRows);
-    let internalCount = 0;
+    const auditStats = calculateAuditStats(filteredRows);
     const filteredAuditors = new Set<string>();
     const filteredSites = new Set<string>();
     for (const r of filteredRows) {
-      if (r.auditType === 'Internal Audit') internalCount++;
       if (r.auditor) {
         r.auditor.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => filteredAuditors.add(s));
       }
@@ -549,12 +544,11 @@ export function TableView({ vm }: { vm: VM }) {
         r.site.split(/[/,]/).map((s) => s.trim()).filter(Boolean).forEach((s) => filteredSites.add(s));
       }
     }
-    const total = customerCount + internalCount;
     return {
-      total,
+      total: auditStats.totalAudits,
       totalRecords: filteredRows.length,
-      customerCount,
-      internalCount,
+      customerCount: auditStats.customerAudits,
+      internalCount: auditStats.internalAudits,
       uniqueSites: filteredSites.size,
       uniqueAuditors: filteredAuditors.size,
     };

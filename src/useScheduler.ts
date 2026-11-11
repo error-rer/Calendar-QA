@@ -15,7 +15,7 @@ import type {
   SubDepartment,
 } from './types';
 import {
-  calculateAuditMetrics,
+  calculateAuditStats,
   formatApptDisplayTitle,
   formatApptLogRef,
   formatDMY,
@@ -728,8 +728,8 @@ export function useScheduler() {
 
   /** Group consecutive-day/multi-day audits into single campaigns; return CS, IA, and reconciled total */
   const summaryCounts = (assignments: Assignment[]) => {
-    const metrics = calculateAuditMetrics(assignments, orderById);
-    return { cs: metrics.customerCount, ia: metrics.internalCount, total: metrics.totalAppointments };
+    const stats = calculateAuditStats(assignments, orderById);
+    return { cs: stats.customerAudits, ia: stats.internalAudits, total: stats.totalAudits };
   };
   /** Assignments (respecting sidebar filters) whose date falls within [start, end]. */
   const assignmentsInRange = (start: Date, end: Date) => {
