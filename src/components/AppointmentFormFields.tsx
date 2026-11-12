@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { Assignment, Engineer } from '../types';
 import { normalizeSite, sortSites } from '../types';
-import { initialSiteCodeOptions } from '../data';
+import { getActiveDropdownOptions, MASTER_PLANT_SITES } from '../utils/auditOptionsHelper';
 import { css } from '../ui';
 import { AvailabilityDatePicker } from './AvailabilityDatePicker';
 
@@ -1957,33 +1957,33 @@ export function AppointmentFormFields({
   values: v,
   onChange,
   isOpen,
-  purposeOptions,
+  purposeOptions: _purposeOptions,
   removePurposeOption,
   removeCustomerOption,
   removeEndCustomerOption,
   removeAuditorOption,
   removeGenericOption,
-  customerDepartmentOptions,
-  internalDepartmentOptions,
+  customerDepartmentOptions: _customerDepartmentOptions,
+  internalDepartmentOptions: _internalDepartmentOptions,
   addCustomerDepartmentOption,
   removeCustomerDepartmentOption,
   addInternalDepartmentOption,
   removeInternalDepartmentOption,
   siteOptions,
-  customerOptions,
-  endCustomerOptions = [],
-  auditorOptions = [],
+  customerOptions: _customerOptions,
+  endCustomerOptions: _endCustomerOptions = [],
+  auditorOptions: _auditorOptions = [],
   removedOptions = [],
   assignments = [],
   engineers = [],
   editingTargetId,
-  targetPackageOptions = [],
-  customerNameOptions = [],
+  targetPackageOptions: _targetPackageOptions = [],
+  customerNameOptions: _customerNameOptions = [],
   addTargetPackageOption,
   removeTargetPackageOption,
   addCustomerNameOption,
   removeCustomerNameOption,
-  auditCategoryOptions = [],
+  auditCategoryOptions: _auditCategoryOptions = [],
   addAuditCategoryOption,
   removeAuditCategoryOption,
   isDateLocked,
@@ -2041,178 +2041,61 @@ export function AppointmentFormFields({
   void isCustomerEHS; // retained for future use
   const customerSiteOptions = siteOptions && siteOptions.length > 0
     ? Array.from(new Set(siteOptions.map(normalizeSite)))
-    : initialSiteCodeOptions.map(normalizeSite);
+    : Array.from(MASTER_PLANT_SITES);
 
   const isInternalEHS = v.department2.split(',').map((s) => s.trim()).includes('EHS');
   const internalSiteOptions = isInternalEHS
-    ? siteOptions.filter((s) => ['UTL1', 'UTL2', 'UTL3', 'U1', 'U2', 'U3'].includes(s)).map(normalizeSite)
-    : siteOptions.map(normalizeSite);
+    ? (siteOptions && siteOptions.length > 0 ? siteOptions : MASTER_PLANT_SITES)
+        .filter((s) => ['UTL1', 'UTL2', 'UTL3', 'U1', 'U2', 'U3'].includes(s))
+        .map(normalizeSite)
+    : (siteOptions && siteOptions.length > 0 ? siteOptions : MASTER_PLANT_SITES).map(normalizeSite);
 
   const removedSet = useMemo(() => new Set(removedOptions), [removedOptions]);
 
   const customerSuggestions = useMemo(() => {
-    const activeAssignments = editingTargetId
-      ? assignments.filter((a) => a.id !== editingTargetId)
-      : assignments;
-    const fromAssign = activeAssignments.map((a) => (a.customer || '').trim()).filter(Boolean);
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const uniqueMap = new Map<string, string>();
-    for (const c of [...customerOptions, ...fromAssign]) {
-      const key = c.trim().toLowerCase();
-      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
-        uniqueMap.set(key, c.trim());
-      }
-    }
-    return Array.from(uniqueMap.values());
-  }, [assignments, customerOptions, editingTargetId, removedSet]);
+    return getActiveDropdownOptions(assignments, 'customer').filter((c) => !removedSet.has(c));
+  }, [assignments, removedSet]);
 
   const endCustomerSuggestions = useMemo(() => {
-    const activeAssignments = editingTargetId
-      ? assignments.filter((a) => a.id !== editingTargetId)
-      : assignments;
-    const fromAssign = activeAssignments.map((a) => (a.endCustomer || '').trim()).filter(Boolean);
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const uniqueMap = new Map<string, string>();
-    for (const c of [...(endCustomerOptions || []), ...fromAssign]) {
-      const key = c.trim().toLowerCase();
-      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
-        uniqueMap.set(key, c.trim());
-      }
-    }
-    return Array.from(uniqueMap.values());
-  }, [assignments, endCustomerOptions, editingTargetId, removedSet]);
+    return getActiveDropdownOptions(assignments, 'endCustomer').filter((c) => !removedSet.has(c));
+  }, [assignments, removedSet]);
 
   const targetPackageSuggestions = useMemo(() => {
-    const activeAssignments = editingTargetId
-      ? assignments.filter((a) => a.id !== editingTargetId)
-      : assignments;
-    const fromAssign = activeAssignments.flatMap((a) => (a.targetPackage || '').split(',').map((s) => s.trim())).filter(Boolean);
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const uniqueMap = new Map<string, string>();
-    for (const p of [...(targetPackageOptions || []), ...fromAssign]) {
-      const key = p.trim().toLowerCase();
-      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
-        uniqueMap.set(key, p.trim());
-      }
-    }
-    return Array.from(uniqueMap.values());
-  }, [assignments, targetPackageOptions, editingTargetId, removedSet]);
+    return getActiveDropdownOptions(assignments, 'targetPackage').filter((p) => !removedSet.has(p));
+  }, [assignments, removedSet]);
 
   const customerNameSuggestions = useMemo(() => {
-    const activeAssignments = editingTargetId
-      ? assignments.filter((a) => a.id !== editingTargetId)
-      : assignments;
-    const fromAssign = activeAssignments.flatMap((a) => (a.customerNames || '').split(',').map((s) => s.trim())).filter(Boolean);
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const uniqueMap = new Map<string, string>();
-    for (const n of [...(customerNameOptions || []), ...fromAssign]) {
-      const key = n.trim().toLowerCase();
-      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
-        uniqueMap.set(key, n.trim());
-      }
-    }
-    return Array.from(uniqueMap.values());
-  }, [assignments, customerNameOptions, editingTargetId, removedSet]);
+    return getActiveDropdownOptions(assignments, 'customerNames').filter((n) => !removedSet.has(n));
+  }, [assignments, removedSet]);
 
   const auditCategorySuggestions = useMemo(() => {
-    const activeAssignments = editingTargetId
-      ? assignments.filter((a) => a.id !== editingTargetId)
-      : assignments;
-    const fromAssign = activeAssignments.map((a) => (a.auditCategory || '').trim()).filter(Boolean);
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const uniqueMap = new Map<string, string>();
-    for (const c of [...(auditCategoryOptions || []), ...fromAssign]) {
-      const key = c.trim().toLowerCase();
-      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
-        uniqueMap.set(key, c.trim());
-      }
-    }
-    return Array.from(uniqueMap.values());
-  }, [assignments, auditCategoryOptions, editingTargetId, removedSet]);
+    return getActiveDropdownOptions(assignments, 'auditCategory').filter((c) => !removedSet.has(c));
+  }, [assignments, removedSet]);
 
   const customerDepartmentSuggestions = useMemo(() => {
-    const activeAssignments = editingTargetId
-      ? assignments.filter((a) => a.id !== editingTargetId)
-      : assignments;
-    const fromAssign = activeAssignments.flatMap((a) => (a.department1 || '').split(',').map((s) => s.trim())).filter(Boolean);
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const uniqueMap = new Map<string, string>();
-    for (const d of [...customerDepartmentOptions, ...fromAssign]) {
-      const key = d.trim().toLowerCase();
-      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
-        uniqueMap.set(key, d.trim());
-      }
-    }
-    return Array.from(uniqueMap.values());
-  }, [assignments, customerDepartmentOptions, editingTargetId, removedSet]);
+    return getActiveDropdownOptions(
+      assignments.filter((a) => a.sectionType !== 'internal'),
+      'department1'
+    ).filter((d) => !removedSet.has(d));
+  }, [assignments, removedSet]);
 
   const internalDepartmentSuggestions = useMemo(() => {
-    const activeAssignments = editingTargetId
-      ? assignments.filter((a) => a.id !== editingTargetId)
-      : assignments;
-    const fromAssign = activeAssignments.flatMap((a) => (a.department2 || '').split(',').map((s) => s.trim())).filter(Boolean);
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const uniqueMap = new Map<string, string>();
-    for (const d of [...internalDepartmentOptions, ...fromAssign]) {
-      const key = d.trim().toLowerCase();
-      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
-        uniqueMap.set(key, d.trim());
-      }
-    }
-    return Array.from(uniqueMap.values());
-  }, [assignments, internalDepartmentOptions, editingTargetId, removedSet]);
+    return getActiveDropdownOptions(
+      assignments.filter((a) => a.sectionType === 'internal'),
+      'department2'
+    ).filter((d) => !removedSet.has(d));
+  }, [assignments, removedSet]);
 
   const purposeSuggestions = useMemo(() => {
-    const activeAssignments = editingTargetId
-      ? assignments.filter((a) => a.id !== editingTargetId)
-      : assignments;
-    const fromAssign = activeAssignments.map((a) => (a.purpose || '').trim()).filter(Boolean);
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const uniqueMap = new Map<string, string>();
-    for (const p of [...purposeOptions, ...fromAssign]) {
-      const key = p.trim().toLowerCase();
-      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
-        uniqueMap.set(key, p.trim());
-      }
-    }
-    return Array.from(uniqueMap.values());
-  }, [assignments, purposeOptions, editingTargetId, removedSet]);
+    return getActiveDropdownOptions(assignments, 'purpose').filter((p) => !removedSet.has(p));
+  }, [assignments, removedSet]);
 
   const auditorSuggestions = useMemo(() => {
-    const activeAssignments = editingTargetId
-      ? assignments.filter((a) => a.id !== editingTargetId)
-      : assignments;
-
-    const fromAssign1 = activeAssignments.flatMap((a) => (a.auditor1 || '').split(',').map((s) => s.trim())).filter(Boolean);
-    const fromAssign2 = activeAssignments.flatMap((a) => (a.auditor2 || '').split(',').map((s) => s.trim())).filter(Boolean);
-
-    // Protected master records from Manage page
-    const masterList = auditorOptions || [];
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const uniqueMap = new Map<string, string>();
-
-    for (const name of masterList) {
-      const key = name.trim().toLowerCase();
-      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
-        uniqueMap.set(key, name.trim());
-      }
-    }
-
-    for (const name of [...fromAssign1, ...fromAssign2]) {
-      const key = name.trim().toLowerCase();
-      if (key && !removedSetLower.has(key) && !uniqueMap.has(key)) {
-        uniqueMap.set(key, name.trim());
-      }
-    }
-
-    return Array.from(uniqueMap.values());
-  }, [assignments, auditorOptions, editingTargetId, removedSet]);
+    return getActiveDropdownOptions(assignments, 'qmsHost').filter((a) => !removedSet.has(a));
+  }, [assignments, removedSet]);
 
   const areaSuggestions = useMemo(() => {
-    const fromAssign = assignments.map((a) => a.area).filter((s): s is string => Boolean(s));
-    return Array.from(new Set(fromAssign))
-      .filter((s) => !removedSet.has(s))
-      .sort();
+    return getActiveDropdownOptions(assignments, 'area').filter((a) => !removedSet.has(a));
   }, [assignments, removedSet]);
 
   return (

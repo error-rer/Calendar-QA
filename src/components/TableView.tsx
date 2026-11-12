@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import type { VM } from '../useScheduler';
 import type { Assignment } from '../types';
 import { isInternalAssignment, calculateAuditStats, normalizeSite, normalizeSites, getSiteOrderIndex } from '../types';
+import { getActiveDropdownOptions, MASTER_PLANT_SITES } from '../utils/auditOptionsHelper';
 import { css, HButton } from '../ui';
 
 interface TableRowData {
@@ -266,58 +267,18 @@ export function TableView({ vm }: { vm: VM }) {
     return list;
   }, [vm.assignments, engMap]);
 
-  // Collect unique filter options from live data
+  // Collect unique filter options from live active schedule records
   const filterOptions = useMemo(() => {
-    const customers = new Set<string>();
-    const standards = new Set<string>();
-    const auditCategories = new Set<string>();
-    const targetPackages = new Set<string>();
-    const customerNames = new Set<string>();
-    const auditors = new Set<string>();
-
-    for (const r of allRows) {
-      if (r.customer && r.customer.trim()) customers.add(r.customer.trim());
-      if (r.standard) {
-        r.standard.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => standards.add(s));
-      }
-      if (r.auditCategory && r.auditCategory.trim()) auditCategories.add(r.auditCategory.trim());
-      if (r.targetPackage) {
-        r.targetPackage.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => targetPackages.add(s));
-      }
-      if (r.customerNames) {
-        r.customerNames.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => customerNames.add(s));
-      }
-      if (r.auditor) {
-        r.auditor.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => auditors.add(s));
-      }
-    }
-
-    const sortByMasterOrder = (items: Iterable<string>, masterOrder?: readonly string[]) => {
-      const arr = Array.from(items);
-      if (!masterOrder || masterOrder.length === 0) {
-        return arr.sort((a, b) => a.localeCompare(b));
-      }
-      const orderMap = new Map<string, number>();
-      masterOrder.forEach((item, index) => {
-        orderMap.set(item.trim().toLowerCase(), index);
-      });
-      return arr.sort((a, b) => {
-        const idxA = orderMap.has(a.trim().toLowerCase()) ? orderMap.get(a.trim().toLowerCase())! : 9999;
-        const idxB = orderMap.has(b.trim().toLowerCase()) ? orderMap.get(b.trim().toLowerCase())! : 9999;
-        if (idxA !== idxB) return idxA - idxB;
-        return a.localeCompare(b);
-      });
-    };
-
     return {
-      customers: sortByMasterOrder(customers, vm.customerOptions),
-      standards: sortByMasterOrder(standards, vm.standardFilterOptions),
-      auditCategories: sortByMasterOrder(auditCategories, vm.auditCategoryFilterOptions),
-      targetPackages: sortByMasterOrder(targetPackages, vm.targetPackageFilterOptions),
-      customerNames: sortByMasterOrder(customerNames, vm.customerNameFilterOptions),
-      auditors: sortByMasterOrder(auditors, vm.auditorOptions),
+      customers: getActiveDropdownOptions(vm.assignments, 'customer'),
+      standards: getActiveDropdownOptions(vm.assignments, 'standard'),
+      auditCategories: getActiveDropdownOptions(vm.assignments, 'auditCategory'),
+      targetPackages: getActiveDropdownOptions(vm.assignments, 'targetPackage'),
+      customerNames: getActiveDropdownOptions(vm.assignments, 'customerNames'),
+      auditors: getActiveDropdownOptions(vm.assignments, 'qmsHost'),
+      purposes: getActiveDropdownOptions(vm.assignments, 'purpose'),
     };
-  }, [allRows, vm.customerOptions, vm.standardFilterOptions, vm.auditCategoryFilterOptions, vm.targetPackageFilterOptions, vm.customerNameFilterOptions, vm.auditorOptions]);
+  }, [vm.assignments]);
 
   // Apply Search & Filters
   const filteredRows = useMemo(() => {
@@ -833,7 +794,7 @@ export function TableView({ vm }: { vm: VM }) {
           <TableMultiSelectFilter
             label="Sites"
             allLabel="All Sites"
-            options={vm.siteCodeOptions || []}
+            options={vm.siteCodeOptions && vm.siteCodeOptions.length > 0 ? vm.siteCodeOptions : Array.from(MASTER_PLANT_SITES)}
             selected={selectedSites}
             onChange={(next) => { setSelectedSites(next); setPage(1); }}
           />

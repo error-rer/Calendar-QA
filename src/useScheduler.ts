@@ -54,6 +54,7 @@ import {
   initialState,
 } from './data';
 import { api } from './api';
+import { getActiveDropdownOptions } from './utils/auditOptionsHelper';
 
 /** Identity tag that supplies a contextual CSSProperties type to a style literal. */
 const sx = (o: CSSProperties): CSSProperties => o;
@@ -943,20 +944,33 @@ export function useScheduler() {
 
         const targetCust = (a.customer || '').trim();
         const custLower = targetCust.toLowerCase();
-        let nextCustomerOptions = s.customerOptions || [];
         let nextRemovedOptions = s.removedOptions || [];
-        let nextFilterCompany = s.filterCompany || [];
         let nextMasterCreated = { ...(s.masterCreatedOptions || {}) };
 
+        const nextCustomerOptions = getActiveDropdownOptions(remaining, 'customer');
+        const nextPurposeOptions = getActiveDropdownOptions(remaining, 'purpose');
+        const nextTargetPackageOptions = getActiveDropdownOptions(remaining, 'targetPackage');
+        const nextCustomerNameOptions = getActiveDropdownOptions(remaining, 'customerNames');
+        const nextAuditCategoryOptions = getActiveDropdownOptions(remaining, 'auditCategory');
+        const nextEndCustomerOptions = getActiveDropdownOptions(remaining, 'endCustomer');
+        const nextCustomerDepartmentOptions = getActiveDropdownOptions(remaining.filter((x) => x.sectionType !== 'internal'), 'department1');
+        const nextInternalDepartmentOptions = getActiveDropdownOptions(remaining.filter((x) => x.sectionType === 'internal'), 'department2');
+
         if (targetCust && !remaining.some((x) => (x.customer || '').trim().toLowerCase() === custLower)) {
-          nextCustomerOptions = nextCustomerOptions.filter((c) => c.trim().toLowerCase() !== custLower);
           if (!nextRemovedOptions.some((r) => r.toLowerCase() === custLower)) {
             nextRemovedOptions = [...nextRemovedOptions, targetCust];
           }
-          nextFilterCompany = nextFilterCompany.filter((f) => f.trim().toLowerCase() !== custLower);
           delete nextMasterCreated['customerOptions:' + custLower];
           api.deleteOption('customer_name', targetCust).catch(() => {});
         }
+
+        const nextFilterCompany = (s.filterCompany || []).filter((f) => nextCustomerOptions.some((c) => c.toLowerCase() === f.toLowerCase()));
+        const nextFilterAuditType = (s.filterAuditType || []).filter((f) => nextPurposeOptions.some((p) => p.toLowerCase() === f.toLowerCase()));
+        const nextFilterTargetPackage = (s.filterTargetPackage || []).filter((f) => nextTargetPackageOptions.some((p) => p.toLowerCase() === f.toLowerCase()));
+        const nextFilterCustomerName = (s.filterCustomerName || []).filter((f) => nextCustomerNameOptions.some((n) => n.toLowerCase() === f.toLowerCase()));
+        const nextFilterAuditCategory = (s.filterAuditCategory || []).filter((f) => nextAuditCategoryOptions.some((c) => c.toLowerCase() === f.toLowerCase()));
+        const nextFilterAuditTopic = (s.filterAuditTopic || []).filter((f) => [...nextCustomerDepartmentOptions, ...nextInternalDepartmentOptions].some((t) => t.toLowerCase() === f.toLowerCase()));
+        const nextAdminFilterDept = (s.adminFilterDept || []).filter((f) => [...nextCustomerDepartmentOptions, ...nextInternalDepartmentOptions].some((t) => t.toLowerCase() === f.toLowerCase()));
 
         const targetOrder = a.order;
         const isOrderStillUsed = Boolean(targetOrder && remaining.some((x) => x.order === targetOrder));
@@ -974,6 +988,13 @@ export function useScheduler() {
             comments,
             activity: s.activity,
             customerOptions: nextCustomerOptions,
+            auditCategoryOptions: nextAuditCategoryOptions,
+            endCustomerOptions: nextEndCustomerOptions,
+            purposeOptions: nextPurposeOptions,
+            targetPackageOptions: nextTargetPackageOptions,
+            customerNameOptions: nextCustomerNameOptions,
+            customerDepartmentOptions: nextCustomerDepartmentOptions,
+            internalDepartmentOptions: nextInternalDepartmentOptions,
             removedOptions: nextRemovedOptions,
             masterCreatedOptions: nextMasterCreated,
           };
@@ -985,8 +1006,21 @@ export function useScheduler() {
           orders: remainingOrders,
           comments,
           customerOptions: nextCustomerOptions,
+          auditCategoryOptions: nextAuditCategoryOptions,
+          endCustomerOptions: nextEndCustomerOptions,
+          purposeOptions: nextPurposeOptions,
+          targetPackageOptions: nextTargetPackageOptions,
+          customerNameOptions: nextCustomerNameOptions,
+          customerDepartmentOptions: nextCustomerDepartmentOptions,
+          internalDepartmentOptions: nextInternalDepartmentOptions,
           removedOptions: nextRemovedOptions,
           filterCompany: nextFilterCompany,
+          filterAuditType: nextFilterAuditType,
+          filterTargetPackage: nextFilterTargetPackage,
+          filterCustomerName: nextFilterCustomerName,
+          filterAuditCategory: nextFilterAuditCategory,
+          filterAuditTopic: nextFilterAuditTopic,
+          adminFilterDept: nextAdminFilterDept,
           masterCreatedOptions: nextMasterCreated,
           selected: s.selected === aid ? null : s.selected,
           editOpen: s.editOpen && s.editDraft?.targetId === aid ? false : s.editOpen,
@@ -1078,8 +1112,14 @@ export function useScheduler() {
       const comments = Object.fromEntries(Object.entries(s.comments).filter(([cid]) => !siblingSet.has(cid)));
       let nextMasterCreatedOptions = { ...(s.masterCreatedOptions || {}) };
 
-      let nextCustomerOptions = s.customerOptions || [];
-      let nextAuditCategoryOptions = s.auditCategoryOptions || [];
+      const nextCustomerOptions = getActiveDropdownOptions(remainingAssignments, 'customer');
+      const nextAuditCategoryOptions = getActiveDropdownOptions(remainingAssignments, 'auditCategory');
+      const nextEndCustomerOptions = getActiveDropdownOptions(remainingAssignments, 'endCustomer');
+      const nextPurposeOptions = getActiveDropdownOptions(remainingAssignments, 'purpose');
+      const nextTargetPackageOptions = getActiveDropdownOptions(remainingAssignments, 'targetPackage');
+      const nextCustomerNameOptions = getActiveDropdownOptions(remainingAssignments, 'customerNames');
+      const nextCustomerDepartmentOptions = getActiveDropdownOptions(remainingAssignments.filter((x) => x.sectionType !== 'internal'), 'department1');
+      const nextInternalDepartmentOptions = getActiveDropdownOptions(remainingAssignments.filter((x) => x.sectionType === 'internal'), 'department2');
       let nextRemovedOptions = s.removedOptions || [];
 
       for (const cat of deletedAuditCategories) {
@@ -1088,14 +1128,10 @@ export function useScheduler() {
           (x) => (x.auditCategory || '').trim().toLowerCase() === catLower
         );
         if (!isStillUsed) {
-          const isMaster = !!(s.masterCreatedOptions && s.masterCreatedOptions['auditCategoryOptions:' + catLower]);
-          if (!isMaster) {
-            nextAuditCategoryOptions = nextAuditCategoryOptions.filter((c) => c.trim().toLowerCase() !== catLower);
-            api.deleteOption('audit_category', cat).catch(() => {});
-          }
+          delete nextMasterCreatedOptions['auditCategoryOptions:' + catLower];
+          api.deleteOption('audit_category', cat).catch(() => {});
         }
       }
-      let nextFilterCompany = s.filterCompany || [];
 
       // Manage Options Cleanup: Prune customer if only referenced in deleted appointment
       for (const cust of deletedCustomers) {
@@ -1104,33 +1140,24 @@ export function useScheduler() {
           (x) => (x.customer || '').trim().toLowerCase() === custLower
         );
         if (!isCustStillUsed) {
-          nextCustomerOptions = nextCustomerOptions.filter((c) => c.trim().toLowerCase() !== custLower);
           if (!nextRemovedOptions.some((r) => r.toLowerCase() === custLower)) {
             nextRemovedOptions = [...nextRemovedOptions, cust];
           }
-          nextFilterCompany = nextFilterCompany.filter((f) => f.trim().toLowerCase() !== custLower);
           delete nextMasterCreatedOptions['customerOptions:' + custLower];
           api.deleteOption('customer_name', cust).catch(() => {});
         }
       }
 
-      let nextEndCustomerOptions = s.endCustomerOptions || [];
       for (const endCust of deletedEndCustomers) {
         const endCustLower = endCust.toLowerCase();
         const isStillUsed = remainingAssignments.some(
           (x) => (x.endCustomer || '').trim().toLowerCase() === endCustLower
         );
         if (!isStillUsed) {
-          const isMaster = !!(s.masterCreatedOptions && s.masterCreatedOptions['endCustomerOptions:' + endCustLower]);
-          if (!isMaster) {
-            nextEndCustomerOptions = nextEndCustomerOptions.filter((c) => c.trim().toLowerCase() !== endCustLower);
-            api.deleteOption('end_customer', endCust).catch(() => {});
-          }
+          delete nextMasterCreatedOptions['endCustomerOptions:' + endCustLower];
+          api.deleteOption('end_customer', endCust).catch(() => {});
         }
       }
-
-      let nextPurposeOptions = s.purposeOptions || [];
-      let nextFilterAuditType = s.filterAuditType || [];
 
       for (const purp of deletedPurposes) {
         const purpLower = purp.toLowerCase();
@@ -1138,13 +1165,8 @@ export function useScheduler() {
           (x) => (x.purpose || '').trim().toLowerCase() === purpLower
         );
         if (!isPurpStillUsed) {
-          const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['purposeOptions:' + purpLower]) ||
-            initialPurposeOptions.some((init) => init.toLowerCase() === purpLower);
-          if (!isMaster) {
-            nextPurposeOptions = nextPurposeOptions.filter((p) => p.trim().toLowerCase() !== purpLower);
-            nextFilterAuditType = nextFilterAuditType.filter((f) => f.trim().toLowerCase() !== purpLower);
-            api.deleteOption('purpose', purp).catch(() => {});
-          }
+          delete nextMasterCreatedOptions['purposeOptions:' + purpLower];
+          api.deleteOption('purpose', purp).catch(() => {});
         }
       }
 
@@ -1206,7 +1228,6 @@ export function useScheduler() {
         }
       }
 
-      let nextCustomerDepartmentOptions = s.customerDepartmentOptions || [];
       for (const dept of deletedDept1) {
         const deptLower = dept.toLowerCase();
         const isStillUsed = remainingAssignments.some((x) => {
@@ -1214,16 +1235,11 @@ export function useScheduler() {
           return depts.includes(deptLower);
         });
         if (!isStillUsed) {
-          const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['customerDepartmentOptions:' + deptLower]) ||
-            initialCustomerDepartmentOptions.some((init) => init.toLowerCase() === deptLower);
-          if (!isMaster) {
-            nextCustomerDepartmentOptions = nextCustomerDepartmentOptions.filter((d) => d.trim().toLowerCase() !== deptLower);
-            api.deleteOption('customer_department', dept).catch(() => {});
-          }
+          delete nextMasterCreatedOptions['customerDepartmentOptions:' + deptLower];
+          api.deleteOption('customer_department', dept).catch(() => {});
         }
       }
 
-      let nextInternalDepartmentOptions = s.internalDepartmentOptions || [];
       for (const dept of deletedDept2) {
         const deptLower = dept.toLowerCase();
         const isStillUsed = remainingAssignments.some((x) => {
@@ -1231,16 +1247,11 @@ export function useScheduler() {
           return depts.includes(deptLower);
         });
         if (!isStillUsed) {
-          const isMaster = (s.masterCreatedOptions && s.masterCreatedOptions['internalDepartmentOptions:' + deptLower]) ||
-            initialInternalDepartmentOptions.some((init) => init.toLowerCase() === deptLower);
-          if (!isMaster) {
-            nextInternalDepartmentOptions = nextInternalDepartmentOptions.filter((d) => d.trim().toLowerCase() !== deptLower);
-            api.deleteOption('internal_department', dept).catch(() => {});
-          }
+          delete nextMasterCreatedOptions['internalDepartmentOptions:' + deptLower];
+          api.deleteOption('internal_department', dept).catch(() => {});
         }
       }
 
-      let nextTargetPackageOptions = s.targetPackageOptions || [];
       for (const pkg of deletedTargetPackages) {
         const pkgLower = pkg.toLowerCase();
         const isStillUsed = remainingAssignments.some((x) => {
@@ -1248,15 +1259,11 @@ export function useScheduler() {
           return pkgs.includes(pkgLower);
         });
         if (!isStillUsed) {
-          const isMaster = !!(s.masterCreatedOptions && s.masterCreatedOptions['targetPackageOptions:' + pkgLower]);
-          if (!isMaster) {
-            nextTargetPackageOptions = nextTargetPackageOptions.filter((p) => p.trim().toLowerCase() !== pkgLower);
-            api.deleteOption('target_package', pkg).catch(() => {});
-          }
+          delete nextMasterCreatedOptions['targetPackageOptions:' + pkgLower];
+          api.deleteOption('target_package', pkg).catch(() => {});
         }
       }
 
-      let nextCustomerNameOptions = s.customerNameOptions || [];
       for (const cn of deletedCustomerNames) {
         const cnLower = cn.toLowerCase();
         const isStillUsed = remainingAssignments.some((x) => {
@@ -1264,13 +1271,18 @@ export function useScheduler() {
           return cns.includes(cnLower);
         });
         if (!isStillUsed) {
-          const isMaster = !!(s.masterCreatedOptions && s.masterCreatedOptions['customerNameOptions:' + cnLower]);
-          if (!isMaster) {
-            nextCustomerNameOptions = nextCustomerNameOptions.filter((c) => c.trim().toLowerCase() !== cnLower);
-            api.deleteOption('customer_names', cn).catch(() => {});
-          }
+          delete nextMasterCreatedOptions['customerNameOptions:' + cnLower];
+          api.deleteOption('customer_names', cn).catch(() => {});
         }
       }
+
+      const nextFilterCompany = (s.filterCompany || []).filter((f) => nextCustomerOptions.some((c) => c.toLowerCase() === f.toLowerCase()));
+      const nextFilterAuditType = (s.filterAuditType || []).filter((f) => nextPurposeOptions.some((p) => p.toLowerCase() === f.toLowerCase()));
+      const nextFilterTargetPackage = (s.filterTargetPackage || []).filter((f) => nextTargetPackageOptions.some((p) => p.toLowerCase() === f.toLowerCase()));
+      const nextFilterCustomerName = (s.filterCustomerName || []).filter((f) => nextCustomerNameOptions.some((n) => n.toLowerCase() === f.toLowerCase()));
+      const nextFilterAuditCategory = (s.filterAuditCategory || []).filter((f) => nextAuditCategoryOptions.some((c) => c.toLowerCase() === f.toLowerCase()));
+      const nextFilterAuditTopic = (s.filterAuditTopic || []).filter((f) => [...nextCustomerDepartmentOptions, ...nextInternalDepartmentOptions].some((t) => t.toLowerCase() === f.toLowerCase()));
+      const nextAdminFilterDept = (s.adminFilterDept || []).filter((f) => [...nextCustomerDepartmentOptions, ...nextInternalDepartmentOptions].some((t) => t.toLowerCase() === f.toLowerCase()));
 
       // Sync local storage snapshots so fresh reloads reflect state changes immediately
       try {
@@ -1285,6 +1297,8 @@ export function useScheduler() {
           auditCategoryOptions: nextAuditCategoryOptions,
           endCustomerOptions: nextEndCustomerOptions,
           purposeOptions: nextPurposeOptions,
+          targetPackageOptions: nextTargetPackageOptions,
+          customerNameOptions: nextCustomerNameOptions,
           siteCodeOptions: nextSiteCodeOptions,
           auditorOptions: nextAuditorOptions,
           customerDepartmentOptions: nextCustomerDepartmentOptions,
@@ -1304,6 +1318,8 @@ export function useScheduler() {
         auditCategoryOptions: nextAuditCategoryOptions,
         endCustomerOptions: nextEndCustomerOptions,
         purposeOptions: nextPurposeOptions,
+        targetPackageOptions: nextTargetPackageOptions,
+        customerNameOptions: nextCustomerNameOptions,
         siteCodeOptions: nextSiteCodeOptions,
         auditorOptions: nextAuditorOptions,
         customerDepartmentOptions: nextCustomerDepartmentOptions,
@@ -1313,6 +1329,11 @@ export function useScheduler() {
         filterCompany: nextFilterCompany,
         filterSite: nextFilterSite,
         filterAuditType: nextFilterAuditType,
+        filterTargetPackage: nextFilterTargetPackage,
+        filterCustomerName: nextFilterCustomerName,
+        filterAuditCategory: nextFilterAuditCategory,
+        filterAuditTopic: nextFilterAuditTopic,
+        adminFilterDept: nextAdminFilterDept,
         filterEmp: nextFilterEmp,
         selected: s.selected && siblingSet.has(s.selected) ? null : s.selected,
         editOpen: s.editOpen && s.editDraft?.targetId && siblingSet.has(s.editDraft.targetId) ? false : s.editOpen,
@@ -4008,51 +4029,26 @@ export function useScheduler() {
   }, [computedSiteCodeOptions]);
 
   const computedCustomerDepartmentOptions = useMemo(() => {
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const active = S.assignments
-      .flatMap((a) => (a.department1 || '').split(',').map((s) => s.trim()).filter(Boolean))
-      .filter((d) => !removedSetLower.has(d.toLowerCase()));
-    const baseList = (S.customerDepartmentOptions || [])
-      .map((d) => d.trim())
-      .filter((d) => Boolean(d) && !removedSetLower.has(d.toLowerCase()));
-
-    const uniqueMap = new Map<string, string>();
-    for (const d of [...baseList, ...active]) {
-      const key = d.toLowerCase();
-      if (!uniqueMap.has(key)) {
-        uniqueMap.set(key, d);
-      }
-    }
-    return Array.from(uniqueMap.values());
-  }, [S.assignments, S.customerDepartmentOptions, removedSet]);
+    return getActiveDropdownOptions(
+      S.assignments.filter((a) => a.sectionType !== 'internal'),
+      'department1'
+    ).filter((d) => !removedSet.has(d));
+  }, [S.assignments, removedSet]);
 
   const computedInternalDepartmentOptions = useMemo(() => {
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const active = S.assignments
-      .flatMap((a) => (a.department2 || '').split(',').map((s) => s.trim()).filter(Boolean))
-      .filter((d) => !removedSetLower.has(d.toLowerCase()));
-    const baseList = (S.internalDepartmentOptions || [])
-      .map((d) => d.trim())
-      .filter((d) => Boolean(d) && !removedSetLower.has(d.toLowerCase()));
-
-    const uniqueMap = new Map<string, string>();
-    for (const d of [...baseList, ...active]) {
-      const key = d.toLowerCase();
-      if (!uniqueMap.has(key)) {
-        uniqueMap.set(key, d);
-      }
-    }
-    return Array.from(uniqueMap.values());
-  }, [S.assignments, S.internalDepartmentOptions, removedSet]);
+    return getActiveDropdownOptions(
+      S.assignments.filter((a) => a.sectionType === 'internal'),
+      'department2'
+    ).filter((d) => !removedSet.has(d));
+  }, [S.assignments, removedSet]);
 
   const computedDepartmentOptions = useMemo(() => {
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
     const active = S.assignments
       .map((a) => (a.department || 'QA').trim())
-      .filter((d) => Boolean(d) && !removedSetLower.has(d.toLowerCase()));
+      .filter((d) => Boolean(d) && !removedSet.has(d));
     const baseList = (S.departmentOptions && S.departmentOptions.length > 0 ? S.departmentOptions : ['QA', 'Non-QA'])
       .map((d) => d.trim())
-      .filter((d) => Boolean(d) && !removedSetLower.has(d.toLowerCase()));
+      .filter((d) => Boolean(d) && !removedSet.has(d));
 
     const uniqueMap = new Map<string, string>();
     for (const d of [...baseList, ...active]) {
@@ -4065,118 +4061,28 @@ export function useScheduler() {
   }, [S.assignments, S.departmentOptions, removedSet]);
 
   const computedCustomerOptions = useMemo(() => {
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const active = S.assignments
-      .map((a) => (a.customer || '').trim())
-      .filter((c) => Boolean(c) && !removedSetLower.has(c.toLowerCase()));
-    const baseList = (S.customerOptions || [])
-      .map((c) => c.trim())
-      .filter((c) => Boolean(c) && !removedSetLower.has(c.toLowerCase()));
-
-    const uniqueMap = new Map<string, string>();
-    for (const c of [...baseList, ...active]) {
-      const key = c.toLowerCase();
-      if (!uniqueMap.has(key)) {
-        uniqueMap.set(key, c);
-      }
-    }
-    return Array.from(uniqueMap.values());
-  }, [S.assignments, S.customerOptions, removedSet]);
+    return getActiveDropdownOptions(S.assignments, 'customer').filter((c) => !removedSet.has(c));
+  }, [S.assignments, removedSet]);
 
   const computedEndCustomerOptions = useMemo(() => {
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const active = S.assignments
-      .map((a) => (a.endCustomer || '').trim())
-      .filter((c) => Boolean(c) && !removedSetLower.has(c.toLowerCase()));
-    const baseList = (S.endCustomerOptions || [])
-      .map((c) => c.trim())
-      .filter((c) => Boolean(c) && !removedSetLower.has(c.toLowerCase()));
-
-    const uniqueMap = new Map<string, string>();
-    for (const c of [...baseList, ...active]) {
-      const key = c.toLowerCase();
-      if (!uniqueMap.has(key)) {
-        uniqueMap.set(key, c);
-      }
-    }
-    return Array.from(uniqueMap.values());
-  }, [S.assignments, S.endCustomerOptions, removedSet]);
+    return getActiveDropdownOptions(S.assignments, 'endCustomer').filter((c) => !removedSet.has(c));
+  }, [S.assignments, removedSet]);
 
   const computedPurposeOptions = useMemo(() => {
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const active = S.assignments
-      .map((a) => (a.purpose || '').trim())
-      .filter((p) => Boolean(p) && !removedSetLower.has(p.toLowerCase()));
-    const baseList = (S.purposeOptions || [])
-      .map((p) => p.trim())
-      .filter((p) => Boolean(p) && !removedSetLower.has(p.toLowerCase()));
-
-    const uniqueMap = new Map<string, string>();
-    for (const p of [...baseList, ...active]) {
-      const key = p.toLowerCase();
-      if (!uniqueMap.has(key)) {
-        uniqueMap.set(key, p);
-      }
-    }
-    return Array.from(uniqueMap.values());
-  }, [S.assignments, S.purposeOptions, removedSet]);
+    return getActiveDropdownOptions(S.assignments, 'purpose').filter((p) => !removedSet.has(p));
+  }, [S.assignments, removedSet]);
 
   const computedTargetPackageOptions = useMemo(() => {
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const active = S.assignments
-      .flatMap((a) => (a.targetPackage || '').split(',').map((s) => s.trim()))
-      .filter((p) => Boolean(p) && !removedSetLower.has(p.toLowerCase()));
-    const baseList = (S.targetPackageOptions || [])
-      .map((p) => p.trim())
-      .filter((p) => Boolean(p) && !removedSetLower.has(p.toLowerCase()));
-
-    const uniqueMap = new Map<string, string>();
-    for (const p of [...baseList, ...active]) {
-      const key = p.toLowerCase();
-      if (!uniqueMap.has(key)) {
-        uniqueMap.set(key, p);
-      }
-    }
-    return Array.from(uniqueMap.values());
-  }, [S.assignments, S.targetPackageOptions, removedSet]);
+    return getActiveDropdownOptions(S.assignments, 'targetPackage').filter((p) => !removedSet.has(p));
+  }, [S.assignments, removedSet]);
 
   const computedCustomerNameOptions = useMemo(() => {
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const active = S.assignments
-      .flatMap((a) => (a.customerNames || '').split(',').map((s) => s.trim()))
-      .filter((n) => Boolean(n) && !removedSetLower.has(n.toLowerCase()));
-    const baseList = (S.customerNameOptions || [])
-      .map((n) => n.trim())
-      .filter((n) => Boolean(n) && !removedSetLower.has(n.toLowerCase()));
-
-    const uniqueMap = new Map<string, string>();
-    for (const n of [...baseList, ...active]) {
-      const key = n.toLowerCase();
-      if (!uniqueMap.has(key)) {
-        uniqueMap.set(key, n);
-      }
-    }
-    return Array.from(uniqueMap.values());
-  }, [S.assignments, S.customerNameOptions, removedSet]);
+    return getActiveDropdownOptions(S.assignments, 'customerNames').filter((n) => !removedSet.has(n));
+  }, [S.assignments, removedSet]);
 
   const computedAuditCategoryOptions = useMemo(() => {
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const active = S.assignments
-      .map((a) => (a.auditCategory || '').trim())
-      .filter((c) => Boolean(c) && !removedSetLower.has(c.toLowerCase()));
-    const baseList = (S.auditCategoryOptions || [])
-      .map((c) => c.trim())
-      .filter((c) => Boolean(c) && !removedSetLower.has(c.toLowerCase()));
-
-    const uniqueMap = new Map<string, string>();
-    for (const c of [...baseList, ...active]) {
-      const key = c.toLowerCase();
-      if (!uniqueMap.has(key)) {
-        uniqueMap.set(key, c);
-      }
-    }
-    return Array.from(uniqueMap.values());
-  }, [S.assignments, S.auditCategoryOptions, removedSet]);
+    return getActiveDropdownOptions(S.assignments, 'auditCategory').filter((c) => !removedSet.has(c));
+  }, [S.assignments, removedSet]);
 
   const masterAuditorOptions = useMemo(() => {
     const engNames = S.engineers
@@ -4196,36 +4102,8 @@ export function useScheduler() {
   }, [S.engineers, S.auditorOptions, removedSet]);
 
   const computedAuditorOptions = useMemo(() => {
-    // 1. Protected master records from Manage page
-    const baseList = masterAuditorOptions;
-
-    // 2. Active auditors from all appointments across schedule
-    const activeAuditors = S.assignments.flatMap((a) => {
-      const names: string[] = [];
-      if (a.auditor1) names.push(...a.auditor1.split(',').map((s) => s.trim()).filter(Boolean));
-      if (a.auditor2) names.push(...a.auditor2.split(',').map((s) => s.trim()).filter(Boolean));
-      return names;
-    });
-
-    const removedSetLower = new Set(Array.from(removedSet).map((r) => r.toLowerCase()));
-    const uniqueMap = new Map<string, string>();
-
-    for (const name of baseList) {
-      const key = name.toLowerCase();
-      if (!removedSetLower.has(key) && !uniqueMap.has(key)) {
-        uniqueMap.set(key, name);
-      }
-    }
-
-    for (const name of activeAuditors) {
-      const key = name.toLowerCase();
-      if (!removedSetLower.has(key) && !uniqueMap.has(key)) {
-        uniqueMap.set(key, name);
-      }
-    }
-
-    return Array.from(uniqueMap.values());
-  }, [masterAuditorOptions, S.assignments, removedSet]);
+    return getActiveDropdownOptions(S.assignments, 'qmsHost').filter((a) => !removedSet.has(a));
+  }, [S.assignments, removedSet]);
 
   // ---- admin VMs ----
   const adminEngineers = useMemo(() => {
@@ -4315,7 +4193,9 @@ export function useScheduler() {
     { label: 'OPEN ORDERS', value: String(poolOrders.length), sub: 'awaiting staffing' },
     { label: 'WEEK APPOINTMENTS', value: String(wk.length), sub: 'this week' },
   ];
-  const adminDeptOptions = Array.from(new Set([...computedInternalDepartmentOptions, ...computedCustomerDepartmentOptions]));
+  const adminDeptOptions = useMemo(() => {
+    return getActiveDropdownOptions(S.assignments, 'standard').filter((s) => !removedSet.has(s));
+  }, [S.assignments, removedSet]);
   const toggleAdminFilterSite = (v: string) => toggleFilterValue('adminFilterSite', v);
   const toggleAdminFilterDept = (v: string) => toggleFilterValue('adminFilterDept', v);
 
@@ -4348,33 +4228,13 @@ export function useScheduler() {
   const standardFilterOptions = useMemo(() => {
     if (isFilterCS) return computedCustomerDepartmentOptions;
     if (isFilterIA) return computedInternalDepartmentOptions;
-    const set = new Set<string>();
-    const res: string[] = [];
-    for (const item of [...computedCustomerDepartmentOptions, ...computedInternalDepartmentOptions]) {
-      const key = item.toLowerCase();
-      if (!set.has(key)) {
-        set.add(key);
-        res.push(item);
-      }
-    }
-    return res;
-  }, [isFilterCS, isFilterIA, computedCustomerDepartmentOptions, computedInternalDepartmentOptions]);
+    return getActiveDropdownOptions(S.assignments, 'standard').filter((s) => !removedSet.has(s));
+  }, [isFilterCS, isFilterIA, computedCustomerDepartmentOptions, computedInternalDepartmentOptions, S.assignments, removedSet]);
 
   const customerTopicOptions = typeIsIA ? [] : computedCustomerDepartmentOptions;
   const internalTopicOptions = typeIsCS ? [] : computedInternalDepartmentOptions;
 
-  const companyNames = useMemo(() => {
-    const activeCustomerSet = new Set<string>();
-    for (const a of S.assignments) {
-      const c = (a.customer || '').trim();
-      if (c && !removedSet.has(c)) {
-        activeCustomerSet.add(c.toLowerCase());
-      }
-    }
-    return computedCustomerOptions.filter((cust) =>
-      activeCustomerSet.has(cust.trim().toLowerCase())
-    );
-  }, [S.assignments, computedCustomerOptions, removedSet]);
+  const companyNames = computedCustomerOptions;
 
   useEffect(() => {
     if (S.filterCompany.length > 0) {
@@ -4385,6 +4245,66 @@ export function useScheduler() {
       }
     }
   }, [companyNames, S.filterCompany, setState]);
+
+  useEffect(() => {
+    if (S.filterAuditType.length > 0) {
+      const validPurposes = new Set(computedPurposeOptions.map((p) => p.toLowerCase()));
+      const cleaned = S.filterAuditType.filter((f) => validPurposes.has(f.toLowerCase()));
+      if (cleaned.length !== S.filterAuditType.length) {
+        setState({ filterAuditType: cleaned });
+      }
+    }
+  }, [computedPurposeOptions, S.filterAuditType, setState]);
+
+  useEffect(() => {
+    if (S.filterAuditTopic.length > 0) {
+      const validTopics = new Set(standardFilterOptions.map((t) => t.toLowerCase()));
+      const cleaned = S.filterAuditTopic.filter((f) => validTopics.has(f.toLowerCase()));
+      if (cleaned.length !== S.filterAuditTopic.length) {
+        setState({ filterAuditTopic: cleaned });
+      }
+    }
+  }, [standardFilterOptions, S.filterAuditTopic, setState]);
+
+  useEffect(() => {
+    if (S.filterTargetPackage && S.filterTargetPackage.length > 0) {
+      const validPkgs = new Set(computedTargetPackageOptions.map((p) => p.toLowerCase()));
+      const cleaned = S.filterTargetPackage.filter((f) => validPkgs.has(f.toLowerCase()));
+      if (cleaned.length !== S.filterTargetPackage.length) {
+        setState({ filterTargetPackage: cleaned });
+      }
+    }
+  }, [computedTargetPackageOptions, S.filterTargetPackage, setState]);
+
+  useEffect(() => {
+    if (S.filterCustomerName && S.filterCustomerName.length > 0) {
+      const validNames = new Set(computedCustomerNameOptions.map((n) => n.toLowerCase()));
+      const cleaned = S.filterCustomerName.filter((f) => validNames.has(f.toLowerCase()));
+      if (cleaned.length !== S.filterCustomerName.length) {
+        setState({ filterCustomerName: cleaned });
+      }
+    }
+  }, [computedCustomerNameOptions, S.filterCustomerName, setState]);
+
+  useEffect(() => {
+    if (S.filterAuditCategory && S.filterAuditCategory.length > 0) {
+      const validCats = new Set(computedAuditCategoryOptions.map((c) => c.toLowerCase()));
+      const cleaned = S.filterAuditCategory.filter((f) => validCats.has(f.toLowerCase()));
+      if (cleaned.length !== S.filterAuditCategory.length) {
+        setState({ filterAuditCategory: cleaned });
+      }
+    }
+  }, [computedAuditCategoryOptions, S.filterAuditCategory, setState]);
+
+  useEffect(() => {
+    if (S.adminFilterDept.length > 0) {
+      const validDepts = new Set(adminDeptOptions.map((d) => d.toLowerCase()));
+      const cleaned = S.adminFilterDept.filter((f) => validDepts.has(f.toLowerCase()));
+      if (cleaned.length !== S.adminFilterDept.length) {
+        setState({ adminFilterDept: cleaned });
+      }
+    }
+  }, [adminDeptOptions, S.adminFilterDept, setState]);
   const auditTypes = typeIsIA ? [] : computedPurposeOptions;
   const apptTypeOptions = [{ value: 'CS', label: 'Customer Audit (CS)' }, { value: 'IA', label: 'Internal Audit (IA)' }];
   const hasFilters = !!(
