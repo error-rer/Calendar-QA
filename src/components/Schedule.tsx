@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useRef, useState, useMemo } from 'react';
 import type { VM } from '../useScheduler';
 import { getApptCardColors } from '../useScheduler';
-import { isAuditResultCompleted } from '../types';
+import { isAuditResultCompleted, formatCardSubtitle } from '../types';
 import { css, HButton, HInput } from '../ui';
 import { getHolidayStyle, isOfficialHoliday } from '../holidays';
 
@@ -32,8 +32,8 @@ function renderApptSubtitle(
   let purp = '';
 
   if (typeof chip === 'string') {
-    const trimmed = chip.trim();
-    if (!trimmed || trimmed === 'Unassigned') {
+    let trimmed = chip.trim();
+    if (!trimmed || trimmed.toLowerCase() === 'unassigned') {
       return (
         <span
           className="font-normal text-white/90"
@@ -47,7 +47,7 @@ function renderApptSubtitle(
         </span>
       );
     }
-    if (trimmed.endsWith(' - Unassigned')) {
+    if (trimmed.toLowerCase().endsWith(' - unassigned')) {
       const p = trimmed.slice(0, -14).trim();
       return (
         <span style={{ color }}>
@@ -65,6 +65,13 @@ function renderApptSubtitle(
         </span>
       );
     }
+
+    // Collapse duplicate parts joined by " - " (e.g. "Viroj, Marc - Viroj, Marc")
+    const parts = trimmed.split(/\s*-\s*/);
+    if (parts.length > 1 && parts.every((p) => p.toLowerCase() === parts[0].toLowerCase())) {
+      trimmed = parts[0];
+    }
+
     return <span style={{ color }}>{trimmed}</span>;
   }
 
@@ -82,28 +89,50 @@ function renderApptSubtitle(
     purp = (
       chip.rawPurpose ||
       chip.apptPurpose ||
-      (chip.purpose && host && chip.purpose.includes(host)
-        ? chip.purpose.replace(new RegExp(`\\s*-\\s*${host.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}$`), '')
-        : chip.purpose) ||
+      chip.purpose ||
       ''
     ).trim();
 
-    if (purp.endsWith(' - Unassigned')) {
+    if (purp.toLowerCase().endsWith(' - unassigned')) {
       purp = purp.slice(0, -14).trim();
-    } else if (purp === 'Unassigned') {
+    } else if (purp.toLowerCase() === 'unassigned') {
       purp = '';
+    }
+
+    // Strip trailing " - ${host}" from purpose if already present
+    if (host && host.toLowerCase() !== 'unassigned') {
+      const escapedHost = host.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      purp = purp.replace(new RegExp(`\\s*-\\s*${escapedHost}$`, 'i'), '').trim();
+      // Prevent accidental duplication if fallback values match
+      if (purp.toLowerCase() === host.toLowerCase()) {
+        purp = '';
+      }
     }
   }
 
-  if (!host || host === 'Unassigned') {
+  const isHostUnassigned = !host || host.toLowerCase() === 'unassigned';
+
+  // Case 4: Both are empty / unassigned
+  if (!purp && isHostUnassigned) {
+    return (
+      <span
+        className="font-normal text-white/90"
+        style={{
+          color: isInc ? 'rgba(255, 255, 255, 0.9)' : '#71717a',
+          fontStyle: 'normal',
+          fontWeight: 400,
+        }}
+      >
+        Unassigned
+      </span>
+    );
+  }
+
+  // Case 3: Purpose exists, but Host is empty / unassigned
+  if (purp && isHostUnassigned) {
     return (
       <span style={{ color }}>
-        {purp ? (
-          <>
-            <span>{purp}</span>
-            <span> - </span>
-          </>
-        ) : null}
+        <span>{purp} - </span>
         <span
           className="font-normal text-white/90"
           style={{
@@ -118,9 +147,15 @@ function renderApptSubtitle(
     );
   }
 
+  // Case 2: Purpose is empty / null / undefined, but Host exists -> ONLY host once
+  if (!purp && !isHostUnassigned) {
+    return <span style={{ color }}>{host}</span>;
+  }
+
+  // Case 1: Both Purpose and Host exist -> "${purpose} - ${host}"
   return (
     <span style={{ color }}>
-      {purp ? `${purp} - ${host}` : host}
+      {`${purp} - ${host}`}
     </span>
   );
 }
@@ -1682,7 +1717,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
                 const border = cardColors.priority === 'default' ? 'none' : cardColors.cardBorder;
 
                 return (
-                  <div key={chip.id} onClick={chip.onClick} title={[chip.customer, chip.auditor2 || chip.purpose, chip.auditor2 ? '' : chip.auditor1].filter(Boolean).join(' - ')} style={{
+                  <div key={chip.id} onClick={chip.onClick} title={[chip.customer, formatCardSubtitle(chip.rawPurpose || chip.purpose, chip.qmsHost || chip.auditor || (chip.isInternal ? chip.auditor2 : chip.auditor1) || chip.auditor1)].filter(Boolean).join(' - ')} style={{
                     display: 'flex', alignItems: 'stretch',
                     background: barBg, borderRadius: '6px',
                     border,
@@ -1723,7 +1758,7 @@ function WeekCalendar({ vm }: { vm: VM }) {
         const border = cardColors.priority === 'default' ? 'none' : cardColors.cardBorder;
 
         return (
-          <div key={sp.id} onClick={sp.onClick} title={[sp.customer, sp.auditor2 || sp.purpose, sp.auditor2 ? '' : sp.auditor1].filter(Boolean).join(' - ')} style={{
+          <div key={sp.id} onClick={sp.onClick} title={[sp.customer, formatCardSubtitle(sp.rawPurpose || sp.purpose, sp.qmsHost || sp.auditor || (sp.isInternal ? sp.auditor2 : sp.auditor1) || sp.auditor1)].filter(Boolean).join(' - ')} style={{
             gridColumn: `${sp.startDay + 1} / span ${sp.span}`,
             gridRow: `${sp.gridRow + 2}`,
             zIndex: 2,

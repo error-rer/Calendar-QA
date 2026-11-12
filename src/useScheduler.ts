@@ -18,6 +18,7 @@ import {
   calculateAuditStats,
   formatApptDisplayTitle,
   formatApptLogRef,
+  formatCardSubtitle,
   formatDMY,
   formatDateRange,
   getAppointmentQmsHost,
@@ -2925,9 +2926,7 @@ export function useScheduler() {
     const site = normalizeSites((isInternal ? a.site2 : a.site1) || '');
     const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
     const rawPurpose = (a.purpose || a.apptPurpose || '').trim();
-    const chipPurpose = rawPurpose
-      ? (auditorName ? `${rawPurpose} - ${auditorName}` : `${rawPurpose} - Unassigned`)
-      : (auditorName || 'Unassigned');
+    const chipPurpose = formatCardSubtitle(rawPurpose, auditorName, true);
     const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
     const isAuditDate = isTodayWithinAssignmentRange(fromDate, toDate, today);
     const cardColors = getApptCardColors({
@@ -2975,9 +2974,7 @@ export function useScheduler() {
     const site = normalizeSites((isInternal ? a.site2 : a.site1) || '');
     const nameWithSite = site ? (mainName ? `${mainName} - ${site}` : site) : mainName;
     const rawPurpose = (a.purpose || a.apptPurpose || '').trim();
-    const chipPurpose = rawPurpose
-      ? (auditorName ? `${rawPurpose} - ${auditorName}` : `${rawPurpose} - Unassigned`)
-      : (auditorName || 'Unassigned');
+    const chipPurpose = formatCardSubtitle(rawPurpose, auditorName, true);
     const { fromDate, toDate } = getAssignmentDateRange(a, S.assignments);
     const isAuditDate = isTodayWithinAssignmentRange(fromDate, toDate, today);
     const cardColors = getApptCardColors({
@@ -3081,9 +3078,7 @@ export function useScheduler() {
       const isAuditDate = isTodayWithinAssignmentRange(fromDate, toDate, today);
       const auditorName = getAppointmentQmsHost(a);
       const rawPurpose = (a.purpose || a.apptPurpose || '').trim();
-      const chipPurpose = rawPurpose
-        ? (auditorName ? `${rawPurpose} - ${auditorName}` : `${rawPurpose} - Unassigned`)
-        : (auditorName || 'Unassigned');
+      const chipPurpose = formatCardSubtitle(rawPurpose, auditorName, true);
       const colors = siteColorsOfAssignment(a, S.siteColors);
       const color = colors[0] || (pl ? pl.color : '#999');
       return {
@@ -3330,9 +3325,7 @@ export function useScheduler() {
     const site = normalizeSites((isInternal ? a.site2 : a.site1) || '');
     const auditorName = getAppointmentQmsHost(a);
     const rawPurpose = (a.purpose || a.apptPurpose || '').trim();
-    const chipPurpose = rawPurpose
-      ? (auditorName ? `${rawPurpose} - ${auditorName}` : `${rawPurpose} - Unassigned`)
-      : (auditorName || 'Unassigned');
+    const chipPurpose = formatCardSubtitle(rawPurpose, auditorName, true);
     const colors = siteColorsOfAssignment(a, S.siteColors);
     const color = colors[0] || (pl ? pl.color : '#999');
     const notesList = (S.comments[a.id] || []).map((m) => ({
@@ -3698,9 +3691,7 @@ export function useScheduler() {
     const isAuditDate = isTodayWithinAssignmentRange(fromDate, toDate, today);
     const auditorName = getAppointmentQmsHost(a);
     const rawPurpose = (a.purpose || a.apptPurpose || '').trim();
-    const chipPurpose = rawPurpose
-      ? (auditorName ? `${rawPurpose} - ${auditorName}` : `${rawPurpose} - Unassigned`)
-      : (auditorName || 'Unassigned');
+    const chipPurpose = formatCardSubtitle(rawPurpose, auditorName, true);
     return {
       ...a,
       _customer: formatApptDisplayTitle(a, ord),

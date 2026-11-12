@@ -268,6 +268,57 @@ export function getAppointmentQmsHost(audit: Assignment | any): string {
   return String(raw).split(/[,/]/).map((s) => s.trim()).filter(Boolean).join(', ');
 }
 
+/**
+ * Formats appointment card subtitle (Purpose and Host) avoiding duplicates.
+ * Rules:
+ * Case 1 (Both Purpose and Host exist): "${purpose} - ${host}"
+ * Case 2 (Purpose is empty/null/undefined, but Host exists): ONLY "${host}" (no hyphen or duplicate name)
+ * Case 3 (Purpose exists, but Host is empty/unassigned): ONLY "${purpose}" (or "${purpose} - Unassigned" if explicit)
+ * Case 4 (Both are empty): "Unassigned"
+ */
+export function formatCardSubtitle(purpose?: string, host?: string, showExplicitUnassignedHost = false): string {
+  let cleanPurpose = (purpose || '').trim();
+  let cleanHost = (host || '').trim();
+
+  // Strip trailing " - Unassigned" if present
+  if (cleanPurpose.toLowerCase().endsWith(' - unassigned')) {
+    cleanPurpose = cleanPurpose.slice(0, -14).trim();
+  } else if (cleanPurpose.toLowerCase() === 'unassigned') {
+    cleanPurpose = '';
+  }
+
+  const isHostUnassigned = !cleanHost || cleanHost.toLowerCase() === 'unassigned';
+
+  // If host is provided and not unassigned, strip trailing " - ${cleanHost}" from purpose if already present
+  if (!isHostUnassigned && cleanHost) {
+    const escapedHost = cleanHost.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    cleanPurpose = cleanPurpose.replace(new RegExp(`\\s*-\\s*${escapedHost}$`, 'i'), '').trim();
+  }
+
+  // Prevent accidental duplication if fallback values match (e.g. purpose fell back to host name)
+  if (!isHostUnassigned && cleanPurpose && cleanPurpose.toLowerCase() === cleanHost.toLowerCase()) {
+    cleanPurpose = '';
+  }
+
+  // Case 1: Both Purpose and Host exist
+  if (cleanPurpose && !isHostUnassigned) {
+    return `${cleanPurpose} - ${cleanHost}`;
+  }
+
+  // Case 3: Purpose exists, but Host is empty/unassigned
+  if (cleanPurpose) {
+    return showExplicitUnassignedHost ? `${cleanPurpose} - Unassigned` : cleanPurpose;
+  }
+
+  // Case 2: Purpose is empty, but Host exists
+  if (!isHostUnassigned) {
+    return cleanHost;
+  }
+
+  // Case 4: Both are empty
+  return 'Unassigned';
+}
+
 export function getMissingFields(a: Assignment | any): string[] {
   if (!a) return [];
   const isInternal = isInternalAssignment(a);
