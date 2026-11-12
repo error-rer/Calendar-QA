@@ -30,9 +30,9 @@ import {
   isAppointmentFormFullyFilled,
   isAppointmentFormIncomplete,
   isAppointmentIncomplete,
-  isAuditResultCompleted,
   isIncompleteAssignment,
   isInternalAssignment,
+  resolveAuditStatus,
   isTodayWithinAssignmentRange,
   normalizeSite,
   normalizeSites,
@@ -154,29 +154,7 @@ export function getApptCardColors(
   nowMs: number = Date.now(),
   isChipView: boolean = false
 ): ApptCardColors {
-  const isInc = chip.isIncomplete !== undefined ? !!chip.isIncomplete : isAppointmentFormIncomplete(chip);
-
-  let onAuditDate = chip.isAuditDate;
-  if (chip.fromDate || chip.toDate) {
-    const today = new Date(nowMs);
-    onAuditDate = isTodayWithinAssignmentRange(chip.fromDate, chip.toDate, today);
-  } else if (onAuditDate === undefined && typeof (chip as any).week === 'number' && typeof (chip as any).day === 'number') {
-    const today = new Date(nowMs);
-    const d = new Date(2026, 5, 29 + (chip as any).week * 7 + (chip as any).day);
-    onAuditDate = isTodayWithinAssignmentRange(d, d, today);
-  }
-
-  const isCompleted = isAuditResultCompleted(chip);
-  const isPending = !isInc && !!onAuditDate && !isCompleted;
-
-  // New / Updated badges only apply when not pending results and not on/past audit date
-  const isCreatedRecent = isNewlyCreated(chip, nowMs);
-  const isUpdatedRecent = isRecentlyUpdated(chip, nowMs);
-  const hasSubsequentUpdate = isUpdatedRecent &&
-    (!chip.createdAt || parseTimestamp(chip.updatedAt) > parseTimestamp(chip.createdAt) + 1000);
-
-  const isNew = !isInc && !onAuditDate && isCreatedRecent && !hasSubsequentUpdate;
-  const isUpd = !isInc && !onAuditDate && (hasSubsequentUpdate || (!isCreatedRecent && isUpdatedRecent));
+  const status = resolveAuditStatus(chip, nowMs);
 
   const defaultTitleColor = chip.isInternal ? '#10b981' : '#2756d6';
   const defaultPurposeColor = '#5c625c';
@@ -184,7 +162,7 @@ export function getApptCardColors(
   const defaultBorder = isChipView ? '1px solid #e2e5de' : '1px solid #e4e7e0';
 
   // Priority 1: INCOMPLETE FORM (Solid Red - bg-red-600 text-white)
-  if (isInc) {
+  if (status === 'INCOMPLETE_DATA') {
     return {
       priority: 'incomplete',
       barBg: '#dc2626', // solid RED (bg-red-600)
@@ -196,21 +174,8 @@ export function getApptCardColors(
     };
   }
 
-  // Priority 2: PENDING AUDIT RESULT ON AUDIT DATE (Soft Yellow Warning State)
-  if (isPending) {
-    return {
-      priority: 'pending_result',
-      barBg: isChipView ? '#fef9c3' : '#fffbeb', // soft yellow (bg-yellow-100 / bg-amber-50)
-      cardBorder: '1px solid #fde047', // border accent (border-amber-300 / #fde047)
-      accentBg: STATUS_COLOR_MAP.pending.color, // '#d97706'
-      titleColor: defaultTitleColor, // PRESERVE typography colors
-      purposeColor: '#78350f', // subtle warm amber/brown text accent
-      overrideCodeColor: undefined,
-    };
-  }
-
-  // Priority 3: RECENTLY CREATED (Light Green - 7 Days)
-  if (isNew) {
+  // Priority 2: RECENTLY CREATED (Light Green - 7 Days)
+  if (status === 'NEW_DATA') {
     return {
       priority: 'recently_created',
       barBg: isChipView ? '#dcfce7' : '#ecfdf5', // soft light green (bg-emerald-50 / bg-green-100)
@@ -222,8 +187,8 @@ export function getApptCardColors(
     };
   }
 
-  // Priority 4: RECENTLY UPDATED (Light Blue - 7 Days)
-  if (isUpd) {
+  // Priority 3: RECENTLY UPDATED (Light Blue - 7 Days)
+  if (status === 'UPDATED_DATA') {
     return {
       priority: 'recently_updated',
       barBg: isChipView ? '#e0f2fe' : '#f0f9ff', // soft light blue (bg-sky-50 / bg-blue-100)
@@ -235,7 +200,20 @@ export function getApptCardColors(
     };
   }
 
-  // Default State: Standard neutral card style (Completed audits or normal scheduled audits)
+  // Priority 4: PENDING AUDIT RESULT ON AUDIT DATE (Soft Yellow Warning State)
+  if (status === 'PENDING_RESULT') {
+    return {
+      priority: 'pending_result',
+      barBg: isChipView ? '#fef9c3' : '#fffbeb', // soft yellow (bg-yellow-100 / bg-amber-50)
+      cardBorder: '1px solid #fde047', // border accent (border-amber-300 / #fde047)
+      accentBg: STATUS_COLOR_MAP.pending.color, // '#d97706'
+      titleColor: defaultTitleColor, // PRESERVE typography colors
+      purposeColor: '#78350f', // subtle warm amber/brown text accent
+      overrideCodeColor: undefined,
+    };
+  }
+
+  // Priority 5: Default State: Standard neutral card style (Completed audits or normal scheduled audits)
   return {
     priority: 'default',
     barBg: defaultBg,

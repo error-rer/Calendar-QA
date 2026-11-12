@@ -310,17 +310,22 @@ export const STATUS_COLOR_LIST: readonly StatusColorItem[] = [
 
 export function getStatusColor(priority: string): string {
   switch (priority) {
+    case 'INCOMPLETE_DATA':
     case 'incomplete':
       return STATUS_COLOR_MAP.incomplete.color;
+    case 'NEW_DATA':
     case 'recently_created':
     case 'new':
       return STATUS_COLOR_MAP.new.color;
+    case 'UPDATED_DATA':
     case 'recently_updated':
     case 'updated':
       return STATUS_COLOR_MAP.updated.color;
+    case 'PENDING_RESULT':
     case 'pending_result':
     case 'pending':
       return STATUS_COLOR_MAP.pending.color;
+    case 'COMPLETE_DATA':
     case 'default':
     case 'complete':
     default:
@@ -729,6 +734,97 @@ export function isTodayWithinAssignmentRange(fromDate?: Date | string, toDate?: 
 }
 
 export const isAuditDatePassedOrToday = isTodayWithinAssignmentRange;
+
+export type AuditStatusKey =
+  | 'INCOMPLETE_DATA'
+  | 'NEW_DATA'
+  | 'UPDATED_DATA'
+  | 'PENDING_RESULT'
+  | 'COMPLETE_DATA';
+
+export function isIncompleteData(apt: any): boolean {
+  if (!apt) return false;
+  if (typeof apt.isIncomplete === 'boolean') return apt.isIncomplete;
+  return isAppointmentFormIncomplete(apt);
+}
+
+export function isAppointmentDatePastOrToday(apt: any, now: Date = new Date()): boolean {
+  if (!apt) return false;
+  if (typeof apt.isAuditDate === 'boolean') {
+    return apt.isAuditDate;
+  }
+  const from = apt.fromDate || apt.date || apt.startDate || apt.from;
+  const to = apt.toDate || apt.endDate || apt.to;
+  if (from || to) {
+    return isTodayWithinAssignmentRange(from, to, now);
+  }
+  if (typeof apt.week === 'number' && typeof apt.day === 'number') {
+    const d = new Date(2026, 5, 29 + apt.week * 7 + apt.day);
+    return isTodayWithinAssignmentRange(d, d, now);
+  }
+  return false;
+}
+
+/**
+ * Strict Status Priority Order:
+ * 1. Red (Incomplete Data): Required fields are missing or unassigned.
+ * 2. Green (New Data): Data is complete AND (now - createdAt) <= 7 days (future OR backdated past).
+ * 3. Blue (Updated Data): Data is complete AND updatedAt exists AND (now - updatedAt) <= 7 days (and updatedAt !== createdAt).
+ * 4. Yellow (Pending Result): Data is complete, older than 7 days since creation/update, AND appointmentDate is in the past without a recorded audit result.
+ * 5. Gray (Complete Data): Default fallback when data is complete and older than 7 days.
+ */
+export const resolveAuditStatus = (apt: any, nowMs: number = Date.now()): AuditStatusKey => {
+  if (!apt) return 'COMPLETE_DATA';
+
+  // 1. Check data completeness first (Red)
+  if (isIncompleteData(apt)) {
+    return 'INCOMPLETE_DATA';
+  }
+
+  const now = typeof nowMs === 'number' ? nowMs : Date.now();
+  const createdTime = parseTimestamp(apt.createdAt);
+  const updatedTime = parseTimestamp(apt.updatedAt);
+
+  // 2. Newly created within 7 days -> ALWAYS Green (even if appointmentDate in the past)
+  if (createdTime > 0 && (now - createdTime) <= SEVEN_DAYS_MS && now >= createdTime) {
+    return 'NEW_DATA';
+  }
+
+  // 3. Updated within 7 days -> Blue (only if updated after created)
+  if (
+    updatedTime > 0 &&
+    (!createdTime || updatedTime > createdTime + 1000) &&
+    (now - updatedTime) <= SEVEN_DAYS_MS &&
+    now >= updatedTime
+  ) {
+    return 'UPDATED_DATA';
+  }
+
+  // 4. Pending result -> Yellow (appointmentDate in past without recorded result, older than 7 days)
+  if (isAppointmentDatePastOrToday(apt, new Date(now)) && !isAuditResultCompleted(apt)) {
+    return 'PENDING_RESULT';
+  }
+
+  // 5. Default fallback -> Gray
+  return 'COMPLETE_DATA';
+};
+
+export function getAppointmentStatusColor(apt: any, nowMs: number = Date.now()): string {
+  const status = resolveAuditStatus(apt, nowMs);
+  switch (status) {
+    case 'INCOMPLETE_DATA':
+      return STATUS_COLOR_MAP.incomplete.color;
+    case 'NEW_DATA':
+      return STATUS_COLOR_MAP.new.color;
+    case 'UPDATED_DATA':
+      return STATUS_COLOR_MAP.updated.color;
+    case 'PENDING_RESULT':
+      return STATUS_COLOR_MAP.pending.color;
+    case 'COMPLETE_DATA':
+    default:
+      return STATUS_COLOR_MAP.complete.color;
+  }
+}
 
 export function getAssignmentDateFormatted(a: Assignment, allAssignments: Assignment[]): string {
   if (!a) return '';
