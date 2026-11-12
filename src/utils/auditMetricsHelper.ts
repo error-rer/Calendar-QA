@@ -299,3 +299,4 @@ export const getGroupedAuditEvents = (
 // Aliases
 export const getUniqueAuditEvents = getGroupedAuditEvents;
 export const calculateAuditMetrics = calculateAuditStats;
+export const calculateUnifiedAuditMetrics = calculateAuditStats;

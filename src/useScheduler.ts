@@ -4349,71 +4349,6 @@ export function useScheduler() {
   const adminDeptOptions = Array.from(new Set([...computedInternalDepartmentOptions, ...computedCustomerDepartmentOptions]));
   const toggleAdminFilterSite = (v: string) => toggleFilterValue('adminFilterSite', v);
   const toggleAdminFilterDept = (v: string) => toggleFilterValue('adminFilterDept', v);
-  // ---- search autocomplete suggestions (filter-driven & appointment card data connected) ----
-  const searchSuggestions = useMemo(() => {
-    const activeAssignments = S.assignments.filter((a) => {
-      const o = orderById(a.order);
-      return !!o && matchesFilters(a, o);
-    });
-
-    const suggestionsMap = new Map<string, { label: string; category: string }>();
-
-    const addSuggestion = (text: string, category: string) => {
-      const clean = text.trim();
-      if (!clean) return;
-      const key = clean.toLowerCase();
-      if (!suggestionsMap.has(key)) {
-        suggestionsMap.set(key, { label: clean, category });
-      }
-    };
-
-    // 1. Classification Types
-    addSuggestion('CS', 'Audit Type');
-    addSuggestion('IA', 'Audit Type');
-
-    // 2. Filter Criteria options
-    computedAuditorOptions.forEach((name) => addSuggestion(name, 'QMS Host'));
-    computedCustomerOptions.forEach((c) => addSuggestion(c, 'Customer'));
-    computedPurposeOptions.forEach((p) => addSuggestion(p, 'Purpose'));
-    computedAuditCategoryOptions.forEach((c) => addSuggestion(c, 'Audit Category'));
-    S.siteCodeOptions.forEach((s) => addSuggestion(normalizeSite(s), 'Site'));
-    S.customerDepartmentOptions.forEach((d) => addSuggestion(d, 'Standard'));
-    S.internalDepartmentOptions.forEach((d) => addSuggestion(d, 'Standard'));
-
-    // 3. Appointment Card attributes
-    for (const a of activeAssignments) {
-      const o = orderById(a.order)!;
-      const e = engById(a.eng);
-
-      if (a.customer) addSuggestion(a.customer, 'Customer');
-      if (o.customer) addSuggestion(o.customer, 'Customer');
-      if (a.endCustomer) addSuggestion(a.endCustomer, 'End Customer');
-
-      if (a.site1) a.site1.split('/').forEach((s) => addSuggestion(normalizeSite(s), 'Site'));
-      if (a.site2) a.site2.split('/').forEach((s) => addSuggestion(normalizeSite(s), 'Site'));
-      if (o.plant) addSuggestion(normalizeSites(o.plant), 'Plant');
-
-      if (a.area) addSuggestion(a.area, 'Area');
-      if (a.purpose) addSuggestion(a.purpose, 'Purpose');
-      if (o.purpose) addSuggestion(o.purpose, 'Purpose');
-
-      if (a.department1) a.department1.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => addSuggestion(s, 'Standard'));
-      if (a.department2) a.department2.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => addSuggestion(s, 'Standard'));
-      if (a.targetPackage) a.targetPackage.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => addSuggestion(s, 'Target Package'));
-      if (a.customerNames) a.customerNames.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => addSuggestion(s, 'Customer Name'));
-      if (a.auditCategory) a.auditCategory.split(',').map((s) => s.trim()).filter(Boolean).forEach((s) => addSuggestion(s, 'Audit Category'));
-
-      if (e && e.name) addSuggestion(e.name, 'QMS Host');
-      if (a.auditor1) a.auditor1.split(',').forEach((s) => addSuggestion(s, 'QMS Host'));
-      if (a.auditor2) a.auditor2.split(',').forEach((s) => addSuggestion(s, 'QMS Host'));
-    }
-
-    return Array.from(suggestionsMap.values()).sort((a, b) => a.label.localeCompare(b.label));
-  }, [
-    S.assignments, S.engineers, S.orders, S.siteCodeOptions, S.customerDepartmentOptions, S.internalDepartmentOptions,
-    computedAuditorOptions, computedCustomerOptions, computedPurposeOptions,
-    S.filterEmp, S.filterSite, S.filterCompany, S.filterAuditType, S.filterAuditTopic, S.filterApptType
-  ]);
 
   const employeeOptions = useMemo(() => {
     const filterOptions = S.engineers
@@ -4677,7 +4612,7 @@ export function useScheduler() {
     yearYear: mYear,
     monthDesktop: isMonth && !isMobile, monthMobile: isMonth && isMobile,
     monthCells, monthWeekdayHeads, monthName, monthOrders, monthScheduledCount, monthOrderCount: monthOrders.length,
-    isSearch, searchQuery: S.searchQuery, setSearchQuery, setSearchScale, searchResults, searchSuggestions,
+    isSearch, searchQuery: S.searchQuery, setSearchQuery, setSearchScale, searchResults,
     searchSort: S.searchSort || 'oldest', setSearchSort: (sort: 'oldest' | 'newest') => setState({ searchSort: sort }),
     searchDateFrom: S.searchDateFrom || '', searchDateTo: S.searchDateTo || '',
     setSearchDateRange: (from: string, to: string) => setState({ searchDateFrom: from, searchDateTo: to }),
@@ -4695,7 +4630,7 @@ export function useScheduler() {
     nextWeek: () => (S.timeScale === 'year' ? shiftMonth(12) : S.timeScale === 'month' ? shiftMonth(1) : shiftWeek(1)),
     profile,
     engForm, engFormOpen: S.engFormOpen, engEditingId: S.engEditingId, openEngForm, openEditEngineer: openEditEngForm, closeEngForm,
-    nowTick, assignments: S.assignments, engineers: S.engineers,
+    nowTick, assignments: S.assignments, engineers: S.engineers, orders: S.orders, orderById,
     stats: {
       assignments: isYear ? yearSummary.total : isMonth ? monthSummary.total : weekSummary.total,
       weekCustomers,

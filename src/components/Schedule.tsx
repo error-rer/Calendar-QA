@@ -244,15 +244,6 @@ function EyeOnIcon({ size = 15, color = '#2756d6' }: { size?: number; color?: st
   );
 }
 
-function SearchIcon({ size = 16, color = '#15191e' }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="7" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
-}
-
 function ApptCard({ chip }: { chip: any }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; code: string; onDelete: () => void } | null>(null);
@@ -1590,177 +1581,7 @@ function SearchView({ vm }: { vm: VM }) {
 }
 
 
-function SearchAutoComplete({ vm, inputRef }: { vm: VM; inputRef?: React.RefObject<HTMLInputElement | null> }) {
-  const [open, setOpen] = useState(false);
-  const [inputVal, setInputVal] = useState(vm.searchQuery);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const localInputRef = useRef<HTMLInputElement>(null);
-  const actualInputRef = inputRef || localInputRef;
-
-  useEffect(() => {
-    setInputVal(vm.searchQuery);
-  }, [vm.searchQuery]);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const q = inputVal.trim().toLowerCase();
-
-  const matches = useMemo(() => {
-    if (!q) return vm.searchSuggestions.slice(0, 10);
-    return vm.searchSuggestions
-      .filter((s) => s.label.toLowerCase().includes(q))
-      .slice(0, 12);
-  }, [q, vm.searchSuggestions]);
-
-  const selectSuggestion = (label: string) => {
-    setInputVal(label);
-    vm.setSearchQuery(label);
-    setOpen(false);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setInputVal(val);
-    vm.setSearchQuery(val);
-    setOpen(true);
-  };
-
-  const renderHighlightedText = (text: string, highlightQuery: string) => {
-    if (!highlightQuery) return text;
-    const index = text.toLowerCase().indexOf(highlightQuery.toLowerCase());
-    if (index === -1) return text;
-
-    const before = text.slice(0, index);
-    const match = text.slice(index, index + highlightQuery.length);
-    const after = text.slice(index + highlightQuery.length);
-
-    return (
-      <>
-        {before}
-        <span style={{ background: '#ffe066', color: '#15191e', fontWeight: 700, borderRadius: '2px', padding: '0 1px' }}>
-          {match}
-        </span>
-        {after}
-      </>
-    );
-  };
-
-  return (
-    <div ref={containerRef} style={{ position: 'relative', width: '240px', minWidth: '160px' }}>
-      <label
-        onClick={() => actualInputRef.current?.focus()}
-        style={{
-          ...css('display:flex;align-items:center;gap:8px;height:36px;padding:0 10px;border:1px solid #15191e;background:#fff;border-radius:8px'),
-          cursor: 'text',
-        }}
-      >
-        <span style={{ display: 'flex', alignItems: 'center' }}><SearchIcon size={15} color="#15191e" /></span>
-        <input
-          ref={actualInputRef}
-          type="text"
-          placeholder="Search appointments…"
-          value={inputVal}
-          onChange={handleInputChange}
-          onFocus={() => setOpen(true)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              vm.setSearchQuery(inputVal);
-              setOpen(false);
-            }
-          }}
-          style={css("width:100%;border:none;outline:none;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;background:transparent;padding:0")}
-        />
-        {inputVal && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setInputVal('');
-              vm.setSearchQuery('');
-              actualInputRef.current?.focus();
-            }}
-            style={css('border:none;background:transparent;color:#8a9088;cursor:pointer;font-size:12px;padding:0;display:flex;align-items:center')}
-          >
-            ✕
-          </button>
-        )}
-      </label>
-
-      {open && matches.length > 0 && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0, right: 0,
-            marginTop: '4px',
-            background: '#fff',
-            border: '1px solid #dde0d9',
-            borderRadius: '8px',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.14)',
-            zIndex: 120,
-            maxHeight: '260px',
-            overflowY: 'auto',
-            padding: '4px',
-          }}
-        >
-          {matches.map((item: { label: string; category: string }, idx: number) => (
-            <div
-              key={item.label + '-' + idx}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                selectSuggestion(item.label);
-              }}
-              style={{
-                padding: '7px 10px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontFamily: "'Archivo',sans-serif",
-                color: '#23282a',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '8px',
-                transition: 'background .1s ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#f0f4fa')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-            >
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                {renderHighlightedText(item.label, q)}
-              </span>
-              <span style={{
-                fontFamily: "'IBM Plex Mono',monospace",
-                fontSize: '9px',
-                fontWeight: 600,
-                color: '#2756d6',
-                background: '#eef2fd',
-                border: '1px solid #d4def0',
-                padding: '1px 5px',
-                borderRadius: '4px',
-                flexShrink: 0,
-              }}>
-                {item.category}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function Toolbar({ vm }: { vm: VM }) {
-  const searchRef = useRef<HTMLInputElement>(null);
   return (
     <div style={vm.toolbarStyle}>
       {vm.isMobile && (
@@ -1770,20 +1591,6 @@ function Toolbar({ vm }: { vm: VM }) {
         <button onClick={vm.setWeekScale} style={vm.weekScaleStyle}>Week</button>
         <button onClick={vm.setMonthScale} style={vm.monthScaleStyle}>Month</button>
         <button onClick={vm.setYearScale} style={vm.yearScaleStyle}>Year</button>
-      </div>
-      {/* Standalone search */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 } as React.CSSProperties}>
-        {vm.isSearch ? (
-          <SearchAutoComplete vm={vm} inputRef={searchRef} />
-        ) : (
-          <button
-            onClick={() => { vm.setSearchScale(); setTimeout(() => searchRef.current?.focus(), 80); }}
-            title="Search appointments"
-            style={css("width:36px;height:36px;border:1px solid #dde0d9;background:#f4f6f1;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0")}
-          >
-            <SearchIcon size={16} color="#15191e" />
-          </button>
-        )}
       </div>
       <div style={css('flex:1')} />
       {vm.showStats && (

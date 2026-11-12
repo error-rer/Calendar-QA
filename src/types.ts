@@ -764,6 +764,7 @@ export {
   getGroupedAuditEvents,
   getUniqueAuditEvents,
   calculateAuditMetrics,
+  calculateUnifiedAuditMetrics,
 } from './utils/auditMetricsHelper';
 export type { AuditStatsResult, AuditStatsResult as AuditMetrics } from './utils/auditMetricsHelper';
 

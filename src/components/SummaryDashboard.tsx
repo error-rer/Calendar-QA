@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import type { VM } from '../useScheduler';
 import type { Assignment, SiteAuditResult } from '../types';
 import { css } from '../ui';
-import { isInternalAssignment, calculateCustomerAuditsCount } from '../types';
+import { isInternalAssignment, calculateUnifiedAuditMetrics } from '../types';
 
 export const CANONICAL_SITE_ORDER = [
   'UTL1',
@@ -203,26 +203,30 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
     setExpandedSites(nextMap as Record<TargetSite, boolean>);
   };
 
-// Metric cards: Audits count in selected year
-  const yearAppts = useMemo(() => {
-    return (vm.assignments || [])
-      .map((a) => {
-        const base = new Date(2026, 5, 29 + a.week * 7);
-        base.setDate(base.getDate() + a.day);
-        const isInternal = isInternalAssignment(a);
-        return {
-          id: a.id,
-          dateObj: base,
-          auditType: isInternal ? 'Internal Audit' : 'Customer Audit',
-          customer: isInternal ? '' : (a.customer || ''),
-          year: base.getFullYear(),
-        };
-      })
-      .filter((a) => a.year === vm.summaryYear);
+  // Active assignments matching selected summary year
+  const yearAssignments = useMemo(() => {
+    return (vm.assignments || []).filter((a) => {
+      const item = a as any;
+      let d: Date;
+      if (item.dateObj instanceof Date && !isNaN(item.dateObj.getTime())) {
+        d = item.dateObj;
+      } else if (item.date) {
+        d = new Date(item.date);
+      } else if (item.dateStr) {
+        d = new Date(item.dateStr);
+      } else if (item.startDate) {
+        d = new Date(item.startDate);
+      } else {
+        d = new Date(2026, 5, 29 + (a.week ?? 0) * 7 + (a.day ?? 0));
+      }
+      return !isNaN(d.getTime()) ? d.getFullYear() === vm.summaryYear : true;
+    });
   }, [vm.assignments, vm.summaryYear]);
 
-  const customerAuditsCount = useMemo(() => calculateCustomerAuditsCount(yearAppts), [yearAppts]);
-  const internalAuditsCount = useMemo(() => yearAppts.filter((a) => a.auditType === 'Internal Audit').length, [yearAppts]);
+  // Synchronized audit metrics using shared utility
+  const auditMetrics = useMemo(() => {
+    return calculateUnifiedAuditMetrics(yearAssignments, vm.orderById);
+  }, [yearAssignments, vm.orderById]);
 
   // Aggregate Findings by Site, Month, and Category dynamically from appointments
   const matrixData = useMemo(() => {
@@ -856,15 +860,15 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
           <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:16px;padding:20px 22px;box-shadow:0 1px 3px rgba(0,0,0,0.02);display:flex;flex-direction:column;justify-content:space-between')}>
             <div>
               <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Total Audits</div>
-              <div style={css("font-size:28px;font-weight:800;color:#15191e;margin-top:4px;line-height:1.1;font-family:'Archivo',sans-serif")}>{customerAuditsCount + internalAuditsCount}</div>
+              <div style={css("font-size:28px;font-weight:800;color:#15191e;margin-top:4px;line-height:1.1;font-family:'Archivo',sans-serif")}>{auditMetrics.totalAudits}</div>
             </div>
             <div style={css('display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap;min-height:28px;user-select:none;-webkit-user-select:none;cursor:default')}>
               <span style={css("display:inline-flex;align-items:center;padding:4px 12px;border-radius:8px;background:#eff6ff;color:#1d4ed8;font-size:13.5px;font-weight:500;font-family:'Archivo',sans-serif;border:1px solid #bfdbfe;line-height:1.2;user-select:none;cursor:default")}>
-                {customerAuditsCount} Customer Audit
+                {auditMetrics.customerAudits} Customer Audit
               </span>
               <span style={css('color:#d4d4d8;font-size:14px;user-select:none;cursor:default')}>·</span>
               <span style={css("display:inline-flex;align-items:center;padding:4px 12px;border-radius:8px;background:#ecfdf5;color:#047857;font-size:13.5px;font-weight:500;font-family:'Archivo',sans-serif;border:1px solid #a7f3d0;line-height:1.2;user-select:none;cursor:default")}>
-                {internalAuditsCount} Internal Audit
+                {auditMetrics.internalAudits} Internal Audit
               </span>
             </div>
           </div>
