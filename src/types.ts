@@ -246,6 +246,88 @@ export function isInternalAssignment(a: Assignment | any): boolean {
   );
 }
 
+export interface StatusColorItem {
+  key: string;
+  label: string;
+  color: string;
+  bg: string;
+  border: string;
+}
+
+/**
+ * Shared Single Source of Truth for Appointment Card Status Colors and Sidebar Legend.
+ * 1. Incomplete Data (Red)
+ * 2. New Data (Green)
+ * 3. Updated Data (Blue)
+ * 4. Pending Result (Yellow)
+ * 5. Complete Data (Gray)
+ */
+export const STATUS_COLOR_MAP = {
+  incomplete: {
+    key: 'incomplete',
+    label: 'Incomplete Data',
+    color: '#dc2626', // Red (Tailwind red-600)
+    bg: '#fef2f2',
+    border: '#fca5a5',
+  },
+  new: {
+    key: 'new',
+    label: 'New Data',
+    color: '#059669', // Green (Tailwind emerald-600)
+    bg: '#ecfdf5',
+    border: '#bbf7d0',
+  },
+  updated: {
+    key: 'updated',
+    label: 'Updated Data',
+    color: '#0284c7', // Blue (Tailwind sky-600)
+    bg: '#f0f9ff',
+    border: '#bae6fd',
+  },
+  pending: {
+    key: 'pending',
+    label: 'Pending Result',
+    color: '#d97706', // Yellow (Tailwind amber-600)
+    bg: '#fffbeb',
+    border: '#fde047',
+  },
+  complete: {
+    key: 'complete',
+    label: 'Complete Data',
+    color: '#9aa097', // Gray neutral
+    bg: '#ffffff',
+    border: '#e4e7e0',
+  },
+} as const;
+
+export const STATUS_COLOR_LIST: readonly StatusColorItem[] = [
+  STATUS_COLOR_MAP.incomplete,
+  STATUS_COLOR_MAP.new,
+  STATUS_COLOR_MAP.updated,
+  STATUS_COLOR_MAP.pending,
+  STATUS_COLOR_MAP.complete,
+];
+
+export function getStatusColor(priority: string): string {
+  switch (priority) {
+    case 'incomplete':
+      return STATUS_COLOR_MAP.incomplete.color;
+    case 'recently_created':
+    case 'new':
+      return STATUS_COLOR_MAP.new.color;
+    case 'recently_updated':
+    case 'updated':
+      return STATUS_COLOR_MAP.updated.color;
+    case 'pending_result':
+    case 'pending':
+      return STATUS_COLOR_MAP.pending.color;
+    case 'default':
+    case 'complete':
+    default:
+      return STATUS_COLOR_MAP.complete.color;
+  }
+}
+
 /**
  * Retrieve formatted QMS Host(s) string for an appointment.
  * Returns empty string if unassigned, null, or empty array.

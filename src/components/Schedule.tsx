@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useRef, useState, useMemo } from 'react';
 import type { VM } from '../useScheduler';
 import { getApptCardColors } from '../useScheduler';
-import { isAuditResultCompleted, formatCardSubtitle } from '../types';
+import { isAuditResultCompleted, formatCardSubtitle, STATUS_COLOR_MAP, STATUS_COLOR_LIST } from '../types';
 import { css, HButton, HInput } from '../ui';
 import { getHolidayStyle, isOfficialHoliday } from '../holidays';
 
@@ -363,22 +363,22 @@ function ApptCard({ chip }: { chip: any }) {
               {chip.isInternal ? 'Internal Audit' : 'Customer Audit'}
             </span>
             {isInc && (
-              <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;color:#dc2626;background:#fef2f2;border:1px solid #fca5a5;")}>
+              <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;color:${STATUS_COLOR_MAP.incomplete.color};background:${STATUS_COLOR_MAP.incomplete.bg};border:1px solid ${STATUS_COLOR_MAP.incomplete.border};`)}>
                 Incomplete Data
               </span>
             )}
             {cardColors.priority === 'recently_created' && (
-              <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;color:#065f46;background:#d1fae5;border:1px solid #6ee7b7;")}>
+              <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;color:#065f46;background:${STATUS_COLOR_MAP.new.bg};border:1px solid ${STATUS_COLOR_MAP.new.border};`)}>
                 New
               </span>
             )}
             {cardColors.priority === 'recently_updated' && (
-              <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;color:#0369a1;background:#e0f2fe;border:1px solid #7dd3fc;")}>
+              <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;color:#0369a1;background:${STATUS_COLOR_MAP.updated.bg};border:1px solid ${STATUS_COLOR_MAP.updated.border};`)}>
                 Updated
               </span>
             )}
             {cardColors.priority === 'pending_result' && (
-              <span style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;color:#78350f;background:#fef3c7;border:1px solid #fcd34d;")}>
+              <span style={css(`font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:4px;color:#78350f;background:${STATUS_COLOR_MAP.pending.bg};border:1px solid ${STATUS_COLOR_MAP.pending.border};`)}>
                 Pending Results
               </span>
             )}
@@ -756,6 +756,18 @@ function Sidebar({ vm }: { vm: VM }) {
         </div>
       </div>
 
+      <div style={css('padding:13px 15px 12px;border-bottom:1px solid #e7eae3')}>
+        <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.6px;margin-bottom:8px")}>STATUS COLOR</div>
+        <div style={css('display:flex;flex-direction:column;gap:7px')}>
+          {STATUS_COLOR_LIST.map((sc) => (
+            <div key={sc.key} style={css('display:flex;align-items:center;gap:8px')}>
+              <span style={{ width: '10px', height: '10px', borderRadius: '3px', flexShrink: 0, background: sc.color }} />
+              <span style={css('font-size:11.5px;color:#3c423d')}>{sc.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div style={css('padding:13px 15px 14px')}>
         <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#9aa097;letter-spacing:.6px;margin-bottom:8px")}>COLOR CODE SITE</div>
         <div style={css('display:flex;flex-direction:column;gap:7px')}>
@@ -853,7 +865,7 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
 
   const cardColors = getApptCardColors(chip, Date.now(), false);
   const isInc = cardColors.priority === 'incomplete';
-  const barBgColor = isInc ? '#dc2626' : cardColors.accentBg;
+  const barBgColor = cardColors.accentBg;
   const rowBg = cardColors.priority === 'default' ? '#fff' : cardColors.barBg;
   const hasResults = isAuditResultCompleted(chip);
 

@@ -15,6 +15,8 @@ import type {
   SubDepartment,
 } from './types';
 import {
+  STATUS_COLOR_MAP,
+  STATUS_COLOR_LIST,
   calculateAuditStats,
   formatApptDisplayTitle,
   formatApptLogRef,
@@ -176,8 +178,6 @@ export function getApptCardColors(
   const isNew = !isInc && !onAuditDate && isCreatedRecent && !hasSubsequentUpdate;
   const isUpd = !isInc && !onAuditDate && (hasSubsequentUpdate || (!isCreatedRecent && isUpdatedRecent));
 
-  const chColors = chip.colors && chip.colors.length > 0 ? chip.colors : [chip.color || '#9aa097'];
-  const defaultAccentBg = getAccentBackground(chColors);
   const defaultTitleColor = chip.isInternal ? '#10b981' : '#2756d6';
   const defaultPurposeColor = '#5c625c';
   const defaultBg = isChipView ? '#f0f2ec' : '#ffffff';
@@ -189,7 +189,7 @@ export function getApptCardColors(
       priority: 'incomplete',
       barBg: '#dc2626', // solid RED (bg-red-600)
       cardBorder: '1px solid #b91c1c', // border-red-700
-      accentBg: '#991b1b', // red-800 accent stripe
+      accentBg: STATUS_COLOR_MAP.incomplete.color, // '#dc2626'
       titleColor: '#FFFFFF', // text-white
       purposeColor: '#FFFFFF', // text-white
       overrideCodeColor: '#FFFFFF',
@@ -202,7 +202,7 @@ export function getApptCardColors(
       priority: 'pending_result',
       barBg: isChipView ? '#fef9c3' : '#fffbeb', // soft yellow (bg-yellow-100 / bg-amber-50)
       cardBorder: '1px solid #fde047', // border accent (border-amber-300 / #fde047)
-      accentBg: defaultAccentBg, // PRESERVE original side-stripe
+      accentBg: STATUS_COLOR_MAP.pending.color, // '#d97706'
       titleColor: defaultTitleColor, // PRESERVE typography colors
       purposeColor: '#78350f', // subtle warm amber/brown text accent
       overrideCodeColor: undefined,
@@ -215,7 +215,7 @@ export function getApptCardColors(
       priority: 'recently_created',
       barBg: isChipView ? '#dcfce7' : '#ecfdf5', // soft light green (bg-emerald-50 / bg-green-100)
       cardBorder: '1px solid #bbf7d0',
-      accentBg: defaultAccentBg, // PRESERVE original side-stripe
+      accentBg: STATUS_COLOR_MAP.new.color, // '#059669'
       titleColor: defaultTitleColor, // PRESERVE typography colors
       purposeColor: defaultPurposeColor, // PRESERVE subtitle colors
       overrideCodeColor: undefined,
@@ -228,7 +228,7 @@ export function getApptCardColors(
       priority: 'recently_updated',
       barBg: isChipView ? '#e0f2fe' : '#f0f9ff', // soft light blue (bg-sky-50 / bg-blue-100)
       cardBorder: '1px solid #bae6fd',
-      accentBg: defaultAccentBg, // PRESERVE original side-stripe
+      accentBg: STATUS_COLOR_MAP.updated.color, // '#0284c7'
       titleColor: defaultTitleColor, // PRESERVE typography colors
       purposeColor: defaultPurposeColor, // PRESERVE subtitle colors
       overrideCodeColor: undefined,
@@ -240,7 +240,7 @@ export function getApptCardColors(
     priority: 'default',
     barBg: defaultBg,
     cardBorder: defaultBorder,
-    accentBg: defaultAccentBg,
+    accentBg: STATUS_COLOR_MAP.complete.color, // '#9aa097'
     titleColor: defaultTitleColor,
     purposeColor: defaultPurposeColor,
     overrideCodeColor: undefined,
@@ -2945,7 +2945,7 @@ export function useScheduler() {
     const borderStyle = cardColors.priority === 'default' ? '1px solid #e3e6e0' : cardColors.cardBorder;
     const base: CSSProperties = {
       display: 'block', padding: '7px 9px', borderRadius: '6px', background: barBg, cursor: 'grab', position: 'relative',
-      border: borderStyle, ...accentStyle,
+      border: borderStyle, ...accentStyle, borderLeft: '3px solid ' + cardColors.accentBg,
       boxShadow: sel ? '0 0 0 2px ' + hexA(colors[0] || '#999', 0.55) : '0 1px 1px rgba(20,25,30,.05)',
       opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', transition: 'box-shadow .12s',
       color: isIncomplete ? '#ffffff' : undefined,
@@ -2995,7 +2995,7 @@ export function useScheduler() {
       aid: a.id, name: e ? e.name : '?', initials: e ? initials(e.name) : '??', code: apptAbbr(a) + (nameWithSite ? ' · ' + nameWithSite : ''), purpose: chipPurpose, plantCode: pl ? pl.code : '?',
       isIncomplete,
       rawPurpose, qmsHost: auditorName, auditor: auditorName,
-      style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: barBg, border: borderStyle, ...accentStyle, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', color: isIncomplete ? '#ffffff' : undefined }),
+      style: sx({ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 7px', background: barBg, border: borderStyle, ...accentStyle, borderLeft: '3px solid ' + cardColors.accentBg, borderRadius: '6px', cursor: 'pointer', opacity: dim ? 0.32 : 1, filter: dim ? 'grayscale(.5)' : 'none', color: isIncomplete ? '#ffffff' : undefined }),
       avatarStyle: sx({ width: '22px', height: '22px', borderRadius: '6px', background: isIncomplete ? '#b91c1c' : '#f1f3ee', color: isIncomplete ? '#ffffff' : '#5c625c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9px', fontWeight: 600, flexShrink: 0 }),
       onClick: () => select(a.id),
     };
@@ -4700,6 +4700,7 @@ export function useScheduler() {
     addAuditorOption: (v: string) => addOption('auditorOptions', v),
     removeAuditorOption: (v: string) => removeOption('auditorOptions', v),
     siteColorList, siteColors: S.siteColors, setSiteColor,
+    statusColorList: STATUS_COLOR_LIST, statusColorMap: STATUS_COLOR_MAP,
     addSiteCodeOption: (v: string) => addOption('siteCodeOptions', v),
     removeSiteCodeOption,
     addCustomerOption: (v: string) => addOption('customerOptions', v),
