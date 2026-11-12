@@ -75,15 +75,26 @@ export const calculateAuditStats = (
       ) || 'Unknown';
     const entity = String(rawEntity).trim();
 
+    const cleanSite = (raw: string) => {
+      if (!raw) return 'Unknown';
+      const parts = raw.split(/[/,]/).map((s) => {
+        const tr = s.trim().toUpperCase();
+        const m = tr.match(/^U(TL)?(1|2|2A|2B|3|3A|3B|3T)$/i);
+        if (m) return 'UTL' + m[2].toUpperCase();
+        return tr;
+      }).filter(Boolean);
+      return parts.length ? Array.from(new Set(parts)).sort().join('/') : raw.trim();
+    };
+
     const rawSite =
       r.site ||
       (type === 'internal' ? (r.site2 || r.site1) : (r.site1 || r.site2)) ||
       (o ? o.plant : '') ||
       'Unknown';
-    const site = String(rawSite).trim();
+    const site = cleanSite(String(rawSite).trim());
 
     const rawPurpose =
-      r.purpose ||
+      (type === 'internal' ? ((r as any).area || r.purpose) : r.purpose) ||
       r.apptPurpose ||
       (r as any).auditScope ||
       (r as any).auditCategory ||
@@ -96,21 +107,34 @@ export const calculateAuditStats = (
     let dateObj: Date;
     if (r.dateObj instanceof Date && !isNaN(r.dateObj.getTime())) {
       dateObj = r.dateObj;
+    } else if (r.week !== undefined && r.day !== undefined) {
+      dateObj = new Date(2026, 5, 29 + r.week * 7 + r.day);
+    } else if (r.dateStr) {
+      const match = String(r.dateStr).match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
+      if (match) {
+        dateObj = new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+      } else {
+        dateObj = new Date(r.dateStr);
+      }
     } else if (r.date) {
       dateObj = new Date(r.date);
-    } else if (r.dateStr) {
-      dateObj = new Date(r.dateStr);
     } else if (r.startDate) {
       dateObj = new Date(r.startDate);
     } else if (r.fromDate) {
       dateObj = new Date(r.fromDate);
-    } else if (r.week !== undefined && r.day !== undefined) {
-      dateObj = new Date(2026, 5, 29 + r.week * 7 + r.day);
     } else {
       dateObj = new Date(0);
     }
 
-    const key = `${type}:::${entity.toLowerCase()}:::${site}:::${purpose}`;
+    if (isNaN(dateObj.getTime())) {
+      if (r.week !== undefined && r.day !== undefined) {
+        dateObj = new Date(2026, 5, 29 + r.week * 7 + r.day);
+      } else {
+        dateObj = new Date(0);
+      }
+    }
+
+    const key = `${type}:::${entity.toLowerCase()}:::${site.toLowerCase()}:::${purpose}`;
 
     if (!groups.has(key)) {
       groups.set(key, []);

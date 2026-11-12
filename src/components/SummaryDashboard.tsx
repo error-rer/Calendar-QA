@@ -203,30 +203,50 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
     setExpandedSites(nextMap as Record<TargetSite, boolean>);
   };
 
-  // Active assignments matching selected summary year
-  const yearAssignments = useMemo(() => {
-    return (vm.assignments || []).filter((a) => {
-      const item = a as any;
-      let d: Date;
-      if (item.dateObj instanceof Date && !isNaN(item.dateObj.getTime())) {
-        d = item.dateObj;
-      } else if (item.date) {
-        d = new Date(item.date);
-      } else if (item.dateStr) {
-        d = new Date(item.dateStr);
-      } else if (item.startDate) {
-        d = new Date(item.startDate);
-      } else {
-        d = new Date(2026, 5, 29 + (a.week ?? 0) * 7 + (a.day ?? 0));
-      }
-      return !isNaN(d.getTime()) ? d.getFullYear() === vm.summaryYear : true;
-    });
-  }, [vm.assignments, vm.summaryYear]);
+  // Synchronized active audit dataset matching Schedule and Table views
+  const activeRecords = useMemo(() => {
+    const list: any[] = [];
+    const baseDate = new Date(2026, 5, 29);
+
+    for (const a of vm.assignments || []) {
+      const d = new Date(baseDate);
+      d.setDate(baseDate.getDate() + (a.week || 0) * 7 + (a.day || 0));
+
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      const dateStr = `${dd}/${mm}/${yyyy}`;
+      const isInternal = isInternalAssignment(a);
+      const auditType: 'Customer Audit' | 'Internal Audit' = isInternal ? 'Internal Audit' : 'Customer Audit';
+      const customer = isInternal ? '' : (a.customer || '');
+      const site = normalizeToTargetSite((isInternal ? (a.site2 || a.site1) : (a.site1 || a.site2)) || '');
+      const standard = (isInternal ? (a.department2 || a.department1) : (a.department1 || a.department2)) || '';
+      const auditCategory = isInternal ? (a.auditCategory || '') : '';
+      const purpose = (isInternal ? (a.area || a.purpose) : (a.purpose || '')) || '';
+
+      list.push({
+        id: a.id,
+        assignment: a,
+        dateObj: d,
+        dateStr,
+        auditType,
+        customer,
+        site,
+        standard,
+        auditCategory,
+        purpose,
+        week: a.week,
+        day: a.day,
+      });
+    }
+
+    return list;
+  }, [vm.assignments]);
 
   // Synchronized audit metrics using shared utility
   const auditMetrics = useMemo(() => {
-    return calculateUnifiedAuditMetrics(yearAssignments, vm.orderById);
-  }, [yearAssignments, vm.orderById]);
+    return calculateUnifiedAuditMetrics(activeRecords, vm.orderById);
+  }, [activeRecords, vm.orderById]);
 
   // Aggregate Findings by Site, Month, and Category dynamically from appointments
   const matrixData = useMemo(() => {
