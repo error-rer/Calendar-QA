@@ -22,7 +22,7 @@ but an internal prototype.
 
 ## What's included
 
-- **Login** — split brand / sign-in layout, Google sign-in, Enter-to-submit.
+- **Login** — split brand / sign-in layout, secure User ID & Password authentication, Enter-to-submit.
 - **Schedule** — a Week / Month scale toggle plus four grouping views
   (By QA / By internal / By customer / By sub-department). The weekly scale is a sticky grid
   with drag-and-drop staffing from the unstaffed-order pool,

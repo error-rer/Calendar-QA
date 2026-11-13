@@ -3694,7 +3694,7 @@ export function useScheduler() {
   const mobileSiteRows = plantRows.map((r) => ({ name: r.name, loc: r.loc, cell: r.cells[selDay] }));
   const mobileSiteDeptRows = siteRows.map((r) => ({ name: r.name, engCount: r.engCount, color: r.color, cell: r.cells[selDay] }));
 
-  // ---- week calendar (Google Calendar-style all-day events per day column) ----
+  // ---- week calendar (all-day events per day column) ----
   const weekFiltered = wk.filter((a) => {
     const o = orderById(a.order);
     return !!o && matchesFilters(a, o);
