@@ -727,13 +727,12 @@
         <li><a href="#feature-summary" class="nav-link">12. KPI Executive Dashboard</a></li>
         <li><a href="#feature-engineers" class="nav-link">13. Manage Engineers & Options</a></li>
         <li><a href="#feature-activity" class="nav-link">14. Audit Trail & History Log</a></li>
-        <li><a href="#feature-sheets" class="nav-link">15. Google Sheets Cloud Sync</a></li>
-      </ul>
+        </ul>
 
       <div class="nav-group-title">Specifications</div>
       <ul class="nav-links">
-        <li><a href="#api-spec" class="nav-link">16. REST API Endpoints</a></li>
-        <li><a href="#feature-status-matrix" class="nav-link">17. Comprehensive Feature Inventory &amp; UI Status Matrix</a></li>
+        <li><a href="#api-spec" class="nav-link">15. REST API Endpoints</a></li>
+        <li><a href="#feature-status-matrix" class="nav-link">16. Comprehensive Feature Inventory &amp; UI Status Matrix</a></li>
       </ul>
     </aside>
 
@@ -752,7 +751,7 @@
           <span class="hero-tag">Cloudflare D1 Distributed SQLite</span>
           <span class="hero-tag">Dual-Layer Local & Remote Persistence</span>
           <span class="hero-tag">Dynamic Master-Order Engine</span>
-          <span class="hero-tag">Google Sheets Two-Way Webhook Sync</span>
+          <span class="hero-tag">Client-Side Excel (.xlsx) Engine</span>
         </div>
       </section>
 
@@ -828,7 +827,7 @@
               </tr>
               <tr>
                 <td><strong>Office & Export Sync</strong></td>
-                <td><code>xlsx-js-style</code> & Google Sheets Webhooks</td>
+                <td><code>xlsx-js-style</code> (Client-Side Engine)</td>
                 <td>Corporate Excel workbook generation with branded cell styling and automated two-way cloud spreadsheet replication via Apps Script Webhook.</td>
               </tr>
             </tbody>
@@ -883,7 +882,7 @@
             <text x="355" y="45" font-size="12" font-weight="700" fill="#64748b" letter-spacing="1">CLOUDFLARE EDGE NETWORK</text>
 
             <rect x="660" y="20" width="280" height="440" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="6,4" />
-            <text x="675" y="45" font-size="12" font-weight="700" fill="#64748b" letter-spacing="1">PERSISTENCE &amp; INTEGRATIONS</text>
+            <text x="675" y="45" font-size="12" font-weight="700" fill="#64748b" letter-spacing="1">DISTRIBUTED PERSISTENCE (D1)</text>
 
             <!-- CLIENT BOXES -->
             <g filter="url(#shadow)">
@@ -929,32 +928,28 @@
               <text x="375" y="320" font-size="11.5" fill="#475569">PUT  /api/assignments/:id (Edit)</text>
               <text x="375" y="340" font-size="11.5" fill="#475569">DEL  /api/assignments/:id (Cascade)</text>
               <text x="375" y="360" font-size="11.5" fill="#475569">PUT  /api/options/reorder (Order)</text>
-              <text x="375" y="380" font-size="11.5" fill="#475569">POST /api/google-sheets/sync</text>
+              <text x="375" y="380" font-size="11.5" fill="#475569">POST /api/auth/login (Auth API)</text>
               <text x="375" y="405" font-size="11" font-weight="600" fill="#0f9d8c">Zero-Cold-Start Execution</text>
             </g>
 
-            <!-- DATABASE & EXTERNAL BOXES -->
+            <!-- PERSISTENCE (CLOUDFLARE D1) -->
             <g filter="url(#shadow)">
-              <rect x="680" y="70" width="240" height="190" rx="10" fill="url(#dbGrad)" />
-              <text x="695" y="100" font-size="15" font-weight="700" fill="#ffffff">Cloudflare D1 (SQLite)</text>
-              <text x="695" y="122" font-size="12" fill="#fef3c7">• assignments (Schedule &amp; Results)</text>
-              <text x="695" y="139" font-size="12" fill="#fef3c7">• orders (Audit metadata)</text>
-              <text x="695" y="156" font-size="12" fill="#fef3c7">• engineers (Roster &amp; Dept)</text>
-              <text x="695" y="173" font-size="12" fill="#fef3c7">• plants &amp; active_plants</text>
-              <text x="695" y="190" font-size="12" fill="#fef3c7">• options (_order_ sequence)</text>
-              <text x="695" y="207" font-size="12" fill="#fef3c7">• comments (Threaded notes)</text>
-              <text x="695" y="224" font-size="12" fill="#fef3c7">• activity (Immutable audit log)</text>
-              <text x="695" y="246" font-size="11" font-weight="600" fill="#ffffff">ACID Storage &amp; Foreign Keys</text>
-            </g>
-
-            <g filter="url(#shadow)">
-              <rect x="680" y="290" width="240" height="140" rx="10" fill="url(#extGrad)" />
-              <text x="695" y="320" font-size="15" font-weight="700" fill="#ffffff">Google Sheets Integration</text>
-              <text x="695" y="342" font-size="12" fill="#ecfdf5">• Apps Script Webhook API</text>
-              <text x="695" y="359" font-size="12" fill="#ecfdf5">• Event-driven sync on mutation</text>
-              <text x="695" y="376" font-size="12" fill="#ecfdf5">• sync_all bulk cloud sync</text>
-              <text x="695" y="393" font-size="12" fill="#ecfdf5">• Corporate master spreadsheets</text>
-              <text x="695" y="415" font-size="11" font-weight="600" fill="#ffffff">Two-Way Enterprise Bridge</text>
+              <rect x="680" y="70" width="240" height="360" rx="10" fill="url(#dbGrad)" />
+              <text x="695" y="102" font-size="15" font-weight="700" fill="#ffffff">Cloudflare D1 (SQLite)</text>
+              <text x="695" y="126" font-size="12" fill="#fef3c7">• assignments (Schedule &amp; Results)</text>
+              <text x="695" y="147" font-size="12" fill="#fef3c7">• orders (Audit metadata &amp; IDs)</text>
+              <text x="695" y="168" font-size="12" fill="#fef3c7">• engineers (Roster, QA/Non-QA)</text>
+              <text x="695" y="189" font-size="12" fill="#fef3c7">• plants &amp; active_plants</text>
+              <text x="695" y="210" font-size="12" fill="#fef3c7">• options (Drag-and-Drop Orders)</text>
+              <text x="695" y="231" font-size="12" fill="#fef3c7">• comments (Threaded Notes)</text>
+              <text x="695" y="252" font-size="12" fill="#fef3c7">• activity (Immutable Audit Trail)</text>
+              <text x="695" y="273" font-size="12" fill="#fef3c7">• users (SHA-256 Credentials Store)</text>
+              <line x1="695" y1="295" x2="905" y2="295" stroke="rgba(255,255,255,0.3)" stroke-width="1" />
+              <text x="695" y="322" font-size="13" font-weight="700" fill="#ffffff">Stand-Alone Reliability</text>
+              <text x="695" y="344" font-size="11.5" fill="#fef3c7">• Zero 3rd-Party Cloud Dependency</text>
+              <text x="695" y="365" font-size="11.5" fill="#fef3c7">• ACID Storage &amp; Foreign Key Integrity</text>
+              <text x="695" y="386" font-size="11.5" fill="#fef3c7">• Global Read Replicas at Edge</text>
+              <text x="695" y="412" font-size="11" font-weight="600" fill="#ffffff">Sub-15ms Edge Persistence</text>
             </g>
 
             <!-- CONNECTOR ARROWS -->
@@ -964,7 +959,8 @@
             <path d="M 360 275 L 280 275" stroke="#2f6df0" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arrowBlue)" />
             <path d="M 600 160 L 680 160" stroke="#d97706" stroke-width="2" marker-end="url(#arrow)" />
             <path d="M 680 180 L 600 180" stroke="#d97706" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arrow)" />
-            <path d="M 600 360 L 680 360" stroke="#10b981" stroke-width="2" marker-end="url(#arrow)" />
+            <path d="M 600 310 L 680 310" stroke="#d97706" stroke-width="2" marker-end="url(#arrow)" />
+            <path d="M 680 330 L 600 330" stroke="#d97706" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arrow)" />
           </svg>
         </div>
       </section>
@@ -1043,7 +1039,7 @@
                 <br><code>const XLSX = (await import('xlsx-js-style')).default || (await import('xlsx-js-style'));</code></li>
               <li><strong>In-Memory Worksheet Construction &amp; Styling:</strong> Converts records with <code>XLSX.utils.aoa_to_sheet()</code> and injects cell-level styling (Calibri fonts, header fill <code>#1E3A8A</code>, double bottom borders on totals, column widths, and <code>worksheet['!autofilter']</code>).</li>
               <li><strong>Instant Browser File Download:</strong> Generates workbook via <code>XLSX.writeFile(workbook, filename)</code>, downloading the <code>.xlsx</code> file directly to the user's computer.
-                <br><em>*Confirmed: 100% client-side memory execution with 0 server requests and 0 Google Sheets API dependencies.*</em></li>
+                <br><em>*Confirmed: 100% client-side memory execution with 0 server requests and 0 third-party cloud dependencies.*</em></li>
             </ol>
           </div>
         </div>
@@ -1635,30 +1631,7 @@
         </div>
       </section>
 
-      <!-- FEATURE 8: Google Sheets Cloud Sync -->
-      <section id="feature-sheets">
-        <h2>15. Feature Deep-Dive: Real-Time Google Sheets Cloud Sync</h2>
-        <div class="feature-card">
-          <div class="card-header-flex">
-            <div class="card-title">🔄 Google Workspace Cloud Bridge (<code>worker/index.ts</code>)</div>
-            <span class="pill pill-green">Integration</span>
-          </div>
-
-          <p>
-            The system includes a serverless cloud-to-cloud bridge connecting the Cloudflare Worker directly to Google Apps Script Webhooks:
-          </p>
-
-          <ol>
-            <li><strong>Automatic Event-Driven Sync:</strong> Whenever an appointment is created, updated, or deleted, a structured JSON payload is posted to the Google Apps Script webhook to update corporate spreadsheets.</li>
-            <li><strong>Full Manual Sync (<code>sync_all</code>):</strong> A dedicated "Sync All to Google Sheets" action reconciles the entire database with the spreadsheet in a single operation.</li>
-          </ol>
-
-          <div class="screenshot-container">
-            <img src="images/media_1792603542297_a651cef6.png" alt="Google Sheets Sync Status Bar" class="screenshot-img" onclick="openLightbox(this.src)" onerror="if(!this.dataset.retried){this.dataset.retried=true;this.src='docs/images/media_1792603542297_a651cef6.png';}">
-            <div class="screenshot-caption">Figure 8: Google Sheets sync status toolbar indicating live cloud connection and sync timestamps.</div>
-          </div>
-        </div>
-      </section>
+      
 
       <!-- REST API Reference -->
       <section id="api-spec">
@@ -1700,12 +1673,7 @@
                 <td><code>{ category, order: string[] }</code></td>
                 <td>Saves custom sequence under <code>_order_&lt;category&gt;</code> in D1, dynamically reordering all UI elements.</td>
               </tr>
-              <tr>
-                <td><code>POST /api/google-sheets/sync</code></td>
-                <td><code>{ action: 'sync_all' | 'sync_one', ... }</code></td>
-                <td>Dispatches structured rows to the Google Apps Script webhook endpoint.</td>
-              </tr>
-            </tbody>
+              </tbody>
           </table>
         </div>
       </section>
@@ -1713,9 +1681,9 @@
       
 
     
-      <!-- 17. Comprehensive Feature Inventory & UI Status -->
+      <!-- 16. Comprehensive Feature Inventory & UI Status -->
       <section id="feature-status-matrix">
-        <h2>17. Comprehensive Feature Inventory &amp; UI Status Matrix</h2>
+        <h2>16. Comprehensive Feature Inventory &amp; UI Status Matrix</h2>
         <p>
           This section provides an exhaustive technical audit of all features, capabilities, endpoints, and data fields in the UTAC QA Calendar codebase, explicitly classifying their operational availability in the frontend User Interface (UI):
         </p>
@@ -1824,12 +1792,7 @@
               <td><span class="pill pill-blue">Backend-Only / Legacy</span></td>
               <td>Cloudflare Worker routes exist to seed and toggle plant visibility, but the modern frontend manages all sites and departments through dynamic tags in the Options tab (<code>options.sites</code>).</td>
             </tr>
-            <tr>
-              <td><strong>Real-Time Google Sheets Cloud Sync</strong></td>
-              <td><code>worker/index.ts</code> (<code>/api/google-sheets/*</code>)<br>D1 table <code>options</code></td>
-              <td><span class="pill pill-blue">Backend-Only / Webhook Service</span></td>
-              <td>Sync engine is executed via Cloudflare Worker and environment variable <code>GOOGLE_SHEETS_WEBHOOK_URL</code> to push database snapshots on demand, without an in-app configuration UI.</td>
-            </tr>
+            
             <tr>
               <td><strong>Engineer <code>isMaster</code> Role Flag</strong></td>
               <td><code>src/types.ts</code> (<code>Engineer.isMaster</code>)<br><code>src/components/EngineerModal.tsx</code></td>
