@@ -339,15 +339,17 @@ export function getStatusColor(priority: string): string {
  */
 export function getAppointmentQmsHost(audit: Assignment | any): string {
   if (!audit) return '';
-  const isInternal = isInternalAssignment(audit);
+  const isInternal =
+    audit.sectionType === 'internal' ||
+    (audit.sectionType !== 'customer' && isInternalAssignment(audit));
   const raw =
     audit.qmsHost !== undefined && audit.qmsHost !== null && audit.qmsHost !== ''
       ? audit.qmsHost
       : audit.auditor !== undefined && audit.auditor !== null && audit.auditor !== ''
       ? audit.auditor
       : isInternal
-      ? (audit.auditor2 || audit.auditor1)
-      : (audit.auditor1 || audit.auditor2);
+      ? (audit.auditor2 || (audit.sectionType === 'internal' ? '' : audit.auditor1))
+      : (audit.auditor1 || (audit.sectionType === 'customer' ? '' : audit.auditor2));
   if (!raw) return '';
   if (Array.isArray(raw)) {
     return raw.map((s: any) => String(s || '').trim()).filter(Boolean).join(', ');
@@ -408,16 +410,20 @@ export function formatCardSubtitle(purpose?: string, host?: string, showExplicit
 
 export function getMissingFields(a: Assignment | any): string[] {
   if (!a) return [];
-  const isInternal = isInternalAssignment(a);
+  const isInternal =
+    a.sectionType === 'internal' ||
+    (a.sectionType !== 'customer' && isInternalAssignment(a));
   const missing: string[] = [];
 
   // 1. Standard (standard, department1 for customer, department2 for internal)
   const rawStandard =
-    a.standard !== undefined && a.standard !== null && a.standard !== ''
-      ? a.standard
-      : isInternal
-      ? (a.department2 || a.department1)
-      : (a.department1 || a.department2) || a.department;
+    isInternal
+      ? (a.department2 !== undefined && a.department2 !== null && a.department2 !== ''
+          ? a.department2
+          : a.standard || (a.sectionType === 'internal' ? '' : a.department1))
+      : (a.department1 !== undefined && a.department1 !== null && a.department1 !== ''
+          ? a.department1
+          : a.standard || (a.sectionType === 'customer' ? '' : a.department2) || a.department);
   const hasStandard = Array.isArray(rawStandard)
     ? rawStandard.length > 0 && rawStandard.some((s: any) => Boolean(s && String(s).trim()))
     : Boolean(rawStandard && String(rawStandard).trim());
@@ -425,11 +431,13 @@ export function getMissingFields(a: Assignment | any): string[] {
 
   // 2. Site (site, site1 for customer, site2 for internal)
   const rawSite =
-    a.site !== undefined && a.site !== null && a.site !== ''
-      ? a.site
-      : isInternal
-      ? (a.site2 || a.site1)
-      : (a.site1 || a.site2);
+    isInternal
+      ? (a.site2 !== undefined && a.site2 !== null && a.site2 !== ''
+          ? a.site2
+          : a.site || (a.sectionType === 'internal' ? '' : a.site1))
+      : (a.site1 !== undefined && a.site1 !== null && a.site1 !== ''
+          ? a.site1
+          : a.site || (a.sectionType === 'customer' ? '' : a.site2));
   const hasSite = Array.isArray(rawSite)
     ? rawSite.length > 0 && rawSite.some((s: any) => Boolean(s && String(s).trim()))
     : Boolean(rawSite && String(rawSite).trim());
@@ -437,18 +445,25 @@ export function getMissingFields(a: Assignment | any): string[] {
 
   // 3. QMS Host (strictly required for both Customer and Internal Audit; cannot be empty or "Unassigned")
   const qmsHostStr = getAppointmentQmsHost(a);
-  const hasQmsHost = Boolean(qmsHostStr && qmsHostStr.trim() && qmsHostStr.trim().toLowerCase() !== 'unassigned');
+  const hasQmsHost = Boolean(
+    qmsHostStr &&
+    String(qmsHostStr).trim() &&
+    String(qmsHostStr).trim().toLowerCase() !== 'unassigned'
+  );
   if (!hasQmsHost) missing.push('QMS Host');
 
   // 4. Dates (valid date or date range)
-  const hasDates = Boolean(
+  const hasDateFrom = Boolean(a.dateFrom && String(a.dateFrom).trim());
+  const hasDateTo = Boolean(a.dateTo && String(a.dateTo).trim());
+  const hasLegacyDates = Boolean(
     (a.date && String(a.date).trim()) ||
     (a.startDate && a.endDate && String(a.startDate).trim() && String(a.endDate).trim()) ||
     (a.from && a.to && String(a.from).trim() && String(a.to).trim()) ||
-    (a.dateFrom && a.dateTo && String(a.dateFrom).trim() && String(a.dateTo).trim()) ||
     (a.week !== undefined && a.day !== undefined && a.week !== null && a.day !== null)
   );
-  if (!hasDates) missing.push('Date Range');
+  const hasDates = (hasDateFrom && hasDateTo) || hasLegacyDates;
+  const isDateOrderValid = !(hasDateFrom && hasDateTo && String(a.dateFrom) > String(a.dateTo));
+  if (!hasDates || !isDateOrderValid) missing.push('Date Range');
 
   if (isInternal) {
     // Internal Audit STRICT FULL-FORM COMPLETION:
@@ -465,10 +480,8 @@ export function getMissingFields(a: Assignment | any): string[] {
       : Boolean(rawAuditCategory && String(rawAuditCategory).trim());
     if (!hasAuditCategory) missing.push('Audit Category');
 
-    // 4. AREA
-    const rawArea = a.area !== undefined && a.area !== null
-      ? a.area
-      : (a.purpose || a.apptPurpose);
+    // 4. AREA (Strictly a.area, never fallback to purpose)
+    const rawArea = a.area;
     const hasArea = Array.isArray(rawArea)
       ? rawArea.length > 0 && rawArea.some((s: any) => Boolean(s && String(s).trim()))
       : Boolean(rawArea && String(rawArea).trim());
@@ -480,9 +493,6 @@ export function getMissingFields(a: Assignment | any): string[] {
     // Optional schema checks
     if (a.leadAuditor !== undefined && a.leadAuditor !== null && !String(a.leadAuditor).trim()) {
       missing.push('Lead Auditor');
-    }
-    if (a.department !== undefined && a.department !== null && a.department !== '' && !String(a.department).trim()) {
-      missing.push('Department');
     }
   } else {
     // Customer Audit: MUST fill ALL 8 fields shown in the form:
@@ -744,7 +754,6 @@ export type AuditStatusKey =
 
 export function isIncompleteData(apt: any): boolean {
   if (!apt) return false;
-  if (typeof apt.isIncomplete === 'boolean') return apt.isIncomplete;
   return isAppointmentFormIncomplete(apt);
 }
 

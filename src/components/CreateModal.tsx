@@ -61,7 +61,14 @@ export function CreateModal({ vm }: { vm: VM }) {
 
         <div style={css('padding:14px 18px;display:flex;justify-content:flex-end;gap:9px;border-top:1px solid #eef1ea')}>
           <HButton tabIndex={create.sectionType === 'customer' ? 12 : 9} onClick={vm.closeCreate} style={css("background:#f4f6f1;border:1px solid #e0e3dc;color:#3c423d;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#eaede6' }}>Cancel</HButton>
-          <button tabIndex={create.sectionType === 'customer' ? 11 : 8} onClick={create.submit} style={create.submitStyle}>Create appointment</button>
+          <button
+            tabIndex={create.sectionType === 'customer' ? 11 : 8}
+            onClick={create.submit}
+            style={create.submitStyle}
+            title={!create.canSubmit ? 'Please fill in all required fields: ' + (create.missingFields || []).join(', ') : 'Create appointment'}
+          >
+            Create appointment
+          </button>
         </div>
       </div>
     </div>

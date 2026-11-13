@@ -17,9 +17,10 @@ interface DateInputFieldProps {
   style?: React.CSSProperties;
   disabled?: boolean;
   tabIndex?: number;
+  hasError?: boolean;
 }
 
-function DateInputField({ id, value, onChange, style, disabled, tabIndex }: DateInputFieldProps) {
+function DateInputField({ id, value, onChange, style, disabled, tabIndex, hasError }: DateInputFieldProps) {
   const dayRef = useRef<HTMLInputElement>(null);
   const monthRef = useRef<HTMLInputElement>(null);
   const yearRef = useRef<HTMLInputElement>(null);
@@ -157,8 +158,16 @@ function DateInputField({ id, value, onChange, style, disabled, tabIndex }: Date
       id={id}
       ref={containerRef}
       style={{
-        border: isFocused ? '1px solid #2756d6' : '1px solid #dde0d9',
-        boxShadow: isFocused ? '0 0 0 3px rgba(39, 86, 214, 0.12)' : 'none',
+        border: isFocused
+          ? (hasError ? '1px solid #dc2626' : '1px solid #2756d6')
+          : hasError
+          ? '1px solid #ef4444'
+          : '1px solid #dde0d9',
+        boxShadow: isFocused
+          ? (hasError ? '0 0 0 3px rgba(220, 38, 38, 0.15)' : '0 0 0 3px rgba(39, 86, 214, 0.12)')
+          : hasError
+          ? '0 0 0 1px rgba(239, 68, 68, 0.2)'
+          : 'none',
         transition: 'border-color .15s ease, box-shadow .15s ease',
         borderRadius: '8px',
         padding: '8px 14px',
@@ -166,7 +175,7 @@ function DateInputField({ id, value, onChange, style, disabled, tabIndex }: Date
         height: '42px',
         fontSize: '12.5px',
         fontFamily: "'Archivo',sans-serif",
-        background: disabled ? '#f3f4f6' : '#fff',
+        background: disabled ? '#f3f4f6' : hasError ? '#fff8f8' : '#fff',
         opacity: disabled ? 0.8 : 1,
         width: '100%',
         minWidth: 0,
@@ -284,6 +293,8 @@ export interface AppointmentFormValues {
   department2: string;
   dateFrom: string;
   dateTo: string;
+  warn?: boolean;
+  warnText?: string;
 }
 
 function MultiSiteSelect({
@@ -292,12 +303,14 @@ function MultiSiteSelect({
   onChange,
   siteOptions,
   tabIndex,
+  hasError,
 }: {
   id: string;
   value: string;
   onChange: (val: string) => void;
   siteOptions: string[];
   tabIndex?: number;
+  hasError?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -349,8 +362,16 @@ function MultiSiteSelect({
           }
         }}
         style={{
-          border: isFocused ? '1px solid #2756d6' : '1px solid #dde0d9',
-          boxShadow: isFocused ? '0 0 0 3px rgba(39, 86, 214, 0.12)' : 'none',
+          border: isFocused
+            ? (hasError ? '1px solid #dc2626' : '1px solid #2756d6')
+            : hasError
+            ? '1px solid #ef4444'
+            : '1px solid #dde0d9',
+          boxShadow: isFocused
+            ? (hasError ? '0 0 0 3px rgba(220, 38, 38, 0.15)' : '0 0 0 3px rgba(39, 86, 214, 0.12)')
+            : hasError
+            ? '0 0 0 1px rgba(239, 68, 68, 0.2)'
+            : 'none',
           transition: 'border-color .15s ease, box-shadow .15s ease',
           borderRadius: '8px',
           padding: '8px 14px',
@@ -360,7 +381,7 @@ function MultiSiteSelect({
           fontFamily: "'Archivo',sans-serif",
           color: selectedSites.length > 0 ? '#23282a' : '#8a9088',
           outline: 'none',
-          background: '#fff',
+          background: hasError ? '#fff8f8' : '#fff',
           width: '100%',
           minWidth: 0,
           boxSizing: 'border-box',
@@ -461,6 +482,7 @@ function AutocompleteInput({
   onAddNew,
   onRemoveOption,
   tabIndex,
+  hasError,
 }: {
   id: string;
   value: string;
@@ -470,6 +492,7 @@ function AutocompleteInput({
   onAddNew?: (val: string) => void;
   onRemoveOption?: (val: string) => void;
   tabIndex?: number;
+  hasError?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -522,11 +545,19 @@ function AutocompleteInput({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          border: isFocused ? '1px solid #2756d6' : '1px solid #dde0d9',
-          boxShadow: isFocused ? '0 0 0 3px rgba(39, 86, 214, 0.12)' : 'none',
+          border: isFocused
+            ? (hasError ? '1px solid #dc2626' : '1px solid #2756d6')
+            : hasError
+            ? '1px solid #ef4444'
+            : '1px solid #dde0d9',
+          boxShadow: isFocused
+            ? (hasError ? '0 0 0 3px rgba(220, 38, 38, 0.15)' : '0 0 0 3px rgba(39, 86, 214, 0.12)')
+            : hasError
+            ? '0 0 0 1px rgba(239, 68, 68, 0.2)'
+            : 'none',
           transition: 'border-color .15s ease, box-shadow .15s ease',
           borderRadius: '8px',
-          background: '#fff',
+          background: hasError ? '#fff8f8' : '#fff',
           width: '100%',
           minWidth: 0,
           minHeight: '42px',
@@ -772,6 +803,7 @@ function MultiSelectCombobox({
   onAddNew,
   onRemoveOption,
   tabIndex,
+  hasError,
 }: {
   id: string;
   value: string;
@@ -783,6 +815,7 @@ function MultiSelectCombobox({
   onAddNew?: (val: string) => void;
   onRemoveOption?: (val: string) => void;
   tabIndex?: number;
+  hasError?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -857,15 +890,23 @@ function MultiSelectCombobox({
           setOpen(true);
         }}
         style={{
-          border: isFocused ? '1px solid #2756d6' : '1px solid #dde0d9',
-          boxShadow: isFocused ? '0 0 0 3px rgba(39, 86, 214, 0.12)' : 'none',
+          border: isFocused
+            ? (hasError ? '1px solid #dc2626' : '1px solid #2756d6')
+            : hasError
+            ? '1px solid #ef4444'
+            : '1px solid #dde0d9',
+          boxShadow: isFocused
+            ? (hasError ? '0 0 0 3px rgba(220, 38, 38, 0.15)' : '0 0 0 3px rgba(39, 86, 214, 0.12)')
+            : hasError
+            ? '0 0 0 1px rgba(239, 68, 68, 0.2)'
+            : 'none',
           transition: 'border-color .15s ease, box-shadow .15s ease',
           borderRadius: '8px',
           padding: '6px 14px',
           minHeight: '42px',
           fontSize: '12.5px',
           fontFamily: "'Archivo',sans-serif",
-          background: '#fff',
+          background: hasError ? '#fff8f8' : '#fff',
           width: '100%',
           minWidth: 0,
           boxSizing: 'border-box',
@@ -1176,6 +1217,7 @@ function MultiStandardSelect({
   onRemoveOption,
   tabIndex,
   inputRef,
+  hasError,
 }: {
   id: string;
   value: string;
@@ -1185,6 +1227,7 @@ function MultiStandardSelect({
   onRemoveOption?: (val: string) => void;
   tabIndex?: number;
   inputRef?: React.RefObject<HTMLInputElement | null>;
+  hasError?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -1278,15 +1321,23 @@ function MultiStandardSelect({
           setOpen(true);
         }}
         style={{
-          border: isFocused ? '1px solid #2756d6' : '1px solid #dde0d9',
-          boxShadow: isFocused ? '0 0 0 3px rgba(39, 86, 214, 0.12)' : 'none',
+          border: isFocused
+            ? (hasError ? '1px solid #dc2626' : '1px solid #2756d6')
+            : hasError
+            ? '1px solid #ef4444'
+            : '1px solid #dde0d9',
+          boxShadow: isFocused
+            ? (hasError ? '0 0 0 3px rgba(220, 38, 38, 0.15)' : '0 0 0 3px rgba(39, 86, 214, 0.12)')
+            : hasError
+            ? '0 0 0 1px rgba(239, 68, 68, 0.2)'
+            : 'none',
           transition: 'border-color .15s ease, box-shadow .15s ease',
           borderRadius: '8px',
           padding: '6px 14px',
           minHeight: '42px',
           fontSize: '12.5px',
           fontFamily: "'Archivo',sans-serif",
-          background: '#fff',
+          background: hasError ? '#fff8f8' : '#fff',
           width: '100%',
           minWidth: 0,
           boxSizing: 'border-box',
@@ -1598,6 +1649,7 @@ function MultiAuditorSelect({
   onAddNew,
   onRemoveOption,
   tabIndex,
+  hasError,
 }: {
   id: string;
   value: string;
@@ -1606,6 +1658,7 @@ function MultiAuditorSelect({
   onAddNew?: (val: string) => void;
   onRemoveOption?: (val: string) => void;
   tabIndex?: number;
+  hasError?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -1678,15 +1731,23 @@ function MultiAuditorSelect({
           setOpen(true);
         }}
         style={{
-          border: isFocused ? '1px solid #2756d6' : '1px solid #dde0d9',
-          boxShadow: isFocused ? '0 0 0 3px rgba(39, 86, 214, 0.12)' : 'none',
+          border: isFocused
+            ? (hasError ? '1px solid #dc2626' : '1px solid #2756d6')
+            : hasError
+            ? '1px solid #ef4444'
+            : '1px solid #dde0d9',
+          boxShadow: isFocused
+            ? (hasError ? '0 0 0 3px rgba(220, 38, 38, 0.15)' : '0 0 0 3px rgba(39, 86, 214, 0.12)')
+            : hasError
+            ? '0 0 0 1px rgba(239, 68, 68, 0.2)'
+            : 'none',
           transition: 'border-color .15s ease, box-shadow .15s ease',
           borderRadius: '8px',
           padding: '6px 14px',
           minHeight: '42px',
           fontSize: '12.5px',
           fontFamily: "'Archivo',sans-serif",
-          background: '#fff',
+          background: hasError ? '#fff8f8' : '#fff',
           width: '100%',
           minWidth: 0,
           boxSizing: 'border-box',
@@ -2098,6 +2159,30 @@ export function AppointmentFormFields({
     return getActiveDropdownOptions(assignments, 'area').filter((a) => !removedSet.has(a));
   }, [assignments, removedSet]);
 
+  const isWarn = Boolean(v.warn);
+  const isInternal = v.sectionType === 'internal';
+
+  // Internal Audit field error states
+  const errIntDept = isWarn && isInternal && !v.department2?.trim();
+  const errIntSite = isWarn && isInternal && !v.site2?.trim();
+  const errIntCategory = isWarn && isInternal && !v.auditCategory?.trim();
+  const errIntArea = isWarn && isInternal && !v.area?.trim();
+  const errIntHost = isWarn && isInternal && (!v.auditor2?.trim() || v.auditor2.trim().toLowerCase() === 'unassigned');
+  const errIntFrom = isWarn && isInternal && !v.dateFrom?.trim();
+  const errIntTo = isWarn && isInternal && (!v.dateTo?.trim() || (Boolean(v.dateFrom && v.dateTo) && v.dateFrom > v.dateTo));
+
+  // Customer Audit field error states
+  const errCustDept = isWarn && !isInternal && !v.department1?.trim();
+  const errCustSite = isWarn && !isInternal && !v.site1?.trim();
+  const errCust = isWarn && !isInternal && !v.customer?.trim();
+  const errEndCust = isWarn && !isInternal && !v.endCustomer?.trim();
+  const errPurpose = isWarn && !isInternal && !v.purpose?.trim();
+  const errTargetPkg = isWarn && !isInternal && !v.targetPackage?.trim();
+  const errCustNames = isWarn && !isInternal && !v.customerNames?.trim();
+  const errCustHost = isWarn && !isInternal && (!v.auditor1?.trim() || v.auditor1.trim().toLowerCase() === 'unassigned');
+  const errCustFrom = isWarn && !isInternal && !v.dateFrom?.trim();
+  const errCustTo = isWarn && !isInternal && (!v.dateTo?.trim() || (Boolean(v.dateFrom && v.dateTo) && v.dateFrom > v.dateTo));
+
   return (
     <>
       <div style={css('display:flex;gap:8px;margin-bottom:12px')}>
@@ -2170,7 +2255,7 @@ export function AppointmentFormFields({
           <div style={css('display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px;row-gap:14px;width:100%;box-sizing:border-box')}>
             {/* ROW 1: STANDARD | SITE */}
             <div style={fld}>
-              <label htmlFor={id('department1')} style={lbl}>STANDARD</label>
+              <label htmlFor={id('department1')} style={lbl}>STANDARD <span style={{ color: '#dc2626' }}>*</span></label>
               <MultiStandardSelect
                 id={id('department1')}
                 tabIndex={1}
@@ -2185,23 +2270,25 @@ export function AppointmentFormFields({
                 suggestions={customerDepartmentSuggestions}
                 onAddNew={addCustomerDepartmentOption}
                 onRemoveOption={removeCustomerDepartmentOption || removeGenericOption}
+                hasError={errCustDept}
               />
             </div>
 
             <div style={fld}>
-              <label htmlFor={id('site1')} style={lbl}>SITE</label>
+              <label htmlFor={id('site1')} style={lbl}>SITE <span style={{ color: '#dc2626' }}>*</span></label>
               <MultiSiteSelect
                 id={id('site1')}
                 tabIndex={2}
                 value={v.site1}
                 onChange={(site1) => onChange({ site1 })}
                 siteOptions={customerSiteOptions}
+                hasError={errCustSite}
               />
             </div>
 
             {/* ROW 2: CUSTOMER | END CUSTOMER */}
             <div style={fld}>
-              <label htmlFor={id('customer')} style={lbl}>CUSTOMER</label>
+              <label htmlFor={id('customer')} style={lbl}>CUSTOMER <span style={{ color: '#dc2626' }}>*</span></label>
               <AutocompleteInput
                 id={id('customer')}
                 tabIndex={3}
@@ -2210,11 +2297,12 @@ export function AppointmentFormFields({
                 placeholder="Type or select customer..."
                 suggestions={customerSuggestions}
                 onRemoveOption={removeCustomerOption}
+                hasError={errCust}
               />
             </div>
 
             <div style={fld}>
-              <label htmlFor={id('endCustomer')} style={lbl}>END CUSTOMER</label>
+              <label htmlFor={id('endCustomer')} style={lbl}>END CUSTOMER <span style={{ color: '#dc2626' }}>*</span></label>
               <AutocompleteInput
                 id={id('endCustomer')}
                 tabIndex={4}
@@ -2223,12 +2311,13 @@ export function AppointmentFormFields({
                 placeholder="Type or select end customer..."
                 suggestions={endCustomerSuggestions}
                 onRemoveOption={removeEndCustomerOption || removeGenericOption}
+                hasError={errEndCust}
               />
             </div>
 
             {/* ROW 3: PURPOSE | TARGET PACKAGE */}
             <div style={fld}>
-              <label htmlFor={id('purpose')} style={lbl}>PURPOSE</label>
+              <label htmlFor={id('purpose')} style={lbl}>PURPOSE <span style={{ color: '#dc2626' }}>*</span></label>
               <AutocompleteInput
                 id={id('purpose')}
                 tabIndex={5}
@@ -2237,11 +2326,12 @@ export function AppointmentFormFields({
                 placeholder="Type or select purpose..."
                 suggestions={purposeSuggestions}
                 onRemoveOption={removePurposeOption}
+                hasError={errPurpose}
               />
             </div>
 
             <div style={fld}>
-              <label htmlFor={id('targetPackage')} style={lbl}>TARGET PACKAGE</label>
+              <label htmlFor={id('targetPackage')} style={lbl}>TARGET PACKAGE <span style={{ color: '#dc2626' }}>*</span></label>
               <MultiSelectCombobox
                 id={id('targetPackage')}
                 tabIndex={6}
@@ -2253,12 +2343,13 @@ export function AppointmentFormFields({
                 suggestions={targetPackageSuggestions}
                 onAddNew={addTargetPackageOption}
                 onRemoveOption={removeTargetPackageOption || removeGenericOption}
+                hasError={errTargetPkg}
               />
             </div>
 
             {/* ROW 4: CUSTOMER NAME | QMS HOST */}
             <div style={fld}>
-              <label htmlFor={id('customerNames')} style={lbl}>CUSTOMER NAME</label>
+              <label htmlFor={id('customerNames')} style={lbl}>CUSTOMER NAME <span style={{ color: '#dc2626' }}>*</span></label>
               <MultiSelectCombobox
                 id={id('customerNames')}
                 tabIndex={7}
@@ -2270,11 +2361,12 @@ export function AppointmentFormFields({
                 suggestions={customerNameSuggestions}
                 onAddNew={addCustomerNameOption}
                 onRemoveOption={removeCustomerNameOption || removeGenericOption}
+                hasError={errCustNames}
               />
             </div>
 
             <div style={fld}>
-              <label htmlFor={id('auditor1')} style={lbl}>QMS HOST</label>
+              <label htmlFor={id('auditor1')} style={lbl}>QMS HOST <span style={{ color: '#dc2626' }}>*</span></label>
               <MultiAuditorSelect
                 id={id('auditor1')}
                 tabIndex={8}
@@ -2283,18 +2375,19 @@ export function AppointmentFormFields({
                 suggestions={auditorSuggestions}
                 onAddNew={(_name) => { if (removeAuditorOption) { /* addAuditor handled by save */ } }}
                 onRemoveOption={removeAuditorOption}
+                hasError={errCustHost}
               />
             </div>
 
             {/* ROW 5: FROM | TO */}
             <div style={fld}>
-              <label htmlFor={id('dateFrom')} style={lbl}>FROM</label>
-              <DateInputField id={id('dateFrom')} tabIndex={9} value={v.dateFrom} onChange={(dateFrom) => onChange({ dateFrom })} style={inp} disabled={isDateLocked} />
+              <label htmlFor={id('dateFrom')} style={lbl}>FROM <span style={{ color: '#dc2626' }}>*</span></label>
+              <DateInputField id={id('dateFrom')} tabIndex={9} value={v.dateFrom} onChange={(dateFrom) => onChange({ dateFrom })} style={inp} disabled={isDateLocked} hasError={errCustFrom} />
             </div>
 
             <div style={fld}>
-              <label htmlFor={id('dateTo')} style={lbl}>TO</label>
-              <DateInputField id={id('dateTo')} tabIndex={10} value={v.dateTo} onChange={(dateTo) => onChange({ dateTo })} style={inp} disabled={isDateLocked} />
+              <label htmlFor={id('dateTo')} style={lbl}>TO <span style={{ color: '#dc2626' }}>*</span></label>
+              <DateInputField id={id('dateTo')} tabIndex={10} value={v.dateTo} onChange={(dateTo) => onChange({ dateTo })} style={inp} disabled={isDateLocked} hasError={errCustTo} />
             </div>
 
             <div style={{ gridColumn: '1 / -1' }}>
@@ -2326,7 +2419,7 @@ export function AppointmentFormFields({
           <div style={css('display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px;row-gap:14px;width:100%;box-sizing:border-box')}>
             {/* 1. STANDARD */}
             <div style={fld}>
-              <label htmlFor={id('department2')} style={lbl}>STANDARD</label>
+              <label htmlFor={id('department2')} style={lbl}>STANDARD <span style={{ color: '#dc2626' }}>*</span></label>
               <MultiStandardSelect
                 id={id('department2')}
                 tabIndex={1}
@@ -2341,24 +2434,26 @@ export function AppointmentFormFields({
                 suggestions={internalDepartmentSuggestions}
                 onAddNew={addInternalDepartmentOption}
                 onRemoveOption={removeInternalDepartmentOption || removeGenericOption}
+                hasError={errIntDept}
               />
             </div>
 
             {/* 2. SITE */}
             <div style={fld}>
-              <label htmlFor={id('site2')} style={lbl}>SITE</label>
+              <label htmlFor={id('site2')} style={lbl}>SITE <span style={{ color: '#dc2626' }}>*</span></label>
               <MultiSiteSelect
                 id={id('site2')}
                 tabIndex={2}
                 value={v.site2}
                 onChange={(site2) => onChange({ site2 })}
                 siteOptions={internalSiteOptions}
+                hasError={errIntSite}
               />
             </div>
 
             {/* Row 2: AUDIT CATEGORY | AREA */}
             <div style={fld}>
-              <label htmlFor={id('auditCategory')} style={lbl}>AUDIT CATEGORY</label>
+              <label htmlFor={id('auditCategory')} style={lbl}>AUDIT CATEGORY <span style={{ color: '#dc2626' }}>*</span></label>
               <AutocompleteInput
                 id={id('auditCategory')}
                 tabIndex={3}
@@ -2368,11 +2463,12 @@ export function AppointmentFormFields({
                 suggestions={auditCategorySuggestions}
                 onAddNew={addAuditCategoryOption}
                 onRemoveOption={removeAuditCategoryOption || removeGenericOption}
+                hasError={errIntCategory}
               />
             </div>
 
             <div style={fld}>
-              <label htmlFor={id('area')} style={lbl}>AREA</label>
+              <label htmlFor={id('area')} style={lbl}>AREA <span style={{ color: '#dc2626' }}>*</span></label>
               <AutocompleteInput
                 id={id('area')}
                 tabIndex={4}
@@ -2381,12 +2477,13 @@ export function AppointmentFormFields({
                 placeholder="Type or select area..."
                 suggestions={areaSuggestions}
                 onRemoveOption={removeGenericOption}
+                hasError={errIntArea}
               />
             </div>
 
             {/* Row 3: QMS HOST | (empty placeholder cell for 50/50 symmetry) */}
             <div style={fld}>
-              <label htmlFor={id('auditor2')} style={lbl}>QMS HOST</label>
+              <label htmlFor={id('auditor2')} style={lbl}>QMS HOST <span style={{ color: '#dc2626' }}>*</span></label>
               <MultiAuditorSelect
                 id={id('auditor2')}
                 tabIndex={5}
@@ -2395,6 +2492,7 @@ export function AppointmentFormFields({
                 suggestions={auditorSuggestions}
                 onAddNew={(_name) => { if (removeAuditorOption) { /* addAuditor handled by save */ } }}
                 onRemoveOption={removeAuditorOption}
+                hasError={errIntHost}
               />
             </div>
 
@@ -2402,13 +2500,13 @@ export function AppointmentFormFields({
 
             {/* Row 4: FROM | TO */}
             <div style={fld}>
-              <label htmlFor={id('dateFrom2')} style={lbl}>FROM</label>
-              <DateInputField id={id('dateFrom2')} tabIndex={6} value={v.dateFrom} onChange={(dateFrom) => onChange({ dateFrom })} style={inp} disabled={isDateLocked} />
+              <label htmlFor={id('dateFrom2')} style={lbl}>FROM <span style={{ color: '#dc2626' }}>*</span></label>
+              <DateInputField id={id('dateFrom2')} tabIndex={6} value={v.dateFrom} onChange={(dateFrom) => onChange({ dateFrom })} style={inp} disabled={isDateLocked} hasError={errIntFrom} />
             </div>
 
             <div style={fld}>
-              <label htmlFor={id('dateTo2')} style={lbl}>TO</label>
-              <DateInputField id={id('dateTo2')} tabIndex={7} value={v.dateTo} onChange={(dateTo) => onChange({ dateTo })} style={inp} disabled={isDateLocked} />
+              <label htmlFor={id('dateTo2')} style={lbl}>TO <span style={{ color: '#dc2626' }}>*</span></label>
+              <DateInputField id={id('dateTo2')} tabIndex={7} value={v.dateTo} onChange={(dateTo) => onChange({ dateTo })} style={inp} disabled={isDateLocked} hasError={errIntTo} />
             </div>
 
             <div style={{ gridColumn: '1 / -1' }}>

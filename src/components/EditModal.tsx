@@ -100,7 +100,14 @@ export function EditModal({ vm }: { vm: VM }) {
 
         <div style={css('padding:14px 18px;display:flex;justify-content:flex-end;gap:9px;border-top:1px solid #eef1ea')}>
           <HButton tabIndex={ed.sectionType === 'customer' ? 12 : 9} onClick={vm.closeEdit} style={css("background:#f4f6f1;border:1px solid #e0e3dc;color:#3c423d;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#eaede6' }}>Cancel</HButton>
-          <button tabIndex={ed.sectionType === 'customer' ? 11 : 8} onClick={vm.submitEdit} style={css("background:#15191e;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}>Save changes</button>
+          <button
+            tabIndex={ed.sectionType === 'customer' ? 11 : 8}
+            onClick={vm.submitEdit}
+            style={vm.editSubmitStyle}
+            title={!vm.canEdit ? 'Please fill in all required fields: ' + (vm.editMissing || []).join(', ') : 'Save changes'}
+          >
+            Save changes
+          </button>
         </div>
       </div>
     </div>

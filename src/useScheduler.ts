@@ -1452,9 +1452,20 @@ export function useScheduler() {
   };
   const closeCreate = () => setState({ createOpen: false });
   const setDraft = (patch: Partial<CreateDraft>) =>
-    setState((s) => ({ createDraft: { ...s.createDraft, ...patch } }));
+    setState((s) => ({ createDraft: { ...s.createDraft, warn: false, warnText: '', ...patch } }));
   const submitCreate = () => {
     const d = S.createDraft;
+    const missing = getMissingFields(d);
+    if (missing.length > 0) {
+      setState((s) => ({
+        createDraft: {
+          ...s.createDraft,
+          warn: true,
+          warnText: 'Please fill in all required fields: ' + missing.join(', '),
+        },
+      }));
+      return;
+    }
     const todayISO = fmtISO(new Date());
     const dateFrom = d.dateFrom || todayISO;
     const dateTo = d.dateTo || dateFrom;
@@ -1836,11 +1847,22 @@ export function useScheduler() {
     });
   };
   const setEditDraft = (patch: Partial<EditDraft>) =>
-    setState((s) => ({ editDraft: { ...s.editDraft, ...patch } }));
+    setState((s) => ({ editDraft: { ...s.editDraft, warn: false, warnText: '', ...patch } }));
   const submitEdit = () => {
     const d = S.editDraft;
     const target = S.assignments.find((x) => x.id === d.targetId);
     if (!target) return;
+    const missing = getMissingFields(d);
+    if (missing.length > 0) {
+      setState((s) => ({
+        editDraft: {
+          ...s.editDraft,
+          warn: true,
+          warnText: 'Please fill in all required fields: ' + missing.join(', '),
+        },
+      }));
+      return;
+    }
     const dateFrom = d.dateFrom || fmtISO(new Date());
     const dateTo = d.dateTo || dateFrom;
     const start = new Date(dateFrom + 'T00:00:00');
@@ -3894,6 +3916,8 @@ export function useScheduler() {
 
   // ---- create modal VM ----
   const cd = S.createDraft;
+  const createMissing = getMissingFields(cd);
+  const canCreate = createMissing.length === 0;
   const create = {
     sectionType: cd.sectionType,
     purpose: cd.purpose, department1: cd.department1, site1: cd.site1, customer: cd.customer, endCustomer: cd.endCustomer, auditor1: cd.auditor1,
@@ -3902,10 +3926,43 @@ export function useScheduler() {
     department: cd.department || undefined,
     dateFrom: cd.dateFrom ?? '', dateTo: cd.dateTo ?? '',
     onChange: setDraft,
-    warn: false, warnText: '',
+    canSubmit: canCreate,
+    warn: Boolean(cd.warn),
+    warnText: cd.warnText || '',
+    missingFields: createMissing,
     submit: () => submitCreate(),
-    submitStyle: sx({ background: '#15191e', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 18px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Archivo',sans-serif" }),
+    submitStyle: sx({
+      background: canCreate ? '#15191e' : '#cbd0c7',
+      color: canCreate ? '#fff' : '#686f66',
+      border: 'none',
+      borderRadius: '8px',
+      padding: '9px 18px',
+      fontSize: '12.5px',
+      fontWeight: 600,
+      cursor: canCreate ? 'pointer' : 'not-allowed',
+      fontFamily: "'Archivo',sans-serif",
+      opacity: canCreate ? 1 : 0.7,
+      transition: 'all .15s ease',
+    }),
   };
+
+  // ---- edit modal validation VM ----
+  const ed = S.editDraft;
+  const editMissing = ed ? getMissingFields(ed) : [];
+  const canEdit = editMissing.length === 0;
+  const editSubmitStyle = sx({
+    background: canEdit ? '#15191e' : '#cbd0c7',
+    color: canEdit ? '#fff' : '#686f66',
+    border: 'none',
+    borderRadius: '8px',
+    padding: '9px 16px',
+    fontSize: '12.5px',
+    fontWeight: 600,
+    cursor: canEdit ? 'pointer' : 'not-allowed',
+    fontFamily: "'Archivo',sans-serif",
+    opacity: canEdit ? 1 : 0.7,
+    transition: 'all .15s ease',
+  });
 
   // ---- profile VM ----
   const myWeekAppointments = S.assignments.filter((a) => a.week === todayWeekOffset).length;
@@ -4553,7 +4610,7 @@ export function useScheduler() {
     clearFilters,
     dayDialogOpen, dayDialogDate, dayDialogDateISO, dayDialogChips, dayDialogInfo, closeDayDialog,
     openCreate, openCreateWithDate, closeCreate, createOpen: S.createOpen, create, stop: (e: React.MouseEvent) => e.stopPropagation(),
-    editOpen: S.editOpen, editDraft: S.editDraft, setEditDraft, closeEdit, submitEdit,
+    editOpen: S.editOpen, editDraft: S.editDraft, setEditDraft, closeEdit, submitEdit, canEdit, editMissing, editSubmitStyle,
     editScopePrompt: S.editScopePrompt, chooseEditScope, closeEditScopePrompt,
     openEdit: (aid: string, forceScope?: 'day' | 'all') => openEdit(aid, forceScope),
     removeAssign: (aid: string, scope?: 'day' | 'all') => removeAssign(aid, scope),
