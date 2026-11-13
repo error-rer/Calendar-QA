@@ -1411,7 +1411,7 @@
 
           <div class="grid-2">
             <div>
-              <h3>Customer Audit Form Fields (Strict 8 Requirements)</h3>
+              <h3>Customer Audit Form Fields (Strict 8 Fields + Date Range)</h3>
               <ol>
                 <li><strong>Standard:</strong> Quality standard (e.g. ISO 9001, IATF 16949, Customer Specific).</li>
                 <li><strong>Site:</strong> Multi-select manufacturing sites, automatically normalized in master order.</li>
@@ -1419,20 +1419,20 @@
                 <li><strong>End Customer:</strong> Dedicated independent field for end-client specification.</li>
                 <li><strong>Purpose:</strong> Reason for audit (Certification, Re-certification, Surveillance, Special).</li>
                 <li><strong>Target Package:</strong> Specific semiconductor package line (e.g., QFN, BGA, WLCSP).</li>
-                <li><strong>Scope:</strong> Detailed focus areas, process lines, or audit objectives.</li>
-                <li><strong>QMS Host:</strong> Assigned QA engineers hosting the external auditor.</li>
+                <li><strong>Customer Name:</strong> Client auditor representative or auditor name.</li>
+                <li><strong>QMS Host:</strong> Assigned QA engineers hosting the external auditor (cannot be empty or Unassigned).</li>
+                <li><strong>Date Range:</strong> Scheduled calendar start and completion dates (From &amp; To).</li>
               </ol>
             </div>
             <div>
-              <h3>Internal Audit Form Fields</h3>
+              <h3>Internal Audit Form Fields (Strict Full-Form Validation: 6 Fields)</h3>
               <ol>
-                <li><strong>Standard:</strong> Internal standard or specification.</li>
-                <li><strong>Site:</strong> Target plant / location being audited.</li>
-                <li><strong>Purpose:</strong> Internal compliance or gap analysis objective.</li>
-                <li><strong>Lead Auditor:</strong> Lead qualified internal auditor in charge.</li>
-                <li><strong>Internal Auditor / Host:</strong> Co-auditors or host engineers.</li>
-                <li><strong>Scope:</strong> Operational process area under evaluation.</li>
-                <li><strong>Date Range:</strong> Calendar start and completion dates.</li>
+                <li><strong>Standard:</strong> Internal audit standard or specification (IATF 16949, ISO 9001, EHS &amp; RBA, etc.).</li>
+                <li><strong>Site:</strong> Target manufacturing plant / facility site (UTL1, UTL2, UTL3, etc.).</li>
+                <li><strong>Audit Category:</strong> Internal QA audit classification category.</li>
+                <li><strong>Area:</strong> Target manufacturing operational area, process line, or cleanroom (strictly validated).</li>
+                <li><strong>QMS Host:</strong> Assigned internal QA engineer hosting the audit (cannot be empty or Unassigned).</li>
+                <li><strong>Date Range:</strong> Calendar start and completion dates (From &amp; To).</li>
               </ol>
             </div>
           </div>
