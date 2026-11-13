@@ -734,7 +734,7 @@
       <div class="nav-group-title">ข้อกำหนดทางเทคนิค</div>
       <ul class="nav-links">
         <li><a href="#api-spec" class="nav-link">16. รายการ REST API Endpoints</a></li>
-        <li><a href="#site-normalization" class="nav-link">17. การแปลงรหัสโรงงาน (Site Normalization)</a></li>
+        <li><a href="#feature-status-matrix" class="nav-link">17. ตารางสถานะฟังก์ชันในระบบ (Feature Matrix)</a></li>
       </ul>
     </aside>
 
@@ -1653,44 +1653,12 @@
         </div>
       </section>
 
-      <!-- 17. Multi-Site Normalization -->
-      <section id="site-normalization">
-        <h2>17. การแปลงรหัสโรงงานให้เป็นมาตรฐานเดียวกัน (Multi-Site Normalization)</h2>
-        <div class="feature-card">
-          <p>
-            เพื่อขจัดความไม่สอดคล้องของรหัสโรงงานในอดีต ระบบจะแปลงรหัสโรงงานทั้งหมดให้อยู่ในรูปแบบนำหน้าด้วย <code>UTL</code> ตามตารางนี้:
-          </p>
-
-          <table class="spec-table">
-            <thead>
-              <tr>
-                <th>ข้อความโรงงานขาเข้า</th>
-                <th>รหัสมาตรฐานที่แปลงได้</th>
-                <th>ลำดับความสำคัญในการเรียง</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td><code>U1</code> หรือ <code>UTL1</code></td><td><code>UTL1</code></td><td>1</td></tr>
-              <tr><td><code>U2</code> หรือ <code>UTL2</code></td><td><code>UTL2</code></td><td>2</td></tr>
-              <tr><td><code>U2A</code> หรือ <code>UTL2A</code></td><td><code>UTL2A</code></td><td>3</td></tr>
-              <tr><td><code>U2B</code> หรือ <code>UTL2B</code></td><td><code>UTL2B</code></td><td>4</td></tr>
-              <tr><td><code>U3</code> หรือ <code>UTL3</code></td><td><code>UTL3</code></td><td>5</td></tr>
-              <tr><td><code>U3A</code> หรือ <code>UTL3A</code></td><td><code>UTL3A</code></td><td>6</td></tr>
-              <tr><td><code>U3B</code> หรือ <code>UTL3B</code></td><td><code>UTL3B</code></td><td>7</td></tr>
-              <tr><td><code>U3T</code> หรือ <code>UTL3T</code></td><td><code>UTL3T</code></td><td>8</td></tr>
-            </tbody>
-          </table>
-
-          <p>
-            หากมีหลายโรงงานคั่นด้วยเครื่องหมายทับ เช่น <code>UTL3/UTL1</code> ระบบจะทำการแยกคำ ตัดค่าซ้ำ และจัดเรียงใหม่ตามลำดับสากลเป็น <code>UTL1/UTL3</code>
-          </p>
-        </div>
-      </section>
+      
 
     
-      <!-- 18. ตารางตรวจสอบสถานะฟังก์ชันทั้งหมดในระบบ -->
+      <!-- 17. ตารางตรวจสอบสถานะฟังก์ชันทั้งหมดในระบบ -->
       <section id="feature-status-matrix">
-        <h2>18. ตารางตรวจสอบสถานะฟังก์ชันทั้งหมดในระบบ (Comprehensive Feature Inventory &amp; UI Status Matrix)</h2>
+        <h2>17. ตารางตรวจสอบสถานะฟังก์ชันทั้งหมดในระบบ (Comprehensive Feature Inventory &amp; UI Status Matrix)</h2>
         <p>
           ส่วนนี้รวบรวมการตรวจสอบเชิงเทคนิคของทุกฟังก์ชัน, ข้อมูล, API Endpoints และหน้าต่างการทำงานในโค้ดเบสของ UTAC QA Calendar โดยจำแนกสถานะการแสดงผลและการใช้งานจริงบนหน้าเว็บ (UI Availability) ไว้อย่างชัดเจน:
         </p>

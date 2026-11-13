@@ -732,8 +732,8 @@
 
       <div class="nav-group-title">Specifications</div>
       <ul class="nav-links">
-        <li><a href="#api-spec" class="nav-link">REST API Endpoints</a></li>
-        <li><a href="#site-normalization" class="nav-link">Multi-Site Normalization</a></li>
+        <li><a href="#api-spec" class="nav-link">16. REST API Endpoints</a></li>
+        <li><a href="#feature-status-matrix" class="nav-link">17. Comprehensive Feature Inventory &amp; UI Status Matrix</a></li>
       </ul>
     </aside>
 
@@ -1659,44 +1659,12 @@
         </div>
       </section>
 
-      <!-- Multi-Site Normalization -->
-      <section id="site-normalization">
-        <h2>17. Multi-Site Normalization &amp; Formatting</h2>
-        <div class="feature-card">
-          <p>
-            To eliminate legacy inconsistencies across the system, all site codes are normalized to standard <code>UTL</code> prefixes using the following rule set:
-          </p>
-
-          <table class="spec-table">
-            <thead>
-              <tr>
-                <th>Input Site String</th>
-                <th>Normalized Site Code</th>
-                <th>Canonical Sort Priority</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td><code>U1</code> or <code>UTL1</code></td><td><code>UTL1</code></td><td>1</td></tr>
-              <tr><td><code>U2</code> or <code>UTL2</code></td><td><code>UTL2</code></td><td>2</td></tr>
-              <tr><td><code>U2A</code> or <code>UTL2A</code></td><td><code>UTL2A</code></td><td>3</td></tr>
-              <tr><td><code>U2B</code> or <code>UTL2B</code></td><td><code>UTL2B</code></td><td>4</td></tr>
-              <tr><td><code>U3</code> or <code>UTL3</code></td><td><code>UTL3</code></td><td>5</td></tr>
-              <tr><td><code>U3A</code> or <code>UTL3A</code></td><td><code>UTL3A</code></td><td>6</td></tr>
-              <tr><td><code>U3B</code> or <code>UTL3B</code></td><td><code>UTL3B</code></td><td>7</td></tr>
-              <tr><td><code>U3T</code> or <code>UTL3T</code></td><td><code>UTL3T</code></td><td>8</td></tr>
-            </tbody>
-          </table>
-
-          <p>
-            Multi-site strings separated by slashes or commas (e.g., <code>UTL3/UTL1</code>) are parsed, de-duplicated, and sorted in canonical order: <code>UTL1/UTL3</code>.
-          </p>
-        </div>
-      </section>
+      
 
     
-      <!-- 18. Comprehensive Feature Inventory & UI Status -->
+      <!-- 17. Comprehensive Feature Inventory & UI Status -->
       <section id="feature-status-matrix">
-        <h2>18. Comprehensive Feature Inventory &amp; UI Status Matrix</h2>
+        <h2>17. Comprehensive Feature Inventory &amp; UI Status Matrix</h2>
         <p>
           This section provides an exhaustive technical audit of all features, capabilities, endpoints, and data fields in the UTAC QA Calendar codebase, explicitly classifying their operational availability in the frontend User Interface (UI):
         </p>
