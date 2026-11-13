@@ -1289,22 +1289,34 @@
           <p>To enforce zero-defect quality standards, cards dynamically reflect real-time validation states:</p>
 
           <div class="grid-3">
-            <div class="stat-box" style="border-top: 4px solid var(--danger);">
-              <div class="stat-label" style="color:var(--danger)">Solid Red Warning Banner</div>
-              <div class="stat-value" style="font-size:18px; color:var(--danger)">Incomplete Audit</div>
-              <div class="stat-desc">Triggered if ANY required form field is blank or missing. Renders in solid red (<code>#dc2626</code>) with a warning exclamation badge.</div>
+            <div class="stat-box" style="border-top: 4px solid #dc2626;">
+              <div class="stat-label" style="color:#dc2626">Red Strip · Incomplete Data</div>
+              <div class="stat-value" style="font-size:17px; color:#dc2626">Missing Required Fields</div>
+              <div class="stat-desc">Triggered if ANY required field is blank or unassigned (Standard, Site, Customer, Purpose, QMS Host). Renders with a solid red indicator bar, warning badge, and appears in the sidebar incomplete queue.</div>
             </div>
 
-            <div class="stat-box" style="border-top: 4px solid var(--warning);">
-              <div class="stat-label" style="color:var(--warning)">Yellow Warning Badge</div>
-              <div class="stat-value" style="font-size:18px; color:var(--warning)">Missing Findings</div>
-              <div class="stat-desc">Triggered when an audit date has elapsed into the past, but the QA findings (Major, Minor, OFI, Obs) have not yet been recorded.</div>
+            <div class="stat-box" style="border-top: 4px solid #059669;">
+              <div class="stat-label" style="color:#059669">Green Strip · New Data</div>
+              <div class="stat-value" style="font-size:17px; color:#059669">Created within 7 Days</div>
+              <div class="stat-desc">Data is complete and newly created within 7 days (<code>now - createdAt &lt;= 7d</code>). Highlights fresh entries on the schedule regardless of whether the audit date is upcoming or backdated.</div>
             </div>
 
-            <div class="stat-box" style="border-top: 4px solid var(--primary);">
-              <div class="stat-label" style="color:var(--primary)">Teal / Standard Card</div>
-              <div class="stat-value" style="font-size:18px; color:var(--primary)">Fully Compliant</div>
-              <div class="stat-desc">All required fields are fully completed, and findings have been successfully submitted or are scheduled for upcoming dates.</div>
+            <div class="stat-box" style="border-top: 4px solid #0284c7;">
+              <div class="stat-label" style="color:#0284c7">Blue Strip · Updated Data</div>
+              <div class="stat-value" style="font-size:17px; color:#0284c7">Modified within 7 Days</div>
+              <div class="stat-desc">Data is complete and modified within the past 7 days (<code>updatedAt &gt; createdAt</code>). Alerts teammates to recently adjusted audit schedules, scopes, or auditor reassignments.</div>
+            </div>
+
+            <div class="stat-box" style="border-top: 4px solid #d97706;">
+              <div class="stat-label" style="color:#d97706">Yellow Strip · Pending Result</div>
+              <div class="stat-value" style="font-size:17px; color:#d97706">Awaiting Audit Findings</div>
+              <div class="stat-desc">The scheduled audit date has elapsed in the past (&gt; 7 days) and findings (Major, Minor, OFI, Obs) have not yet been recorded, prompting immediate QA closure.</div>
+            </div>
+
+            <div class="stat-box" style="border-top: 4px solid #9aa097;">
+              <div class="stat-label" style="color:#64748b">Gray Strip · Complete Data</div>
+              <div class="stat-value" style="font-size:17px; color:#64748b">Fully Compliant &amp; Closed</div>
+              <div class="stat-desc">Standard steady-state. All required fields are complete, older than 7 days, and quantitative findings are either submitted or the appointment is planned for future dates.</div>
             </div>
           </div>
 

@@ -1283,22 +1283,34 @@
           <h3>ค. ระบบสีเตือนความถูกต้องและมาตรฐานคุณภาพเข้มงวด</h3>
 
           <div class="grid-3">
-            <div class="stat-box" style="border-top: 4px solid var(--danger);">
-              <div class="stat-label" style="color:var(--danger)">แบนเนอร์สีแดงทึบ (Solid Red)</div>
-              <div class="stat-value" style="font-size:18px; color:var(--danger)">ข้อมูลไม่ครบถ้วน</div>
-              <div class="stat-desc">แสดงสีแดงทึบ (<code>#dc2626</code>) พร้อมเครื่องหมายตกใจทันที หากขาดข้อมูลจำเป็นแม้แต่ช่องเดียว</div>
+            <div class="stat-box" style="border-top: 4px solid #dc2626;">
+              <div class="stat-label" style="color:#dc2626">แถบสีแดง · Incomplete Data</div>
+              <div class="stat-value" style="font-size:17px; color:#dc2626">ข้อมูลไม่ครบถ้วน</div>
+              <div class="stat-desc">แสดงสีแดงทึบ (<code>#dc2626</code>) พร้อมเครื่องหมายเตือนทันที หากขาดข้อมูลจำเป็นช่องใดช่องหนึ่ง (Standard, Site, Customer, Purpose, QMS Host) และแสดงในรายการคิวเตือนด้านซ้าย</div>
             </div>
 
-            <div class="stat-box" style="border-top: 4px solid var(--warning);">
-              <div class="stat-label" style="color:var(--warning)">ป้ายเตือนสีเหลือง (Yellow Badge)</div>
-              <div class="stat-value" style="font-size:18px; color:var(--warning)">ยังไม่บันทึกผลตรวจ</div>
-              <div class="stat-desc">แสดงขึ้นเมื่อวันตรวจได้ผ่านพ้นไปแล้ว แต่ยังไม่มีการบันทึกตัวเลขข้อบกพร่อง (Major, Minor, OFI, Obs)</div>
+            <div class="stat-box" style="border-top: 4px solid #059669;">
+              <div class="stat-label" style="color:#059669">แถบสีเขียว · New Data</div>
+              <div class="stat-value" style="font-size:17px; color:#059669">สร้างใหม่ภายใน 7 วัน</div>
+              <div class="stat-desc">ข้อมูลสมบูรณ์และถูกสร้างขึ้นใหม่ภายใน 7 วัน (<code>now - createdAt &lt;= 7d</code>) ไม่ว่าวันนัดหมายจะอยู่ในอนาคตหรือลงบันทึกย้อนหลัง</div>
             </div>
 
-            <div class="stat-box" style="border-top: 4px solid var(--primary);">
-              <div class="stat-label" style="color:var(--primary)">บัตรสีมาตรฐาน / เขียว</div>
-              <div class="stat-value" style="font-size:18px; color:var(--primary)">ข้อมูลถูกต้องสมบูรณ์</div>
-              <div class="stat-desc">กรอกข้อมูลครบถ้วนทุกช่อง และได้บันทึกผลการตรวจเรียบร้อยแล้ว หรือเป็นงานตรวจที่ยังไม่ถึงกำหนด</div>
+            <div class="stat-box" style="border-top: 4px solid #0284c7;">
+              <div class="stat-label" style="color:#0284c7">แถบสีน้ำเงิน · Updated Data</div>
+              <div class="stat-value" style="font-size:17px; color:#0284c7">แก้ไขภายใน 7 วัน</div>
+              <div class="stat-desc">ข้อมูลสมบูรณ์และได้รับการแก้ไขเปลี่ยนแปลงล่าสุดภายใน 7 วัน เพื่อให้ทีมงานสังเกตเห็นการเปลี่ยนวันตรวจหรือผู้ตรวจได้อย่างชัดเจน</div>
+            </div>
+
+            <div class="stat-box" style="border-top: 4px solid #d97706;">
+              <div class="stat-label" style="color:#d97706">แถบสีเหลือง · Pending Result</div>
+              <div class="stat-value" style="font-size:17px; color:#d97706">รอลงบันทึกผลการตรวจ</div>
+              <div class="stat-desc">วันตรวจประเมินได้ผ่านพ้นไปแล้ว (เกิน 7 วัน) แต่ยังไม่มีการบันทึกตัวเลขข้อบกพร่อง (Major, Minor, OFI, Obs) เพื่อเตือนให้ปิดผลการตรวจ</div>
+            </div>
+
+            <div class="stat-box" style="border-top: 4px solid #9aa097;">
+              <div class="stat-label" style="color:#64748b">แถบสีเทา · Complete Data</div>
+              <div class="stat-value" style="font-size:17px; color:#64748b">ข้อมูลเสร็จสมบูรณ์</div>
+              <div class="stat-desc">สถานะปกติ กรอกข้อมูลครบถ้วน เกิน 7 วันแล้ว และได้บันทึกผลการตรวจเรียบร้อยแล้ว หรือเป็นงานตรวจล่วงหน้าที่ข้อมูลครบถ้วน</div>
             </div>
           </div>
 
