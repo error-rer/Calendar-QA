@@ -970,32 +970,83 @@
         </div>
       </section>
 
-      <!-- 4. Data Lifecycle -->
+            <!-- 4. Data Lifecycle -->
       <section id="data-lifecycle">
-        <h2>4. วงจรชีวิตข้อมูลและการบันทึก 2 ชั้น (Data Lifecycle &amp; Dual-Persistence)</h2>
+        <h2>4. วงจรชีวิตข้อมูลและการทำงานครบวงจร (Data Lifecycle &amp; End-to-End Workflows)</h2>
         <div class="feature-card">
           <p>
-            เพื่อให้มั่นใจว่าระบบจะตอบสนองทันทีโดยไม่มีการรอคอย และสามารถทำงานได้อย่างราบรื่นในพื้นที่โรงงานผลิตที่มีสัญญาณเครือข่ายไม่เสถียร ระบบจึงใช้สถาปัตยกรรม <strong>Dual-Layer Persistence</strong>:
+            เพื่อให้มั่นใจว่าระบบจะตอบสนองทันทีโดยไม่มีการรอคอย และสามารถทำงานได้อย่างราบรื่นในพื้นที่โรงงานผลิตที่มีสัญญาณเครือข่ายไม่เสถียร ระบบจึงใช้สถาปัตยกรรม <strong>Dual-Layer Persistence</strong> ร่วมกับกลไกการกลายพันธุ์ข้อมูลแบบ <strong>Optimistic UI Update</strong> และการส่งออกสเปรดชีตผ่านเบราว์เซอร์ 100%
           </p>
 
-          <ol>
-            <li>
-              <strong>การโหลดข้อมูลทันที (Layer 1 - Local Snapshot):</strong>
-              เมื่อเปิดเว็บเบราว์เซอร์ โมดูล <code>useScheduler</code> จะอ่านข้อมูลจาก <code>localStorage['calendar_qa_snapshot']</code> ทันที ทำให้ตารางปฏิทิน รายชื่อวิศวกร และลำดับตัวเลือกแสดงผลทันทีโดยไม่ต้องรอผลตอบกลับจากเซิร์ฟเวอร์
-            </li>
-            <li>
-              <strong>การเชื่อมต่อเบื้องหลัง (Layer 2 - Edge Remote Sync):</strong>
-              พร้อมกันนั้น ระบบจะส่งคำขอ <code>GET /api/state</code> ไปยัง Cloudflare Worker เพื่อนำข้อมูลล่าสุดจากฐานข้อมูล D1 มาปรับให้สอดคล้องกันแบบเรียลไทม์
-            </li>
-            <li>
-              <strong>การอัปเดตแบบฉับไว (Optimistic Updates):</strong>
-              เมื่อมีการสร้าง แก้ไข หรือลบนัดหมาย ระบบจะอัปเดตหน้าจอทันที เขียนทับลง Local Snapshot แล้วส่งคำสั่งไปยัง Cloudflare Worker และ D1 ในเบื้องหลัง
-            </li>
-            <li>
-              <strong>การแจ้งเตือนไปยัง Google Sheets:</strong>
-              เมื่อฐานข้อมูลบันทึกสำเร็จ ระบบจะแปลงข้อมูลเป็นแถวตารางและยิง Webhook ไปยัง Google Sheets ทันที
-            </li>
-          </ol>
+          <div class="callout callout-blue" style="margin-bottom: 24px;">
+            <div class="callout-title">สถาปัตยกรรมความต่อเนื่องของข้อมูล 2 ชั้น (Dual-Layer Persistence)</div>
+            <p style="margin: 0; font-size: 14px;">
+              <strong>ชั้นที่ 1 (Local Snapshot):</strong> อ่าน/เขียนแคชทันทีที่คีย์ <code>localStorage['calendar_qa_snapshot']</code> (Cold Start: 0ms)<br>
+              <strong>ชั้นที่ 2 (Edge Cloudflare D1):</strong> ซิงค์ข้อมูลสอดคล้องกันผ่าน REST API <code>GET /api/state</code> และ D1 SQLite Transactions
+            </p>
+          </div>
+
+          <h3 style="font-size: 17px; margin: 24px 0 12px; color: #0f172a;">กระบวนการทำงานหลักจากโค้ดเบส (3 Core End-to-End Workflows)</h3>
+
+          <!-- Workflow A -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <h4 style="margin: 0; font-size: 15px; color: #0f766e;">🔄 Workflow A: Data Loading &amp; State Hydration (การโหลดข้อมูลและเตรียมสถานะระบบ)</h4>
+              <span class="pill pill-teal">Initial Load / Zero Cold-Start</span>
+            </div>
+            <p style="font-size: 13.5px; color: #475569; margin-bottom: 14px;">
+              ผังการโหลดข้อมูลตั้งแต่เปิดเว็บเบราว์เซอร์จนถึงการคำนวณสถิติและแสดงผลปฏิทิน:
+            </p>
+            <ol style="margin-left: 20px; font-size: 13.5px; color: #334155; line-height: 1.8;">
+              <li><strong>Instant Offline Hydration (<code>src/data.ts</code> &rarr; <code>initialState()</code>):</strong> เมื่อผู้ใช้เปิดหน้าเว็บ ฟังก์ชันจะดึงแคชจาก <code>localStorage.getItem('calendar_qa_snapshot')</code> เพื่อสร้าง State ในหน่วยความจำทันที ทำให้ตารางปฏิทินและตัวเลือกแสดงผลทันทีโดยไม่ต้องรอเครือข่าย</li>
+              <li><strong>Edge API Handshake (<code>src/useScheduler.ts</code> &rarr; <code>api.fetchState()</code>):</strong> ส่งคำขอ HTTP Asynchronous <code>GET /api/state</code> ไปยัง Cloudflare Worker เพื่อดึงข้อมูลสดล่าสุด</li>
+              <li><strong>Concurrent D1 Queries (<code>worker/index.ts</code>):</strong> Cloudflare Worker รันบน V8 Isolate ทำการ Query ตารางในฐานข้อมูล D1 พร้อมกันผ่าน <code>Promise.all</code>:
+                <br><code>SELECT * FROM engineers, plants, active_plants, orders, assignments, comments, activity, options</code></li>
+              <li><strong>State Reconciliation &amp; Snapshot Update (<code>src/useScheduler.ts</code>):</strong> ข้อมูลที่ได้รับจะถูกปรับรูปแบบผ่าน <code>normalizeAssignment()</code> และอัปเดตลง State Tree พร้อมเขียนทับลง <code>localStorage.setItem('calendar_qa_snapshot', ...)</code> เพื่อเป็นแคชล่าสุด</li>
+              <li><strong>Unified Metrics Rollup (<code>src/utils/auditMetricsHelper.ts</code> &rarr; <code>calculateAuditStats()</code>):</strong> ทำการ Reconcile วันตรวจต่อเนื่องหลายวัน (Consecutive Dates) ของงานเดียวกันให้ยุบเป็น 1 แคมเปญ ส่งผลให้ตัวเลขสรุปผล (Customer Audits, Internal Audits, Total Audits) ตรงกันทุกหน้าจอ</li>
+            </ol>
+          </div>
+
+          <!-- Workflow B -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <h4 style="margin: 0; font-size: 15px; color: #1d4ed8;">⚡ Workflow B: Create / Update / Delete Mutation Flow (การสร้าง แก้ไข และลบนัดหมาย)</h4>
+              <span class="pill pill-blue">Optimistic UI / Dynamic Dropdown Sync</span>
+            </div>
+            <p style="font-size: 13.5px; color: #475569; margin-bottom: 14px;">
+              ผังการกลายพันธุ์ข้อมูลแบบเรียลไทม์พร้อมการรีเฟรชตัวเลือกลงดรอปดาวน์อัตโนมัติ:
+            </p>
+            <ol style="margin-left: 20px; font-size: 13.5px; color: #334155; line-height: 1.8;">
+              <li><strong>User Form Submission (<code>AppointmentFormFields.tsx</code>):</strong> ผู้ใช้ส่งข้อมูลจาก Modal ตรวจสอบความถูกต้องครบทั้ง 8 ฟิลด์ (Customer) หรือ 6 ฟิลด์ (Internal)</li>
+              <li><strong>Optimistic ViewModel Update (<code>src/useScheduler.ts</code>):</strong> ฟังก์ชัน <code>submitCreate()</code>, <code>submitEdit()</code>, หรือ <code>removeAssign()</code> อัปเดต <code>state.assignments</code> ในหน่วยความจำทันที ผู้ใช้จะเห็น Card เปลี่ยนแปลงบนปฏิทินทันที (0ms Latency) พร้อมบันทึก Snapshot ลง <code>localStorage</code></li>
+              <li><strong>Asynchronous REST API Invocation (<code>src/api.ts</code>):</strong> ยิงคำสั่งในเบื้องหลัง:
+                <br>&bull; สร้าง: <code>POST /api/assignments</code>, <code>POST /api/orders</code>
+                <br>&bull; แก้ไข: <code>PUT /api/assignments/:id</code>
+                <br>&bull; ลบ: <code>DELETE /api/assignments/:id</code> (พร้อม Cascade ลบ <code>comments</code>)</li>
+              <li><strong>D1 Transaction Persistence (<code>worker/index.ts</code>):</strong> Cloudflare Worker ดำเนินการ Prepared Statement <code>INSERT</code>, <code>UPDATE</code>, หรือ <code>DELETE</code> บันทึกลง D1 SQLite อย่างปลอดภัย</li>
+              <li><strong>Dynamic Dropdown Options Refresh (<code>src/utils/auditOptionsHelper.ts</code> &rarr; <code>getActiveDropdownOptions()</code>):</strong> ดรอปดาวน์ <code>STANDARD</code>, <code>CUSTOMER</code>, <code>PURPOSE</code>, <code>QMS HOST</code> ฯลฯ ถูกคำนวณใหม่จากรายการนัดหมายที่ยังคงอยู่ หากนัดหมายถูกลบ ค่ากำพร้าจะหายไปจากตัวเลือกทันทีทุกหน้าจอ (โดยคงรายชื่อโรงงาน <code>SITE</code> ไว้ตามมาตรฐาน <code>MASTER_PLANT_SITES</code>: UTL1..UTL3T)</li>
+            </ol>
+          </div>
+
+          <!-- Workflow C -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <h4 style="margin: 0; font-size: 15px; color: #15803d;">📊 Workflow C: Client-Side Excel (.xlsx) Export Flow (การส่งออกไฟล์ Excel ผ่านเบราว์เซอร์ 100%)</h4>
+              <span class="pill pill-green">Zero-Server / Standalone .xlsx</span>
+            </div>
+            <p style="font-size: 13.5px; color: #475569; margin-bottom: 14px;">
+              การสร้างไฟล์สเปรดชีตความเร็วสูงที่ทำงานบนหน่วยความจำไคลเอนต์โดยสมบูรณ์:
+            </p>
+            <ol style="margin-left: 20px; font-size: 13.5px; color: #334155; line-height: 1.8;">
+              <li><strong>Trigger Export:</strong> ผู้ใช้คลิกปุ่มส่งออกใน <code>TableView.tsx</code> (<code>handleExportExcel</code>) หรือ <code>SummaryDashboard.tsx</code> (<code>handleExportVisitsExcel</code>, <code>handleExportFindingsExcel</code>)</li>
+              <li><strong>Data Extraction &amp; KPI Rollup:</strong> ดึงชุดข้อมูลที่ผ่านตัวกรอง active และจัดโครงสร้าง Matrix (เช่น แยกตามโรงงานและ 12 เดือน พร้อมยอดรวม CS / IA) ที่ได้จาก <code>calculateAuditStats()</code></li>
+              <li><strong>On-Demand Lazy Loading:</strong> โหลดไลบรารี <code>xlsx-js-style</code> แบบ Dynamic Import เฉพาะเมื่อมีการเรียกใช้งาน:
+                <br><code>const XLSX = (await import('xlsx-js-style')).default || (await import('xlsx-js-style'));</code></li>
+              <li><strong>In-Memory Worksheet Construction &amp; Styling:</strong> แปลง Array ข้อมูลด้วย <code>XLSX.utils.aoa_to_sheet()</code> พร้อมจัดสไตล์ระดับเซลล์ (ฟอนต์ Calibri, สีหัวตาราง <code>#1E3A8A</code>, ขอบเส้นคู่ที่แถวยอดรวม, และ AutoFilter <code>worksheet['!autofilter']</code>)</li>
+              <li><strong>Instant Browser File Download:</strong> สั่งดาวน์โหลดด้วย <code>XLSX.writeFile(workbook, filename)</code> โดยเบราว์เซอร์จะสร้าง Blob และเซฟไฟล์ <code>.xlsx</code> ลงเครื่องทันที
+                <br><em>*ยืนยันการทำงานแบบอิสระ: ไม่มีการเรียก API ไปยังเซิร์ฟเวอร์ และไม่มีการพึ่งพา Google Sheets API ใดๆ (0 Network Requests)*</em></li>
+            </ol>
+          </div>
         </div>
       </section>
 

@@ -969,32 +969,83 @@
         </div>
       </section>
 
-      <!-- Data Lifecycle -->
+            <!-- Data Lifecycle -->
       <section id="data-lifecycle">
-        <h2>4. Data Lifecycle &amp; Dual-Persistence Mechanism</h2>
+        <h2>4. Data Lifecycle &amp; End-to-End System Workflows</h2>
         <div class="feature-card">
           <p>
-            To guarantee <strong>zero perceivable latency</strong> and uninterrupted offline accessibility during factory floor inspections, the application utilizes a sophisticated <strong>Dual-Layer Persistence Pattern</strong>:
+            To guarantee <strong>zero perceivable latency</strong>, robust multi-facility audit synchronization, and uninterrupted offline accessibility during factory floor inspections, the application utilizes an enterprise <strong>Dual-Layer Persistence Pattern</strong> paired with an <strong>Optimistic Mutation Pipeline</strong> and a 100% client-side Excel export engine.
           </p>
 
-          <ol>
-            <li>
-              <strong>Instant Hydration (Layer 1 - Local Snapshot):</strong>
-              When the browser initializes, <code>useScheduler</code> immediately parses <code>localStorage['calendar_qa_snapshot']</code>. If present, the full calendar, engineer roster, plant states, and custom options orders render within milliseconds without waiting for server roundtrips.
-            </li>
-            <li>
-              <strong>Background Reconciliation (Layer 2 - Edge Remote Sync):</strong>
-              Concurrently, an asynchronous <code>GET /api/state</code> request dispatches to the Cloudflare Worker. The remote D1 state reconciles with the local state, seamlessly updating any mutations made by other QA team members.
-            </li>
-            <li>
-              <strong>Optimistic Mutation Pipeline:</strong>
-              When an engineer creates, edits, or deletes an appointment, the UI updates <em>optimistically</em> in memory, instantly writes to the local snapshot, and asynchronously commits to the Cloudflare Worker and D1 database.
-            </li>
-            <li>
-              <strong>Event-Driven Google Sheets Broadcast:</strong>
-              Upon successful persistence, the backend checks for Google Sheets synchronization rules and pushes formatted rows to the configured webhook endpoint.
-            </li>
-          </ol>
+          <div class="callout callout-blue" style="margin-bottom: 24px;">
+            <div class="callout-title">Dual-Layer Persistence Architecture</div>
+            <p style="margin: 0; font-size: 14px;">
+              <strong>Layer 1 (Local Snapshot):</strong> Immediate read/write from <code>localStorage['calendar_qa_snapshot']</code> (Cold Start: 0ms)<br>
+              <strong>Layer 2 (Edge Cloudflare D1):</strong> Authoritative distributed ACID persistence synchronized via <code>GET /api/state</code> and prepared SQLite statements.
+            </p>
+          </div>
+
+          <h3 style="font-size: 17px; margin: 24px 0 12px; color: #0f172a;">3 Core End-to-End Workflows Traced from Codebase</h3>
+
+          <!-- Workflow A -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <h4 style="margin: 0; font-size: 15px; color: #0f766e;">🔄 Workflow A: Data Loading &amp; State Hydration</h4>
+              <span class="pill pill-teal">Initial Load / Zero Cold-Start</span>
+            </div>
+            <p style="font-size: 13.5px; color: #475569; margin-bottom: 14px;">
+              End-to-end execution flow from application initialization to unified metrics rollup and UI rendering:
+            </p>
+            <ol style="margin-left: 20px; font-size: 13.5px; color: #334155; line-height: 1.8;">
+              <li><strong>Instant Offline Hydration (<code>src/data.ts</code> &rarr; <code>initialState()</code>):</strong> On browser boot, the app immediately reads <code>localStorage.getItem('calendar_qa_snapshot')</code> to instantiate the reactive state tree. The calendar and option menus render in 0ms without waiting for network responses.</li>
+              <li><strong>Edge API Handshake (<code>src/useScheduler.ts</code> &rarr; <code>api.fetchState()</code>):</strong> An asynchronous <code>GET /api/state</code> request dispatches to Cloudflare Worker to fetch authoritative live data.</li>
+              <li><strong>Concurrent D1 Queries (<code>worker/index.ts</code>):</strong> Cloudflare Worker executes parallel queries via <code>Promise.all</code> across 8 tables:
+                <br><code>SELECT * FROM engineers, plants, active_plants, orders, assignments, comments, activity, options</code></li>
+              <li><strong>State Reconciliation &amp; Snapshot Refresh (<code>src/useScheduler.ts</code>):</strong> Incoming data is normalized via <code>normalizeAssignment()</code>, reconciled into the reactive state tree, and written back to <code>localStorage.setItem('calendar_qa_snapshot', ...)</code>.</li>
+              <li><strong>Unified Metrics Rollup (<code>src/utils/auditMetricsHelper.ts</code> &rarr; <code>calculateAuditStats()</code>):</strong> Reconciles multi-day consecutive dates of identical audits into single unified campaigns, guaranteeing identical audit figures across Schedule, Table, and Summary views.</li>
+            </ol>
+          </div>
+
+          <!-- Workflow B -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <h4 style="margin: 0; font-size: 15px; color: #1d4ed8;">⚡ Workflow B: Create / Update / Delete Mutation Flow</h4>
+              <span class="pill pill-blue">Optimistic UI / Dynamic Dropdown Sync</span>
+            </div>
+            <p style="font-size: 13.5px; color: #475569; margin-bottom: 14px;">
+              Real-time optimistic data mutation pipeline with synchronized reactive dropdown refresh:
+            </p>
+            <ol style="margin-left: 20px; font-size: 13.5px; color: #334155; line-height: 1.8;">
+              <li><strong>User Form Submission (<code>AppointmentFormFields.tsx</code>):</strong> Form modal validates all mandatory fields (8 for Customer Audits, 6 for Internal Audits).</li>
+              <li><strong>Optimistic ViewModel Update (<code>src/useScheduler.ts</code>):</strong> Handlers (<code>submitCreate()</code>, <code>submitEdit()</code>, <code>removeAssign()</code>) immediately mutate <code>state.assignments</code> in memory with zero user-perceivable latency and update <code>localStorage</code> snapshot.</li>
+              <li><strong>Asynchronous REST API Invocation (<code>src/api.ts</code>):</strong> Dispatches background requests:
+                <br>&bull; Create: <code>POST /api/assignments</code>, <code>POST /api/orders</code>
+                <br>&bull; Update: <code>PUT /api/assignments/:id</code>
+                <br>&bull; Delete: <code>DELETE /api/assignments/:id</code> (cascading comment removal)</li>
+              <li><strong>D1 Transaction Persistence (<code>worker/index.ts</code>):</strong> Cloudflare Worker executes parameterized prepared statements (<code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>) against Cloudflare D1.</li>
+              <li><strong>Dynamic Dropdown Options Refresh (<code>src/utils/auditOptionsHelper.ts</code> &rarr; <code>getActiveDropdownOptions()</code>):</strong> Autocomplete options for <code>STANDARD</code>, <code>CUSTOMER</code>, <code>PURPOSE</code>, <code>QMS HOST</code>, etc. re-derive dynamically from active schedule records. Deleted values disappear immediately across Modal, Table, and Manage views, while <code>SITE</code> preserves the fixed <code>MASTER_PLANT_SITES</code> list (UTL1..UTL3T).</li>
+            </ol>
+          </div>
+
+          <!-- Workflow C -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <h4 style="margin: 0; font-size: 15px; color: #15803d;">📊 Workflow C: Client-Side Excel (.xlsx) Export Flow</h4>
+              <span class="pill pill-green">Zero-Server / Standalone .xlsx</span>
+            </div>
+            <p style="font-size: 13.5px; color: #475569; margin-bottom: 14px;">
+              High-fidelity spreadsheet generation executing 100% inside client browser memory:
+            </p>
+            <ol style="margin-left: 20px; font-size: 13.5px; color: #334155; line-height: 1.8;">
+              <li><strong>Trigger Export:</strong> User triggers export in <code>TableView.tsx</code> (<code>handleExportExcel</code>) or <code>SummaryDashboard.tsx</code> (<code>handleExportVisitsExcel</code>, <code>handleExportFindingsExcel</code>).</li>
+              <li><strong>Data Extraction &amp; KPI Rollup:</strong> Extracts filtered active rows and aggregates Site &times; Month matrices from <code>calculateAuditStats()</code>.</li>
+              <li><strong>On-Demand Lazy Loading:</strong> Dynamically imports <code>xlsx-js-style</code> without inflating initial application bundle:
+                <br><code>const XLSX = (await import('xlsx-js-style')).default || (await import('xlsx-js-style'));</code></li>
+              <li><strong>In-Memory Worksheet Construction &amp; Styling:</strong> Converts records with <code>XLSX.utils.aoa_to_sheet()</code> and injects cell-level styling (Calibri fonts, header fill <code>#1E3A8A</code>, double bottom borders on totals, column widths, and <code>worksheet['!autofilter']</code>).</li>
+              <li><strong>Instant Browser File Download:</strong> Generates workbook via <code>XLSX.writeFile(workbook, filename)</code>, downloading the <code>.xlsx</code> file directly to the user's computer.
+                <br><em>*Confirmed: 100% client-side memory execution with 0 server requests and 0 Google Sheets API dependencies.*</em></li>
+            </ol>
+          </div>
         </div>
       </section>
 
