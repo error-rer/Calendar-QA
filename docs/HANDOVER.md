@@ -8,7 +8,7 @@
 
 ## 1. Executive Summary & Purpose
 
-The **UTAC Calendar Auditor** platform is an enterprise-grade semiconductor operations management system designed for Quality Assurance (QA) departments across UTAC manufacturing sites (**UTL1**, **UTL2**, **UTL2A**, **UTL2B**, **UTL3**, **UTL3A**, **UTL3T**).
+The **UTAC Calendar Auditor** platform is an enterprise-grade semiconductor operations management system designed for Quality Assurance (QA) departments across UTAC's 3 primary manufacturing campuses (**UTL1**, **UTL2**, **UTL3**) and their 4 operational facility subsets (**UTL2A**, **UTL2B**, **UTL3A**, **UTL3T**).
 
 It replaces legacy spreadsheets with a real-time, multi-user scheduling workspace supporting:
 - **Customer Audits (CS)** and **Internal Audits (IA)** scheduling with strict conflict and double-booking guardrails.
@@ -22,7 +22,6 @@ It replaces legacy spreadsheets with a real-time, multi-user scheduling workspac
 flowchart LR
     A["Client Browser (React 19 SPA)"] -->|"REST JSON (/api/*)"| B["Cloudflare Worker (Edge API)"]
     B -->|"D1 Prepared SQL"| C[("Cloudflare D1 Database")]
-    B -->|"Async JSON Webhook"| D["Google Apps Script (Sheets Sync)"]
     A <-->|"Optimistic Offline Cache"| E[("LocalStorage Snapshot")]
 ```
 
