@@ -82,7 +82,7 @@ Calendar-QA/
 │   ├── ui.tsx                          # Atomic CSS helper & base button primitives
 │   └── useScheduler.ts                 # Master Hook (Reactive state, validation, CRUD, sync)
 ├── worker/                             # Cloudflare Worker Backend
-│   └── index.ts                        # REST API routing, D1 query executor, Sheets webhook
+│   └── index.ts                        # REST API routing, D1 query executor, auth & CORS
 ├── package.json                        # Dependencies & NPM build scripts
 ├── tsconfig.json                       # TypeScript compiler configurations
 ├── vite.config.ts                      # Vite build configuration with React plugin
