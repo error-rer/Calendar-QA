@@ -3,6 +3,7 @@ export interface UserRecord {
   username: string;
   name?: string;
   role?: string;
+  engineerId?: string;
   passwordHash?: string;
   salt?: string;
   createdAt?: string;
@@ -83,11 +84,17 @@ function getLocalUsers(): UserRecord[] {
     try {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
+        let changed = false;
         const users = parsed.filter((user) => !(
           (user?.id === 'usr_jordan' && user?.username === 'jordan.lee') ||
           (user?.id === 'usr_100234' && user?.username === '100234')
         ));
-        if (users.length !== parsed.length) saveLocalUsers(users);
+        if (users.length !== parsed.length) changed = true;
+        if (users.length > 0 && !users.some((u) => (u?.role || 'user').toLowerCase() === 'admin')) {
+          users[0] = { ...users[0], role: 'admin' };
+          changed = true;
+        }
+        if (changed) saveLocalUsers(users);
         return users;
       }
     } catch {}
@@ -203,7 +210,7 @@ export const authClient = {
       id: 'usr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
       username: cleanUser,
       name: name?.trim() || cleanUser,
-      role: 'user',
+      role: localUsers.length === 0 ? 'admin' : 'user',
       salt,
       passwordHash,
       createdAt: new Date().toISOString(),
@@ -294,7 +301,10 @@ export const authClient = {
     } catch (err) {
       if (!isDevelopment()) throw err;
       const user = getDevSession();
-      return user ? { ok: true, user } : null;
+      if (!user) return null;
+      const localMatch = getLocalUsers().find((u) => u.id === user.id || u.username.toLowerCase() === user.username.toLowerCase());
+      const syncedUser = localMatch ? { ...user, role: localMatch.role || 'user', name: localMatch.name || user.name } : user;
+      return { ok: true, user: syncedUser };
     }
   },
 
@@ -373,5 +383,164 @@ export const authClient = {
       ok: true,
       message: 'Password updated successfully.',
     };
+  },
+
+  /**
+   * List all user accounts (Admin only)
+   */
+  async listUsers(): Promise<UserRecord[]> {
+    try {
+      const res = await fetch('/api/users', { headers: { 'Content-Type': 'application/json' } });
+      if (res.ok) {
+        const data = await res.json();
+        return Array.isArray(data.users) ? data.users : [];
+      }
+      throw await responseError(res, 'Failed to load users.');
+    } catch (err: any) {
+      if (!isDevelopment() || (err.message && err.message.includes('Admin access required'))) {
+        throw err;
+      }
+    }
+
+    return getLocalUsers().map((u) => ({
+      id: u.id,
+      username: u.username,
+      name: u.name || u.username,
+      role: (u.role || 'user').toLowerCase(),
+      engineerId: u.engineerId || '',
+      createdAt: u.createdAt,
+    }));
+  },
+
+  /**
+   * Create a new standard user account (Admin only; always created with role 'user')
+   */
+  async createUser(input: { userId: string; password: string; name?: string; engineerId?: string }): Promise<UserRecord> {
+    const cleanUser = input.userId.trim();
+    const check = validateUserId(cleanUser);
+    if (!check.valid) throw new Error(check.error);
+    if (!input.password || input.password.length < 4) {
+      throw new Error('Password must be at least 4 characters long.');
+    }
+
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: cleanUser,
+          username: cleanUser,
+          password: input.password,
+          name: input.name?.trim() || cleanUser,
+          engineerId: input.engineerId || '',
+          role: 'user',
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.user;
+      }
+      throw await responseError(res, 'Failed to create user.');
+    } catch (err: any) {
+      if (!isDevelopment() || (err.message && (err.message.includes('already registered') || err.message.includes('User ID') || err.message.includes('Password') || err.message.includes('Admin')))) {
+        throw err;
+      }
+    }
+
+    const localUsers = getLocalUsers();
+    if (localUsers.some((u) => u.username.toLowerCase() === cleanUser.toLowerCase())) {
+      throw new Error('User ID is already registered.');
+    }
+
+    const salt = Math.random().toString(36).slice(2, 10);
+    const passwordHash = await hashPassword(input.password, salt);
+    const newUser: UserRecord = {
+      id: 'usr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      username: cleanUser,
+      name: input.name?.trim() || cleanUser,
+      role: 'user',
+      engineerId: input.engineerId || '',
+      salt,
+      passwordHash,
+      createdAt: new Date().toISOString(),
+    };
+    localUsers.push(newUser);
+    saveLocalUsers(localUsers);
+
+    return {
+      id: newUser.id,
+      username: newUser.username,
+      name: newUser.name,
+      role: newUser.role,
+      engineerId: newUser.engineerId,
+      createdAt: newUser.createdAt,
+    };
+  },
+
+  /**
+   * Grant admin role to an existing standard user (Admin only)
+   */
+  async grantAdmin(id: string): Promise<UserRecord> {
+    try {
+      const res = await fetch(`/api/users/${encodeURIComponent(id)}/role`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'admin' }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.user;
+      }
+      throw await responseError(res, 'Failed to grant admin role.');
+    } catch (err: any) {
+      if (!isDevelopment() || (err.message && (err.message.includes('not found') || err.message.includes('admin') || err.message.includes('Admin')))) {
+        throw err;
+      }
+    }
+
+    const localUsers = getLocalUsers();
+    const idx = localUsers.findIndex((u) => u.id === id);
+    if (idx === -1) throw new Error('User not found.');
+    if ((localUsers[idx].role || 'user').toLowerCase() === 'admin') {
+      throw new Error('User is already an admin.');
+    }
+
+    localUsers[idx] = { ...localUsers[idx], role: 'admin' };
+    saveLocalUsers(localUsers);
+
+    return {
+      id: localUsers[idx].id,
+      username: localUsers[idx].username,
+      name: localUsers[idx].name || localUsers[idx].username,
+      role: 'admin',
+      createdAt: localUsers[idx].createdAt,
+    };
+  },
+
+  /**
+   * Delete a standard user account (Admin only; cannot delete admin accounts)
+   */
+  async deleteUser(id: string): Promise<void> {
+    try {
+      const res = await fetch(`/api/users/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (res.ok) return;
+      throw await responseError(res, 'Failed to delete user.');
+    } catch (err: any) {
+      if (!isDevelopment() || (err.message && (err.message.includes('not found') || err.message.includes('admin') || err.message.includes('Admin')))) {
+        throw err;
+      }
+    }
+
+    const localUsers = getLocalUsers();
+    const target = localUsers.find((u) => u.id === id);
+    if (!target) throw new Error('User not found.');
+    if ((target.role || 'user').toLowerCase() === 'admin') {
+      throw new Error('Admins cannot delete admin accounts.');
+    }
+
+    saveLocalUsers(localUsers.filter((u) => u.id !== id));
   },
 };

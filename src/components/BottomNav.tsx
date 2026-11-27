@@ -22,11 +22,11 @@ export function BottomNav({ vm }: { vm: VM }) {
     { key: 'schedule', label: 'Schedule', on: vm.isSchedule, go: vm.goSchedule },
     { key: 'table', label: 'Table', on: vm.isTable, go: vm.goTable },
     { key: 'summary', label: 'Summary', on: vm.isSummary, go: vm.goSummary },
-    { key: 'manage', label: 'Manage', on: vm.isAdmin, go: vm.goAdmin },
+    ...(vm.canManage ? [{ key: 'manage', label: 'Manage', on: vm.isAdmin, go: vm.goAdmin }] : []),
     { key: 'history', label: 'History', on: vm.isHistory, go: vm.goHistory },
   ];
   return (
-    <nav aria-label="Main" className="bottom-nav">
+    <nav aria-label="Main" className="bottom-nav" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
       {items.map((it) => (
         <button key={it.key} type="button" onClick={it.go} aria-current={it.on ? 'page' : undefined}>
           <span className="pill">{ICONS[it.key]}</span>

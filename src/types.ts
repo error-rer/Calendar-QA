@@ -1232,7 +1232,7 @@ export {
 export type Page = 'schedule' | 'table' | 'admin' | 'profile' | 'summary' | 'history';
 export type View = 'person' | 'plant' | 'site' | 'timetable';
 export type TimeScale = 'week' | 'month' | 'year' | 'search';
-export type AdminTab = 'engineers' | 'options' | 'holidays';
+export type AdminTab = 'engineers' | 'options' | 'holidays' | 'users';
 
 export interface EngineerForm {
   name: string;

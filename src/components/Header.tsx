@@ -1,5 +1,6 @@
 import type { VM } from '../useScheduler';
 import { css, HButton } from '../ui';
+import { ThemeSwap } from './ThemeSwap';
 
 export function Header({ vm }: { vm: VM }) {
   const user = vm.currentUser;
@@ -28,12 +29,16 @@ export function Header({ vm }: { vm: VM }) {
         <button className="tap" onClick={vm.goSchedule} style={vm.navSchedStyle}>Schedule</button>
         <button className="tap" onClick={vm.goTable} style={vm.navTableStyle}>Table</button>
         <button className="tap" onClick={vm.goSummary} style={vm.navSummaryStyle}>Summary</button>
-        <button className="tap" onClick={vm.goAdmin} style={vm.navAdminStyle}>Manage</button>
+        {vm.canManage && (
+          <button className="tap" onClick={vm.goAdmin} style={vm.navAdminStyle}>Manage</button>
+        )}
         <button className="tap" onClick={vm.goHistory} style={vm.navHistoryStyle}>History</button>
       </nav>
       )}
 
       <div style={css('flex:1')} />
+
+      <ThemeSwap />
 
       <div style={css('position:relative')}>
         <HButton

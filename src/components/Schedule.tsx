@@ -23,7 +23,7 @@ function renderApptCode(code: string, overrideColor?: string) {
     if (spaceDotIdx !== -1) {
       const prefix = code.slice(0, spaceDotIdx);
       const rest = code.slice(spaceDotIdx);
-      const prefixColor = overrideColor || (code.startsWith('CS') ? '#2756d6' : '#10b981');
+      const prefixColor = overrideColor || (code.startsWith('CS') ? '#2756d6' : '#004F10');
       return (
         <>
           <span style={{ color: prefixColor, fontWeight: 700 }}>{prefix}</span>
@@ -921,7 +921,7 @@ function SearchRowItem({ dateLabel, chip, isLast }: { dateLabel: string; chip: a
         <div style={{ flex: 1, minWidth: 0, padding: '9px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
           <div onClick={toggleExpand} style={{ minWidth: 0, flex: 1, cursor: 'pointer' }} title="Click to expand embedded details">
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', flexWrap: 'wrap' }}>
-              <div style={css(`font-size:12.5px;font-weight:600;color:${chip.isInternal ? '#10b981' : '#2756d6'}`)}>
+              <div style={css(`font-size:12.5px;font-weight:600;color:${chip.isInternal ? '#004F10' : '#2756d6'}`)}>
                 {renderApptCode(chip.code)}
               </div>
               {isInc && (

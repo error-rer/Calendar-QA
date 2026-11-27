@@ -1,36 +1,84 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { VM } from '../useScheduler';
 import { css, HButton } from '../ui';
 import { HolidaysPanel } from './HolidaysPanel';
+import { UsersPanel } from './UsersPanel';
+import { authClient, type UserRecord } from '../utils/authClient';
+
+export function findUserForHost(host: { id: string; name: string }, users: UserRecord[]): UserRecord | undefined {
+  const byId = users.find((u) => u.engineerId && u.engineerId === host.id);
+  if (byId) return byId;
+  const hostName = host.name.trim().toLowerCase();
+  if (!hostName) return undefined;
+  return users.find(
+    (u) =>
+      (u.name || '').trim().toLowerCase() === hostName ||
+      (u.username || '').trim().toLowerCase() === hostName
+  );
+}
 
 export function Admin({ vm }: { vm: VM }) {
+  const [users, setUsers] = useState<UserRecord[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+  const [usersError, setUsersError] = useState<string | null>(null);
+  const [preselectedHost, setPreselectedHost] = useState<{ id: string; name: string } | null>(null);
+
+  useEffect(() => {
+    if (!vm.canManage) return;
+    let active = true;
+    setUsersLoading(true);
+    setUsersError(null);
+    authClient
+      .listUsers()
+      .then((list) => {
+        if (active) setUsers(list);
+      })
+      .catch((err: any) => {
+        if (active) setUsersError(err?.message || 'Unable to load users.');
+      })
+      .finally(() => {
+        if (active) setUsersLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [vm.canManage]);
+
+  if (!vm.canManage) return null;
+
   const hosts = vm.engineers || [];
   const totalHosts = hosts.length;
   const qaCount = hosts.filter((h) => h.department === 'QA').length;
   const nonQaCount = hosts.filter((h) => h.department === 'Non-QA').length;
   const unassignedCount = totalHosts - qaCount - nonQaCount;
+  const hostsWithUserCount = hosts.filter((h) => Boolean(findUserForHost(h, users))).length;
+  const hostsWithoutUserCount = totalHosts - hostsWithUserCount;
+
+  const totalUsers = users.length;
+  const adminCount = users.filter((u) => (u.role || 'user').toLowerCase() === 'admin').length;
+  const standardUserCount = totalUsers - adminCount;
 
   return (
     <main className="scrl" style={vm.adminMainStyle}>
       <div style={vm.adminWrapStyle}>
         <div style={css('margin-bottom:20px')}>
           <div style={css('font-size:20px;font-weight:700;letter-spacing:-.3px')}>Manage workspace</div>
-          <div style={css('font-size:13px;color:#7a807a;margin-top:3px')}>QMS Hosts, appointment form options, and calendar holidays/restrictions. Changes apply to the live schedule.</div>
+          <div style={css('font-size:13px;color:#7a807a;margin-top:3px')}>QMS Hosts &amp; User accounts, appointment form options, and calendar holidays/restrictions. Changes apply to the live schedule.</div>
         </div>
 
-        <div style={css('display:flex;background:#fff;border:1px solid #e0e3dc;border-radius:9px;padding:2px;gap:2px;width:max-content;margin-bottom:18px')}>
-          <button className="tap" onClick={vm.setTabEng} style={vm.tabEngStyle}>QMS Host</button>
+        <div style={css('display:flex;background:#fff;border:1px solid #e0e3dc;border-radius:9px;padding:2px;gap:2px;width:max-content;margin-bottom:18px;flex-wrap:wrap')}>
+          <button className="tap" onClick={vm.setTabEng} style={vm.tabEngStyle}>QMS Host &amp; Users</button>
           <button className="tap" onClick={vm.setTabOptions} style={vm.tabOptionsStyle}>Options</button>
           <button className="tap" onClick={vm.setTabHolidays} style={vm.tabHolidaysStyle}>Holidays</button>
         </div>
 
-        {vm.tabEngineers && (
+        {(vm.tabEngineers || vm.tabUsers) && (
           <>
-            {/* Consolidated Single Header Card: UTL Auditors (Only in QMS Host tab) */}
-            <div style={css('margin-bottom:20px;max-width:380px')}>
+            {/* Summary Cards: QMS Hosts & Workspace Users */}
+            <div style={css('display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;margin-bottom:20px;max-width:780px')}>
               <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.02)')}>
                 <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>
-                  UTL Auditors
+                  UTL Auditors (QMS Host)
                 </div>
                 <div style={css("font-size:28px;font-weight:800;color:#15191e;margin-top:4px;line-height:1.1;font-family:'Archivo',sans-serif")}>
                   {totalHosts}
@@ -39,23 +87,61 @@ export function Admin({ vm }: { vm: VM }) {
                   <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;font-size:11.5px;font-weight:600;font-family:'Archivo',sans-serif;background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd")}>
                     {qaCount} QA
                   </span>
-                  <span style={css('color:#d4d4d8;font-size:13px')}>·</span>
                   <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;font-size:11.5px;font-weight:600;font-family:'Archivo',sans-serif;background:#fef3c7;color:#92400e;border:1px solid #fde68a")}>
                     {nonQaCount} Non-QA
                   </span>
                   {unassignedCount > 0 && (
-                    <>
-                      <span style={css('color:#d4d4d8;font-size:13px')}>·</span>
-                      <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;font-size:11px;font-weight:500;font-family:'Archivo',sans-serif;background:#f4f4f5;color:#71717a;border:1px solid #e4e4e7")}>
-                        {unassignedCount} Unassigned
-                      </span>
-                    </>
+                    <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;font-size:11px;font-weight:500;font-family:'Archivo',sans-serif;background:#f4f4f5;color:#71717a;border:1px solid #e4e4f7")}>
+                      {unassignedCount} Unassigned
+                    </span>
                   )}
+                </div>
+                <div style={css('display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;user-select:none')}>
+                  <span style={css("display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;font-family:'Archivo',sans-serif;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0")}>
+                    {hostsWithUserCount} Has User
+                  </span>
+                  <span style={css("display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;font-family:'Archivo',sans-serif;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa")}>
+                    {hostsWithoutUserCount} No User
+                  </span>
+                </div>
+              </div>
+
+              <div style={css('background:#fff;border:1px solid #e2e5de;border-radius:14px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.02)')}>
+                <div style={css("font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>
+                  Workspace Accounts (Users)
+                </div>
+                <div style={css("font-size:28px;font-weight:800;color:#15191e;margin-top:4px;line-height:1.1;font-family:'Archivo',sans-serif")}>
+                  {usersLoading ? '…' : totalUsers}
+                </div>
+                <div style={css('display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;user-select:none')}>
+                  <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;font-size:11.5px;font-weight:600;font-family:'Archivo',sans-serif;background:#eef2fd;color:#2756d6;border:1px solid #c7d5fa")}>
+                    {adminCount} Admin
+                  </span>
+                  <span style={css('color:#d4d4d8;font-size:13px')}>·</span>
+                  <span style={css("display:inline-flex;align-items:center;padding:2.5px 9px;border-radius:6px;font-size:11.5px;font-weight:600;font-family:'Archivo',sans-serif;background:#f4f6f1;color:#3c423d;border:1px solid #dde0d9")}>
+                    {standardUserCount} User
+                  </span>
                 </div>
               </div>
             </div>
 
-            <EngineersTable vm={vm} />
+            <EngineersTable
+              vm={vm}
+              users={users}
+              onCreateUserForHost={(host) => setPreselectedHost({ id: host.id, name: host.name })}
+            />
+
+            <div style={css('margin-top:20px')}>
+              <UsersPanel
+                vm={vm}
+                users={users}
+                loading={usersLoading}
+                initialError={usersError}
+                onUsersChange={setUsers}
+                preselectedHost={preselectedHost}
+                onClearPreselectedHost={() => setPreselectedHost(null)}
+              />
+            </div>
           </>
         )}
         {vm.tabOptions && <OptionsPanel vm={vm} />}
@@ -289,8 +375,17 @@ function DepartmentFilterDropdown({
   );
 }
 
-function EngineersTable({ vm }: { vm: VM }) {
+function EngineersTable({
+  vm,
+  users,
+  onCreateUserForHost,
+}: {
+  vm: VM;
+  users: UserRecord[];
+  onCreateUserForHost: (host: { id: string; name: string }) => void;
+}) {
   const [selectedDepartments, setSelectedDepartments] = useState<('QA' | 'Non-QA')[]>([]);
+  const [userStatusFilter, setUserStatusFilter] = useState<'all' | 'has_user' | 'no_user'>('all');
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [dropTargetIdx, setDropTargetIdx] = useState<number | null>(null);
 
@@ -316,24 +411,25 @@ function EngineersTable({ vm }: { vm: VM }) {
   const hasSiteFilter = vm.adminFilterSite.length > 0;
   const hasDeptFilter = activeStandardsCount > 0;
   const hasDepartmentFilter = selectedDepartments.length === 1;
-  const hasAnyFilter = hasSiteFilter || hasDeptFilter || hasDepartmentFilter;
+  const hasUserFilter = userStatusFilter !== 'all';
+  const hasAnyFilter = hasSiteFilter || hasDeptFilter || hasDepartmentFilter || hasUserFilter;
 
   const handleClearAllFilters = () => {
     vm.clearAdminFilters?.();
     setSelectedDepartments([]);
+    setUserStatusFilter('all');
   };
 
   const filteredEngineers = vm.adminEngineers.filter((e) => {
     const hasQa = selectedDepartments.includes('QA');
     const hasNonQa = selectedDepartments.includes('Non-QA');
-    if ((!hasQa && !hasNonQa) || (hasQa && hasNonQa)) {
-      return true;
+    if ((hasQa && !hasNonQa && e.department !== 'QA') || (!hasQa && hasNonQa && e.department !== 'Non-QA')) {
+      return false;
     }
-    if (hasQa) {
-      return e.department === 'QA';
-    }
-    if (hasNonQa) {
-      return e.department === 'Non-QA';
+    if (userStatusFilter !== 'all') {
+      const hasUser = Boolean(findUserForHost(e, users));
+      if (userStatusFilter === 'has_user' && !hasUser) return false;
+      if (userStatusFilter === 'no_user' && hasUser) return false;
     }
     return true;
   });
@@ -364,6 +460,26 @@ function EngineersTable({ vm }: { vm: VM }) {
             onToggle={handleToggleDepartment}
             onClear={handleClearDepartment}
           />
+          <select
+            aria-label="Filter by User status"
+            value={userStatusFilter}
+            onChange={(ev) => setUserStatusFilter(ev.target.value as 'all' | 'has_user' | 'no_user')}
+            style={css(
+              'padding:6px 10px;border-radius:7px;border:1px solid ' +
+                (hasUserFilter ? '#2756d6' : '#dde0d9') +
+                ';background:' +
+                (hasUserFilter ? '#eef2fd' : '#fff') +
+                ';font-size:11.5px;font-weight:' +
+                (hasUserFilter ? '600' : '500') +
+                ';color:' +
+                (hasUserFilter ? '#2756d6' : '#4a504a') +
+                ";cursor:pointer;font-family:'Archivo',sans-serif"
+            )}
+          >
+            <option value="all">User: All</option>
+            <option value="has_user">Has User</option>
+            <option value="no_user">No User</option>
+          </select>
           {hasAnyFilter && (
             <button className="tap"
               type="button"
@@ -382,6 +498,8 @@ function EngineersTable({ vm }: { vm: VM }) {
       <div style={css('position:relative;z-index:1')}>
         {filteredEngineers.map((e, idx) => {
           const isLast = idx === filteredEngineers.length - 1;
+          const matchedUser = findUserForHost(e, users);
+          const isMatchedAdmin = (matchedUser?.role || 'user').toLowerCase() === 'admin';
           return (
           <div
             key={e.id}
@@ -443,7 +561,7 @@ function EngineersTable({ vm }: { vm: VM }) {
               <div onClick={() => vm.openEditEngineer(e.id)} style={css('display:flex;align-items:center;gap:12px;min-width:0;cursor:pointer;flex:1')}>
                 <div style={e.avatarStyle}>{e.initials}</div>
                 <div style={css('min-width:0')}>
-                  <div style={css('font-size:13px;font-weight:600;color:#15191e;text-decoration:none;display:flex;align-items:center;gap:8px')}>
+                  <div style={css('font-size:13px;font-weight:600;color:#15191e;text-decoration:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
                     <span>{e.name}</span>
                     {e.department && (e.department === 'QA' || e.department === 'Non-QA') && (
                       <span
@@ -457,26 +575,63 @@ function EngineersTable({ vm }: { vm: VM }) {
                         {e.department}
                       </span>
                     )}
+                    {matchedUser ? (
+                      <span
+                        style={css(
+                          "font-size:10.5px;font-weight:600;padding:2px 7.5px;border-radius:5px;font-family:'IBM Plex Mono',monospace;line-height:1.2;user-select:none;" +
+                            (isMatchedAdmin
+                              ? 'background:#eef2fd;color:#2756d6;border:1px solid #c7d5fa;'
+                              : 'background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;')
+                        )}
+                        title={`Linked user account: ${matchedUser.username} (${isMatchedAdmin ? 'Admin' : 'User'})`}
+                      >
+                        Has User · {matchedUser.username} ({isMatchedAdmin ? 'Admin' : 'User'})
+                      </span>
+                    ) : (
+                      <span
+                        style={css(
+                          "font-size:10.5px;font-weight:600;padding:2px 7.5px;border-radius:5px;font-family:'IBM Plex Mono',monospace;line-height:1.2;user-select:none;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;"
+                        )}
+                      >
+                        No User
+                      </span>
+                    )}
                   </div>
                   <div style={css('font-size:11px;color:#8a9088;margin-top:2px')}>{e.site || 'UTL1'}{e.subDepartments.length > 0 ? ' · ' + e.subDepartments.join(', ') : ''}</div>
                 </div>
               </div>
             </div>
-            <button className="tap-square"
-              onClick={e.onDelete}
-              title="Remove QMS Host"
-              style={css("background:none;border:none;cursor:pointer;color:#9aa097;font-size:16px;padding:6px 10px;border-radius:6px;transition:all 0.12s;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0")}
-              onMouseEnter={(evt) => {
-                evt.currentTarget.style.color = '#ef4444';
-                evt.currentTarget.style.background = '#fef2f2';
-              }}
-              onMouseLeave={(evt) => {
-                evt.currentTarget.style.color = '#9aa097';
-                evt.currentTarget.style.background = 'none';
-              }}
-            >
-              ×
-            </button>
+            <div style={css('display:flex;align-items:center;gap:6px;flex-shrink:0')}>
+              {!matchedUser && (
+                <button
+                  type="button"
+                  className="tap"
+                  onClick={(evt) => {
+                    evt.stopPropagation();
+                    onCreateUserForHost({ id: e.id, name: e.name });
+                  }}
+                  style={css("padding:5px 10px;border-radius:7px;border:1px solid #c7d5fa;background:#eef2fd;color:#2756d6;font-size:11px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
+                  title={`Create login user for ${e.name}`}
+                >
+                  + Create User
+                </button>
+              )}
+              <button className="tap-square"
+                onClick={e.onDelete}
+                title="Remove QMS Host"
+                style={css("background:none;border:none;cursor:pointer;color:#9aa097;font-size:16px;padding:6px 10px;border-radius:6px;transition:all 0.12s;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0")}
+                onMouseEnter={(evt) => {
+                  evt.currentTarget.style.color = '#ef4444';
+                  evt.currentTarget.style.background = '#fef2f2';
+                }}
+                onMouseLeave={(evt) => {
+                  evt.currentTarget.style.color = '#9aa097';
+                  evt.currentTarget.style.background = 'none';
+                }}
+              >
+                ×
+              </button>
+            </div>
           </div>
           );
         })}

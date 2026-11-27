@@ -175,7 +175,7 @@ export function getApptCardColors(
 ): ApptCardColors {
   const status = resolveAuditStatus(chip, nowMs);
 
-  const defaultTitleColor = chip.isInternal ? '#10b981' : '#2756d6';
+  const defaultTitleColor = chip.isInternal ? '#004F10' : '#2756d6';
   const defaultPurposeColor = '#5c625c';
   // Priority 1: INCOMPLETE FORM (Soft Red)
   if (status === 'INCOMPLETE_DATA') {
@@ -824,9 +824,19 @@ export function useScheduler() {
       setSaveError(`Sign out could not reach the server. Your current session is still active. (${String(err)})`);
     }
   };
+  const isAdminRole = (S.currentUser?.role || 'user').toLowerCase() === 'admin';
+  useEffect(() => {
+    if (!isAdminRole && S.page === 'admin') {
+      setRaw((s) => (s.page === 'admin' ? { ...s, page: 'schedule' } : s));
+    }
+  }, [isAdminRole, S.page]);
+
   const goSchedule = () => setState({ page: 'schedule', userMenuOpen: false });
   const goTable = () => setState({ page: 'table', userMenuOpen: false, selected: null, sidebarOpen: false });
-  const goAdmin = () => setState({ page: 'admin', userMenuOpen: false, selected: null });
+  const goAdmin = () => {
+    if (!isAdminRole) return;
+    setState({ page: 'admin', userMenuOpen: false, selected: null });
+  };
   const goProfile = () => setState({ page: 'profile', userMenuOpen: false, selected: null, sidebarOpen: false });
   const goSummary = () => setState({ page: 'summary', userMenuOpen: false, selected: null, sidebarOpen: false });
   const goHistory = () => setState({ page: 'history', userMenuOpen: false, selected: null, sidebarOpen: false });
@@ -5206,7 +5216,8 @@ export function useScheduler() {
     onPass: (e: React.ChangeEvent<HTMLInputElement>) => setState({ loginPass: e.target.value }),
     onLoginKey: (e: React.KeyboardEvent) => { if (e.key === 'Enter') signIn(); },
     signIn, signOut, onAuthSuccess,
-    isSchedule: S.page === 'schedule', isTable: S.page === 'table', isAdmin: S.page === 'admin', isProfile: S.page === 'profile', isSummary: S.page === 'summary', isHistory: S.page === 'history',
+    canManage: isAdminRole,
+    isSchedule: S.page === 'schedule', isTable: S.page === 'table', isAdmin: S.page === 'admin' && isAdminRole, isProfile: S.page === 'profile', isSummary: S.page === 'summary', isHistory: S.page === 'history',
     goSchedule, goTable, goAdmin, goProfile, goSummary, goHistory,
     navSchedStyle: S.page === 'schedule' ? tabOn : tabOff, navTableStyle: S.page === 'table' ? tabOn : tabOff, navAdminStyle: S.page === 'admin' ? tabOn : tabOff, navSummaryStyle: S.page === 'summary' ? tabOn : tabOff, navHistoryStyle: S.page === 'history' ? tabOn : tabOff,
     activityLogs: S.activityLogs || [],
@@ -5290,12 +5301,13 @@ export function useScheduler() {
     saveResults: (aid: string, newResults: Record<string, SiteAuditResult>) => saveResults(aid, newResults),
     adminStats,
     tabEngineers: S.adminTab === 'engineers', tabOptions: S.adminTab === 'options',
-    tabHolidays: S.adminTab === 'holidays',
+    tabHolidays: S.adminTab === 'holidays', tabUsers: S.adminTab === 'users',
     setTabEng: () => setAdminTab('engineers'), setTabOptions: () => setAdminTab('options'),
-    setTabHolidays: () => setAdminTab('holidays'),
+    setTabHolidays: () => setAdminTab('holidays'), setTabUsers: () => setAdminTab('users'),
     tabEngStyle: S.adminTab === 'engineers' ? tabOn : tabOff,
     tabOptionsStyle: S.adminTab === 'options' ? tabOn : tabOff,
     tabHolidaysStyle: S.adminTab === 'holidays' ? tabOn : tabOff,
+    tabUsersStyle: S.adminTab === 'users' ? tabOn : tabOff,
     customHolidays: S.customHolidays || {},
     saveHolidayRule,
     deleteHolidayRule,

@@ -2599,9 +2599,11 @@ export function AppointmentFormFields({
   }, [assignments, _purposeOptions, removedSet, localAdded]);
 
   const auditorSuggestions = useMemo(() => {
-    const base = getActiveDropdownOptions(assignments, 'qmsHost').filter((a) => !removedSet.has(a));
-    return Array.from(new Set([...base, ...(localAdded['auditor'] || [])])).sort((a, b) => a.localeCompare(b));
-  }, [assignments, removedSet, localAdded]);
+    const fromAssignments = getActiveDropdownOptions(assignments, 'qmsHost').filter((a) => !removedSet.has(a));
+    const fromEngineers = (engineers || []).map((e) => (e.name || '').trim()).filter(Boolean);
+    const fromOptions = (_auditorOptions || []).map((a) => (a || '').trim()).filter((a) => a && !removedSet.has(a));
+    return Array.from(new Set([...fromAssignments, ...fromEngineers, ...fromOptions, ...(localAdded['auditor'] || [])])).sort((a, b) => a.localeCompare(b));
+  }, [assignments, engineers, _auditorOptions, removedSet, localAdded]);
 
   const areaSuggestions = useMemo(() => {
     const base = getActiveDropdownOptions(assignments, 'area').filter((a) => !removedSet.has(a));

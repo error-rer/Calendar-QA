@@ -379,9 +379,11 @@ async function ensureUsersTable(DB: D1Database) {
         salt TEXT NOT NULL DEFAULT '',
         name TEXT NOT NULL DEFAULT '',
         role TEXT NOT NULL DEFAULT 'user',
+        engineer_id TEXT DEFAULT '',
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `).run();
+    await DB.prepare("ALTER TABLE users ADD COLUMN engineer_id TEXT DEFAULT ''").run().catch(() => {});
   } catch {}
   usersTableChecked = true;
 }
@@ -473,6 +475,8 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
     }
     // Audit entries are attributed to the server-verified account, never to a name sent by the browser.
     const actorName = String(sessionUser?.name || sessionUser?.username || 'Unknown user').trim();
+    const isAdmin = String(sessionUser?.role || 'user').toLowerCase() === 'admin';
+    const requireAdmin = () => (isAdmin ? null : json({ error: 'Admin access required.' }, 403));
 
     // --- auth: register / signup ---
     if (method === 'POST' && (path === 'auth/register' || path === 'auth/signup')) {
@@ -711,6 +715,103 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
           updated_at: r.updated_at,
         })),
       });
+    }
+
+    // --- users (admin only) ---
+    if (method === 'GET' && path === 'users') {
+      const denied = requireAdmin();
+      if (denied) return denied;
+      const { results } = await DB.prepare(
+        'SELECT id, username, name, role, engineer_id, created_at FROM users ORDER BY created_at ASC, id ASC'
+      ).all();
+      return json({
+        users: (results as any[]).map((u) => ({
+          id: u.id,
+          username: u.username,
+          name: u.name || u.username,
+          role: (u.role || 'user').toLowerCase(),
+          engineerId: u.engineer_id || '',
+          createdAt: u.created_at,
+        })),
+      });
+    }
+    if (method === 'POST' && path === 'users') {
+      const denied = requireAdmin();
+      if (denied) return denied;
+      const { userId, username, password, name, engineerId, role: requestedRole } = body || {};
+      if (requestedRole && String(requestedRole).toLowerCase() === 'admin') {
+        return json({ error: 'Admins cannot create another admin directly.' }, 403);
+      }
+      const rawUser = String(userId || username || '').trim();
+      const rawPass = String(password || '');
+      if (!rawUser) return json({ error: 'User ID is required.' }, 400);
+      if (!/^[a-zA-Z0-9._-]+$/.test(rawUser) || rawUser.length < 3) {
+        return json({ error: 'User ID must be at least 3 characters and contain only letters, numbers, dots, underscores, or dashes.' }, 400);
+      }
+      if (!rawPass || rawPass.length < 4) {
+        return json({ error: 'Password must be at least 4 characters long.' }, 400);
+      }
+      const existing = await DB.prepare('SELECT id FROM users WHERE LOWER(username) = LOWER(?)').bind(rawUser).first();
+      if (existing) {
+        return json({ error: 'User ID is already registered.' }, 409);
+      }
+      const salt = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+      const passwordHash = await hashPassword(rawPass, salt);
+      const newUserId = 'usr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+      const displayName = String(name || rawUser).trim();
+      const linkedEngId = String(engineerId || '').trim();
+      await DB.prepare(
+        'INSERT INTO users (id, username, password_hash, salt, name, role, engineer_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).bind(newUserId, rawUser, passwordHash, salt, displayName, 'user', linkedEngId).run();
+      return json({
+        ok: true,
+        user: {
+          id: newUserId,
+          username: rawUser,
+          name: displayName,
+          role: 'user',
+          engineerId: linkedEngId,
+        },
+      }, 201);
+    }
+    const userRoleMatch = path.match(/^users\/([^/]+)\/role$/);
+    if (userRoleMatch && (method === 'PATCH' || method === 'PUT')) {
+      const denied = requireAdmin();
+      if (denied) return denied;
+      const targetId = decodeURIComponent(userRoleMatch[1]);
+      const nextRole = String(body?.role || '').toLowerCase();
+      if (nextRole !== 'admin') {
+        return json({ error: 'Only granting admin role is supported.' }, 400);
+      }
+      const target = await DB.prepare('SELECT id, username, name, role FROM users WHERE id = ?').bind(targetId).first<any>();
+      if (!target) return json({ error: 'User not found.' }, 404);
+      if (String(target.role || 'user').toLowerCase() === 'admin') {
+        return json({ error: 'User is already an admin.' }, 400);
+      }
+      await DB.prepare('UPDATE users SET role = ? WHERE id = ?').bind('admin', targetId).run();
+      return json({
+        ok: true,
+        user: {
+          id: target.id,
+          username: target.username,
+          name: target.name || target.username,
+          role: 'admin',
+        },
+      });
+    }
+    const userDeleteMatch = path.match(/^users\/([^/]+)$/);
+    if (userDeleteMatch && method === 'DELETE') {
+      const denied = requireAdmin();
+      if (denied) return denied;
+      const targetId = decodeURIComponent(userDeleteMatch[1]);
+      const target = await DB.prepare('SELECT id, role FROM users WHERE id = ?').bind(targetId).first<any>();
+      if (!target) return json({ error: 'User not found.' }, 404);
+      if (String(target.role || 'user').toLowerCase() === 'admin') {
+        return json({ error: 'Admins cannot delete admin accounts.' }, 403);
+      }
+      await DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(targetId).run();
+      await DB.prepare('DELETE FROM users WHERE id = ?').bind(targetId).run();
+      return json({ ok: true });
     }
 
     // --- engineers ---
