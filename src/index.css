@@ -106,10 +106,28 @@ input::placeholder{color:#8a9088;opacity:1}
 }
 
 button:focus-visible,
-[role="button"]:focus-visible {
+[role="button"]:focus-visible,
+a:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
   outline: 2px solid #2756d6 !important;
   outline-offset: 2px !important;
 }
+
+/* Read-only data stays copyable: table cells, history entries, and detail panels.
+   The global user-select:none above exists to stop accidental selection while dragging cards. */
+td, td *, th,
+.selectable, .selectable * {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
+/* Main navigation scrolls sideways on narrow windows instead of clipping tabs. */
+.nav-scroll { scrollbar-width: none; }
+.nav-scroll::-webkit-scrollbar { display: none; }
+.nav-scroll > button { flex-shrink: 0; white-space: nowrap; }
 
 /* Summary Dashboard KPI Grid: 1 col on mobile, 3 cols on medium+ screens */
 .summary-kpi-grid {
@@ -122,4 +140,69 @@ button:focus-visible,
   .summary-kpi-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+/* Appointment form: one column on narrow screens so field placeholders stay readable. */
+@media (max-width: 560px) {
+  .appointment-modal-fields { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+/* App shell: phone browsers count their own toolbars in 100vh, which pushed the bottom of the app off screen. */
+.app-shell { height: 100vh; height: 100dvh; }
+
+/* Bottom tab bar (phones only; rendered when the window is under 860px). */
+.bottom-nav {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 2px;
+  padding: 5px 6px calc(5px + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 1px solid #d8dcd4;
+}
+.bottom-nav button {
+  min-height: 54px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #5c625c;
+  font: 600 11px/1.1 'Archivo', system-ui, sans-serif;
+  letter-spacing: .1px;
+  -webkit-tap-highlight-color: transparent;
+}
+.bottom-nav .pill {
+  width: 46px;
+  height: 28px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color .2s cubic-bezier(.16,1,.3,1), color .2s cubic-bezier(.16,1,.3,1);
+}
+.bottom-nav button:active .pill { background: #e9ebe6; }
+.bottom-nav button[aria-current="page"] { color: #15191e; font-weight: 700; }
+.bottom-nav button[aria-current="page"] .pill { background: #15191e; color: #fff; }
+/* Phones held sideways have little height: label beside the icon, one 44px row. */
+@media (max-height: 480px) {
+  .bottom-nav { padding-top: 3px; padding-bottom: calc(3px + env(safe-area-inset-bottom)); }
+  .bottom-nav button { min-height: 44px; flex-direction: row; gap: 6px; }
+  .bottom-nav .pill { width: 38px; height: 26px; }
+}
+
+/* Touch screens: finger-sized controls (44px) without changing the desktop layout.
+   .tap grows a control's height, .tap-square both sides; .tap-hit widens only the hit area
+   (for small icons inside dense rows, such as the ✕ on a tag). */
+@media (pointer: coarse) {
+  .tap { min-height: 44px; }
+  .tap-square { min-width: 44px; min-height: 44px; }
+  .tap-hit:not([style*="absolute"]) { position: relative; }
+  .tap-hit::after { content: ''; position: absolute; inset: -12px; }
+  /* Fields under 16px make phone browsers zoom in on focus. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]), select, textarea { font-size: 16px !important; }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]), select { min-height: 44px; }
 }

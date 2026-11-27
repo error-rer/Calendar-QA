@@ -19,9 +19,9 @@ export function Admin({ vm }: { vm: VM }) {
         </div>
 
         <div style={css('display:flex;background:#fff;border:1px solid #e0e3dc;border-radius:9px;padding:2px;gap:2px;width:max-content;margin-bottom:18px')}>
-          <button onClick={vm.setTabEng} style={vm.tabEngStyle}>QMS Host</button>
-          <button onClick={vm.setTabOptions} style={vm.tabOptionsStyle}>Options</button>
-          <button onClick={vm.setTabHolidays} style={vm.tabHolidaysStyle}>Holidays</button>
+          <button className="tap" onClick={vm.setTabEng} style={vm.tabEngStyle}>QMS Host</button>
+          <button className="tap" onClick={vm.setTabOptions} style={vm.tabOptionsStyle}>Options</button>
+          <button className="tap" onClick={vm.setTabHolidays} style={vm.tabHolidaysStyle}>Holidays</button>
         </div>
 
         {vm.tabEngineers && (
@@ -96,7 +96,7 @@ function AdminFilterDropdown({
 
   return (
     <div style={css('position:relative')}>
-      <button
+      <button className="tap"
         type="button"
         onClick={() => setOpen(!open)}
         style={css(
@@ -207,7 +207,7 @@ function DepartmentFilterDropdown({
 
   return (
     <div style={css('position:relative')}>
-      <button
+      <button className="tap"
         type="button"
         onClick={() => setOpen(!open)}
         style={css(
@@ -365,7 +365,7 @@ function EngineersTable({ vm }: { vm: VM }) {
             onClear={handleClearDepartment}
           />
           {hasAnyFilter && (
-            <button
+            <button className="tap"
               type="button"
               onClick={handleClearAllFilters}
               style={css("background:none;border:none;color:#ef4444;font-size:11.5px;font-weight:600;cursor:pointer;padding:5px 8px;border-radius:6px;display:flex;align-items:center;gap:4px;font-family:'Archivo',sans-serif;transition:all .12s ease")}
@@ -376,7 +376,7 @@ function EngineersTable({ vm }: { vm: VM }) {
               ✕ Clear filters
             </button>
           )}
-          <HButton onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New QMS Host</HButton>
+          <HButton className="tap" onClick={vm.addEngineer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ New QMS Host</HButton>
         </div>
       </div>
       <div style={css('position:relative;z-index:1')}>
@@ -462,7 +462,7 @@ function EngineersTable({ vm }: { vm: VM }) {
                 </div>
               </div>
             </div>
-            <button
+            <button className="tap-square"
               onClick={e.onDelete}
               title="Remove QMS Host"
               style={css("background:none;border:none;cursor:pointer;color:#9aa097;font-size:16px;padding:6px 10px;border-radius:6px;transition:all 0.12s;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0")}
@@ -590,7 +590,7 @@ function TagListEditor({ title, count, values, onAdd, onRemove, onReorder, place
               </label>
             )}
             <span style={css('user-select:none;cursor:inherit')}>{v}</span>
-            <button onClick={() => onRemove(v)} className="cursor-pointer" style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1;user-select:none')}>✕</button>
+            <button onClick={() => onRemove(v)} className="cursor-pointer tap-hit" style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1;user-select:none')}>✕</button>
           </div>
         ))}
         {values.length === 0 && <span style={css('font-size:12px;color:#a6aca2;font-style:italic')}>No options yet.</span>}
@@ -603,7 +603,7 @@ function TagListEditor({ title, count, values, onAdd, onRemove, onReorder, place
           placeholder={placeholder}
           style={css("flex:1;border:1px solid #dde0d9;border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fff")}
         />
-        <HButton onClick={submit} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ Add</HButton>
+        <HButton className="tap" onClick={submit} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ Add</HButton>
       </div>
     </div>
   );
@@ -699,7 +699,7 @@ function DepartmentEditor({ vm, onReorderInternal, onReorderCustomer }: { vm: VM
               >
                 {onReorderInternal && <span style={css('color:#9aa097;font-size:11px;cursor:grab;line-height:1;user-select:none')}>⋮⋮</span>}
                 <span style={css('user-select:none;cursor:inherit')}>{v}</span>
-                <button onClick={() => vm.removeInternalDepartmentOption(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1;user-select:none')}>✕</button>
+                <button className="tap-hit" onClick={() => vm.removeInternalDepartmentOption(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1;user-select:none')}>✕</button>
               </div>
             ))}
             {vm.internalDepartmentOptions.length === 0 && <span style={css('font-size:12px;color:#a6aca2;font-style:italic')}>No internal audit standards yet.</span>}
@@ -712,7 +712,7 @@ function DepartmentEditor({ vm, onReorderInternal, onReorderCustomer }: { vm: VM
               placeholder="e.g. EHS"
               style={css("flex:1;border:1px solid #dde0d9;border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fff")}
             />
-            <HButton onClick={submitInternal} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ Add</HButton>
+            <HButton className="tap" onClick={submitInternal} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ Add</HButton>
           </div>
         </div>
 
@@ -775,7 +775,7 @@ function DepartmentEditor({ vm, onReorderInternal, onReorderCustomer }: { vm: VM
               >
                 {onReorderCustomer && <span style={css('color:#9aa097;font-size:11px;cursor:grab;line-height:1;user-select:none')}>⋮⋮</span>}
                 <span style={css('user-select:none;cursor:inherit')}>{v}</span>
-                <button onClick={() => vm.removeCustomerDepartmentOption(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1;user-select:none')}>✕</button>
+                <button className="tap-hit" onClick={() => vm.removeCustomerDepartmentOption(v)} style={css('background:none;border:none;cursor:pointer;color:#9aa097;font-size:12px;padding:2px;line-height:1;user-select:none')}>✕</button>
               </div>
             ))}
             {vm.customerDepartmentOptions.length === 0 && <span style={css('font-size:12px;color:#a6aca2;font-style:italic')}>No customer audit standards yet.</span>}
@@ -788,7 +788,7 @@ function DepartmentEditor({ vm, onReorderInternal, onReorderCustomer }: { vm: VM
               placeholder="e.g. ISO13485"
               style={css("flex:1;border:1px solid #dde0d9;border-radius:8px;padding:8px 10px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fff")}
             />
-            <HButton onClick={submitCustomer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ Add</HButton>
+            <HButton className="tap" onClick={submitCustomer} style={css("background:#15191e;color:#fff;border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")} hover={{ background: '#23282e' }}>+ Add</HButton>
           </div>
         </div>
       </div>

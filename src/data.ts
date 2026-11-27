@@ -72,7 +72,8 @@ export function initialState(): State {
     view: 'person',
     adminTab: 'engineers',
     vw: typeof window !== 'undefined' ? window.innerWidth : 1440,
-    selectedDay: 0,
+    // Phone week view opens on today (Friday at the weekend, when the current week has ended).
+    selectedDay: Math.min(4, (now.getDay() + 6) % 7),
     sidebarOpen: false,
     timeScale: 'month',
     monthOffset: currentCalendar.monthOffset,

@@ -1,5 +1,5 @@
 import type { Order } from '../types';
-import { formatAreaString } from '../types';
+import { formatAreaString, isInternalAssignment } from '../types';
 
 export interface AuditStatsResult {
   totalAudits: number;
@@ -59,13 +59,7 @@ export const calculateAuditStats = (
   validRecords.forEach((r) => {
     const o = orderLookup && r.order ? orderLookup(r.order) : undefined;
 
-    const isInternal =
-      r.type === 'internal' ||
-      r.auditType === 'Internal Audit' ||
-      r.sectionType === 'internal' ||
-      Boolean(r.site2 || r.auditor2 || r.department2 || r.area) ||
-      (typeof r.id === 'string' && r.id.startsWith('IA')) ||
-      (typeof r.order === 'string' && r.order.startsWith('IA'));
+    const isInternal = isInternalAssignment(r);
 
     const type: 'customer' | 'internal' = isInternal ? 'internal' : 'customer';
 
@@ -222,13 +216,7 @@ export const getGroupedAuditEvents = (
   validRecords.forEach((r) => {
     const o = orderLookup && r.order ? orderLookup(r.order) : undefined;
 
-    const isInternal =
-      r.type === 'internal' ||
-      r.auditType === 'Internal Audit' ||
-      r.sectionType === 'internal' ||
-      Boolean(r.site2 || r.auditor2 || r.department2 || r.area) ||
-      (typeof r.id === 'string' && r.id.startsWith('IA')) ||
-      (typeof r.order === 'string' && r.order.startsWith('IA'));
+    const isInternal = isInternalAssignment(r);
 
     const type: 'customer' | 'internal' = isInternal ? 'internal' : 'customer';
 

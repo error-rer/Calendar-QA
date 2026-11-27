@@ -1,51 +1,56 @@
 # UTAC QA Calendar (QMS-CASS)
 
-UTAC QA Calendar is a web application for planning Customer Audits (CS) and Internal Audits (IA) across seven UTAC sites: `UTL1`, `UTL2`, `UTL2A`, `UTL2B`, `UTL3`, `UTL3A`, and `UTL3T`. It includes Schedule, Table, Summary, Manage, and History views, with Cloudflare Workers and D1 used for the shared deployment.
+Web app for planning Customer Audits (CS) and Internal Audits (IA) across seven UTAC sites: `UTL1`, `UTL2`, `UTL2A`, `UTL2B`, `UTL3`, `UTL3A`, and `UTL3T`. Views: Schedule, Table, Summary, Manage, and History. Runs as a Cloudflare Worker with a Cloudflare D1 database.
 
-## Guides
+## Documentation
 
-- [User workflows by role — Thai / English with annotated screenshots](docs/User-workflows.html)
-- [Thai workflows by user type — Markdown](docs/User-workflows.md)
-- [Thai developer workflow — setup, architecture, feature changes, and release](docs/Developer-workflows.md)
-- [Thai developer workflow — illustrated HTML with screenshots](docs/Developer-workflows.html)
-- [Bilingual Thai / English user manual](docs/User-manual.md)
-- [IT engineering and Cloudflare handover](docs/HANDOVER.md)
-- [Documentation index](docs/index.md)
+| Guide | ไทย | English |
+|---|---|---|
+| User Guide · คู่มือผู้ใช้ | [Markdown](docs/th/user-guide.md) | [Markdown](docs/en/user-guide.md) |
+| Developer Guide · คู่มือนักพัฒนา | [Markdown](docs/th/developer-guide.md) | [Markdown](docs/en/developer-guide.md) |
+| IT Handover · คู่มือส่งมอบ IT | [Markdown](docs/th/it-handover.md) | [Markdown](docs/en/it-handover.md) |
 
-## Run locally
+Printable HTML versions: open [`docs/index.html`](docs/index.html). See [docs/README.md](docs/README.md) for how the docs are organized and rebuilt.
+
+## Quick start
 
 ```bash
 npm ci
-npm run dev
+npm run dev          # frontend only, browser-local dev data
 ```
 
-`npm run dev` starts the Vite frontend with browser-local development data/authentication. It is not the production configuration. For the Worker and local D1 development setup, apply local migrations and run:
+For the Worker with a local D1 database:
 
 ```bash
 npm run migrate:local
 npm run dev:worker
 ```
 
-Do not connect local development to the production D1 database.
+Never connect local development to the production D1 database.
 
 ## Build and deploy
 
 ```bash
 npm run lint
 npm run build
-npm run deploy
+npm run deploy       # build, confirm and apply pending D1 migrations, then deploy the Worker
 ```
 
-`npm run deploy` builds and deploys the Worker and static assets. It does not apply D1 migrations. Review and apply database migrations separately using the IT-approved release process. See the [Cloudflare handover](docs/HANDOVER.md) for ownership, release, migration, recovery, security, and incident procedures.
+Production migrations, releases, and recovery follow the [IT Handover runbook](docs/en/it-handover.md#5-release-and-database-runbook).
 
-## Architecture at a glance
+## Repository layout
 
-- `src/` — React and TypeScript frontend.
-- `worker/index.ts` — Cloudflare Worker API and static asset routing.
-- `migrations/` — ordered D1 SQL migrations.
-- `wrangler.toml` — Worker, static asset, and D1 binding configuration.
-- `docs/` — user and engineering documentation.
+| Path | Contents |
+|---|---|
+| `src/` | React + TypeScript frontend |
+| `worker/index.ts` | Cloudflare Worker: API and static assets |
+| `migrations/` | Ordered D1 SQL migrations |
+| `wrangler.toml` | Worker, assets, and D1 binding |
+| `docs/` | User, developer, and IT documentation |
+| `scripts/build-docs.mjs` | Builds the HTML docs from Markdown (`npm run docs`) |
+| `scripts/deploy.mjs` | Release: confirm and apply pending D1 migrations, then deploy (`npm run deploy`) |
+| `scripts/capture-docs-screenshots.mjs` | Recaptures the doc screenshots from the dev app with fictional demo data (`npm run docs:screenshots`) |
 
-## Current IT review items
+## Open IT review items
 
-The handover document records items requiring company review, including server-side role enforcement, account lifecycle and registration code handling, password strength/storage, and the browser's cached schedule data. The repository does not by itself confirm the live Cloudflare account, URL, CI/CD setup, or active production deployment.
+Server-side role enforcement, account lifecycle and the shared registration code, password handling, business data kept in the browser after sign-out, a History whose entries are written by the browser, and browser-only validation. Details and suggested decisions: [IT Handover § Security findings](docs/en/it-handover.md#4-security-findings). Confirmed application defects are listed under [Known application issues](docs/en/it-handover.md#7-known-application-issues).

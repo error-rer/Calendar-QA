@@ -12,6 +12,7 @@ export interface ApiState {
   comments: Record<string, Comment[]>;
   activity: Activity[];
   activityLogs?: ActivityLog[];
+  historyHasMore?: boolean;
   purposeOptions?: string[];
   customerDepartmentOptions?: string[];
   internalDepartmentOptions?: string[];
@@ -49,6 +50,14 @@ async function req<T>(url: string, opts?: RequestInit): Promise<T> {
 
 export const api = {
   fetchState: () => req<ApiState>('/state'),
+
+  // Shared History. The server records who made the change and when.
+  addHistory: (entry: Pick<ActivityLog, 'actionType' | 'entityType' | 'description' | 'metadata'>) =>
+    req<ActivityLog>('/history', { method: 'POST', body: JSON.stringify(entry) }),
+  fetchHistory: (before: { timestamp: string; id: string }) =>
+    req<{ entries: ActivityLog[]; hasMore: boolean }>(
+      '/history?before=' + encodeURIComponent(before.timestamp) + '&beforeId=' + encodeURIComponent(before.id)
+    ),
 
   createEngineer: (data: { id: string; name: string; role: string; site?: string; department?: string; subDepartments: string[] }) =>
     req('/engineers', { method: 'POST', body: JSON.stringify(data) }),

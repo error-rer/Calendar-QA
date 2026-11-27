@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="scripts/build-docs.mjs">
+<title>คู่มือส่งมอบระบบให้ IT · UTAC QA Calendar</title>
+<link rel="icon" href="../images/utac-logo.jpg">
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/search-index.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body class="th" data-root="../" data-search-scope="lang">
+<!-- Generated file. Edit the Markdown source and run: npm run docs -->
+<a class="skip" href="#main">ข้ามไปยังเนื้อหา</a>
+<header class="bar">
+  <a class="brand" href="../index.html"><img src="../images/utac-logo.jpg" alt="" width="28" height="28"><span><b>UTAC QA Calendar</b><small>QMS-CASS · DOCUMENTATION</small></span></a>
+  <div class="search" role="search">
+    <input id="doc-search" type="search" placeholder="ค้นหาในเอกสาร" aria-label="ค้นหาในเอกสาร" autocomplete="off" spellcheck="false"
+      role="combobox" aria-expanded="false" aria-controls="search-results" aria-autocomplete="list"
+      data-no-results="ไม่พบผลลัพธ์สำหรับ" data-results="รายการ" data-clear="ล้างไฮไลต์การค้นหา">
+    <kbd class="search-key" aria-hidden="true">/</kbd>
+    <div id="search-results" class="search-results" role="listbox" hidden></div>
+  </div>
+  <div class="bar-tools"><details class="toc-menu"><summary>สารบัญ</summary><ol><li><a href="#1-ภาพรวมระบบ"><span class="n">1</span>ภาพรวมระบบ</a></li><li><a href="#2-ค่าตั้งค่าที่ต้องตรวจสอบ"><span class="n">2</span>ค่าตั้งค่าที่ต้องตรวจสอบ</a></li><li><a href="#3-เจ้าของระบบและการรับมอบ"><span class="n">3</span>เจ้าของระบบและการรับมอบ</a></li><li><a href="#4-ข้อค้นพบด้านความปลอดภัย"><span class="n">4</span>ข้อค้นพบด้านความปลอดภัย</a></li><li><a href="#5-runbook-การ-release-และฐานข้อมูล"><span class="n">5</span>Runbook การ release และฐานข้อมูล</a></li><li><a href="#6-การติดตามระบบและเหตุขัดข้อง"><span class="n">6</span>การติดตามระบบและเหตุขัดข้อง</a></li><li><a href="#7-ปัญหาที่ทราบของแอป"><span class="n">7</span>ปัญหาที่ทราบของแอป</a></li><li><a href="#8-การยอมรับการส่งมอบ"><span class="n">8</span>การยอมรับการส่งมอบ</a></li><li><a href="#เอกสารอ้างอิง">เอกสารอ้างอิง</a></li></ol></details><nav class="lang" aria-label="ภาษา"><a class="seg on" href="../th/it-handover.html" hreflang="th" lang="th" aria-current="true">ไทย</a><a class="seg" href="../en/it-handover.html" hreflang="en" lang="en" data-keep-chapter>EN</a></nav><button type="button" class="btn ink" data-print>พิมพ์</button></div>
+</header>
+<div class="desk">
+<nav class="rail" aria-label="บท"><a class="rail-home" href="#top">คู่มือส่งมอบ IT</a><ol><li><a href="#1-ภาพรวมระบบ" data-ch="1"><span class="n">1</span><span>ภาพรวมระบบ</span></a></li><li><a href="#2-ค่าตั้งค่าที่ต้องตรวจสอบ" data-ch="2"><span class="n">2</span><span>ค่าตั้งค่าที่ต้องตรวจสอบ</span></a></li><li><a href="#3-เจ้าของระบบและการรับมอบ" data-ch="3"><span class="n">3</span><span>เจ้าของระบบและการรับมอบ</span></a></li><li><a href="#4-ข้อค้นพบด้านความปลอดภัย" data-ch="4"><span class="n">4</span><span>ข้อค้นพบด้านความปลอดภัย</span></a></li><li><a href="#5-runbook-การ-release-และฐานข้อมูล" data-ch="5"><span class="n">5</span><span>Runbook การ release และฐานข้อมูล</span></a></li><li><a href="#6-การติดตามระบบและเหตุขัดข้อง" data-ch="6"><span class="n">6</span><span>การติดตามระบบและเหตุขัดข้อง</span></a></li><li><a href="#7-ปัญหาที่ทราบของแอป" data-ch="7"><span class="n">7</span><span>ปัญหาที่ทราบของแอป</span></a></li><li><a href="#8-การยอมรับการส่งมอบ" data-ch="8"><span class="n">8</span><span>การยอมรับการส่งมอบ</span></a></li><li><a href="#เอกสารอ้างอิง" data-ch="9"><span>เอกสารอ้างอิง</span></a></li></ol></nav>
+<main id="main" class="binder" style="--tab:#123f73">
+<nav class="tabs" aria-label="คู่มือ"><div class="tabs-in"><a class="tab" style="--c:#2e7d32" href="../th/user-guide.html">คู่มือผู้ใช้</a><a class="tab" style="--c:#1e5fa8" href="../th/developer-guide.html">นักพัฒนา</a><a class="tab on" style="--c:#123f73" href="../th/it-handover.html" aria-current="page">ส่งมอบ IT</a></div></nav>
+<section class="sheet cover" id="top" data-ch="0">
+<div class="runhead"><span>คู่มือส่งมอบ IT</span><span>ปรับปรุง 2026-11-27</span></div>
+<h1>คู่มือส่งมอบระบบให้ IT</h1>
+<p class="lede">ทุกอย่างที่ทีม IT ของ UTAC ต้องใช้เพื่อรับดูแล UTAC QA Calendar (QMS-CASS): สิ่งที่ต้องตรวจสอบ ใครควรรับผิดชอบอะไร ข้อค้นพบด้านความปลอดภัยที่ยังเปิดอยู่และปัญหาที่ทราบ และวิธี release, migrate, กู้คืน และรับมือเหตุขัดข้อง ส่วนการทำงานของโค้ดดูที่ <a href="developer-guide.html">คู่มือนักพัฒนา</a></p>
+<aside class="callout important" role="note"><span class="badge">สำคัญ</span><p>ตรวจทานเทียบกับ repository เมื่อวันที่ 27 พฤศจิกายน 2026 ยัง <strong>ไม่ได้</strong> ยืนยันบัญชี Cloudflare, URL, เวอร์ชันที่ deploy และฐานข้อมูลจริงจาก repository ให้ยืนยันสิ่งเหล่านี้ก่อนใช้เอกสารนี้เป็น runbook ของ production</p>
+</aside>
+
+<h2 class="contents-title">สารบัญ</h2>
+<ol class="contents"><li><a href="#1-ภาพรวมระบบ"><span class="n">1</span><span class="ct"><span class="cn">ภาพรวมระบบ</span></span></a></li><li><a href="#2-ค่าตั้งค่าที่ต้องตรวจสอบ"><span class="n">2</span><span class="ct"><span class="cn">ค่าตั้งค่าที่ต้องตรวจสอบ</span></span></a></li><li><a href="#3-เจ้าของระบบและการรับมอบ"><span class="n">3</span><span class="ct"><span class="cn">เจ้าของระบบและการรับมอบ</span><span class="cs">ผู้รับผิดชอบที่เสนอ · รายการตรวจรับมอบ</span></span></a></li><li><a href="#4-ข้อค้นพบด้านความปลอดภัย"><span class="n">4</span><span class="ct"><span class="cn">ข้อค้นพบด้านความปลอดภัย</span></span></a></li><li><a href="#5-runbook-การ-release-และฐานข้อมูล"><span class="n">5</span><span class="ct"><span class="cn">Runbook การ release และฐานข้อมูล</span><span class="cs">การ release โค้ด · Migration ของ D1 · การย้อนกลับและกู้คืน</span></span></a></li><li><a href="#6-การติดตามระบบและเหตุขัดข้อง"><span class="n">6</span><span class="ct"><span class="cn">การติดตามระบบและเหตุขัดข้อง</span></span></a></li><li><a href="#7-ปัญหาที่ทราบของแอป"><span class="n">7</span><span class="ct"><span class="cn">ปัญหาที่ทราบของแอป</span></span></a></li><li><a href="#8-การยอมรับการส่งมอบ"><span class="n">8</span><span class="ct"><span class="cn">การยอมรับการส่งมอบ</span></span></a></li><li><a href="#เอกสารอ้างอิง"><span class="n"></span><span class="ct"><span class="cn">เอกสารอ้างอิง</span></span></a></li></ol>
+</section>
+<section class="sheet" id="ch-1" data-ch="1">
+<div class="runhead"><span>คู่มือส่งมอบ IT · 1</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="1-ภาพรวมระบบ"><span class="num">1</span><span class="ht">ภาพรวมระบบ</span><a class="anchor" href="#1-ภาพรวมระบบ" aria-label="ลิงก์ไปยังหัวข้อนี้: ภาพรวมระบบ"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<ul>
+<li><strong>คืออะไร:</strong> เว็บแอปที่ใช้ร่วมกันสำหรับวางแผน Customer Audit (CS) และ Internal Audit (IA) ใน 7 ไซต์ของ UTAC (<span class="site" style="--c:#c0392b">UTL1</span>, <span class="site" style="--c:#2e7d32">UTL2</span>, <span class="site" style="--c:#66bb6a">UTL2A</span>, <span class="site" style="--c:#1b5e20">UTL2B</span>, <span class="site" style="--c:#1e5fa8">UTL3</span>, <span class="site" style="--c:#4a90d9">UTL3A</span>, <span class="site" style="--c:#123f73">UTL3T</span>) แทนการใช้ spreadsheet ตัวแอปเรียกตัวเองว่า &quot;Calendar Auditor&quot;</li>
+<li><strong>เทคโนโลยี:</strong> React 19, TypeScript, Vite; Cloudflare Worker หนึ่งตัวที่ส่งไฟล์ static และให้บริการ API <code>/api/*</code>; Cloudflare D1 (SQLite)</li>
+<li><strong>ผู้ใช้:</strong> QA Planner, QMS Host, QA Admin และผู้ทำรายงาน ใช้งานผ่าน Microsoft Edge หรือ Google Chrome</li>
+<li><strong>ข้อมูลใน D1:</strong> ตารางการตรวจ ชื่อลูกค้า ชื่อ QMS Host ผลตรวจ บันทึก กฎวันหยุด History ที่ใช้ร่วมกัน (<code>history_log</code>) บัญชีผู้ใช้ และ session</li>
+<li><strong>ข้อมูลในแต่ละเบราว์เซอร์ (<code>localStorage</code>):</strong> สำเนาตารางการตรวจ (<code>calendar_qa_snapshot</code> ซึ่งเก็บรายการตัวเลือก และรายการ History ที่บันทึกขึ้นเซิร์ฟเวอร์ไม่สำเร็จไว้ด้วย) บันทึก (<code>calendar_qa_comments</code>) ผู้ใช้ที่จำไว้ (<code>calendar_qa_session_user</code>) และบัญชีที่สร้างในเบราว์เซอร์นั้น (<code>calendar_qa_users</code>)</li>
+</ul>
+<figure class="diagram"><a class="shot" href="../images/architecture.th.svg" target="_blank" rel="noopener" title="เปิดภาพขนาดเต็มในแท็บใหม่"><img src="../images/architecture.th.svg" alt="สถาปัตยกรรม: เบราว์เซอร์ Worker D1 และแคช snapshot ในเบราว์เซอร์" width="720" height="590" loading="lazy" decoding="async"></a><figcaption><span class="fig">ภาพที่ 1</span> สถาปัตยกรรมระบบ</figcaption></figure>
+
+<footer class="sheet-foot"><span></span><span class="folio">1 / 9</span><a href="#2-ค่าตั้งค่าที่ต้องตรวจสอบ" rel="next"><span class="dir">ถัดไป →</span>ค่าตั้งค่าที่ต้องตรวจสอบ</a></footer>
+</section>
+<section class="sheet" id="ch-2" data-ch="2">
+<div class="runhead"><span>คู่มือส่งมอบ IT · 2</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="2-ค่าตั้งค่าที่ต้องตรวจสอบ"><span class="num">2</span><span class="ht">ค่าตั้งค่าที่ต้องตรวจสอบ</span><a class="anchor" href="#2-ค่าตั้งค่าที่ต้องตรวจสอบ" aria-label="ลิงก์ไปยังหัวข้อนี้: ค่าตั้งค่าที่ต้องตรวจสอบ"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>ค่าต่อไปนี้มาจาก repository ให้ยืนยันทีละรายการในบัญชี Cloudflare และ GitHub ของบริษัท</p>
+<div class="table"><table><thead><tr><th scope="col">รายการ</th><th scope="col">ค่าใน repository</th><th scope="col">หมายเหตุ</th></tr></thead><tbody>
+<tr><td>ชื่อ Worker</td><td><code>utac-qa-calendar</code></td><td><code>wrangler.toml</code></td></tr>
+<tr><td>จุดเริ่มของ Worker</td><td><code>worker/index.ts</code></td><td>จัดการ <code>/api/*</code> และส่งไฟล์แอปที่ build แล้ว</td></tr>
+<tr><td>ไฟล์ static</td><td><code>dist</code>, binding <code>ASSETS</code></td><td>สร้างโดย <code>npm run build</code></td></tr>
+<tr><td>D1 binding</td><td><code>DB</code> → <code>calendar-qa-db</code></td><td>Database ID <code>11c524c4-b02e-4d38-840e-ee98294f2118</code></td></tr>
+<tr><td>Compatibility date</td><td><code>2025-04-01</code></td><td></td></tr>
+<tr><td>Secret</td><td><code>REGISTRATION_CODE</code></td><td>ใช้ควบคุมการสมัคร หากไม่ได้ตั้งค่าไว้ การสมัครทุกครั้งจะถูกปฏิเสธ ตั้งค่าด้วย <code>npx wrangler secret put REGISTRATION_CODE</code> ห้ามเก็บค่าไว้ใน Git, ticket หรือเอกสาร</td></tr>
+<tr><td>อายุ session</td><td>30 วันเมื่อเลือก Remember me; หากไม่เลือก จะอยู่จนกว่าจะปิดเบราว์เซอร์ นานสุด 12 ชั่วโมง</td><td>ค่าคงที่ใน <code>worker/index.ts</code></td></tr>
+<tr><td>การบันทึก log</td><td>ไม่มีบล็อก <code>[observability]</code> ใน <code>wrangler.toml</code></td><td>Workers Logs อาจปิดอยู่ ให้ตรวจใน dashboard</td></tr>
+<tr><td>Source code</td><td>GitHub remote <code>origin</code></td><td>ยังไม่ยืนยันเจ้าของ</td></tr>
+</tbody></table></div>
+<p><strong>การเปลี่ยน schema ที่รออยู่:</strong> migration <code>0020_assignment_audit_type.sql</code> เพิ่มและเติมค่าคอลัมน์ <code>assignments.audit_type</code> และ <code>0021_history_log.sql</code> สร้างตาราง <code>history_log</code> สำหรับ History ที่ใช้ร่วมกัน คำสั่ง <code>npm run deploy</code> ครั้งถัดไปจะ apply ทั้งสอง migration (ดู <a href="#52-migration-ของ-d1">5.2</a>) ทั้งสองเป็นการเพิ่มเท่านั้น Worker ที่ทำงานอยู่จึงยังทำงานได้ตามปกติระหว่างที่ migration รัน ก่อน release ครั้งแรกนั้น ให้ตรวจว่ายังไม่มีคอลัมน์นี้อยู่ (build ทดสอบรุ่นก่อนหน้าเคยเพิ่มคอลัมน์นี้ตอน runtime): <code>npx wrangler d1 execute calendar-qa-db --remote --command &quot;PRAGMA table_info(assignments)&quot;</code> หากพบ <code>audit_type</code> ในรายการ ให้สอบถามผู้ดูแลโค้ดว่าจะทำเครื่องหมายว่า 0020 apply แล้วอย่างไร แทนการรัน migration นั้น</p>
+<p><strong>สิ่งที่ไม่ได้ประกาศไว้ใน repository:</strong> staging environment, custom domain, Cloudflare account ID, CI/CD workflow และ monitoring alert ซึ่งไม่ได้แปลว่าไม่มีอยู่จริง ให้ตรวจใน dashboard การ push ขึ้น Git อย่างเดียวไม่ได้ deploy อะไร การ deploy ใช้ <code>npm run deploy</code></p>
+
+<footer class="sheet-foot"><a href="#1-ภาพรวมระบบ" rel="prev"><span class="dir">← ก่อนหน้า</span>ภาพรวมระบบ</a><span class="folio">2 / 9</span><a href="#3-เจ้าของระบบและการรับมอบ" rel="next"><span class="dir">ถัดไป →</span>เจ้าของระบบและการรับมอบ</a></footer>
+</section>
+<section class="sheet" id="ch-3" data-ch="3">
+<div class="runhead"><span>คู่มือส่งมอบ IT · 3</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="3-เจ้าของระบบและการรับมอบ"><span class="num">3</span><span class="ht">เจ้าของระบบและการรับมอบ</span><a class="anchor" href="#3-เจ้าของระบบและการรับมอบ" aria-label="ลิงก์ไปยังหัวข้อนี้: เจ้าของระบบและการรับมอบ"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<h3 id="31-ผู้รับผิดชอบที่เสนอ"><span class="num">3.1</span><span class="ht">ผู้รับผิดชอบที่เสนอ</span><a class="anchor" href="#31-ผู้รับผิดชอบที่เสนอ" aria-label="ลิงก์ไปยังหัวข้อนี้: ผู้รับผิดชอบที่เสนอ"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>ระหว่างการส่งมอบอย่างเป็นทางการ ให้แทนแต่ละบทบาทด้วยชื่อบุคคลและช่องทาง escalation</p>
+<div class="table"><table><thead><tr><th scope="col">งาน</th><th scope="col">ผู้รับผิดชอบที่เสนอ</th><th scope="col">หน้าที่</th></tr></thead><tbody>
+<tr><td>บัญชี Cloudflare และ Worker</td><td>UTAC IT Cloud / Platform Operations</td><td>ความเป็นเจ้าของบัญชี, สิทธิ์เท่าที่จำเป็น, การตั้งค่า Worker, การควบคุมการ deploy, domain และ route, การกู้คืนบัญชี</td></tr>
+<tr><td>D1 และการปกป้องข้อมูล</td><td>IT Data / Platform Operations ร่วมกับเจ้าของข้อมูล QA</td><td>อนุมัติ migration, นโยบาย backup และ restore, สิทธิ์เข้าถึง, ระยะเก็บข้อมูล, การซ้อมกู้คืน, การตัดสินใจเรื่อง export</td></tr>
+<tr><td>กระบวนการ QA และคุณภาพข้อมูล</td><td>เจ้าของกระบวนการ QA / QMS</td><td>นิยามการตรวจ, ฟิลด์บังคับ, สถานะ, รายชื่อ QMS Host, กฎวันหยุด, การยอมรับของผู้ใช้</td></tr>
+<tr><td>Source code และ release</td><td>ผู้ดูแลแอปของ IT ที่ระบุชื่อ ร่วมกับผู้อนุมัติการเปลี่ยนแปลงฝั่ง QA</td><td>สิทธิ์ repository, code review, กระบวนการ release, change log, การคัดแยก defect</td></tr>
+<tr><td>Identity และความปลอดภัย</td><td>UTAC IT Identity / Security</td><td>นโยบายการสมัคร, วงจรชีวิตของ admin, ทบทวนการยืนยันตัวตน, รับมือเหตุการณ์, งาน SSO / MFA / สิทธิ์ตามบทบาท หากต้องทำ</td></tr>
+</tbody></table></div>
+<h3 id="32-รายการตรวจรับมอบ"><span class="num">3.2</span><span class="ht">รายการตรวจรับมอบ</span><a class="anchor" href="#32-รายการตรวจรับมอบ" aria-label="ลิงก์ไปยังหัวข้อนี้: รายการตรวจรับมอบ"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li>กำหนดเจ้าของบัญชี Cloudflare และผู้ดูแลที่บริษัทควบคุมอย่างน้อยสองคน เลิกการเป็นเจ้าของโดยบุคคลเพียงคนเดียว และทบทวนสิทธิ์ของผู้ใช้และ token</li>
+<li>ยืนยัน Worker ของ production, URL หรือ custom domain, ฐานข้อมูล D1, เวอร์ชันที่ deploy, บัญชี Cloudflare และเจ้าของ repository บน GitHub แล้วบันทึกไว้ในทะเบียนบริการของบริษัท ไม่ใช่ในเอกสารสาธารณะ</li>
+<li>ยืนยันว่าตั้งค่า <code>REGISTRATION_CODE</code> แล้วหรือยัง ใครเปลี่ยนรหัสได้ และควรเปิดให้สมัครเองต่อไปหรือไม่</li>
+<li>สร้าง secret และสิทธิ์ API ที่ IT เป็นเจ้าของ อย่าใช้ credential Cloudflare ส่วนตัวของนักพัฒนา</li>
+<li>ทบทวน<a href="#4-ข้อค้นพบด้านความปลอดภัย">ข้อค้นพบด้านความปลอดภัย</a>และ<a href="#7-ปัญหาที่ทราบของแอป">ปัญหาที่ทราบ</a>ร่วมกับ IT Security และเจ้าของข้อมูล QA และกำหนดผู้รับผิดชอบพร้อมการตัดสินใจของแต่ละข้อ</li>
+<li>กำหนดผู้อนุมัติ release, ผู้ตัดสินใจ rollback, ผู้ติดต่อฝ่ายสนับสนุน, ระดับชั้นข้อมูล, ระยะเก็บข้อมูล, RPO / RTO และเส้นทาง escalation</li>
+<li>ตรวจความครอบคลุมของการกู้คืน D1 ตามแผน Cloudflare ปัจจุบัน และซ้อมกู้คืนนอก production</li>
+<li>ตกลงหลักฐานว่า release สำเร็จ: test, lint และ build ผ่าน, เข้าและออกจากระบบได้, สร้าง / แก้ไข / ลบได้, ดาวน์โหลด Excel ได้, เห็นข้อมูลที่บันทึกใน D1 จากเบราว์เซอร์ที่สอง และ error log ของ Worker ไม่มีข้อผิดพลาด</li>
+</ol>
+
+<footer class="sheet-foot"><a href="#2-ค่าตั้งค่าที่ต้องตรวจสอบ" rel="prev"><span class="dir">← ก่อนหน้า</span>ค่าตั้งค่าที่ต้องตรวจสอบ</a><span class="folio">3 / 9</span><a href="#4-ข้อค้นพบด้านความปลอดภัย" rel="next"><span class="dir">ถัดไป →</span>ข้อค้นพบด้านความปลอดภัย</a></footer>
+</section>
+<section class="sheet" id="ch-4" data-ch="4">
+<div class="runhead"><span>คู่มือส่งมอบ IT · 4</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="4-ข้อค้นพบด้านความปลอดภัย"><span class="num">4</span><span class="ht">ข้อค้นพบด้านความปลอดภัย</span><a class="anchor" href="#4-ข้อค้นพบด้านความปลอดภัย" aria-label="ลิงก์ไปยังหัวข้อนี้: ข้อค้นพบด้านความปลอดภัย"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>ให้ตัดสินใจทุกข้อก่อนเปิดใช้งาน production ในวงกว้าง</p>
+<div class="table"><table><thead><tr><th scope="col">#</th><th scope="col">ข้อค้นพบ</th><th scope="col">ความเสี่ยง</th><th scope="col">การตัดสินใจที่แนะนำ</th></tr></thead><tbody>
+<tr><td>1</td><td><code>admin</code> / <code>user</code> ไม่ใช่ขอบเขตสิทธิ์ ส่วนหัวแสดงบทบาท แต่ผู้ใช้ที่เข้าสู่ระบบทุกคนเปิด Manage ได้ และ Worker ตรวจเพียงว่ามี session ที่ใช้ได้</td><td>ทุกบัญชีแก้ข้อมูลหลักและกฎวันหยุดได้</td><td>เพิ่มและทดสอบการตรวจบทบาทฝั่งเซิร์ฟเวอร์ หรือยอมรับความเสี่ยงเป็นลายลักษณ์อักษร</td></tr>
+<tr><td>2</td><td>การสมัครใช้ <code>REGISTRATION_CODE</code> ร่วมกันค่าเดียว บัญชีแรกในฐานข้อมูลว่างจะเป็น <code>admin</code> บัญชีต่อมาเป็น <code>user</code> ทุกครั้งที่ Worker cold start หากไม่มี admin เลย Worker จะเลื่อนบัญชีที่เก่าที่สุดเป็น admin การลบ admin คนสุดท้ายจึงถูกย้อนกลับ User ID ไม่แยกตัวพิมพ์เล็กใหญ่ และไม่มีหน้าจอสำหรับจัดการ admin หรือปิดบัญชีพนักงานที่ลาออก</td><td>ใครที่มีรหัสก็สร้างบัญชีได้ และพนักงานที่ลาออกยังเข้าถึงได้</td><td>ตกลงวงจรชีวิตบัญชีและกระบวนการเปลี่ยนรหัส หรือย้ายไปใช้ SSO ของบริษัท</td></tr>
+<tr><td>3</td><td>รหัสผ่าน hash ด้วย SHA-256 แบบมี salt และยาวขั้นต่ำเพียง 4 ตัวอักษร ไม่มี rate limiting หรือการล็อกบัญชีทั้งตอนเข้าสู่ระบบและตอนเปลี่ยนรหัสผ่าน ข้อความ error บอกได้ว่าบัญชีมีอยู่หรือไม่ และการเปรียบเทียบ hash ไม่ได้ทำแบบ constant-time ไม่มี SSO หรือ MFA</td><td>การเดารหัสผ่าน รหัสผ่านอ่อน และ hash คำนวณเร็ว</td><td>ให้ IT Security อนุมัติ หรือกำหนดให้ใช้ hash ที่แข็งแรงกว่า, rate limiting, นโยบายรหัสผ่าน และ SSO / MFA</td></tr>
+<tr><td>4</td><td>เบราว์เซอร์ยังเก็บข้อมูลธุรกิจไว้หลัง sign out: สำเนาตารางการตรวจ รายการตัวเลือก บันทึก รายการ History ที่ยังไม่ได้บันทึก และผู้ใช้ที่จำไว้ (ดูหัวข้อ 1) เมื่อ session ฝั่งเซิร์ฟเวอร์สิ้นสุดแล้ว (เช่น ปิดเบราว์เซอร์โดยไม่ได้เลือก Remember me) แอปยังเปิดขึ้นในสถานะเข้าสู่ระบบและแสดงข้อมูลที่แคชไว้นี้ โดยไม่มี session ที่ใช้ได้ หากบัญชีถูกสร้างในเบราว์เซอร์นั้น การเปลี่ยนรหัสผ่านจะเก็บ hash แบบมี salt ของรหัสผ่านใหม่ไว้ใน <code>calendar_qa_users</code> ด้วย</td><td>ข้อมูลรั่วไหลบนเครื่องที่ใช้ร่วมกันหรือเครื่องที่สูญหาย ระดับปานกลางบนคอมพิวเตอร์ที่ใช้ร่วมกัน</td><td>ใช้นโยบายจัดการอุปกรณ์ และตัดสินใจว่าแอปควรลบหรือลดข้อมูลใน <code>localStorage</code> เมื่อ sign out และเมื่อ session สิ้นสุดหรือไม่</td></tr>
+<tr><td>5</td><td>History เก็บใน D1 (<code>history_log</code>) และใช้ร่วมกัน โดย Worker บันทึกบัญชีที่เข้าสู่ระบบและเวลาไว้ แต่เบราว์เซอร์เป็นผู้เขียนแต่ละรายการ: คำอธิบายมาจากแอป การเปลี่ยนแปลงจะถูกบันทึกก็ต่อเมื่อเบราว์เซอร์ส่งรายการนั้นมา และผู้ใช้ที่เข้าสู่ระบบคนใดก็เพิ่มรายการผ่าน API ได้ การเปลี่ยนรายชื่อ QMS Host ไม่ถูกบันทึก</td><td>History เชื่อถือได้ในเรื่องว่าใครและเมื่อไร แต่ไม่ใช่หลักฐานว่าเปลี่ยนอะไร</td><td>ตัดสินใจว่าเท่านี้เพียงพอสำหรับใช้เป็น audit trail อย่างเป็นทางการหรือไม่ หากไม่พอ ให้ Worker บันทึกการเปลี่ยนแปลงเองในทุก route ที่เขียนข้อมูล</td></tr>
+<tr><td>6</td><td>Worker เชื่อข้อมูลจากเบราว์เซอร์: ฟิลด์บังคับและกฎวันหยุดตรวจเฉพาะในเบราว์เซอร์ id สร้างโดยเบราว์เซอร์ (หากสองคนสร้างพร้อมกันอาจชนกัน ทำให้บันทึกไม่สำเร็จหรือนัดหมายสองรายการถูกรวมกัน) และการแก้ไขเป็นแบบ last-write-wins</td><td>ข้อมูลไม่สอดคล้องกันหรือถูกรวมกัน</td><td>เพิ่มการตรวจสอบข้อมูลฝั่งเซิร์ฟเวอร์ และให้เซิร์ฟเวอร์เป็นผู้สร้าง id</td></tr>
+<tr><td>7</td><td>response 500 ส่งข้อความ exception ดิบกลับไป และไม่มีการบันทึก log ของ error</td><td>เปิดเผยรายละเอียดภายใน และมองไม่เห็นความล้มเหลวใน log</td><td>บันทึก error ฝั่งเซิร์ฟเวอร์ และส่งข้อความทั่วไปกลับไป</td></tr>
+<tr><td>8</td><td>dependency <code>xlsx@0.18.5</code> ไม่ได้ใช้งาน และมี security advisory ที่เผยแพร่แล้ว</td><td>เสี่ยงด้าน supply chain โดยไม่ได้ประโยชน์</td><td>ลบออก และรัน <code>npm audit</code> เป็นส่วนหนึ่งของการ release</td></tr>
+</tbody></table></div>
+<p>การควบคุมอื่นที่มีอยู่แล้ว: session เป็น token แบบสุ่มที่เก็บใน D1 เฉพาะค่า hash และส่งใน cookie แบบ HttpOnly, <code>SameSite=Lax</code> (<code>Secure</code> เมื่อใช้ HTTPS); การเปลี่ยนรหัสผ่านยกเลิกทุก session ของบัญชีนั้น; Worker ปฏิเสธ request ข้าม origin; SQL ทุกคำสั่ง bind พารามิเตอร์</p>
+
+<footer class="sheet-foot"><a href="#3-เจ้าของระบบและการรับมอบ" rel="prev"><span class="dir">← ก่อนหน้า</span>เจ้าของระบบและการรับมอบ</a><span class="folio">4 / 9</span><a href="#5-runbook-การ-release-และฐานข้อมูล" rel="next"><span class="dir">ถัดไป →</span>Runbook การ release และฐานข้อมูล</a></footer>
+</section>
+<section class="sheet" id="ch-5" data-ch="5">
+<div class="runhead"><span>คู่มือส่งมอบ IT · 5</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="5-runbook-การ-release-และฐานข้อมูล"><span class="num">5</span><span class="ht">Runbook การ release และฐานข้อมูล</span><a class="anchor" href="#5-runbook-การ-release-และฐานข้อมูล" aria-label="ลิงก์ไปยังหัวข้อนี้: Runbook การ release และฐานข้อมูล"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>repository มีการตั้งค่า Wrangler ชุดเดียวและไม่มี staging environment ให้รันคำสั่ง production จาก checkout ที่ IT ควบคุมเท่านั้น หลังยืนยันบัญชีและฐานข้อมูลเป้าหมายแล้ว</p>
+<h3 id="51-การ-release-โค้ด"><span class="num">5.1</span><span class="ht">การ release โค้ด</span><a class="anchor" href="#51-การ-release-โค้ด" aria-label="ลิงก์ไปยังหัวข้อนี้: การ release โค้ด"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li>ทบทวน commit ที่อนุมัติ และยืนยัน branch และเป้าหมาย production</li>
+<li>ติดตั้ง dependency ตามเวอร์ชันที่ล็อกไว้: <code>npm ci</code></li>
+<li>รัน <code>npm test</code>, <code>npm run lint</code> และ <code>npm run build</code> แก้ทุกข้อผิดพลาดก่อนทำต่อ</li>
+<li>ใน Cloudflare dashboard ตรวจเวอร์ชันที่ deploy อยู่และ log ของ Worker ยืนยันว่ามี binding และ secret ครบ โดยไม่พิมพ์ค่า secret ออกมา</li>
+<li>หาก release นี้มีไฟล์ใหม่ใน <code>migrations/</code> ให้ตรวจตาม <a href="#52-migration-ของ-d1">5.2</a> ให้ครบก่อน</li>
+<li>Deploy: <code>npm run deploy</code> (<code>scripts/deploy.mjs</code>) คำสั่งนี้จะ build แสดงรายการ migration ของ D1 ที่ค้างอยู่และขอให้ยืนยัน พิมพ์จุดกู้คืน D1 Time Travel สำหรับ change record แล้ว apply migration จากนั้นจึง deploy Worker หากตอบอย่างอื่นที่ไม่ใช่ <code>y</code> หรือ migration ล้มเหลว release จะหยุดก่อนที่โค้ดจะถูก deploy เมื่อรันใน CI หรือใช้ <code>-- --yes</code> จะไม่มีการถาม</li>
+<li>ตรวจหลัง deploy: เข้าสู่ระบบได้, หน้า Schedule ของเดือนปัจจุบันโหลดได้, สร้างและแก้นัดหมายได้, กฎวันหยุดบล็อกได้ตามคาด, Table กรองและ export ได้ โหลดหน้าใหม่ในเบราว์เซอร์ที่สองและยืนยันว่าเห็นการเปลี่ยนแปลง และมีรายการใน <strong>History</strong> ภายใต้ชื่อของคุณ แล้วตรวจ error ของ Worker</li>
+<li>บันทึก commit, เวลา deploy, ผู้ดำเนินการ, ผลลัพธ์, migration ที่ apply, จุดกู้คืน และเลขอ้างอิงการเปลี่ยนแปลง</li>
+</ol>
+<h3 id="52-migration-ของ-d1"><span class="num">5.2</span><span class="ht">Migration ของ D1</span><a class="anchor" href="#52-migration-ของ-d1" aria-label="ลิงก์ไปยังหัวข้อนี้: Migration ของ D1"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>migration รันเป็นส่วนหนึ่งของ <code>npm run deploy</code> ก่อนโค้ดใหม่ขึ้นใช้งานไม่นาน ระบบ apply เฉพาะ migration ที่ยังไม่เคยรัน ดังนั้น release ที่ไม่มี migration ใหม่จะไม่เปลี่ยนแปลงฐานข้อมูล ก่อน release ที่ <strong>มี</strong> migration ใหม่:</p>
+<ol>
+<li>อ่าน SQL ใหม่ใน <code>migrations/</code> และประเมินผลกระทบหากต้องย้อนกลับ ห้าม release migration ที่ลบข้อมูลโดยไม่ได้ทบทวน</li>
+<li>ตรวจว่าใช้ได้กับ Worker ที่ทำงานอยู่ตอนนี้ เพราะฐานข้อมูลจะเปลี่ยนก่อนโค้ดใหม่ deploy เพียงครู่เดียว การเพิ่มตารางหรือคอลัมน์ปลอดภัย ยกเว้นกรณีที่ฟังก์ชัน <code>ensure*()</code> ของ Worker สร้างคอลัมน์เดียวกันด้วย (migration จะล้มเหลวด้วยข้อความ &quot;duplicate column name&quot;) การลบหรือเปลี่ยนชื่อคอลัมน์ที่โค้ดที่ทำงานอยู่ยังใช้ ต้องรอ release ถัดไป</li>
+<li>ดูว่าจะมีอะไรรัน: <code>npx wrangler d1 migrations list calendar-qa-db --remote</code> หากต้องการ ให้ซ้อมบนเครื่องด้วย <code>npm run deploy -- --local</code></li>
+<li>ขออนุมัติจากเจ้าของข้อมูล QA และทำตามกระบวนการ change ของบริษัท Wrangler ไม่ได้ทำ backup ให้เอง จุดกู้คืนคือ D1 Time Travel และ release จะพิมพ์จุดนี้ออกมา</li>
+<li>Release ด้วย <code>npm run deploy</code> (<a href="#51-การ-release-โค้ด">5.1</a>) และยืนยันรายการ migration เมื่อถูกถาม</li>
+<li>หลังจากนั้นรันคำสั่ง list อีกครั้ง ควรไม่มีรายการค้าง</li>
+</ol>
+<p>หากต้องการ apply migration โดยไม่ deploy โค้ด (เช่น รันการเติมข้อมูลขนาดใหญ่แยกต่างหาก) ใช้ <code>npm run migrate:remote</code> โปรดทราบว่า prompt ของ Wrangler เองถือว่าการตอบ &quot;No&quot; เป็นความสำเร็จ จึงควรใช้คำสั่งนี้เฉพาะเมื่อตั้งใจจะ apply จริง</p>
+<h3 id="53-การย้อนกลับและกู้คืน"><span class="num">5.3</span><span class="ht">การย้อนกลับและกู้คืน</span><a class="anchor" href="#53-การย้อนกลับและกู้คืน" aria-label="ลิงก์ไปยังหัวข้อนี้: การย้อนกลับและกู้คืน"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ul>
+<li>การ rollback โค้ด Worker และการกู้ข้อมูล D1 เป็นคนละขั้นตอน การ rollback โค้ดไม่ได้ย้อน migration หรือนำแถวที่ลบไปแล้วกลับมา ให้ตรวจความเข้ากันของโค้ดกับ schema ก่อน rollback ฝั่งใดฝั่งหนึ่ง</li>
+<li>การ rollback เวอร์ชันของ Worker มีผลทันที ให้ยืนยันเวอร์ชันเป้าหมายและการอนุมัติ แล้วบันทึกไว้</li>
+<li>การกู้ข้อมูล: จำกัดการเขียนข้อมูล หาจุดเวลาที่ถูกต้อง (จุดกู้คืนที่ release พิมพ์ไว้ หรือ <code>npx wrangler d1 time-travel info calendar-qa-db</code>) เก็บหลักฐาน และทำตามกระบวนการกู้คืน D1 ที่บริษัทอนุมัติ ทดสอบนอก production เมื่อทำได้ ปัจจุบัน Cloudflare ระบุช่วง D1 Time Travel ไว้ 7 วัน (Workers Free) และ 30 วัน (Workers Paid) ให้ยืนยันแผนที่ใช้ก่อนพึ่งพา</li>
+<li>การกู้คืนที่กระทบข้อมูลจริงต้องได้รับอนุมัติจากเจ้าของข้อมูล QA และมี incident หรือ change record</li>
+</ul>
+
+<footer class="sheet-foot"><a href="#4-ข้อค้นพบด้านความปลอดภัย" rel="prev"><span class="dir">← ก่อนหน้า</span>ข้อค้นพบด้านความปลอดภัย</a><span class="folio">5 / 9</span><a href="#6-การติดตามระบบและเหตุขัดข้อง" rel="next"><span class="dir">ถัดไป →</span>การติดตามระบบและเหตุขัดข้อง</a></footer>
+</section>
+<section class="sheet" id="ch-6" data-ch="6">
+<div class="runhead"><span>คู่มือส่งมอบ IT · 6</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="6-การติดตามระบบและเหตุขัดข้อง"><span class="num">6</span><span class="ht">การติดตามระบบและเหตุขัดข้อง</span><a class="anchor" href="#6-การติดตามระบบและเหตุขัดข้อง" aria-label="ลิงก์ไปยังหัวข้อนี้: การติดตามระบบและเหตุขัดข้อง"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<ol>
+<li>จาก checkout ที่ได้รับอนุญาต ใช้ <code>npx wrangler tail</code> ดู request แบบเรียลไทม์ ตรวจ status code และอ่าน body ของ response 500 ทุกรายการ (มีข้อความ exception อยู่ ซึ่ง Worker ไม่ได้บันทึก log ไว้) หากเปิด Workers Logs ไว้ ให้ตรวจ log ของ Worker <code>utac-qa-calendar</code> ใน dashboard ด้วย</li>
+<li>แยกประเภทความล้มเหลว: ไฟล์ static, Worker API หรือการยืนยันตัวตน, query หรือ migration ของ D1, หรือการเชื่อมต่อของผู้ใช้ รหัส 401 ชี้ไปที่ session, 403 ชี้ไปที่ request ข้าม origin และ 5xx ชี้ไปที่ Worker หรือฐานข้อมูล</li>
+<li>หากข้อมูลหายหรือไม่อัปเดต ให้ตรวจ error ของ Worker, ข้อมูลที่บันทึกใน D1 จากเบราว์เซอร์ที่สอง และข้อความเตือนการบันทึกในแอป ก่อนขอให้ผู้ใช้แก้ซ้ำ ผู้ใช้ที่ session สิ้นสุดแล้วจะยังเห็นข้อมูลที่แคชไว้ และได้รับคำเตือนการบันทึกทุกครั้งที่แก้ไข ผู้ใช้กลุ่มนี้ควร sign out แล้วเข้าสู่ระบบใหม่</li>
+<li>บันทึกเวลาและเขตเวลา ผู้ใช้และไซต์ที่ได้รับผลกระทบ request path (ไม่รวม credential) เวอร์ชันที่ deploy และผลกระทบ ห้ามบันทึกรหัสผ่าน cookie registration code หรือ session token</li>
+<li>แจ้งเหตุสงสัยข้อมูลสูญหายหรือการเข้าถึงโดยไม่ได้รับอนุญาตไปยัง UTAC IT Security และเจ้าของข้อมูล QA ตามกระบวนการรับมือเหตุการณ์ของบริษัท</li>
+</ol>
+
+<footer class="sheet-foot"><a href="#5-runbook-การ-release-และฐานข้อมูล" rel="prev"><span class="dir">← ก่อนหน้า</span>Runbook การ release และฐานข้อมูล</a><span class="folio">6 / 9</span><a href="#7-ปัญหาที่ทราบของแอป" rel="next"><span class="dir">ถัดไป →</span>ปัญหาที่ทราบของแอป</a></footer>
+</section>
+<section class="sheet" id="ch-7" data-ch="7">
+<div class="runhead"><span>คู่มือส่งมอบ IT · 7</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="7-ปัญหาที่ทราบของแอป"><span class="num">7</span><span class="ht">ปัญหาที่ทราบของแอป</span><a class="anchor" href="#7-ปัญหาที่ทราบของแอป" aria-label="ลิงก์ไปยังหัวข้อนี้: ปัญหาที่ทราบของแอป"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>พฤติกรรมที่ยืนยันแล้วในโค้ดปัจจุบัน ซึ่งผู้ใช้และฝ่ายสนับสนุนควรทราบ แต่ละข้อเป็นรายการที่ควรพิจารณาแก้ไข</p>
+<div class="table"><table><thead><tr><th scope="col">ปัญหา</th><th scope="col">ผลกระทบ</th></tr></thead><tbody>
+<tr><td>ผลตรวจที่บันทึกเป็น 0 ทุกช่องก่อนการแก้ไขปัญหา</td><td>การตรวจเดิมที่ไม่มี finding เลยจะยังเป็นสีอำพันจนกว่าจะมีคนเปิด <strong>Audit Results</strong> แล้วเลือก <strong>Save Results</strong> อีกครั้ง</td></tr>
+<tr><td>ลำดับ QMS Host ที่ลากจัดไว้ไม่ถูกบันทึก</td><td>ลำดับจะรีเซ็ตเมื่อโหลดหน้าใหม่ และผู้ใช้อื่นไม่เห็นลำดับนี้</td></tr>
+<tr><td>บันทึกไม่มีผู้เขียนหรือเวลา</td><td>ทุกบันทึกแสดง &quot;You&quot; และ &quot;just now&quot;</td></tr>
+<tr><td>การลากย้ายไม่สนใจกฎของวัน</td><td>การลาก การทำสำเนา หรือการคัดลอกสัปดาห์ อาจวางนัดหมายลงในวันที่ถูกบล็อกได้</td></tr>
+<tr><td>นัดหมายในวันที่ภายหลังกลายเป็นวันหยุดนักขัตฤกษ์</td><td>เปิดจาก Schedule ไม่ได้ ให้ใช้ Table</td></tr>
+<tr><td>การเปลี่ยนรายชื่อ QMS Host ไม่อยู่ใน History</td><td>การเพิ่ม แก้ไข ลบ หรือจัดลำดับ host ใหม่ ไม่มีบันทึกไว้</td></tr>
+<tr><td>อาจเกิด foreign key ล้มเหลวเมื่อสร้างรายการ</td><td>เบราว์เซอร์ส่ง order, host และวันของนัดหมายใหม่โดยไม่รอกัน การสร้างจึงอาจล้มเหลวเป็นครั้งคราวด้วยข้อความ &quot;FOREIGN KEY constraint failed&quot;</td></tr>
+<tr><td>วันหยุดนักขัตฤกษ์ตามปฏิทินจันทรคติกำหนดไว้เฉพาะปี 2026–2028</td><td>ปีถัดไปต้องอัปเดตใน <code>src/holidays.ts</code></td></tr>
+</tbody></table></div>
+
+<footer class="sheet-foot"><a href="#6-การติดตามระบบและเหตุขัดข้อง" rel="prev"><span class="dir">← ก่อนหน้า</span>การติดตามระบบและเหตุขัดข้อง</a><span class="folio">7 / 9</span><a href="#8-การยอมรับการส่งมอบ" rel="next"><span class="dir">ถัดไป →</span>การยอมรับการส่งมอบ</a></footer>
+</section>
+<section class="sheet" id="ch-8" data-ch="8">
+<div class="runhead"><span>คู่มือส่งมอบ IT · 8</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="8-การยอมรับการส่งมอบ"><span class="num">8</span><span class="ht">การยอมรับการส่งมอบ</span><a class="anchor" href="#8-การยอมรับการส่งมอบ" aria-label="ลิงก์ไปยังหัวข้อนี้: การยอมรับการส่งมอบ"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>ทำร่วมกัน โดยระบุผู้รับผิดชอบและหลักฐานของแต่ละข้อ</p>
+<ul>
+<li><input disabled="" type="checkbox"> ยืนยันว่าบริษัทเป็นเจ้าของ source repository และบัญชี Cloudflare แล้ว</li>
+<li><input disabled="" type="checkbox"> บันทึก Worker, URL หรือ domain, ฐานข้อมูล D1, secret และเวอร์ชันที่ deploy ไว้ในที่เก็บภายในที่อนุมัติแล้ว</li>
+<li><input disabled="" type="checkbox"> ตรวจสถานะ migration ของ production แล้ว และซ้อมกู้คืนฐานข้อมูลนอก production แล้ว</li>
+<li><input disabled="" type="checkbox"> IT Security และ QA ทบทวนข้อค้นพบเรื่องการสมัคร วงจรชีวิตของ admin และการบังคับสิทธิ์ตามบทบาทแล้ว</li>
+<li><input disabled="" type="checkbox"> จัดการข้อค้นพบเรื่องแคชในเบราว์เซอร์ audit trail และการเก็บข้อมูลแล้ว หรือเจ้าของข้อมูลยอมรับอย่างเป็นทางการแล้ว</li>
+<li><input disabled="" type="checkbox"> คัดแยกปัญหาที่ทราบของแอปแล้ว โดยแต่ละข้อมีผู้รับผิดชอบหรือเป็นความเสี่ยงที่ยอมรับแล้ว</li>
+<li><input disabled="" type="checkbox"> กำหนดผู้รับผิดชอบด้าน release, rollback, การติดตามระบบ, การสนับสนุน, RPO / RTO และ escalation แล้ว</li>
+<li><input disabled="" type="checkbox"> ผู้ใช้ QA ตรวจรับขั้นตอนการทำงานและการ export ที่ตกลงกันแล้ว</li>
+</ul>
+
+<footer class="sheet-foot"><a href="#7-ปัญหาที่ทราบของแอป" rel="prev"><span class="dir">← ก่อนหน้า</span>ปัญหาที่ทราบของแอป</a><span class="folio">8 / 9</span><a href="#เอกสารอ้างอิง" rel="next"><span class="dir">ถัดไป →</span>เอกสารอ้างอิง</a></footer>
+</section>
+<section class="sheet" id="ch-9" data-ch="9">
+<div class="runhead"><span>คู่มือส่งมอบ IT · 9</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="เอกสารอ้างอิง"><span class="ht">เอกสารอ้างอิง</span><a class="anchor" href="#เอกสารอ้างอิง" aria-label="ลิงก์ไปยังหัวข้อนี้: เอกสารอ้างอิง"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>เอกสาร Cloudflare (ตรวจการเปลี่ยนแปลงก่อนทุกครั้ง): <a href="https://developers.cloudflare.com/workers/wrangler/commands/workers/" rel="noopener">Workers deploy and rollback</a> · <a href="https://developers.cloudflare.com/d1/wrangler-commands/" rel="noopener">D1 migrations</a> · <a href="https://developers.cloudflare.com/d1/reference/time-travel/" rel="noopener">D1 Time Travel and backups</a> · <a href="https://developers.cloudflare.com/workers/configuration/secrets/" rel="noopener">Worker secrets</a> · <a href="https://developers.cloudflare.com/workers/observability/logs/" rel="noopener">Worker logs</a> · <a href="https://developers.cloudflare.com/workers/authorization/workers/" rel="noopener">Workers roles and permissions</a></p>
+
+<footer class="sheet-foot"><a href="#8-การยอมรับการส่งมอบ" rel="prev"><span class="dir">← ก่อนหน้า</span>การยอมรับการส่งมอบ</a><span class="folio">9 / 9</span><span></span></footer>
+</section>
+</main>
+</div>
+</body>
+</html>

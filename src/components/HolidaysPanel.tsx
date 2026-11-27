@@ -440,7 +440,7 @@ export function HolidaysPanel({ vm }: { vm: VM }) {
           </div>
 
           <div style={css('display:flex;align-items:center;gap:10px;flex-wrap:wrap')}>
-            <button
+            <button className="tap"
               onClick={handleOpenRangeModal}
               style={css("display:inline-flex;align-items:center;gap:6px;background:#2756d6;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12.5px;font-weight:600;font-family:'Archivo',sans-serif;cursor:pointer;transition:background .15s")}
               onMouseEnter={(e) => (e.currentTarget.style.background = '#1e44b0')}
@@ -619,6 +619,7 @@ export function HolidaysPanel({ vm }: { vm: VM }) {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
             <button
               type="button"
+              className="tap"
               onClick={() => setFilterCategory('ALL')}
               style={{
                 padding: '5px 10px',
@@ -638,6 +639,7 @@ export function HolidaysPanel({ vm }: { vm: VM }) {
 
             <button
               type="button"
+              className="tap"
               onClick={() => setFilterCategory('PUBLIC_HOLIDAY')}
               style={{
                 padding: '5px 10px',
@@ -657,6 +659,7 @@ export function HolidaysPanel({ vm }: { vm: VM }) {
 
             <button
               type="button"
+              className="tap"
               onClick={() => setFilterCategory('SHUTDOWN_PLANT')}
               style={{
                 padding: '5px 10px',
@@ -676,6 +679,7 @@ export function HolidaysPanel({ vm }: { vm: VM }) {
 
             <button
               type="button"
+              className="tap"
               onClick={() => setFilterCategory('NO_CUSTOMER_AUDITS')}
               style={{
                 padding: '5px 10px',
@@ -731,7 +735,7 @@ export function HolidaysPanel({ vm }: { vm: VM }) {
               style={css("width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:8px;padding:7px 28px 7px 32px;font-size:12px;font-family:'Archivo',sans-serif;color:#1e293b;outline:none")}
             />
             {ruleSearch && (
-              <button
+              <button className="tap-hit"
                 type="button"
                 onClick={() => setRuleSearch('')}
                 style={css('position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#94a3b8;cursor:pointer;font-size:12px;padding:2px')}
@@ -844,7 +848,7 @@ export function HolidaysPanel({ vm }: { vm: VM }) {
                     </div>
 
                     {/* 4) Delete ("×") Button */}
-                    <button
+                    <button className="tap-hit"
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -897,7 +901,7 @@ export function HolidaysPanel({ vm }: { vm: VM }) {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <button
+              <button className="tap-square"
                 type="button"
                 onClick={prevYear}
                 style={css("width:32px;height:32px;border:1px solid #dde0d9;background:#fff;border-radius:7px;cursor:pointer;font-size:14px;color:#475569;display:flex;align-items:center;justify-content:center;transition:background .12s")}
@@ -907,7 +911,7 @@ export function HolidaysPanel({ vm }: { vm: VM }) {
               >
                 ◀
               </button>
-              <button
+              <button className="tap-square"
                 type="button"
                 onClick={nextYear}
                 style={css("width:32px;height:32px;border:1px solid #dde0d9;background:#fff;border-radius:7px;cursor:pointer;font-size:14px;color:#475569;display:flex;align-items:center;justify-content:center;transition:background .12s")}
@@ -1106,7 +1110,7 @@ export function HolidaysPanel({ vm }: { vm: VM }) {
               <div style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
                 {editHolidayData.isNew ? '＋ Add Public Holiday' : '✏️ Edit Public Holiday'}
               </div>
-              <button
+              <button className="tap"
                 type="button"
                 onClick={() => setEditHolidayModalOpen(false)}
                 style={css('width:28px;height:28px;border:1px solid #e2e8f0;background:#fff;border-radius:7px;cursor:pointer;color:#64748b;font-size:14px')}
@@ -1141,14 +1145,14 @@ export function HolidaysPanel({ vm }: { vm: VM }) {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px', paddingTop: '12px', borderTop: '1px solid #f1f3ee' }}>
-              <button
+              <button className="tap"
                 type="button"
                 onClick={() => setEditHolidayModalOpen(false)}
                 style={css("background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:600;font-family:'Archivo',sans-serif;cursor:pointer")}
               >
                 Cancel
               </button>
-              <button
+              <button className="tap"
                 type="button"
                 onClick={handleSaveEditHoliday}
                 style={css("background:#2563eb;color:#fff;border:none;padding:7px 18px;border-radius:8px;font-size:12.5px;font-weight:600;font-family:'Archivo',sans-serif;cursor:pointer")}
@@ -1176,7 +1180,7 @@ export function HolidaysPanel({ vm }: { vm: VM }) {
                   Apply holiday, shutdown, or audit restriction to date
                 </div>
               </div>
-              <button
+              <button className="tap"
                 type="button"
                 onClick={() => setModalOpen(false)}
                 style={css('width:28px;height:28px;border:1px solid #e2e8f0;background:#fff;border-radius:7px;cursor:pointer;color:#64748b;font-size:14px')}
@@ -1191,7 +1195,7 @@ export function HolidaysPanel({ vm }: { vm: VM }) {
                 <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155' }}>
                   {isRangeMode ? 'DATE RANGE' : 'DATE'}
                 </label>
-                <button
+                <button className="tap"
                   type="button"
                   onClick={() => setIsRangeMode(!isRangeMode)}
                   style={css("background:transparent;border:none;color:#2756d6;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
@@ -1425,7 +1429,7 @@ export function HolidaysPanel({ vm }: { vm: VM }) {
             {/* Modal Actions */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px', paddingTop: '14px', borderTop: '1px solid #f1f3ee' }}>
               {customHolidays[modalFromDate] || (modalFromDate && getHolidayForDate(new Date(modalFromDate + 'T00:00:00'), customHolidays)) ? (
-                <button
+                <button className="tap"
                   type="button"
                   onClick={handleDelete}
                   style={css("background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;font-family:'Archivo',sans-serif;cursor:pointer")}
@@ -1438,14 +1442,14 @@ export function HolidaysPanel({ vm }: { vm: VM }) {
               )}
 
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button
+                <button className="tap"
                   type="button"
                   onClick={() => setModalOpen(false)}
                   style={css("background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600;font-family:'Archivo',sans-serif;cursor:pointer")}
                 >
                   Cancel
                 </button>
-                <button
+                <button className="tap"
                   type="button"
                   onClick={handleSave}
                   disabled={modalType === 'SHUTDOWN_PLANT' && modalLockedSites.length === 0}

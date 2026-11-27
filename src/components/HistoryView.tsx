@@ -3,6 +3,43 @@ import type { VM } from '../useScheduler';
 import type { ActionType, ActivityLog, EntityType } from '../types';
 import { css, HButton } from '../ui';
 
+const ACTION_LABELS: Record<string, string> = {
+  CREATE: 'Create', UPDATE: 'Update', DELETE: 'Delete', REORDER: 'Reorder', MANAGE_ITEM: 'Manage', RESET: 'Reset', OTHER: 'Other',
+};
+const ENTITY_LABELS: Record<string, string> = {
+  APPOINTMENT: 'Appointment', HOLIDAY: 'Holiday / Restriction', CUSTOMER: 'Customer', END_CUSTOMER: 'End Customer',
+  AUDITOR: 'QMS Host', QMS_HOST: 'QMS Host', SITE: 'Site', STANDARD: 'Standard', DEPARTMENT: 'Department', PURPOSE: 'Purpose',
+  TARGET_PACKAGE: 'Target Package', CUSTOMER_NAME: 'Customer Name', AUDIT_CATEGORY: 'Audit Category',
+};
+const humanize = (code: string) => code.charAt(0) + code.slice(1).toLowerCase().replace(/_/g, ' ');
+
+/** Parses log timestamps: ISO (current) or the older local 'dd/mm/yyyy hh:mm:ss' format. */
+function parseLogTime(value: string): Date | null {
+  if (!value) return null;
+  const legacy = value.match(/^(\d{2})\/(\d{2})\/(\d{4})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
+  const d = legacy
+    ? new Date(+legacy[3], +legacy[2] - 1, +legacy[1], +legacy[4], +legacy[5], +(legacy[6] || 0))
+    : new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/** Local calendar day (yyyy-mm-dd) of a log entry, for the From/To filter. */
+function logDayKey(value: string): string {
+  const d = parseLogTime(value);
+  if (!d) return '';
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Shows a log timestamp in the viewer's local time. */
+function formatLogTime(value: string): { date: string; time: string } | null {
+  const d = parseLogTime(value);
+  if (!d) return null;
+  return {
+    date: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+    time: d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+  };
+}
+
 function getActionBadgeStyle(actionType: ActionType): { bg: string; color: string; border: string } {
   switch (actionType) {
     case 'CREATE':
@@ -118,13 +155,15 @@ export function HistoryView({ vm }: { vm: VM }) {
 
     if (dateFrom) {
       logs = logs.filter((log) => {
-        return log.timestamp >= dateFrom;
+        const day = logDayKey(log.timestamp);
+        return day !== '' && day >= dateFrom;
       });
     }
 
     if (dateTo) {
       logs = logs.filter((log) => {
-        return log.timestamp <= dateTo + 'T23:59:59';
+        const day = logDayKey(log.timestamp);
+        return day !== '' && day <= dateTo;
       });
     }
 
@@ -142,7 +181,7 @@ export function HistoryView({ vm }: { vm: VM }) {
   };
 
   return (
-    <div style={css('flex:1;display:flex;flex-direction:column;min-height:0;background:#e9ebe6;padding:16px 20px;gap:14px;overflow-y:auto')}>
+    <div style={css('flex:1;display:flex;flex-direction:column;min-height:0;background:#e9ebe6;overflow-y:auto;' + (vm.isMobile ? 'padding:12px;gap:12px' : 'padding:16px 20px;gap:14px'))}>
       {/* Top Header Card */}
       <div style={css('background:#fff;border:1px solid #d8dcd4;border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.03)')}>
         <div>
@@ -153,8 +192,9 @@ export function HistoryView({ vm }: { vm: VM }) {
             </span>
           </div>
           <p style={css('font-size:12px;color:#8a9088;margin:3px 0 0 0')}>
-            Track real-time appointment updates, master data modifications, and user actions across the system.
-          </p>
+            {vm.historyOnServer
+              ? 'Changes made by everyone: appointments, results, master data, and holiday rules. The server records who made each change and when. Times are shown in your local time zone.'
+              : 'Changes made in this browser: appointments, results, master data, and holiday rules. Shared History appears once you are signed in to the server. Times are shown in your local time zone.'}</p>
         </div>
       </div>
 
@@ -172,30 +212,30 @@ export function HistoryView({ vm }: { vm: VM }) {
         </div>
 
         {/* Action Type Filter */}
-        <div style={css('display:flex;align-items:center;gap:5px')}>
+        <div style={css('display:flex;gap:5px;' + (vm.isMobile ? 'flex:1 1 140px;min-width:0;flex-direction:column;align-items:stretch' : 'align-items:center'))}>
           <label style={css('font-size:11.5px;font-weight:600;color:#5c625c')}>Action:</label>
           <select
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value)}
-            style={css("padding:6px 10px;border:1px solid #d8dcd4;border-radius:8px;font-size:12px;color:#15191e;background:#fff;outline:none;font-family:'Archivo',sans-serif;cursor:pointer")}
+            style={css("padding:6px 10px;border:1px solid #d8dcd4;border-radius:8px;font-size:12px;color:#15191e;background:#fff;outline:none;font-family:'Archivo',sans-serif;cursor:pointer" + (vm.isMobile ? ';width:100%;min-width:0' : ''))}
           >
             <option value="ALL">All Actions</option>
-            <option value="CREATE">CREATE</option>
-            <option value="UPDATE">UPDATE</option>
-            <option value="DELETE">DELETE</option>
-            <option value="REORDER">REORDER</option>
-            <option value="MANAGE_ITEM">MANAGE_ITEM</option>
-            <option value="RESET">RESET</option>
+            <option value="CREATE">{ACTION_LABELS.CREATE}</option>
+            <option value="UPDATE">{ACTION_LABELS.UPDATE}</option>
+            <option value="DELETE">{ACTION_LABELS.DELETE}</option>
+            <option value="REORDER">{ACTION_LABELS.REORDER}</option>
+            <option value="MANAGE_ITEM">{ACTION_LABELS.MANAGE_ITEM}</option>
+            <option value="RESET">{ACTION_LABELS.RESET}</option>
           </select>
         </div>
 
         {/* Entity Type Filter */}
-        <div style={css('display:flex;align-items:center;gap:5px')}>
+        <div style={css('display:flex;gap:5px;' + (vm.isMobile ? 'flex:1 1 140px;min-width:0;flex-direction:column;align-items:stretch' : 'align-items:center'))}>
           <label style={css('font-size:11.5px;font-weight:600;color:#5c625c')}>Entity:</label>
           <select
             value={entityFilter}
             onChange={(e) => setEntityFilter(e.target.value)}
-            style={css("padding:6px 10px;border:1px solid #d8dcd4;border-radius:8px;font-size:12px;color:#15191e;background:#fff;outline:none;font-family:'Archivo',sans-serif;cursor:pointer")}
+            style={css("padding:6px 10px;border:1px solid #d8dcd4;border-radius:8px;font-size:12px;color:#15191e;background:#fff;outline:none;font-family:'Archivo',sans-serif;cursor:pointer" + (vm.isMobile ? ';width:100%;min-width:0' : ''))}
           >
             <option value="ALL">All Entities</option>
             <option value="APPOINTMENT">Appointment</option>
@@ -213,28 +253,29 @@ export function HistoryView({ vm }: { vm: VM }) {
         </div>
 
         {/* Date Range Filters */}
-        <div style={css('display:flex;align-items:center;gap:5px')}>
+        <div style={css('display:flex;gap:5px;' + (vm.isMobile ? 'flex:1 1 140px;min-width:0;flex-direction:column;align-items:stretch' : 'align-items:center'))}>
           <label style={css('font-size:11.5px;font-weight:600;color:#5c625c')}>From:</label>
           <input
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            style={css("padding:5px 8px;border:1px solid #d8dcd4;border-radius:8px;font-size:12px;color:#15191e;background:#fff;outline:none;font-family:'Archivo',sans-serif")}
+            style={css("padding:5px 8px;border:1px solid #d8dcd4;border-radius:8px;font-size:12px;color:#15191e;background:#fff;outline:none;font-family:'Archivo',sans-serif" + (vm.isMobile ? ';width:100%;min-width:0' : ''))}
           />
         </div>
 
-        <div style={css('display:flex;align-items:center;gap:5px')}>
+        <div style={css('display:flex;gap:5px;' + (vm.isMobile ? 'flex:1 1 140px;min-width:0;flex-direction:column;align-items:stretch' : 'align-items:center'))}>
           <label style={css('font-size:11.5px;font-weight:600;color:#5c625c')}>To:</label>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            style={css("padding:5px 8px;border:1px solid #d8dcd4;border-radius:8px;font-size:12px;color:#15191e;background:#fff;outline:none;font-family:'Archivo',sans-serif")}
+            style={css("padding:5px 8px;border:1px solid #d8dcd4;border-radius:8px;font-size:12px;color:#15191e;background:#fff;outline:none;font-family:'Archivo',sans-serif" + (vm.isMobile ? ';width:100%;min-width:0' : ''))}
           />
         </div>
 
         {hasFilters && (
           <HButton
+            className="tap"
             onClick={handleResetFilters}
             style={css("background:#f4f6f1;border:1px solid #e0e3dc;color:#5c625c;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
             hover={{ background: '#eaede6' }}
@@ -245,9 +286,50 @@ export function HistoryView({ vm }: { vm: VM }) {
       </div>
 
       {/* Audit Log Table Feed */}
-      <div style={css('background:#fff;border:1px solid #d8dcd4;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.03);display:flex;flex-direction:column;flex:1')}>
-        <div className="scrl" style={css('overflow-y:auto;flex:1')}>
-          <table style={css('width:100%;border-collapse:collapse;text-align:left;font-size:12.5px')}>
+      <div style={css('background:#fff;border:1px solid #d8dcd4;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.03);display:flex;flex-direction:column;' + (vm.isMobile ? 'flex:0 0 auto' : 'flex:1'))}>
+        {vm.isMobile ? (
+          <ul aria-label="History entries" style={css('list-style:none;margin:0;padding:0')}>
+            {filteredLogs.length === 0 ? (
+              <li style={css('padding:36px 16px;text-align:center;color:#6a706a;font-size:14px')}>No activity audit logs found matching your filters.</li>
+            ) : (
+              filteredLogs.map((log: ActivityLog, idx: number) => {
+                const actionStyle = getActionBadgeStyle(log.actionType);
+                const entityStyle = getEntityBadgeStyle(log.entityType);
+                const initials = log.user.avatarInitials || log.user.name.slice(0, 2).toUpperCase();
+                const t = formatLogTime(log.timestamp);
+                return (
+                  <li key={log.id || idx} className="selectable" style={css('padding:12px 14px 13px;border-bottom:1px solid #f0f3ec')}>
+                    <div style={css('display:flex;align-items:center;gap:10px')}>
+                      <div aria-hidden="true" style={css("width:30px;height:30px;border-radius:8px;background:#15191e;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;flex-shrink:0")}>
+                        {initials}
+                      </div>
+                      <div style={css('min-width:0;flex:1')}>
+                        <div style={css('font-size:14px;font-weight:600;color:#15191e;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{log.user.name}</div>
+                        <time dateTime={log.timestamp} style={css("display:block;margin-top:2px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6a706a")}>
+                          {t ? `${t.date} · ${t.time}` : log.timestamp}
+                        </time>
+                      </div>
+                    </div>
+                    <div style={css('display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:9px')}>
+                      <span style={{ padding: '2px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, backgroundColor: actionStyle.bg, color: actionStyle.color, border: `1px solid ${actionStyle.border}` }}>
+                        {ACTION_LABELS[log.actionType] || humanize(String(log.actionType))}
+                      </span>
+                      <span style={{ padding: '2px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, backgroundColor: entityStyle.bg, color: entityStyle.color }}>
+                        {ENTITY_LABELS[log.entityType] || humanize(String(log.entityType))}
+                      </span>
+                      {vm.historyOnServer && !log.synced && (
+                        <span title="Stored only in this browser. Other people cannot see it." style={css('font-size:12px;color:#92400e')}>This browser only</span>
+                      )}
+                    </div>
+                    <div style={css('margin-top:7px;font-size:14px;line-height:1.45;color:#2a2f28;overflow-wrap:anywhere')}>{renderDescription(log.description)}</div>
+                  </li>
+                );
+              })
+            )}
+          </ul>
+        ) : (
+        <div className="scrl" style={css('overflow:auto;flex:1')}>
+          <table style={css('width:100%;min-width:760px;border-collapse:collapse;text-align:left;font-size:12.5px')}>
             <thead>
               <tr style={css('background:#f8faf6;border-bottom:1px solid #e2e5de;color:#5c625c;font-size:11.5px;font-weight:700;letter-spacing:.2px;text-transform:uppercase')}>
                 <th style={css('padding:10px 16px;width:180px')}>User</th>
@@ -287,6 +369,14 @@ export function HistoryView({ vm }: { vm: VM }) {
                             {log.user.email && (
                               <div style={css('font-size:10.5px;color:#8a9088;margin-top:1px')}>{log.user.email}</div>
                             )}
+                            {vm.historyOnServer && !log.synced && (
+                              <div
+                                title="This entry is stored only in this browser: it was recorded before shared History, or it could not be saved to the server. Other people cannot see it."
+                                style={css('font-size:10.5px;color:#92400e;margin-top:2px')}
+                              >
+                                This browser only
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -306,7 +396,7 @@ export function HistoryView({ vm }: { vm: VM }) {
                             border: `1px solid ${actionStyle.border}`,
                           }}
                         >
-                          {log.actionType}
+                          {ACTION_LABELS[log.actionType] || humanize(String(log.actionType))}
                         </span>
                       </td>
 
@@ -323,7 +413,7 @@ export function HistoryView({ vm }: { vm: VM }) {
                             color: entityStyle.color,
                           }}
                         >
-                          {log.entityType === 'AUDITOR' ? 'QMS_HOST' : log.entityType}
+                          {ENTITY_LABELS[log.entityType] || humanize(String(log.entityType))}
                         </span>
                       </td>
 
@@ -333,8 +423,17 @@ export function HistoryView({ vm }: { vm: VM }) {
                       </td>
 
                       {/* Timestamp */}
-                      <td style={css("padding:12px 16px;vertical-align:middle;text-align:right;color:#6a706a;font-family:'IBM Plex Mono',monospace;font-size:11px")}>
-                        {log.timestamp}
+                      <td style={css("padding:12px 16px;vertical-align:middle;text-align:right;color:#6a706a;font-family:'IBM Plex Mono',monospace;font-size:11px;white-space:nowrap")}>
+                        {(() => {
+                          const t = formatLogTime(log.timestamp);
+                          if (!t) return log.timestamp;
+                          return (
+                            <time dateTime={log.timestamp} title={log.timestamp}>
+                              <span style={css('color:#23282a')}>{t.date}</span>
+                              <span style={css('margin-left:8px')}>{t.time}</span>
+                            </time>
+                          );
+                        })()}
                       </td>
                     </tr>
                   );
@@ -343,6 +442,20 @@ export function HistoryView({ vm }: { vm: VM }) {
             </tbody>
           </table>
         </div>
+        )}
+        {vm.historyHasMore && (
+          <div style={css('display:flex;justify-content:center;padding:12px;border-top:1px solid #f0f3ec')}>
+            <HButton
+              className="tap"
+              onClick={vm.loadOlderHistory}
+              disabled={vm.historyLoadingOlder}
+              style={css("background:#f4f6f1;border:1px solid #dde0d9;color:#3c423d;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
+              hover={{ background: '#e9ece5' }}
+            >
+              {vm.historyLoadingOlder ? 'Loading older changes…' : 'Load older changes'}
+            </HButton>
+          </div>
+        )}
       </div>
     </div>
   );

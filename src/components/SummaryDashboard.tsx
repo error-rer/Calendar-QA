@@ -852,7 +852,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
         <div style={css('display:flex;align-items:center;gap:12px;margin-bottom:20px')}>
           <div style={css('font-size:22px;font-weight:700;letter-spacing:-.3px;color:#15191e')}>Summary Dashboard</div>
           <div style={css('flex:1')} />
-          <button
+          <button className="tap-square"
             onClick={() => { vm.setSummaryYear(vm.summaryYear - 1); setYearText(String(vm.summaryYear - 1)); }}
             style={css('padding:4px 10px;border-radius:6px;border:1px solid #e0e3dc;background:#fff;cursor:pointer;font-size:12px;font-weight:600;color:#4a504a;font-family:\'Archivo\',sans-serif')}
           >
@@ -866,7 +866,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
             onKeyDown={(e) => { if (e.key === 'Enter') { commitYear(e.currentTarget.value); (e.target as HTMLInputElement).blur(); } }}
             style={css('width:60px;text-align:center;border:1px solid #e0e3dc;border-radius:6px;padding:4px 6px;font-size:15px;font-weight:700;color:#15191e;font-family:\'Archivo\',sans-serif;outline:none;background:#fff')}
           />
-          <button
+          <button className="tap-square"
             onClick={() => { vm.setSummaryYear(vm.summaryYear + 1); setYearText(String(vm.summaryYear + 1)); }}
             style={css('padding:4px 10px;border-radius:6px;border:1px solid #e0e3dc;background:#fff;cursor:pointer;font-size:12px;font-weight:600;color:#4a504a;font-family:\'Archivo\',sans-serif')}
           >
@@ -934,7 +934,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
             </div>
 
             <div style={css('display:flex;align-items:center;gap:8px')}>
-              <button
+              <button className="tap"
                 type="button"
                 onClick={handleExportVisitsExcel}
                 style={css("display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:7px;border:1px solid #10b981;background:#f0fdf4;cursor:pointer;font-size:12px;font-weight:600;color:#047857;font-family:'Archivo',sans-serif")}
@@ -1055,7 +1055,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
             </div>
 
             <div style={css('display:flex;align-items:center;gap:8px')}>
-              <button
+              <button className="tap"
                 onClick={toggleAll}
                 style={css('display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:7px;border:1px solid #dde0d9;background:#fff;cursor:pointer;font-size:12px;font-weight:600;color:#4a504a;font-family:\'Archivo\',sans-serif')}
               >
@@ -1071,7 +1071,7 @@ export function SummaryDashboard({ vm }: { vm: VM }) {
 
               {/* Export to Excel Dropdown Menu */}
               <div ref={exportDropdownRef} style={css('position:relative;display:inline-block')}>
-                <button
+                <button className="tap"
                   type="button"
                   onClick={() => setExportDropdownOpen((prev) => !prev)}
                   style={css(

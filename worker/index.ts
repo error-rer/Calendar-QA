@@ -54,6 +54,44 @@ function normalizeSite(site: string): string {
   return s;
 }
 
+// --- History (shared audit log, table history_log from migration 0021) ---
+const HISTORY_PAGE = 200;
+const HISTORY_ACTIONS = new Set(['CREATE', 'UPDATE', 'DELETE', 'REORDER', 'MANAGE_ITEM', 'RESET', 'OTHER']);
+const HISTORY_ENTITIES = new Set([
+  'APPOINTMENT', 'CUSTOMER', 'END_CUSTOMER', 'AUDITOR', 'QMS_HOST', 'SITE', 'STANDARD', 'DEPARTMENT',
+  'PURPOSE', 'TARGET_PACKAGE', 'CUSTOMER_NAME', 'AUDIT_CATEGORY', 'HOLIDAY',
+]);
+
+function historyOut(r: any) {
+  let metadata: any;
+  try { metadata = r.metadata ? JSON.parse(r.metadata) : undefined; } catch { metadata = undefined; }
+  return {
+    id: r.id,
+    timestamp: r.created_at,
+    user: { name: r.user_name || 'Unknown user' },
+    actionType: r.action_type,
+    entityType: r.entity_type,
+    description: r.description,
+    ...(metadata && Object.keys(metadata).length ? { metadata } : {}),
+    synced: true,
+  };
+}
+
+/** Newest-first page of History, optionally before a (timestamp, id) cursor. Null when the table does not exist yet. */
+async function readHistory(DB: D1Database, limit: number, before?: { timestamp: string; id: string }) {
+  try {
+    const stmt = before && before.timestamp
+      ? DB.prepare('SELECT * FROM history_log WHERE created_at < ? OR (created_at = ? AND id < ?) ORDER BY created_at DESC, id DESC LIMIT ?')
+          .bind(before.timestamp, before.timestamp, before.id || '', limit + 1)
+      : DB.prepare('SELECT * FROM history_log ORDER BY created_at DESC, id DESC LIMIT ?').bind(limit + 1);
+    const rows = ((await stmt.all()).results as any[]) || [];
+    return { entries: rows.slice(0, limit).map(historyOut), hasMore: rows.length > limit };
+  } catch (e) {
+    if (/no such table/i.test(String(e))) return null;
+    throw e;
+  }
+}
+
 const SITE_ORDER = [
   'UTL1',
   'UTL2',
@@ -110,6 +148,7 @@ function normalizeAuditResults(results: any): Record<string, any> {
         ofi: (Number((out[normKey] as any).ofi) || 0) + (Number((val as any).ofi) || 0),
         obs: (Number((out[normKey] as any).obs) || 0) + (Number((val as any).obs) || 0),
         findings: (Number((out[normKey] as any).findings) || 0) + (Number((val as any).findings) || 0),
+        ...(((out[normKey] as any).recorded || (val as any).recorded) ? { recorded: true } : {}),
       };
     }
   }
@@ -150,7 +189,7 @@ async function insertActivityLog(
 ) {
   const actId = entry.id || ('act_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7));
   const ts = entry.timestamp || new Date().toISOString();
-  const who = entry.who || 'Jordan Lee';
+  const who = entry.who || 'Unknown user';
   const text = entry.text || '';
   const ago = entry.ago || 'just now';
   const color = entry.color || '#0f9d8c';
@@ -202,6 +241,14 @@ function engineerOut(r: any) {
   };
 }
 
+/** 'customer' | 'internal' from the client's type/sectionType/auditType fields, or '' when absent. */
+function auditTypeIn(d: any): '' | 'customer' | 'internal' {
+  const t = String(d?.type || d?.sectionType || d?.auditType || '').trim().toLowerCase();
+  if (t === 'internal' || t === 'internal audit' || t === 'ia') return 'internal';
+  if (t === 'customer' || t === 'customer audit' || t === 'cs') return 'customer';
+  return '';
+}
+
 function assignmentOut(r: any) {
   let parsedResults = {};
   if (r.results) {
@@ -241,10 +288,25 @@ function assignmentOut(r: any) {
     results: normalizeAuditResults(parsedResults),
     createdAt: r.created_at || (r.created_at_num ? String(r.created_at_num) : undefined),
     updatedAt: r.updated_at || undefined,
+    ...(r.audit_type === 'customer' || r.audit_type === 'internal'
+      ? { type: r.audit_type, sectionType: r.audit_type, auditType: r.audit_type === 'internal' ? 'Internal Audit' : 'Customer Audit' }
+      : {}),
   };
 }
 
 let migrationChecked = false;
+// assignments.audit_type is created only by migration 0020. The Worker never adds it itself, so a
+// migration and a runtime ALTER can never collide ("duplicate column name"); until the column
+// exists the Worker simply does not write it, and the client infers the type from content.
+let hasAuditTypeColumn = false;
+async function refreshAuditTypeColumn(DB: D1Database) {
+  try {
+    const cols = await DB.prepare('PRAGMA table_info(assignments)').all();
+    hasAuditTypeColumn = ((cols.results as any[]) || []).some((c) => c.name === 'audit_type');
+  } catch {
+    hasAuditTypeColumn = false;
+  }
+}
 async function ensureAssignmentColumns(DB: D1Database) {
   if (migrationChecked) return;
   try {
@@ -404,10 +466,13 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
     const publicAuthRoute = method === 'POST' && (
       path === 'auth/register' || path === 'auth/signup' || path === 'auth/login' || path === 'auth/signin' || path === 'auth/reset-password' || path === 'auth/reset'
     );
+    let sessionUser: any = null;
     if (!publicAuthRoute) {
-      const user = await findSessionUser(DB, request);
-      if (!user) return json({ error: 'Authentication required.' }, 401);
+      sessionUser = await findSessionUser(DB, request);
+      if (!sessionUser) return json({ error: 'Authentication required.' }, 401);
     }
+    // Audit entries are attributed to the server-verified account, never to a name sent by the browser.
+    const actorName = String(sessionUser?.name || sessionUser?.username || 'Unknown user').trim();
 
     // --- auth: register / signup ---
     if (method === 'POST' && (path === 'auth/register' || path === 'auth/signup')) {
@@ -536,7 +601,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
 
     // --- GET /api/state (full data dump for initial load) ---
     if (method === 'GET' && path === 'state') {
-      const [engineers, plants, activePlantsRows, orders, assignments, comments, activity, optionsRows, holidaysRows] = await Promise.all([
+      const [engineers, plants, activePlantsRows, orders, assignments, comments, activity, optionsRows, holidaysRows, history] = await Promise.all([
         DB.prepare('SELECT * FROM engineers').all(),
         DB.prepare('SELECT * FROM plants').all(),
         DB.prepare('SELECT * FROM active_plants').all(),
@@ -546,6 +611,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
         DB.prepare('SELECT * FROM activity ORDER BY rowid DESC LIMIT 50').all(),
         DB.prepare('SELECT * FROM options').all(),
         DB.prepare('SELECT date, type, note, locked_sites, created_at, updated_at FROM custom_holidays ORDER BY date ASC').all().catch(() => ({ results: [] })),
+        readHistory(DB, HISTORY_PAGE),
       ]);
 
       const activePlants: Record<string, boolean> = {};
@@ -622,6 +688,8 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
           return acc;
         }, {} as Record<string, any[]>),
         activity: activity.results,
+        // Omitted until migration 0021 has run, so the browser keeps its own History meanwhile.
+        ...(history ? { activityLogs: history.entries, historyHasMore: history.hasMore } : {}),
         purposeOptions: applyOrder(purposeOptions, 'purpose'),
         customerDepartmentOptions: applyOrder(customerDepartmentOptions, 'customer_department'),
         internalDepartmentOptions: applyOrder(internalDepartmentOptions, 'internal_department'),
@@ -741,6 +809,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
     }
     if (method === 'POST' && path === 'assignments') {
       await ensureAssignmentColumns(DB);
+      if (!hasAuditTypeColumn) await refreshAuditTypeColumn(DB);
       const d = body || {};
       const dept = d.department === 'Non-QA' ? 'Non-QA' : d.department === 'QA' ? 'QA' : '';
       const resolvedSite = normalizeSites(d.site || (d.sectionType === 'internal' ? d.site2 : d.site1) || '');
@@ -761,8 +830,8 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       ).trim();
 
       await DB.prepare(
-        `INSERT INTO assignments (id, eng, order_id, day, week, site, customer, end_customer, auditor, purpose, target_package, customer_names, audit_category, area, standard, department, results, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO assignments (id, eng, order_id, day, week, site, customer, end_customer, auditor, purpose, target_package, customer_names, audit_category, area, standard, department, results, created_at, updated_at${hasAuditTypeColumn ? ', audit_type' : ''})
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?${hasAuditTypeColumn ? ', ?' : ''})`,
       ).bind(
         d.id, d.eng || '', d.order || '', d.day ?? 0, d.week ?? 0,
         resolvedSite,
@@ -773,6 +842,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
         typeof d.results === 'string' ? d.results : JSON.stringify(d.results || {}),
         d.createdAt ? String(d.createdAt) : '',
         d.updatedAt ? String(d.updatedAt) : '',
+        ...(hasAuditTypeColumn ? [auditTypeIn(d)] : []),
       ).run();
       return json({ id: d.id }, 201);
     }
@@ -785,6 +855,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       const existing = await DB.prepare('SELECT * FROM assignments WHERE id = ?').bind(assignMatch[1]).first<any>();
       if (!existing) return json({ error: 'not found' }, 404);
       await ensureAssignmentColumns(DB);
+      if (!hasAuditTypeColumn) await refreshAuditTypeColumn(DB);
       const resolvedSite = d.site !== undefined ? normalizeSites(d.site) : (d.site1 !== undefined || d.site2 !== undefined ? normalizeSites(d.site1 || d.site2 || '') : undefined);
       const resolvedAuditor = d.auditor !== undefined
         ? String(d.auditor).trim()
@@ -803,7 +874,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       await DB.prepare(
         `UPDATE assignments SET eng = ?, order_id = ?, day = ?, week = ?, site = ?, customer = ?, end_customer = ?, auditor = ?, purpose = ?,
            target_package = ?, customer_names = ?, audit_category = ?, area = ?, standard = ?, department = ?, results = ?,
-           created_at = ?, updated_at = ? WHERE id = ?`,
+           created_at = ?, updated_at = ?${hasAuditTypeColumn ? ', audit_type = ?' : ''} WHERE id = ?`,
       ).bind(
         d.eng ?? existing.eng, d.order ?? existing.order_id, d.day ?? existing.day, d.week ?? existing.week,
         resolvedSite ?? existing.site ?? '',
@@ -817,6 +888,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
         d.results !== undefined ? (typeof d.results === 'string' ? d.results : JSON.stringify(d.results)) : (existing.results ?? '{}'),
         d.createdAt !== undefined ? String(d.createdAt) : (existing.created_at ?? ''),
         d.updatedAt !== undefined ? String(d.updatedAt) : (existing.updated_at ?? ''),
+        ...(hasAuditTypeColumn ? [auditTypeIn(d) || existing.audit_type || ''] : []),
         assignMatch[1],
       ).run();
       return json({ ok: true });
@@ -838,6 +910,48 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
     if (commentMatch && method === 'DELETE') {
       await DB.prepare('DELETE FROM comments WHERE id = ?').bind(commentMatch[1]).run();
       return json({ ok: true });
+    }
+
+    // --- History: who and when come from the session and the server clock ---
+    if (method === 'GET' && path === 'history') {
+      const params = new URL(request.url).searchParams;
+      const limit = Math.min(Math.max(Math.floor(Number(params.get('limit'))) || HISTORY_PAGE, 1), 500);
+      const page = await readHistory(DB, limit, { timestamp: String(params.get('before') || ''), id: String(params.get('beforeId') || '') });
+      if (!page) return json({ error: 'History is not available yet: apply the pending D1 migrations.' }, 503);
+      return json(page);
+    }
+
+    if (method === 'POST' && path === 'history') {
+      const actionType = String(body?.actionType || '').toUpperCase();
+      const entityType = String(body?.entityType || '').toUpperCase();
+      const description = String(body?.description || '').trim().slice(0, 2000);
+      if (!HISTORY_ACTIONS.has(actionType) || !HISTORY_ENTITIES.has(entityType) || !description) {
+        return json({ error: 'Invalid history entry.' }, 400);
+      }
+      let metadata = '{}';
+      if (body?.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata)) {
+        const text = JSON.stringify(body.metadata);
+        metadata = text.length <= 16000 ? text : JSON.stringify({ truncated: true });
+      }
+      const row = {
+        id: 'hist_' + crypto.randomUUID(),
+        created_at: new Date().toISOString(),
+        user_id: String(sessionUser?.id || ''),
+        user_name: actorName,
+        action_type: actionType,
+        entity_type: entityType,
+        description,
+        metadata,
+      };
+      try {
+        await DB.prepare(
+          'INSERT INTO history_log (id, created_at, user_id, user_name, action_type, entity_type, description, metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        ).bind(row.id, row.created_at, row.user_id, row.user_name, row.action_type, row.entity_type, row.description, row.metadata).run();
+      } catch (e) {
+        if (/no such table/i.test(String(e))) return json({ error: 'History is not available yet: apply the pending D1 migrations.' }, 503);
+        throw e;
+      }
+      return json(historyOut(row), 201);
     }
 
     // --- activity ---
@@ -891,7 +1005,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       const prefix = `${year}-%`;
       await DB.prepare("DELETE FROM custom_holidays WHERE date LIKE ? AND type IN ('PUBLIC_HOLIDAY', 'WORKING_DAY')").bind(prefix).run();
 
-      const actor = String(body?.actor || body?.user || 'Jordan Lee').trim();
+      const actor = actorName;
       const desc = String(body?.description || `Reset Public Holidays to default reference list (${year})`).trim();
 
       const activity = await insertActivityLog(DB, {
@@ -928,7 +1042,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       }
 
       // Log activity into D1
-      const actor = String(body?.actor || body?.user || 'Jordan Lee').trim();
+      const actor = actorName;
       let actionType = String(body?.actionType || 'CREATE').toUpperCase();
       let desc = String(body?.description || '').trim();
       let color = '#0f9d8c';
@@ -990,7 +1104,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
       const existing = await DB.prepare('SELECT type, note, locked_sites FROM custom_holidays WHERE date = ?').bind(dateKey).first() as { type?: string; note?: string; locked_sites?: string } | null;
       await DB.prepare('DELETE FROM custom_holidays WHERE date = ?').bind(dateKey).run();
 
-      const actor = String(body?.actor || body?.user || 'Jordan Lee').trim();
+      const actor = actorName;
       let desc = String(body?.description || '').trim();
       if (!desc) {
         if (existing?.type === 'PUBLIC_HOLIDAY') {
@@ -1027,7 +1141,7 @@ async function handleApi(request: Request, env: Env, path: string): Promise<Resp
         }
       }
 
-      const actor = String(body?.actor || body?.user || 'Jordan Lee').trim();
+      const actor = actorName;
       let desc = String(body?.description || '').trim();
       const actionType = String(body?.actionType || 'DELETE').toUpperCase();
       if (!desc) {

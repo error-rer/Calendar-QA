@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="scripts/build-docs.mjs">
+<title>คู่มือนักพัฒนา · UTAC QA Calendar</title>
+<link rel="icon" href="../images/utac-logo.jpg">
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/search-index.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body class="th" data-root="../" data-search-scope="lang">
+<!-- Generated file. Edit the Markdown source and run: npm run docs -->
+<a class="skip" href="#main">ข้ามไปยังเนื้อหา</a>
+<header class="bar">
+  <a class="brand" href="../index.html"><img src="../images/utac-logo.jpg" alt="" width="28" height="28"><span><b>UTAC QA Calendar</b><small>QMS-CASS · DOCUMENTATION</small></span></a>
+  <div class="search" role="search">
+    <input id="doc-search" type="search" placeholder="ค้นหาในเอกสาร" aria-label="ค้นหาในเอกสาร" autocomplete="off" spellcheck="false"
+      role="combobox" aria-expanded="false" aria-controls="search-results" aria-autocomplete="list"
+      data-no-results="ไม่พบผลลัพธ์สำหรับ" data-results="รายการ" data-clear="ล้างไฮไลต์การค้นหา">
+    <kbd class="search-key" aria-hidden="true">/</kbd>
+    <div id="search-results" class="search-results" role="listbox" hidden></div>
+  </div>
+  <div class="bar-tools"><details class="toc-menu"><summary>สารบัญ</summary><ol><li><a href="#1-สถาปัตยกรรม"><span class="n">1</span>สถาปัตยกรรม</a></li><li><a href="#2-รันในเครื่อง"><span class="n">2</span>รันในเครื่อง</a></li><li><a href="#3-แอปเริ่มทำงานอย่างไร"><span class="n">3</span>แอปเริ่มทำงานอย่างไร</a></li><li><a href="#4-โครงสร้างข้อมูล"><span class="n">4</span>โครงสร้างข้อมูล</a></li><li><a href="#5-api"><span class="n">5</span>API</a></li><li><a href="#6-กฎธุรกิจ"><span class="n">6</span>กฎธุรกิจ</a></li><li><a href="#7-การแก้ไขระบบ"><span class="n">7</span>การแก้ไขระบบ</a></li><li><a href="#8-ตรวจงานก่อนส่ง"><span class="n">8</span>ตรวจงานก่อนส่ง</a></li><li><a href="#9-migration-และ-release"><span class="n">9</span>Migration และ release</a></li><li><a href="#10-แก้ปัญหาที่พบบ่อย"><span class="n">10</span>แก้ปัญหาที่พบบ่อย</a></li><li><a href="#11-ข้อควรระวังด้านความปลอดภัย"><span class="n">11</span>ข้อควรระวังด้านความปลอดภัย</a></li><li><a href="#12-แผนที่อ่านโค้ด"><span class="n">12</span>แผนที่อ่านโค้ด</a></li></ol></details><nav class="lang" aria-label="ภาษา"><a class="seg on" href="../th/developer-guide.html" hreflang="th" lang="th" aria-current="true">ไทย</a><a class="seg" href="../en/developer-guide.html" hreflang="en" lang="en" data-keep-chapter>EN</a></nav><button type="button" class="btn ink" data-print>พิมพ์</button></div>
+</header>
+<div class="desk">
+<nav class="rail" aria-label="บท"><a class="rail-home" href="#top">คู่มือนักพัฒนา</a><ol><li><a href="#1-สถาปัตยกรรม" data-ch="1"><span class="n">1</span><span>สถาปัตยกรรม</span></a></li><li><a href="#2-รันในเครื่อง" data-ch="2"><span class="n">2</span><span>รันในเครื่อง</span></a></li><li><a href="#3-แอปเริ่มทำงานอย่างไร" data-ch="3"><span class="n">3</span><span>แอปเริ่มทำงานอย่างไร</span></a></li><li><a href="#4-โครงสร้างข้อมูล" data-ch="4"><span class="n">4</span><span>โครงสร้างข้อมูล</span></a></li><li><a href="#5-api" data-ch="5"><span class="n">5</span><span>API</span></a></li><li><a href="#6-กฎธุรกิจ" data-ch="6"><span class="n">6</span><span>กฎธุรกิจ</span></a></li><li><a href="#7-การแก้ไขระบบ" data-ch="7"><span class="n">7</span><span>การแก้ไขระบบ</span></a></li><li><a href="#8-ตรวจงานก่อนส่ง" data-ch="8"><span class="n">8</span><span>ตรวจงานก่อนส่ง</span></a></li><li><a href="#9-migration-และ-release" data-ch="9"><span class="n">9</span><span>Migration และ release</span></a></li><li><a href="#10-แก้ปัญหาที่พบบ่อย" data-ch="10"><span class="n">10</span><span>แก้ปัญหาที่พบบ่อย</span></a></li><li><a href="#11-ข้อควรระวังด้านความปลอดภัย" data-ch="11"><span class="n">11</span><span>ข้อควรระวังด้านความปลอดภัย</span></a></li><li><a href="#12-แผนที่อ่านโค้ด" data-ch="12"><span class="n">12</span><span>แผนที่อ่านโค้ด</span></a></li></ol></nav>
+<main id="main" class="binder" style="--tab:#1e5fa8">
+<nav class="tabs" aria-label="คู่มือ"><div class="tabs-in"><a class="tab" style="--c:#2e7d32" href="../th/user-guide.html">คู่มือผู้ใช้</a><a class="tab on" style="--c:#1e5fa8" href="../th/developer-guide.html" aria-current="page">นักพัฒนา</a><a class="tab" style="--c:#123f73" href="../th/it-handover.html">ส่งมอบ IT</a></div></nav>
+<section class="sheet cover" id="top" data-ch="0">
+<div class="runhead"><span>คู่มือนักพัฒนา</span><span>ปรับปรุง 2026-11-27</span></div>
+<h1>คู่มือนักพัฒนา</h1>
+<p class="lede">อธิบายว่า UTAC QA Calendar (QMS-CASS) สร้างอย่างไร รันในเครื่องอย่างไร และแก้ไขอย่างไรโดยไม่ทำให้การเชื่อมต่อระหว่างหน้าจอ กฎธุรกิจ API และฐานข้อมูลเสียหาย เรื่องการดูแลระบบจริง (เจ้าของระบบ การ release การกู้คืน และการทบทวนความปลอดภัย) อยู่ใน <a href="it-handover.html">คู่มือส่งมอบ IT</a></p>
+<aside class="callout caution" role="note"><span class="badge">ข้อควรระวัง</span><p><code>npm run deploy</code> และ <code>npm run migrate:remote</code> เปลี่ยน Worker และฐานข้อมูลจริง ให้ทำงานกับ local D1 และรันคำสั่ง production เฉพาะเมื่อได้รับอนุมัติจาก IT และเจ้าของข้อมูล QA</p>
+</aside>
+
+<h2 class="contents-title">สารบัญ</h2>
+<ol class="contents"><li><a href="#1-สถาปัตยกรรม"><span class="n">1</span><span class="ct"><span class="cn">สถาปัตยกรรม</span></span></a></li><li><a href="#2-รันในเครื่อง"><span class="n">2</span><span class="ct"><span class="cn">รันในเครื่อง</span><span class="cs">ติดตั้ง · เฉพาะ frontend · Worker พร้อม local D1 · คำสั่ง</span></span></a></li><li><a href="#3-แอปเริ่มทำงานอย่างไร"><span class="n">3</span><span class="ct"><span class="cn">แอปเริ่มทำงานอย่างไร</span></span></a></li><li><a href="#4-โครงสร้างข้อมูล"><span class="n">4</span><span class="ct"><span class="cn">โครงสร้างข้อมูล</span><span class="cs">ตารางใน D1 · นัดหมายหลายวัน</span></span></a></li><li><a href="#5-api"><span class="n">5</span><span class="ct"><span class="cn">API</span></span></a></li><li><a href="#6-กฎธุรกิจ"><span class="n">6</span><span class="ct"><span class="cn">กฎธุรกิจ</span></span></a></li><li><a href="#7-การแก้ไขระบบ"><span class="n">7</span><span class="ct"><span class="cn">การแก้ไขระบบ</span><span class="cs">แก้หน้าจอ · เพิ่มฟิลด์ในนัดหมาย · เพิ่ม API route · เปลี่ยนสีหรือกฎสถานะ · เปลี่ยนกฎวันหยุด · เปลี่ยนการส่งออกไฟล์ · เพิ่มไซต์</span></span></a></li><li><a href="#8-ตรวจงานก่อนส่ง"><span class="n">8</span><span class="ct"><span class="cn">ตรวจงานก่อนส่ง</span></span></a></li><li><a href="#9-migration-และ-release"><span class="n">9</span><span class="ct"><span class="cn">Migration และ release</span></span></a></li><li><a href="#10-แก้ปัญหาที่พบบ่อย"><span class="n">10</span><span class="ct"><span class="cn">แก้ปัญหาที่พบบ่อย</span></span></a></li><li><a href="#11-ข้อควรระวังด้านความปลอดภัย"><span class="n">11</span><span class="ct"><span class="cn">ข้อควรระวังด้านความปลอดภัย</span></span></a></li><li><a href="#12-แผนที่อ่านโค้ด"><span class="n">12</span><span class="ct"><span class="cn">แผนที่อ่านโค้ด</span></span></a></li></ol>
+</section>
+<section class="sheet" id="ch-1" data-ch="1">
+<div class="runhead"><span>คู่มือนักพัฒนา · 1</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="1-สถาปัตยกรรม"><span class="num">1</span><span class="ht">สถาปัตยกรรม</span><a class="anchor" href="#1-สถาปัตยกรรม" aria-label="ลิงก์ไปยังหัวข้อนี้: สถาปัตยกรรม"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>แอปเป็น single-page app ด้วย React 19 และ TypeScript ที่ build ด้วย Vite มี Cloudflare Worker ตัวเดียวทำหน้าที่ให้บริการไฟล์ที่ build แล้วและ API <code>/api/*</code> ข้อมูลที่ใช้ร่วมกันเก็บใน Cloudflare D1 (SQLite)</p>
+<figure class="diagram"><a class="shot" href="../images/architecture.th.svg" target="_blank" rel="noopener" title="เปิดภาพขนาดเต็มในแท็บใหม่"><img src="../images/architecture.th.svg" alt="สถาปัตยกรรม: เบราว์เซอร์ Worker D1 และ snapshot cache ในเครื่อง" width="720" height="590" loading="lazy" decoding="async"></a><figcaption><span class="fig">ภาพที่ 1</span> สถาปัตยกรรมระบบ</figcaption></figure>
+<div class="table"><table><thead><tr><th scope="col">ส่วน</th><th scope="col">ตำแหน่ง</th><th scope="col">หน้าที่</th></tr></thead><tbody>
+<tr><td>หน้าจอ</td><td><code>src/components/</code></td><td>แสดงผลและเรียก callback จาก view model</td></tr>
+<tr><td>ศูนย์กลาง state</td><td><code>src/useScheduler.ts</code></td><td>state, navigation, filter, validation, สร้าง/แก้/ลบ และ view model (<code>VM</code>)</td></tr>
+<tr><td>กฎธุรกิจ</td><td><code>src/types.ts</code>, <code>src/holidays.ts</code>, <code>src/utils/</code></td><td>types, normalization, ฟิลด์บังคับ, สถานะ, กฎวัน, metrics, ตัวเลือก dropdown</td></tr>
+<tr><td>API client</td><td><code>src/api.ts</code>, <code>src/utils/authClient.ts</code></td><td>เรียก <code>/api/*</code> แบบ same-origin, sign-in และ session</td></tr>
+<tr><td>Worker</td><td><code>worker/index.ts</code></td><td>ตรวจ session, routing API, SQL กับ D1, fallback ไปยังไฟล์ static</td></tr>
+<tr><td>Schema</td><td><code>migrations/*.sql</code> และ <code>ensure*()</code> ใน <code>worker/index.ts</code></td><td>migration ของ D1 ตามลำดับ และ Worker ยังแก้ schema บางส่วนตอน runtime ด้วย (ดู 4.1)</td></tr>
+<tr><td>Config</td><td><code>wrangler.toml</code></td><td>ชื่อ Worker, asset binding <code>dist</code>, D1 binding</td></tr>
+</tbody></table></div>
+
+<footer class="sheet-foot"><span></span><span class="folio">1 / 12</span><a href="#2-รันในเครื่อง" rel="next"><span class="dir">ถัดไป →</span>รันในเครื่อง</a></footer>
+</section>
+<section class="sheet" id="ch-2" data-ch="2">
+<div class="runhead"><span>คู่มือนักพัฒนา · 2</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="2-รันในเครื่อง"><span class="num">2</span><span class="ht">รันในเครื่อง</span><a class="anchor" href="#2-รันในเครื่อง" aria-label="ลิงก์ไปยังหัวข้อนี้: รันในเครื่อง"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<h3 id="21-ติดตั้ง"><span class="num">2.1</span><span class="ht">ติดตั้ง</span><a class="anchor" href="#21-ติดตั้ง" aria-label="ลิงก์ไปยังหัวข้อนี้: ติดตั้ง"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>ใช้ <strong>Node.js 22.12 ขึ้นไป</strong> (Wrangler ต้องใช้ 22+ ส่วน Vite และ oxlint ต้องใช้ 22.12+) แล้วรันจาก root ของ repository:</p>
+<div class="code"><pre><code data-lang="bash">npm ci</code></pre><button type="button" class="copy" data-copied="คัดลอกแล้ว">คัดลอก</button></div>
+<h3 id="22-เฉพาะ-frontend"><span class="num">2.2</span><span class="ht">เฉพาะ frontend</span><a class="anchor" href="#22-เฉพาะ-frontend" aria-label="ลิงก์ไปยังหัวข้อนี้: เฉพาะ frontend"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<div class="code"><pre><code data-lang="bash">npm run dev</code></pre><button type="button" class="copy" data-copied="คัดลอกแล้ว">คัดลอก</button></div>
+<p>Vite ที่ <code>http://localhost:5173</code> เหมาะกับงาน layout และ component โหมดนี้ไม่มี Worker, D1 หรือ proxy สำหรับ <code>/api</code>:</p>
+<ul>
+<li>การ sign-in จะใช้บัญชีที่เก็บในเบราว์เซอร์แทน (เฉพาะ development build) ให้สร้างบัญชีผ่าน <strong>Sign up</strong></li>
+<li>ข้อมูลมาจาก <code>calendar_qa_snapshot</code> ใน <code>localStorage</code> (cache เดียวกับที่ production ใช้) ปฏิทินจึงเริ่มต้นแบบว่าง</li>
+<li>จะเห็น banner &quot;Could not load the shared calendar&quot; ตอนโหลด และ banner บันทึกไม่สำเร็จทุกครั้งที่แก้ไข เพราะไม่มีการให้บริการ <code>/api/*</code></li>
+</ul>
+<h3 id="23-worker-พร้อม-local-d1"><span class="num">2.3</span><span class="ht">Worker พร้อม local D1</span><a class="anchor" href="#23-worker-พร้อม-local-d1" aria-label="ลิงก์ไปยังหัวข้อนี้: Worker พร้อม local D1"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li><p>apply migration กับฐานข้อมูลในเครื่อง<strong>ก่อน</strong>เริ่ม Worker (ดูข้อ 9 ขั้นตอนที่ 3):</p>
+<div class="code"><pre><code data-lang="bash">npm run migrate:local</code></pre><button type="button" class="copy" data-copied="คัดลอกแล้ว">คัดลอก</button></div>
+</li>
+<li><p>หากต้องทดสอบการสมัคร ให้สร้างไฟล์ <code>.dev.vars</code> ที่ root ของ repository (ไฟล์นี้ไม่ถูก track ใน git):</p>
+<div class="code"><pre><code data-lang="dotenv">REGISTRATION_CODE=any-local-test-value</code></pre><button type="button" class="copy" data-copied="คัดลอกแล้ว">คัดลอก</button></div>
+</li>
+<li><p>build และเริ่ม Worker:</p>
+<div class="code"><pre><code data-lang="bash">npm run dev:worker</code></pre><button type="button" class="copy" data-copied="คัดลอกแล้ว">คัดลอก</button></div>
+<p>Wrangler จะแสดง URL ในเครื่อง</p>
+</li>
+</ol>
+<aside class="callout warning" role="note"><span class="badge">คำเตือน</span><p>ห้ามใส่ registration code ของ production, Cloudflare token หรือข้อมูลลูกค้าจริงใน <code>.dev.vars</code>, source code, log หรือภาพหน้าจอที่ commit และห้ามชี้การพัฒนาในเครื่องไปที่ D1 ของ production</p>
+</aside>
+<h3 id="24-คำสั่ง"><span class="num">2.4</span><span class="ht">คำสั่ง</span><a class="anchor" href="#24-คำสั่ง" aria-label="ลิงก์ไปยังหัวข้อนี้: คำสั่ง"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<div class="table"><table><thead><tr><th scope="col">คำสั่ง</th><th scope="col">ทำอะไร</th></tr></thead><tbody>
+<tr><td><code>npm run dev</code></td><td>Vite dev server เฉพาะ frontend</td></tr>
+<tr><td><code>npm run dev:worker</code></td><td>build แล้ว <code>wrangler dev</code> กับ local D1</td></tr>
+<tr><td><code>npm run build</code></td><td>ตรวจ type (<code>tsc -b</code>) และ bundle ด้วย Vite</td></tr>
+<tr><td><code>npm run lint</code></td><td><code>oxlint</code></td></tr>
+<tr><td><code>npm test</code></td><td>regression test การแยกประเภท Customer / Internal Audit และเกณฑ์ว่าการตรวจใดนับว่ามีผลตรวจแล้ว</td></tr>
+<tr><td><code>npm run preview</code></td><td>ดูตัวอย่าง production build</td></tr>
+<tr><td><code>npm run migrate:local</code></td><td>apply migration กับ local D1</td></tr>
+<tr><td><code>npm run migrate:remote</code></td><td>apply migration กับ D1 ใน <code>wrangler.toml</code> (production)</td></tr>
+<tr><td><code>npm run deploy</code></td><td>release (<code>scripts/deploy.mjs</code>): build แสดงรายการ D1 migration ที่ค้างอยู่และขอให้ยืนยัน แสดงจุดกู้คืน (restore point) ของ Time Travel แล้ว apply migration เหล่านั้น จากนั้น <code>wrangler deploy</code> หากปฏิเสธหรือ migration ล้มเหลว จะหยุดก่อน deploy โค้ด ใช้ <code>-- --local</code> เพื่อซ้อมกับ local D1 โดยไม่ deploy</td></tr>
+<tr><td><code>npm run docs</code></td><td>สร้างเอกสาร HTML ใหม่ (รวมถึง search index) จากไฟล์ Markdown เหล่านี้</td></tr>
+<tr><td><code>npm run docs:screenshots</code></td><td>ถ่ายภาพหน้าจอสำหรับเอกสารใหม่จากแอปที่รันอยู่</td></tr>
+</tbody></table></div>
+
+<footer class="sheet-foot"><a href="#1-สถาปัตยกรรม" rel="prev"><span class="dir">← ก่อนหน้า</span>สถาปัตยกรรม</a><span class="folio">2 / 12</span><a href="#3-แอปเริ่มทำงานอย่างไร" rel="next"><span class="dir">ถัดไป →</span>แอปเริ่มทำงานอย่างไร</a></footer>
+</section>
+<section class="sheet" id="ch-3" data-ch="3">
+<div class="runhead"><span>คู่มือนักพัฒนา · 3</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="3-แอปเริ่มทำงานอย่างไร"><span class="num">3</span><span class="ht">แอปเริ่มทำงานอย่างไร</span><a class="anchor" href="#3-แอปเริ่มทำงานอย่างไร" aria-label="ลิงก์ไปยังหัวข้อนี้: แอปเริ่มทำงานอย่างไร"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<ol>
+<li><code>src/main.tsx</code> mount <code>&lt;App /&gt;</code> แล้ว <code>src/App.tsx</code> เรียก <code>useScheduler()</code> และแสดง Login หรือแอป</li>
+<li><code>initialState()</code> ใน <code>src/data.ts</code> โหลดค่าเริ่มต้น browser snapshot (<code>calendar_qa_snapshot</code>) บันทึกที่เก็บไว้ (<code>calendar_qa_comments</code>) และผู้ใช้ที่จำไว้ (<code>calendar_qa_session_user</code>) หากมีผู้ใช้ที่จำไว้ แอปจะเปิดขึ้นในสถานะ sign-in แล้ว เดือนและปีมาจาก <code>getCurrentCalendarDefaults(new Date())</code></li>
+<li><code>useScheduler()</code> ตรวจ session ฝั่งเซิร์ฟเวอร์ด้วย <code>authClient.getSession()</code> (<code>GET /api/auth/session</code> ตรวจ HttpOnly cookie กับ D1) หาก session หมดแล้ว (401) แอป<strong>ยังคง</strong>ใช้ตัวตนที่จำไว้และ snapshot ใน cache และไม่โหลดข้อมูลจากเซิร์ฟเวอร์ หลังจากนั้นการบันทึกทุกครั้งจะล้มเหลวจนกว่าผู้ใช้จะ sign out แล้ว sign in ใหม่</li>
+<li>เมื่อ session ใช้ได้ จะเรียก <code>api.fetchState()</code> (<code>GET /api/state</code>) หนึ่งครั้ง Worker อ่าน engineers, plants, active plants, orders, assignments, comments, แถว <code>activity</code> 50 แถวล่าสุด, options, holidays และรายการ History 200 รายการล่าสุดพร้อมกัน ไม่มีการ polling การเปลี่ยนแปลงของผู้ใช้อื่นจะเห็นหลัง reload</li>
+<li>client normalize ข้อมูล (<code>normalizeAssignment</code>, <code>normalizeSite</code> ฯลฯ) และอัปเดต snapshot จากจุดนี้ D1 เป็นแหล่งข้อมูลหลัก snapshot เป็นเพียง cache หน้า History แสดงรายการจากเซิร์ฟเวอร์ รวมถึงรายการที่เบราว์เซอร์นี้บันทึกไม่สำเร็จ (มีป้าย &quot;This browser only&quot;) และเก็บใน cache เฉพาะรายการที่ยังบันทึกไม่สำเร็จเหล่านั้น</li>
+</ol>
+<p>หากหน้าจอว่าง ให้ตรวจว่าอยู่ในโหมดใด (Vite อย่างเดียว หรือ Worker + D1) เข้าสู่ระบบแล้วหรือยัง และดูใน DevTools ว่า <code>/api/auth/session</code> และ <code>/api/state</code> ตอบอะไร</p>
+
+<footer class="sheet-foot"><a href="#2-รันในเครื่อง" rel="prev"><span class="dir">← ก่อนหน้า</span>รันในเครื่อง</a><span class="folio">3 / 12</span><a href="#4-โครงสร้างข้อมูล" rel="next"><span class="dir">ถัดไป →</span>โครงสร้างข้อมูล</a></footer>
+</section>
+<section class="sheet" id="ch-4" data-ch="4">
+<div class="runhead"><span>คู่มือนักพัฒนา · 4</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="4-โครงสร้างข้อมูล"><span class="num">4</span><span class="ht">โครงสร้างข้อมูล</span><a class="anchor" href="#4-โครงสร้างข้อมูล" aria-label="ลิงก์ไปยังหัวข้อนี้: โครงสร้างข้อมูล"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<h3 id="41-ตารางใน-d1"><span class="num">4.1</span><span class="ht">ตารางใน D1</span><a class="anchor" href="#41-ตารางใน-d1" aria-label="ลิงก์ไปยังหัวข้อนี้: ตารางใน D1"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<div class="table"><table><thead><tr><th scope="col">ตาราง</th><th scope="col">คีย์</th><th scope="col">เก็บอะไร</th></tr></thead><tbody>
+<tr><td><code>assignments</code></td><td><code>id</code></td><td>หนึ่งแถวต่อหนึ่งวันของนัดหมายที่จองได้: <code>audit_type</code> (<code>customer</code>, <code>internal</code> หรือ <code>''</code> = ไม่ทราบ ถือเป็น CS) ไซต์ ลูกค้า purpose ฟิลด์การตรวจ ผลตรวจ (แยกตามไซต์; <code>recorded: true</code> ระบุว่าผลตรวจถูกบันทึกแล้ว ดังนั้นแม้จำนวนเป็น 0 ทั้งหมดก็ยังนับว่ามีผลตรวจ) timestamps มี foreign key ไปที่ <code>engineers.id</code> (<code>eng</code>) และ <code>orders.id</code> (<code>order_id</code>)</td></tr>
+<tr><td><code>orders</code></td><td><code>id</code></td><td>หนึ่งแถวต่อหนึ่งนัดหมาย ทุกวันของนัดหมายใช้แถวเดียวกัน จึงเป็นตัวเชื่อมชุดนัดหมาย <code>product</code> เก็บ end customer (CS) หรือ area (IA); <code>plant</code> เก็บไซต์ (CS) หรือ standard (IA)</td></tr>
+<tr><td><code>engineers</code></td><td><code>id</code></td><td>QMS Host: ชื่อ บทบาท แผนก แผนกย่อย รวมถึง <code>site</code> และ <code>host_department</code> ระบบสร้างแถวให้อัตโนมัติเมื่อพิมพ์ชื่อ host ใหม่ในฟอร์ม</td></tr>
+<tr><td><code>comments</code></td><td><code>id</code></td><td>บันทึกของวัน เชื่อม <code>assignments</code> ด้วย <code>assignment_id</code> ไม่ได้บันทึกผู้เขียนและเวลา (แสดงเป็น &quot;You&quot;, &quot;just now&quot; เสมอ)</td></tr>
+<tr><td><code>plants</code> / <code>active_plants</code></td><td><code>id</code> / <code>plant_id</code></td><td>ข้อมูล plant แบบเก่าของ QMS / EHS / ESD และ flag สถานะเปิดใช้ ไม่มีหน้าจอใดใช้</td></tr>
+<tr><td><code>options</code></td><td><code>(category, value)</code></td><td>ค่าของ dropdown ไซต์คือแถว <code>site_code</code> ที่เก็บสีไว้ใน <code>meta</code> ลำดับที่กำหนดเองเก็บเป็น JSON ในแถว <code>_order_&lt;category&gt;</code></td></tr>
+<tr><td><code>custom_holidays</code></td><td><code>date</code></td><td>กฎวันหยุด shutdown no-customer-audit และ working-day พร้อมไซต์ที่ล็อก</td></tr>
+<tr><td><code>activity</code></td><td><code>id</code></td><td>activity feed แบบเก่า (แสดงในหน้า Profile) และแถว audit ของการเปลี่ยนวันหยุด โดยระบุบัญชีที่ sign-in อยู่ หน้า History ไม่ได้ใช้ตารางนี้</td></tr>
+<tr><td><code>history_log</code></td><td><code>id</code></td><td>History ที่ใช้ร่วมกัน (migration <code>0021</code>): หนึ่งแถวต่อหนึ่งการเปลี่ยนแปลง โดย Worker กำหนดผู้ใช้และเวลาจาก session ส่วน action, entity, คำอธิบาย และ metadata มาจากเบราว์เซอร์</td></tr>
+<tr><td><code>users</code></td><td><code>id</code></td><td>ชื่อผู้ใช้ hash และ salt ของรหัสผ่าน ชื่อที่แสดง บทบาท</td></tr>
+<tr><td><code>sessions</code></td><td><code>token_hash</code></td><td>session ฝั่งเซิร์ฟเวอร์ (เชื่อม <code>users</code> เชิงตรรกะ ไม่มี foreign key) แถวที่หมดอายุแล้วไม่ถูกลบทิ้ง</td></tr>
+</tbody></table></div>
+<p>อ่าน migration ตามลำดับเลขตั้งแต่ <code>0001_init.sql</code> ห้ามแก้ migration ที่อาจ apply ไปแล้ว ให้เพิ่มไฟล์หมายเลขถัดไป</p>
+<p>Worker ยังแก้ schema ตอน runtime ด้วย: ใน request แรกของ Worker instance แต่ละตัว <code>ensureAssignmentColumns()</code>, <code>ensureUsersTable()</code>, <code>ensureSessionsTable()</code> และ <code>ensureCustomHolidaysTable()</code> จะเพิ่มคอลัมน์และตารางที่ยังไม่มี <code>assignments.department</code>, <code>engineers.site</code> และ <code>engineers.host_department</code> มีอยู่<strong>เฉพาะ</strong>ผ่านฟังก์ชันเหล่านี้ นอกจากนี้ <code>ensureSessionsTable()</code> ยังลบผู้ใช้ demo เก่า และเลื่อนบัญชีที่เก่าที่สุดขึ้นเป็น admin เมื่อยังไม่มี admin ทุกครั้งที่ cold start</p>
+<h3 id="42-นัดหมายหลายวัน"><span class="num">4.2</span><span class="ht">นัดหมายหลายวัน</span><a class="anchor" href="#42-นัดหมายหลายวัน" aria-label="ลิงก์ไปยังหัวข้อนี้: นัดหมายหลายวัน"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>นัดหมายที่ครอบคลุมหลายวันคือหลายแถวใน <code>assignments</code> หนึ่งแถวต่อหนึ่งวันธรรมดาที่จองได้ (ข้ามวันหยุดสุดสัปดาห์และวันหยุดนักขัตฤกษ์ตอนสร้างแถว) แถวเหล่านี้เชื่อมกันด้วย <code>order_id</code> ที่ใช้ร่วมกัน (และ <code>eng</code>) client ยังกำหนด <code>seriesId</code> / <code>groupId</code> ด้วย แต่ค่าเหล่านี้<strong>ไม่ได้</strong>ถูกบันทึก หลัง reload จึงหาชุดนัดหมายจาก <code>order</code> + <code>eng</code> การแก้หรือลบทุกครั้งต้องรองรับทั้ง &quot;เฉพาะวันนี้&quot; และ &quot;ทั้งชุด&quot; ผลตรวจเก็บแยกตามไซต์ใน <code>results</code> และ normalize ด้วย <code>normalizeAuditResults()</code> โดยใช้ร่วมกันทั้งชุด</p>
+
+<footer class="sheet-foot"><a href="#3-แอปเริ่มทำงานอย่างไร" rel="prev"><span class="dir">← ก่อนหน้า</span>แอปเริ่มทำงานอย่างไร</a><span class="folio">4 / 12</span><a href="#5-api" rel="next"><span class="dir">ถัดไป →</span>API</a></footer>
+</section>
+<section class="sheet" id="ch-5" data-ch="5">
+<div class="runhead"><span>คู่มือนักพัฒนา · 5</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="5-api"><span class="num">5</span><span class="ht">API</span><a class="anchor" href="#5-api" aria-label="ลิงก์ไปยังหัวข้อนี้: API"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>ทุก route อยู่ใต้ <code>/api/</code> แบบ same-origin Worker ตอบ request ข้าม origin (ตรวจ Origin หรือ <code>Sec-Fetch-Site</code>) ด้วย 403 &quot;Cross-origin request denied.&quot; ทุก route ต้องมี session ที่ใช้ได้ ยกเว้น <code>auth/session</code> (ตอบ 401 เอง), <code>auth/logout</code>, <code>auth/login</code>, <code>auth/register</code> และ <code>auth/reset-password</code> ส่วน alias <code>auth/signin</code>, <code>auth/signup</code> และ <code>auth/reset</code> ทำงานเหมือนกัน</p>
+<div class="table"><table><thead><tr><th scope="col">Route</th><th scope="col">Methods</th><th scope="col">หน้าที่</th></tr></thead><tbody>
+<tr><td><code>auth/session</code></td><td><code>GET</code></td><td>session ปัจจุบัน</td></tr>
+<tr><td><code>auth/login</code></td><td><code>POST</code></td><td>เข้าสู่ระบบ</td></tr>
+<tr><td><code>auth/register</code></td><td><code>POST</code></td><td>สมัคร ต้องใช้ <code>REGISTRATION_CODE</code> (ตอบ 403 หากไม่ได้ตั้งค่าไว้)</td></tr>
+<tr><td><code>auth/reset-password</code></td><td><code>POST</code></td><td>เปลี่ยนรหัสผ่านโดยใช้รหัสผ่าน<strong>ปัจจุบัน</strong> (ไม่มีการรีเซ็ตกรณีลืมรหัสผ่าน) และยกเลิกทุก session ของบัญชี</td></tr>
+<tr><td><code>auth/logout</code></td><td><code>POST</code></td><td>ยกเลิก session ปัจจุบัน</td></tr>
+<tr><td><code>state</code></td><td><code>GET</code></td><td>ข้อมูลทั้งหมดที่แอปใช้ตอนเริ่ม</td></tr>
+<tr><td><code>assignments</code> · <code>assignments/:id</code></td><td><code>GET</code> <code>POST</code> · <code>PUT</code> <code>DELETE</code></td><td>วันของนัดหมาย <code>PUT</code> จะ merge body บางส่วนเข้ากับแถวที่เก็บไว้</td></tr>
+<tr><td><code>orders</code> · <code>orders/:id</code></td><td><code>GET</code> <code>POST</code> · <code>PUT</code> <code>DELETE</code></td><td>Orders <code>DELETE</code> จะลบ assignment ทุกแถวที่เชื่อมอยู่และ comment ของแถวเหล่านั้นด้วย</td></tr>
+<tr><td><code>engineers</code> · <code>engineers/:id</code></td><td><code>GET</code> <code>POST</code> · <code>PUT</code> <code>DELETE</code></td><td>QMS Host <code>DELETE</code> จะลบ assignment ทุกแถวที่เชื่อมอยู่และ comment ของแถวเหล่านั้นด้วย</td></tr>
+<tr><td><code>plants</code> · <code>plants/:id</code> · <code>plants/:id/toggle</code></td><td><code>GET</code> <code>POST</code> · <code>DELETE</code> · <code>POST</code></td><td>plant แบบเก่า (UI ไม่ได้ใช้)</td></tr>
+<tr><td><code>comments</code> · <code>comments/:id</code></td><td><code>POST</code> · <code>DELETE</code></td><td>บันทึกของวัน</td></tr>
+<tr><td><code>history</code></td><td><code>GET</code> <code>POST</code></td><td>History ที่ใช้ร่วมกัน <code>GET</code> คืนค่าทีละหน้าโดยเรียงจากใหม่ไปเก่า (<code>before</code>, <code>beforeId</code>, <code>limit</code> สูงสุด 500 ค่าเริ่มต้น 200) <code>POST</code> เก็บหนึ่งรายการ โดย Worker กำหนดผู้ใช้และเวลา และตรวจชื่อ action และ entity</td></tr>
+<tr><td><code>activity</code></td><td><code>POST</code></td><td>activity feed แบบเก่า</td></tr>
+<tr><td><code>options</code> · <code>options/reorder</code></td><td><code>POST</code> <code>DELETE</code> · <code>PUT</code></td><td>ค่าของ dropdown และลำดับ</td></tr>
+<tr><td><code>holidays</code> · <code>holidays/:date</code> · <code>holidays/reset</code></td><td><code>GET</code> <code>POST</code> <code>DELETE</code> · <code>DELETE</code> · <code>POST</code></td><td>กฎวัน ลบหลายรายการ รีเซ็ตทั้งปี ทุกการเปลี่ยนแปลงจะเขียนแถว <code>activity</code></td></tr>
+</tbody></table></div>
+<p>session ใช้ cookie <code>qa_session</code> แบบ HttpOnly (<code>SameSite=Lax</code> และ <code>Secure</code> เฉพาะเมื่อใช้ HTTPS) เมื่อเลือก <strong>Remember me</strong> cookie จะอยู่ได้ 30 วัน หากไม่เลือก cookie จะไม่มีวันหมดอายุ จึงหมดไปเมื่อปิดเบราว์เซอร์ และเซิร์ฟเวอร์จะให้หมดอายุหลัง 12 ชั่วโมง ค่าคงที่อยู่ต้นไฟล์ <code>worker/index.ts</code> response 500 จะส่งข้อความ exception ดิบกลับไป และ Worker ไม่ได้ log ไว้</p>
+
+<footer class="sheet-foot"><a href="#4-โครงสร้างข้อมูล" rel="prev"><span class="dir">← ก่อนหน้า</span>โครงสร้างข้อมูล</a><span class="folio">5 / 12</span><a href="#6-กฎธุรกิจ" rel="next"><span class="dir">ถัดไป →</span>กฎธุรกิจ</a></footer>
+</section>
+<section class="sheet" id="ch-6" data-ch="6">
+<div class="runhead"><span>คู่มือนักพัฒนา · 6</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="6-กฎธุรกิจ"><span class="num">6</span><span class="ht">กฎธุรกิจ</span><a class="anchor" href="#6-กฎธุรกิจ" aria-label="ลิงก์ไปยังหัวข้อนี้: กฎธุรกิจ"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>กฎแต่ละข้อมีที่อยู่เดียวในโค้ด ให้แก้ที่นั่น ไม่ใช่ใน component</p>
+<div class="table"><table><thead><tr><th scope="col">กฎ</th><th scope="col">ตำแหน่ง</th></tr></thead><tbody>
+<tr><td>7 ไซต์ <span class="site" style="--c:#c0392b">UTL1</span> <span class="site" style="--c:#2e7d32">UTL2</span> <span class="site" style="--c:#66bb6a">UTL2A</span> <span class="site" style="--c:#1b5e20">UTL2B</span> <span class="site" style="--c:#1e5fa8">UTL3</span> <span class="site" style="--c:#4a90d9">UTL3A</span> <span class="site" style="--c:#123f73">UTL3T</span> และ normalize ค่าเก่า</td><td><code>normalizeSite()</code> / <code>normalizeSites()</code> ใน <code>src/types.ts</code>; <code>MASTER_PLANT_SITES</code> ใน <code>src/utils/auditOptionsHelper.ts</code></td></tr>
+<tr><td>ประเภท Customer หรือ Internal Audit: เก็บใน <code>audit_type</code> (migration <code>0020</code>) หากไม่มีค่า ให้ตัดสินจากเนื้อหา: มีฟิลด์ลูกค้า → CS, มี area / audit category → IA ห้ามใช้ <code>site2</code>, <code>auditor2</code>, <code>department2</code> เพราะเป็นค่าสำเนาเพื่อความเข้ากันได้ที่มีในทุกแถว id, order, code หรือ title ที่ขึ้นต้นด้วย &quot;IA&quot; ก็ถือเป็น IA เช่นกัน</td><td><code>isInternalAssignment()</code> ใน <code>src/types.ts</code> ทดสอบด้วย <code>npm test</code></td></tr>
+<tr><td>CS ต้องมี 8 ฟิลด์ IA ต้องมี 5 ฟิลด์ และทั้งคู่ต้องมีช่วงวันที่ที่ถูกต้อง</td><td><code>getMissingFields()</code> และ <code>isAppointmentFormIncomplete()</code> ใน <code>src/types.ts</code></td></tr>
+<tr><td>สถานะ: Incomplete → Updated → New → Pending Result → Complete ด้วยกรอบเวลา 7 วัน การตรวจนับว่ามีผลตรวจเมื่อบันทึกผลตรวจของไซต์แล้ว (<code>recorded: true</code> ซึ่งตั้งโดย <strong>Save Results</strong>) หรือมีจำนวนใดมากกว่า 0 ส่วน <strong>Clear Results</strong> จะบันทึกค่า 0 โดยไม่มี flag นี้</td><td><code>resolveAuditStatus()</code>, <code>isAuditResultCompleted()</code> และ <code>STATUS_COLOR_MAP</code> ใน <code>src/types.ts</code></td></tr>
+<tr><td>สีพื้นและขอบการ์ดมาจากสถานะ (<code>getApptCardColors()</code>) แถบซ้ายมาจากสีไซต์ (<code>siteColorsOfAssignment()</code> + <code>getAccentStyle()</code>)</td><td><code>src/useScheduler.ts</code>; สีไซต์คือ <code>initialSiteColors</code> (<code>src/data.ts</code>) ที่ถูกทับด้วยตัวเลือก <code>site_code</code> จาก D1 แก้ได้ที่ Manage → Options → Site</td></tr>
+<tr><td>Public Holiday และวันหยุดสุดสัปดาห์ถูกข้ามออกจากช่วงวันที่; No Customer Audits ปิด CS; Shutdown Plant ปิด CS ทุกไซต์ และปิด IA เฉพาะไซต์ที่ล็อก; Working Day ยกเว้นวันหยุดในตัว (built-in)</td><td><code>src/holidays.ts</code> บังคับใช้<strong>เฉพาะในเบราว์เซอร์</strong> ใน <code>submitCreate()</code> / <code>submitEdit()</code> การลากย้าย (drag-move), duplicate, copy-week และ Worker ไม่ได้ตรวจกฎเหล่านี้</td></tr>
+<tr><td>ตัวเลือก dropdown มาจากนัดหมายที่ใช้งานอยู่ ยกเว้น Site (รายการคงที่)</td><td><code>getActiveDropdownOptions()</code> ใน <code>src/utils/auditOptionsHelper.ts</code></td></tr>
+<tr><td>วันที่มีประเภท entity ไซต์ และ purpose เดียวกัน นับเป็นการตรวจ 1 ครั้งเมื่อห่างกันไม่เกิน 1 วันตามปฏิทิน (ดังนั้นศุกร์ → จันทร์นับเป็น 2 ครั้ง และวันหยุดจะตัดช่วงต่อเนื่องออกจากกัน) สำหรับ IA entity คือ standard / category / area และ purpose คือ area</td><td><code>calculateAuditStats()</code> ใน <code>src/utils/auditMetricsHelper.ts</code> (<code>calculateUnifiedAuditMetrics</code> เป็น alias)</td></tr>
+<tr><td>ข้อความรองของการ์ด: &quot;purpose - host&quot; หากไม่มี host การ์ดจะแสดง &quot;purpose - Unassigned&quot; และแสดง &quot;Unassigned&quot; เมื่อไม่มีทั้งสองค่า</td><td><code>formatCardSubtitle()</code> ใน <code>src/types.ts</code></td></tr>
+<tr><td>ตัวคั่นฟิลด์หลายค่า: Site <code>/</code>; Standard, QMS Host, Purpose, Target Package, Customer Name <code>, </code>; Area <code>/</code> ส่วน Worker รวม array <code>qmsHost</code> ด้วย <code>, </code> และ array <code>standard</code> ด้วย <code>/</code></td><td>ฟิลด์ในฟอร์มอยู่ใน <code>AppointmentFormFields.tsx</code>; normalizer อยู่ใน <code>src/types.ts</code></td></tr>
+</tbody></table></div>
+
+<footer class="sheet-foot"><a href="#5-api" rel="prev"><span class="dir">← ก่อนหน้า</span>API</a><span class="folio">6 / 12</span><a href="#7-การแก้ไขระบบ" rel="next"><span class="dir">ถัดไป →</span>การแก้ไขระบบ</a></footer>
+</section>
+<section class="sheet" id="ch-7" data-ch="7">
+<div class="runhead"><span>คู่มือนักพัฒนา · 7</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="7-การแก้ไขระบบ"><span class="num">7</span><span class="ht">การแก้ไขระบบ</span><a class="anchor" href="#7-การแก้ไขระบบ" aria-label="ลิงก์ไปยังหัวข้อนี้: การแก้ไขระบบ"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<h3 id="71-แก้หน้าจอ"><span class="num">7.1</span><span class="ht">แก้หน้าจอ</span><a class="anchor" href="#71-แก้หน้าจอ" aria-label="ลิงก์ไปยังหัวข้อนี้: แก้หน้าจอ"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li>หา component ที่ render หน้านั้นจาก <code>src/App.tsx</code></li>
+<li>ตาม props กลับไปที่ <code>VM</code> ที่ <code>useScheduler()</code> คืนค่า</li>
+<li>markup และ interaction อยู่ใน component, state และ action อยู่ใน hook, กฎร่วมอยู่ใน domain helper</li>
+<li>ตรวจหน้าจอกว้างและแคบ สถานะ loading, empty, error และ keyboard focus เมื่อกว้างน้อยกว่า 860px (<code>vm.isMobile</code>) แอปใช้ layout สำหรับโทรศัพท์: <code>BottomNav</code> แทนแท็บใน header การ์ดแทนตารางใน Table และ History แถบช่วงเวลาพร้อม Today และลูกศรใน toolbar ของ Schedule (<code>PhonePeriodBar</code>, <code>goToday</code>) และในมุมมอง Month เป็นตารางจุดพร้อมรายการของวันที่เลือกด้านล่าง (<code>MonthMobile</code>, <code>monthAgenda</code>) บนหน้าจอสัมผัส ให้ใส่ class <code>tap</code>, <code>tap-square</code> หรือ <code>tap-hit</code> จาก <code>src/index.css</code> กับปุ่มต่าง ๆ เพื่อให้มีขนาดอย่างน้อย 44px</li>
+</ol>
+<h3 id="72-เพิ่มฟิลด์ในนัดหมาย"><span class="num">7.2</span><span class="ht">เพิ่มฟิลด์ในนัดหมาย</span><a class="anchor" href="#72-เพิ่มฟิลด์ในนัดหมาย" aria-label="ลิงก์ไปยังหัวข้อนี้: เพิ่มฟิลด์ในนัดหมาย"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>แก้ให้ครบทั้งเส้นทาง จากบนลงล่าง:</p>
+<ol>
+<li>type และความหมาย: <code>Assignment</code>, <code>CreateDraft</code>, <code>EditDraft</code> ใน <code>src/types.ts</code> และ <code>normalizeAssignment()</code></li>
+<li>ค่าเริ่มต้นและ hydration: <code>src/data.ts</code>, <code>src/useScheduler.ts</code></li>
+<li>control ในฟอร์ม: <code>AppointmentFormFields.tsx</code> ทั้ง CS และ IA ทั้งสร้างและแก้ไข รวมถึงส่วนที่สร้าง object ใน <code>submitCreate()</code> / <code>submitEdit()</code> และ draft ที่ <code>openEdit()</code> เติมค่าให้</li>
+<li>validation: <code>getMissingFields()</code> หากเป็นฟิลด์บังคับ และตัดสินว่าฟิลด์มีผลต่อสถานะสีแดงหรือไม่</li>
+<li>API: <code>src/api.ts</code> และใน Worker คือ <code>assignmentOut()</code> กับรายการคอลัมน์ที่ระบุไว้ชัดเจนใน <code>INSERT</code> / <code>UPDATE</code> ของ <code>assignments</code></li>
+<li>migration ใหม่ <code>migrations/0021_&lt;name&gt;.sql</code> (ใช้หมายเลขถัดไปที่ว่าง) ทดสอบกับ local D1 ที่มีข้อมูลเดิม <strong>อย่า</strong>เพิ่มคอลัมน์นั้นใน <code>ensureAssignmentColumns()</code> ซ้ำอีก (ดูข้อ 9)</li>
+<li>การ์ดและรายละเอียด ตัวกรอง Table Summary และ export History ตามที่เกี่ยวข้อง</li>
+<li>คู่มือผู้ใช้และคู่มือนักพัฒนา</li>
+</ol>
+<p>อย่าเพิ่มฟิลด์ในฟอร์มโดยไม่มีเส้นทาง API และฐานข้อมูล และอย่าทำให้แถวเก่าที่ฟิลด์ว่างอ่านไม่ได้</p>
+<h3 id="73-เพิ่ม-api-route"><span class="num">7.3</span><span class="ht">เพิ่ม API route</span><a class="anchor" href="#73-เพิ่ม-api-route" aria-label="ลิงก์ไปยังหัวข้อนี้: เพิ่ม API route"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li>กำหนด type ของ request และ response แล้วเพิ่ม method ใน <code>src/api.ts</code></li>
+<li>เพิ่ม route ใน <code>handleApi()</code> ใน <code>worker/index.ts</code> ตรวจ method, payload และกรณีผิดพลาด</li>
+<li>bind ค่าจาก request ทุกค่าด้วย <code>DB.prepare(...).bind(...)</code> ห้ามต่อ SQL จาก string</li>
+<li>จำไว้ว่า <code>admin</code> ยังไม่ถูกบังคับฝั่งเซิร์ฟเวอร์ (ดู <a href="it-handover.html#4-ข้อค้นพบด้านความปลอดภัย">คู่มือส่งมอบ IT</a>) และ Worker ไม่ได้ตรวจฟิลด์บังคับ ให้เพิ่มการตรวจเองหาก route ต้องใช้</li>
+</ol>
+<h3 id="74-เปลี่ยนสีหรือกฎสถานะ"><span class="num">7.4</span><span class="ht">เปลี่ยนสีหรือกฎสถานะ</span><a class="anchor" href="#74-เปลี่ยนสีหรือกฎสถานะ" aria-label="ลิงก์ไปยังหัวข้อนี้: เปลี่ยนสีหรือกฎสถานะ"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>แก้ <code>resolveAuditStatus()</code> และ <code>STATUS_COLOR_MAP</code> ใน <code>src/types.ts</code> และ <code>getApptCardColors()</code> สำหรับสีพื้น แถบซ้ายต้องเป็นสีไซต์เสมอ ไม่ใช่สีสถานะ ตรวจ legend ในแถบด้านข้าง Schedule Table การ์ดแบบย่อ และคู่มือเหล่านี้</p>
+<h3 id="75-เปลี่ยนกฎวันหยุด"><span class="num">7.5</span><span class="ht">เปลี่ยนกฎวันหยุด</span><a class="anchor" href="#75-เปลี่ยนกฎวันหยุด" aria-label="ลิงก์ไปยังหัวข้อนี้: เปลี่ยนกฎวันหยุด"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>ต้องแก้ให้ครบทุกชั้น:</p>
+<ul>
+<li>หน้า Manage (<code>HolidaysPanel.tsx</code>) และ <code>src/holidays.ts</code> รวมถึงตารางในตัว <code>FIXED_ANNUAL_HOLIDAYS</code> และ <code>LUNAR_BUDDHIST_HOLIDAYS</code> (วันตามจันทรคติกำหนดไว้เฉพาะปี 2026–2028)</li>
+<li>validation ใน <code>submitCreate()</code> / <code>submitEdit()</code> และจุดใน <code>src/useScheduler.ts</code> ที่ป้องกันไม่ให้คลิกช่องวันหยุด</li>
+<li>route <code>custom_holidays</code> และ whitelist ของประเภทวันใน Worker รวมถึง <code>CustomHolidayType</code> (<code>src/holidays.ts</code>, <code>src/api.ts</code>)</li>
+</ul>
+<p>การเปลี่ยนสีช่องวันอย่างเดียวไม่ได้เปลี่ยนสิ่งที่จองได้</p>
+<h3 id="76-เปลี่ยนการส่งออกไฟล์"><span class="num">7.6</span><span class="ht">เปลี่ยนการส่งออกไฟล์</span><a class="anchor" href="#76-เปลี่ยนการส่งออกไฟล์" aria-label="ลิงก์ไปยังหัวข้อนี้: เปลี่ยนการส่งออกไฟล์"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>export อยู่ใน <code>TableView.tsx</code> (<code>handleExportExcel</code>, <code>handleExportCSV</code>) และ <code>SummaryDashboard.tsx</code> (<code>handleExportVisitsExcel</code>, <code>handleExportFindingsExcel</code>) ไฟล์ Excel สร้างในเบราว์เซอร์ด้วย <code>xlsx-js-style</code> ซึ่งโหลดเมื่อต้องใช้ ส่วน package <code>xlsx</code> ใน <code>package.json</code> ไม่ได้ถูก import ตรวจว่า export ตามตัวกรอง ปี ไซต์ และลำดับคอลัมน์ปัจจุบัน แล้วเปิดไฟล์จริง</p>
+<h3 id="77-เพิ่มไซต์"><span class="num">7.7</span><span class="ht">เพิ่มไซต์</span><a class="anchor" href="#77-เพิ่มไซต์" aria-label="ลิงก์ไปยังหัวข้อนี้: เพิ่มไซต์"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>รหัสไซต์ถูก hard-code ไว้หลายที่ ให้แก้ให้ครบทุกที่ แล้วรัน <code>npm run build</code>:</p>
+<ol>
+<li><code>MASTER_PLANT_SITES</code> (<code>src/utils/auditOptionsHelper.ts</code>), <code>SITE_ORDER</code> (<code>src/types.ts</code>), <code>initialSiteCodeOptions</code> และ <code>initialSiteColors</code> (<code>src/data.ts</code>), <code>SHUTDOWN_SITE_OPTIONS</code> (<code>src/holidays.ts</code>)</li>
+<li>pattern ของ <code>normalizeSite</code> ใน <code>src/types.ts</code> และ <code>worker/index.ts</code> รวมถึง <code>cleanSite</code> ใน <code>src/utils/auditMetricsHelper.ts</code> ซึ่ง match เฉพาะรหัสปัจจุบันเท่านั้น</li>
+<li>ใน <code>SummaryDashboard.tsx</code>: <code>CANONICAL_SITE_ORDER</code>, <code>DEFAULT_SITE_PALETTE</code>, <code>normalizeToTargetSite</code>, ค่าเริ่มต้นของ <code>expandedSites</code> และข้อความ &quot;7 Sites (…)&quot;</li>
+<li><code>SITE_ORDER</code> ของ Worker (ใช้กำหนด label &quot;All Sites&quot; ด้วย) และตัวกรองไซต์ของ IA ใน <code>AppointmentFormFields.tsx</code></li>
+<li>แถว <code>options</code> ใน D1 ที่มี category <code>site_code</code> และสีใน <code>meta</code> เพิ่มได้ที่ Manage → Options → Site หรือผ่าน migration รายการไซต์ในแอปมาจาก D1</li>
+<li>ไม่บังคับ: <code>SITE_COLORS</code> ใน <code>scripts/build-docs.mjs</code> สำหรับเอกสาร</li>
+</ol>
+
+<footer class="sheet-foot"><a href="#6-กฎธุรกิจ" rel="prev"><span class="dir">← ก่อนหน้า</span>กฎธุรกิจ</a><span class="folio">7 / 12</span><a href="#8-ตรวจงานก่อนส่ง" rel="next"><span class="dir">ถัดไป →</span>ตรวจงานก่อนส่ง</a></footer>
+</section>
+<section class="sheet" id="ch-8" data-ch="8">
+<div class="runhead"><span>คู่มือนักพัฒนา · 8</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="8-ตรวจงานก่อนส่ง"><span class="num">8</span><span class="ht">ตรวจงานก่อนส่ง</span><a class="anchor" href="#8-ตรวจงานก่อนส่ง" aria-label="ลิงก์ไปยังหัวข้อนี้: ตรวจงานก่อนส่ง"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>ก่อนส่ง review:</p>
+<div class="code"><pre><code data-lang="bash">npm test          # audit type and audit result regression tests
+npm run lint
+npm run build</code></pre><button type="button" class="copy" data-copied="คัดลอกแล้ว">คัดลอก</button></div>
+<p>จากนั้นทดสอบด้วยมือบน Worker + local D1 ตามส่วนที่แก้:</p>
+<ul>
+<li>sign-in, refresh, sign-out (หากแก้ auth)</li>
+<li>สร้าง แก้ ลบ ทั้ง CS และ IA รวมถึงหลายวันและแก้เฉพาะวันในชุด</li>
+<li>ฟิลด์บังคับ ร่างสีแดง และกฎวันหยุด</li>
+<li>QMS Host ตัวกรอง Schedule กับ Table ตรงกัน Summary History และ export</li>
+<li>ไม่มี error ใน DevTools และข้อมูลยังอยู่หลัง reload</li>
+</ul>
+<p>ใน pull request ให้ระบุไฟล์ที่เปลี่ยน กฎที่ได้รับผล migration (ถ้ามี) วิธีทดสอบ และความเสี่ยง ห้ามแนบ secret หรือข้อมูลลูกค้าจริง</p>
+
+<footer class="sheet-foot"><a href="#7-การแก้ไขระบบ" rel="prev"><span class="dir">← ก่อนหน้า</span>การแก้ไขระบบ</a><span class="folio">8 / 12</span><a href="#9-migration-และ-release" rel="next"><span class="dir">ถัดไป →</span>Migration และ release</a></footer>
+</section>
+<section class="sheet" id="ch-9" data-ch="9">
+<div class="runhead"><span>คู่มือนักพัฒนา · 9</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="9-migration-และ-release"><span class="num">9</span><span class="ht">Migration และ release</span><a class="anchor" href="#9-migration-และ-release" aria-label="ลิงก์ไปยังหัวข้อนี้: Migration และ release"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<ol>
+<li>ตั้งหมายเลข migration ต่อจากไฟล์ล่าสุดที่ commit และตั้งชื่อให้สื่อความหมาย</li>
+<li>เขียนให้ใช้กับแถวเดิมได้ และระบุว่าย้อนกลับได้หรือไม่
+และต้องใช้ได้กับ Worker ที่<strong>ทำงานอยู่ในปัจจุบัน</strong>ด้วย เพราะ <code>npm run deploy</code> จะ apply migration ก่อนโค้ดใหม่ขึ้นไปเพียงครู่เดียว การเพิ่มตารางหรือคอลัมน์ทำได้ แต่การลบหรือเปลี่ยนชื่อคอลัมน์ที่โค้ดที่ใช้งานอยู่ยังอ่าน ต้องรอ release ถัดไป หลังจากโค้ดที่เลิกใช้คอลัมน์นั้น deploy แล้ว</li>
+<li>ห้ามสร้างคอลัมน์เดียวกันทั้งใน migration และในฟังก์ชัน <code>ensure*()</code> หาก Worker ที่เพิ่มคอลัมน์นั้นทำงานก่อน migration จะล้มเหลวด้วย &quot;duplicate column name&quot; และ release จะหยุด การ drop คอลัมน์ที่ <code>ensureAssignmentColumns()</code> เพิ่มไว้จะถูกย้อนกลับใน cold start ครั้งถัดไป ด้วยเหตุผลเดียวกันนี้ ให้รัน <code>npm run migrate:local</code> ก่อน <code>npm run dev:worker</code></li>
+<li>apply ในเครื่องด้วย <code>npm run migrate:local</code> หรือซ้อม release ด้วย <code>npm run deploy -- --local</code> และตรวจการอ่าน/เขียนก่อนและหลัง</li>
+<li>ขอ code review และอนุมัติจากเจ้าของข้อมูล QA</li>
+<li>IT ทำ release ด้วย <code>npm run deploy</code> ซึ่งจะ apply migration ที่ค้างอยู่แล้วจึง deploy โค้ด ให้ทำตาม <a href="it-handover.html#5-runbook-การ-release-และฐานข้อมูล">runbook การ release</a></li>
+</ol>
+<p><code>wrangler.toml</code> ไม่มี staging environment ในเครื่องไม่ใช่ staging และห้ามใช้ D1 ของ production ทดสอบ</p>
+
+<footer class="sheet-foot"><a href="#8-ตรวจงานก่อนส่ง" rel="prev"><span class="dir">← ก่อนหน้า</span>ตรวจงานก่อนส่ง</a><span class="folio">9 / 12</span><a href="#10-แก้ปัญหาที่พบบ่อย" rel="next"><span class="dir">ถัดไป →</span>แก้ปัญหาที่พบบ่อย</a></footer>
+</section>
+<section class="sheet" id="ch-10" data-ch="10">
+<div class="runhead"><span>คู่มือนักพัฒนา · 10</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="10-แก้ปัญหาที่พบบ่อย"><span class="num">10</span><span class="ht">แก้ปัญหาที่พบบ่อย</span><a class="anchor" href="#10-แก้ปัญหาที่พบบ่อย" aria-label="ลิงก์ไปยังหัวข้อนี้: แก้ปัญหาที่พบบ่อย"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<div class="table"><table><thead><tr><th scope="col">อาการ</th><th scope="col">ตรวจ</th></tr></thead><tbody>
+<tr><td>เปิดแอปได้แต่ไม่มีข้อมูลหรือข้อมูลแปลก</td><td>ใช้ Vite อย่างเดียว (<code>npm run dev</code>) หรือ Worker (<code>npm run dev:worker</code>)? Vite ไม่ได้ให้บริการ <code>/api</code> จึงแสดง banner การโหลดและการบันทึกเสมอ</td></tr>
+<tr><td>API ตอบ 401</td><td>session cookie, เวลาหมดอายุ และแอปกับ API ใช้ origin เดียวกัน</td></tr>
+<tr><td>API ตอบ 403 &quot;Cross-origin request denied.&quot;</td><td>request มาจาก origin อื่น หรือ proxy เปลี่ยนค่า <code>Origin</code> / <code>Sec-Fetch-Site</code></td></tr>
+<tr><td>ข้อมูลหายหลัง reload</td><td>ข้อความเตือนการบันทึก, Network response, Worker log, local D1 การแสดงผลแบบ optimistic ไม่ได้ยืนยันว่าเขียนสำเร็จ</td></tr>
+<tr><td>dropdown ไม่มีค่า หรือยังมีค่าเก่า</td><td>มี (หรือไม่มี) นัดหมายที่ใช้ค่านั้นอยู่ ดู <code>getActiveDropdownOptions()</code> ค่าอาจถูกซ่อนด้วย <code>removedOptions</code> ใน snapshot ของเบราว์เซอร์นี้</td></tr>
+<tr><td>รายการ History มีป้าย &quot;This browser only&quot;</td><td>บันทึกไว้ก่อน migration <code>0021</code> หรือ <code>POST /api/history</code> ล้มเหลว (แอปจะแสดงข้อความเตือน) การรันเฉพาะ frontend (<code>npm run dev</code>) จะไม่เก็บ History บนเซิร์ฟเวอร์เลย</td></tr>
+<tr><td>build ไม่ผ่าน</td><td>อ่าน error แรกจาก <code>npm run build</code> ตรวจ types, <code>VM</code> และ API payload ให้ตรงกัน</td></tr>
+<tr><td>migration ล้มเหลวด้วย &quot;duplicate column name&quot;</td><td>คอลัมน์ถูกสร้างไว้แล้วโดยฟังก์ชัน <code>ensure*()</code> (ข้อ 9 ขั้นตอนที่ 3)</td></tr>
+<tr><td>migration ล้มเหลวด้วยสาเหตุอื่น</td><td>schema และประวัติ migration ในเครื่อง ให้เพิ่ม migration ใหม่แทนการแก้ไฟล์เดิม</td></tr>
+<tr><td>API ทำงานแต่หน้าเว็บไม่ขึ้น</td><td><code>npm run build</code>, โฟลเดอร์ <code>dist/</code>, <code>[assets]</code> และ <code>ASSETS</code> ใน <code>wrangler.toml</code></td></tr>
+</tbody></table></div>
+
+<footer class="sheet-foot"><a href="#9-migration-และ-release" rel="prev"><span class="dir">← ก่อนหน้า</span>Migration และ release</a><span class="folio">10 / 12</span><a href="#11-ข้อควรระวังด้านความปลอดภัย" rel="next"><span class="dir">ถัดไป →</span>ข้อควรระวังด้านความปลอดภัย</a></footer>
+</section>
+<section class="sheet" id="ch-11" data-ch="11">
+<div class="runhead"><span>คู่มือนักพัฒนา · 11</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="11-ข้อควรระวังด้านความปลอดภัย"><span class="num">11</span><span class="ht">ข้อควรระวังด้านความปลอดภัย</span><a class="anchor" href="#11-ข้อควรระวังด้านความปลอดภัย" aria-label="ลิงก์ไปยังหัวข้อนี้: ข้อควรระวังด้านความปลอดภัย"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>อ่าน <a href="it-handover.html#4-ข้อค้นพบด้านความปลอดภัย">ข้อค้นพบด้านความปลอดภัย</a> ก่อนเปิดให้ใช้งานกว้างขึ้น โดยสรุป:</p>
+<ul>
+<li><code>admin</code> / <code>user</code> เป็นเพียงป้ายชื่อ ไม่ใช่สิทธิ์ฝั่งเซิร์ฟเวอร์ อย่าสมมติว่า route ของ Manage ใช้ได้เฉพาะ admin</li>
+<li>Worker เชื่อข้อมูลจากเบราว์เซอร์เรื่องฟิลด์บังคับและกฎวันหยุด และ id ถูกสร้างในเบราว์เซอร์</li>
+<li><code>localStorage</code> ยังเก็บ snapshot ของปฏิทิน บันทึก รายการ History ที่ยังไม่ได้เก็บบนเซิร์ฟเวอร์ และผู้ใช้ที่จำไว้หลัง sign-out และเมื่อ session หมดแล้ว แอปก็ยังเปิดด้วยข้อมูลใน cache นั้น</li>
+<li>History บันทึกผู้ใช้และเวลาจริง แต่คำอธิบายเขียนโดยเบราว์เซอร์</li>
+<li>การสมัครใช้ <code>REGISTRATION_CODE</code> ร่วมกันค่าเดียว รหัสผ่านใช้ salted SHA-256 ยาวขั้นต่ำ 4 ตัวอักษร และไม่มี rate limiting</li>
+<li>ห้าม log credential, cookie, session token, registration code หรือข้อมูลลูกค้าที่ไม่จำเป็น</li>
+</ul>
+
+<footer class="sheet-foot"><a href="#10-แก้ปัญหาที่พบบ่อย" rel="prev"><span class="dir">← ก่อนหน้า</span>แก้ปัญหาที่พบบ่อย</a><span class="folio">11 / 12</span><a href="#12-แผนที่อ่านโค้ด" rel="next"><span class="dir">ถัดไป →</span>แผนที่อ่านโค้ด</a></footer>
+</section>
+<section class="sheet" id="ch-12" data-ch="12">
+<div class="runhead"><span>คู่มือนักพัฒนา · 12</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="12-แผนที่อ่านโค้ด"><span class="num">12</span><span class="ht">แผนที่อ่านโค้ด</span><a class="anchor" href="#12-แผนที่อ่านโค้ด" aria-label="ลิงก์ไปยังหัวข้อนี้: แผนที่อ่านโค้ด"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<div class="table"><table><thead><tr><th scope="col">ต้องการเข้าใจหรือแก้</th><th scope="col">เริ่มที่</th></tr></thead><tbody>
+<tr><td>โครงแอปและ navigation</td><td><code>src/App.tsx</code>, <code>src/components/Header.tsx</code></td></tr>
+<tr><td>การเริ่มต้น sign-in และ hydration</td><td><code>src/data.ts</code>, <code>src/useScheduler.ts</code>, <code>src/utils/authClient.ts</code></td></tr>
+<tr><td>สร้าง แก้ ลบ</td><td><code>AppointmentFormFields.tsx</code>, <code>CreateModal.tsx</code>, <code>EditModal.tsx</code>, <code>EditScopeModal.tsx</code>, <code>src/useScheduler.ts</code>, <code>src/api.ts</code>, <code>worker/index.ts</code></td></tr>
+<tr><td>ผลตรวจ</td><td><code>AuditResultsModal.tsx</code>, <code>normalizeAuditResults()</code></td></tr>
+<tr><td>กฎวันหยุด</td><td><code>src/holidays.ts</code>, <code>HolidaysPanel.tsx</code>, <code>src/useScheduler.ts</code>, <code>worker/index.ts</code></td></tr>
+<tr><td>สีสถานะและสีไซต์</td><td><code>src/types.ts</code>, <code>src/useScheduler.ts</code>, <code>Schedule.tsx</code>, <code>TableView.tsx</code></td></tr>
+<tr><td>การ export Excel และ CSV</td><td><code>TableView.tsx</code>, <code>SummaryDashboard.tsx</code></td></tr>
+<tr><td>Database schema</td><td><code>migrations/</code> และฟังก์ชัน <code>ensure*()</code> ใน <code>worker/index.ts</code></td></tr>
+<tr><td>การ release</td><td><code>scripts/deploy.mjs</code></td></tr>
+<tr><td>History</td><td><code>HistoryView.tsx</code>, <code>logActivity()</code> และ <code>loadOlderHistory()</code> ใน <code>src/useScheduler.ts</code>, route <code>history</code> ใน <code>worker/index.ts</code></td></tr>
+<tr><td>การดูแลระบบจริง</td><td><a href="it-handover.html">คู่มือส่งมอบ IT</a></td></tr>
+</tbody></table></div>
+
+<footer class="sheet-foot"><a href="#11-ข้อควรระวังด้านความปลอดภัย" rel="prev"><span class="dir">← ก่อนหน้า</span>ข้อควรระวังด้านความปลอดภัย</a><span class="folio">12 / 12</span><span></span></footer>
+</section>
+</main>
+</div>
+</body>
+</html>

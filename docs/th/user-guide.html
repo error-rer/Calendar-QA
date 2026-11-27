@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="scripts/build-docs.mjs">
+<title>คู่มือผู้ใช้ · UTAC QA Calendar</title>
+<link rel="icon" href="../images/utac-logo.jpg">
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/search-index.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body class="th" data-root="../" data-search-scope="lang">
+<!-- Generated file. Edit the Markdown source and run: npm run docs -->
+<a class="skip" href="#main">ข้ามไปยังเนื้อหา</a>
+<header class="bar">
+  <a class="brand" href="../index.html"><img src="../images/utac-logo.jpg" alt="" width="28" height="28"><span><b>UTAC QA Calendar</b><small>QMS-CASS · DOCUMENTATION</small></span></a>
+  <div class="search" role="search">
+    <input id="doc-search" type="search" placeholder="ค้นหาในเอกสาร" aria-label="ค้นหาในเอกสาร" autocomplete="off" spellcheck="false"
+      role="combobox" aria-expanded="false" aria-controls="search-results" aria-autocomplete="list"
+      data-no-results="ไม่พบผลลัพธ์สำหรับ" data-results="รายการ" data-clear="ล้างไฮไลต์การค้นหา">
+    <kbd class="search-key" aria-hidden="true">/</kbd>
+    <div id="search-results" class="search-results" role="listbox" hidden></div>
+  </div>
+  <div class="bar-tools"><details class="toc-menu"><summary>สารบัญ</summary><ol><li><a href="#1-ก่อนเริ่มใช้งาน"><span class="n">1</span>ก่อนเริ่มใช้งาน</a></li><li><a href="#2-ปฏิทินทำงานอย่างไร"><span class="n">2</span>ปฏิทินทำงานอย่างไร</a></li><li><a href="#3-qa-planner-วางแผนการตรวจ"><span class="n">3</span>QA Planner: วางแผนการตรวจ</a></li><li><a href="#4-qms-host-ตรวจตารางและบันทึกผล"><span class="n">4</span>QMS Host: ตรวจตารางและบันทึกผล</a></li><li><a href="#5-qa-admin-ดูแล-qms-host-ตัวเลือก-และวันหยุด"><span class="n">5</span>QA Admin: ดูแล QMS Host ตัวเลือก และวันหยุด</a></li><li><a href="#6-รายงาน-ค้นหา-ส่งออก-และดูประวัติ"><span class="n">6</span>รายงาน: ค้นหา ส่งออก และดูประวัติ</a></li><li><a href="#7-ตรวจสอบก่อนจบวัน"><span class="n">7</span>ตรวจสอบก่อนจบวัน</a></li><li><a href="#8-แก้ปัญหาเบื้องต้น"><span class="n">8</span>แก้ปัญหาเบื้องต้น</a></li></ol></details><nav class="lang" aria-label="ภาษา"><a class="seg on" href="../th/user-guide.html" hreflang="th" lang="th" aria-current="true">ไทย</a><a class="seg" href="../en/user-guide.html" hreflang="en" lang="en" data-keep-chapter>EN</a></nav><button type="button" class="btn ink" data-print>พิมพ์</button></div>
+</header>
+<div class="desk">
+<nav class="rail" aria-label="บท"><a class="rail-home" href="#top">คู่มือผู้ใช้</a><ol><li><a href="#1-ก่อนเริ่มใช้งาน" data-ch="1"><span class="n">1</span><span>ก่อนเริ่มใช้งาน</span></a></li><li><a href="#2-ปฏิทินทำงานอย่างไร" data-ch="2"><span class="n">2</span><span>ปฏิทินทำงานอย่างไร</span></a></li><li><a href="#3-qa-planner-วางแผนการตรวจ" data-ch="3"><span class="n">3</span><span>QA Planner: วางแผนการตรวจ</span></a></li><li><a href="#4-qms-host-ตรวจตารางและบันทึกผล" data-ch="4"><span class="n">4</span><span>QMS Host: ตรวจตารางและบันทึกผล</span></a></li><li><a href="#5-qa-admin-ดูแล-qms-host-ตัวเลือก-และวันหยุด" data-ch="5"><span class="n">5</span><span>QA Admin: ดูแล QMS Host ตัวเลือก และวันหยุด</span></a></li><li><a href="#6-รายงาน-ค้นหา-ส่งออก-และดูประวัติ" data-ch="6"><span class="n">6</span><span>รายงาน: ค้นหา ส่งออก และดูประวัติ</span></a></li><li><a href="#7-ตรวจสอบก่อนจบวัน" data-ch="7"><span class="n">7</span><span>ตรวจสอบก่อนจบวัน</span></a></li><li><a href="#8-แก้ปัญหาเบื้องต้น" data-ch="8"><span class="n">8</span><span>แก้ปัญหาเบื้องต้น</span></a></li></ol></nav>
+<main id="main" class="binder" style="--tab:#2e7d32">
+<nav class="tabs" aria-label="คู่มือ"><div class="tabs-in"><a class="tab on" style="--c:#2e7d32" href="../th/user-guide.html" aria-current="page">คู่มือผู้ใช้</a><a class="tab" style="--c:#1e5fa8" href="../th/developer-guide.html">นักพัฒนา</a><a class="tab" style="--c:#123f73" href="../th/it-handover.html">ส่งมอบ IT</a></div></nav>
+<section class="sheet cover" id="top" data-ch="0">
+<div class="runhead"><span>คู่มือผู้ใช้</span><span>ปรับปรุง 2026-11-27</span></div>
+<h1>คู่มือผู้ใช้</h1>
+<p class="lede">วิธีวางแผน Customer Audit (CS) และ Internal Audit (IA) ใน UTAC QA Calendar (QMS-CASS) ซึ่งในแอปแสดงชื่อว่า <strong>Calendar Auditor</strong> รวมถึงการบันทึกผลตรวจ การดูแลข้อมูลที่อยู่เบื้องหลัง และการจัดทำรายงาน ส่วนแรกอธิบายว่าปฏิทินทำงานอย่างไร ส่วนที่สองเป็นขั้นตอนการทำงานแยกตามบทบาท</p>
+<aside class="callout note" role="note"><span class="badge">หมายเหตุ</span><p>บทบาทในคู่มือนี้บอกว่าใครมักทำงานใด ระบบไม่ได้ซ่อนเมนูตามบทบาท ดังนั้นก่อนแก้ข้อมูลที่ใช้ร่วมกัน ให้ทำตามขั้นตอนอนุมัติของหน่วยงาน</p>
+</aside>
+
+<h2 class="contents-title">สารบัญ</h2>
+<ol class="contents"><li><a href="#1-ก่อนเริ่มใช้งาน"><span class="n">1</span><span class="ct"><span class="cn">ก่อนเริ่มใช้งาน</span><span class="cs">เบราว์เซอร์ · เข้าสู่ระบบ · เมนูหลัก</span></span></a></li><li><a href="#2-ปฏิทินทำงานอย่างไร"><span class="n">2</span><span class="ct"><span class="cn">ปฏิทินทำงานอย่างไร</span><span class="cs">ไซต์ · สถานะของนัดหมาย · กฎของวัน · ฟิลด์ที่จำเป็น</span></span></a></li><li><a href="#3-qa-planner-วางแผนการตรวจ"><span class="n">3</span><span class="ct"><span class="cn">QA Planner: วางแผนการตรวจ</span><span class="cs">สร้าง Customer Audit (CS) · สร้าง Internal Audit (IA) · ค้นหา แก้ไข หรือลบนัดหมาย</span></span></a></li><li><a href="#4-qms-host-ตรวจตารางและบันทึกผล"><span class="n">4</span><span class="ct"><span class="cn">QMS Host: ตรวจตารางและบันทึกผล</span><span class="cs">ตรวจการตรวจที่ได้รับมอบหมาย · บันทึกผลตรวจ</span></span></a></li><li><a href="#5-qa-admin-ดูแล-qms-host-ตัวเลือก-และวันหยุด"><span class="n">5</span><span class="ct"><span class="cn">QA Admin: ดูแล QMS Host ตัวเลือก และวันหยุด</span><span class="cs">QMS Host · ตัวเลือกในแบบฟอร์ม · วันหยุดและข้อจำกัด</span></span></a></li><li><a href="#6-รายงาน-ค้นหา-ส่งออก-และดูประวัติ"><span class="n">6</span><span class="ct"><span class="cn">รายงาน: ค้นหา ส่งออก และดูประวัติ</span><span class="cs">Table และการส่งออก · Summary · History</span></span></a></li><li><a href="#7-ตรวจสอบก่อนจบวัน"><span class="n">7</span><span class="ct"><span class="cn">ตรวจสอบก่อนจบวัน</span></span></a></li><li><a href="#8-แก้ปัญหาเบื้องต้น"><span class="n">8</span><span class="ct"><span class="cn">แก้ปัญหาเบื้องต้น</span></span></a></li></ol>
+</section>
+<section class="sheet" id="ch-1" data-ch="1">
+<div class="runhead"><span>คู่มือผู้ใช้ · 1</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="1-ก่อนเริ่มใช้งาน"><span class="num">1</span><span class="ht">ก่อนเริ่มใช้งาน</span><a class="anchor" href="#1-ก่อนเริ่มใช้งาน" aria-label="ลิงก์ไปยังหัวข้อนี้: ก่อนเริ่มใช้งาน"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<h3 id="11-เบราว์เซอร์"><span class="num">1.1</span><span class="ht">เบราว์เซอร์</span><a class="anchor" href="#11-เบราว์เซอร์" aria-label="ลิงก์ไปยังหัวข้อนี้: เบราว์เซอร์"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>ใช้ <strong>Microsoft Edge</strong> (เบราว์เซอร์มาตรฐานของ UTAC) หรือ <strong>Google Chrome</strong> เวอร์ชันปัจจุบันในหน้าต่างปกติ</p>
+<ul>
+<li>หลีกเลี่ยงหน้าต่าง InPrivate หรือ Incognito เพราะจะต้องเข้าสู่ระบบใหม่ทุกครั้ง</li>
+<li>อย่าตั้งค่าให้เบราว์เซอร์ล้าง cookies และข้อมูลเว็บไซต์เมื่อปิด มิฉะนั้นจะต้องเข้าสู่ระบบใหม่ทุกครั้ง</li>
+<li>อนุญาตการดาวน์โหลดจากแอป เพื่อให้บันทึกไฟล์ส่งออก Excel (<code>.xlsx</code>) และ CSV ได้</li>
+</ul>
+<h3 id="12-เข้าสู่ระบบ"><span class="num">1.2</span><span class="ht">เข้าสู่ระบบ</span><a class="anchor" href="#12-เข้าสู่ระบบ" aria-label="ลิงก์ไปยังหัวข้อนี้: เข้าสู่ระบบ"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li>กรอก <strong>User ID</strong> และ <strong>Password</strong> แล้วเลือก <strong>Sign in</strong> ระบบจะเปิดหน้า <strong>Schedule</strong> ของเดือนปัจจุบัน</li>
+<li>ติ๊ก <strong>Remember me on this device</strong> เพื่อคงการเข้าสู่ระบบไว้ได้นานสูงสุด 30 วัน หากไม่ติ๊ก เซสชันจะสิ้นสุดเมื่อปิดเบราว์เซอร์ และอยู่ได้นานสุด 12 ชั่วโมง</li>
+<li>บัญชีใหม่: เลือก <strong>Sign up</strong> แล้วกรอก <strong>User ID</strong> (อย่างน้อย 3 ตัว ใช้ตัวอักษร ตัวเลข <code>.</code>, <code>_</code> หรือ <code>-</code>), <strong>Staff registration code</strong> (รับจากผู้ดูแลระบบ), <strong>Password</strong> (อย่างน้อย 4 ตัว) และ <strong>Confirm password</strong> จากนั้นระบบจะกลับไปที่หน้า <strong>Sign in</strong> ให้เข้าสู่ระบบด้วยบัญชีใหม่</li>
+<li>เปลี่ยนรหัสผ่าน: เลือก <strong>Change password</strong> และกรอกรหัสผ่านปัจจุบันก่อน เมื่อเปลี่ยนแล้วทุกเซสชันของบัญชีจะสิ้นสุด ให้เข้าสู่ระบบใหม่ด้วยรหัสใหม่ ระบบไม่มีการรีเซ็ตแบบ &quot;forgot password&quot; หากลืมรหัสผ่าน ให้ติดต่อผู้ดูแลระบบ</li>
+</ol>
+<figure><a class="shot" href="../images/login.png" target="_blank" rel="noopener" title="เปิดภาพขนาดเต็มในแท็บใหม่"><img src="../images/login.png" alt="หน้าเข้าสู่ระบบ มีช่อง User ID, Password, Remember me, Change password และ Sign up" width="2880" height="1800" loading="lazy" decoding="async"></a><figcaption><span class="fig">ภาพที่ 1</span> หน้าเข้าสู่ระบบ</figcaption></figure>
+<h3 id="13-เมนูหลัก"><span class="num">1.3</span><span class="ht">เมนูหลัก</span><a class="anchor" href="#13-เมนูหลัก" aria-label="ลิงก์ไปยังหัวข้อนี้: เมนูหลัก"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>แถบด้านบนมี 5 หน้า: <strong>Schedule</strong> (ปฏิทิน), <strong>Table</strong> (รายการที่ค้นหาได้), <strong>Summary</strong> (สรุปรายปี), <strong>Manage</strong> (QMS Host ตัวเลือก และวันหยุด) และ <strong>History</strong> (ประวัติการเปลี่ยนแปลง) เปิดเมนูใต้ชื่อของคุณเพื่อไปที่ <strong>Your profile</strong> และ <strong>Sign out</strong> บนโทรศัพท์ (หรือหน้าต่างที่แคบกว่า 860px) ทั้ง 5 หน้าจะอยู่ที่แถบด้านล่างของหน้าจอ และ <strong>Table</strong> กับ <strong>History</strong> จะแสดงแต่ละรายการเป็นการ์ด ส่วนตัวกรองใน <strong>Table</strong> เปิดได้ด้วยปุ่ม <strong>Filters</strong> บนโทรศัพท์ แถบใต้ <strong>Week / Month / Year</strong> จะแสดงสัปดาห์ เดือน หรือปีที่กำลังดู พร้อมปุ่ม <strong>Today</strong> และลูกศรสำหรับเลื่อน ในมุมมอง <strong>Week</strong> แตะวันในแถบวันทำการ ในมุมมอง <strong>Month</strong> แต่ละวันจะแสดงจุดหนึ่งจุดต่อหนึ่งนัดหมายตามสีสถานะ แตะวันเพื่อดูรายการนัดหมายของวันนั้นใต้ปฏิทิน</p>
+<figure><a class="shot" href="../images/app-header.png" target="_blank" rel="noopener" title="เปิดภาพขนาดเต็มในแท็บใหม่"><img src="../images/app-header.png" alt="ส่วนหัวของแอป: แท็บหน้าต่าง ๆ ด้านซ้าย และเมนูบัญชีด้านขวา" width="2880" height="116" loading="lazy" decoding="async"></a><figcaption><span class="fig">ภาพที่ 2</span> ส่วนหัวของแอปและเมนูบัญชี (ข้อมูลตัวอย่าง)</figcaption></figure>
+<aside class="callout warning" role="note"><span class="badge">คำเตือน</span><p>หากใช้เครื่องร่วมกัน ให้เลือก <strong>Sign out</strong> เมื่อใช้งานเสร็จ การ Sign out จะสิ้นสุดเซสชัน แต่เบราว์เซอร์ยังเก็บสำเนาข้อมูลปฏิทิน (นัดหมาย ชื่อลูกค้า และโน้ต) ไว้ อย่าใช้เครื่องที่ใช้ร่วมกันหรือเครื่องสาธารณะกับข้อมูลการตรวจที่เป็นความลับ</p>
+</aside>
+
+<footer class="sheet-foot"><span></span><span class="folio">1 / 8</span><a href="#2-ปฏิทินทำงานอย่างไร" rel="next"><span class="dir">ถัดไป →</span>ปฏิทินทำงานอย่างไร</a></footer>
+</section>
+<section class="sheet" id="ch-2" data-ch="2">
+<div class="runhead"><span>คู่มือผู้ใช้ · 2</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="2-ปฏิทินทำงานอย่างไร"><span class="num">2</span><span class="ht">ปฏิทินทำงานอย่างไร</span><a class="anchor" href="#2-ปฏิทินทำงานอย่างไร" aria-label="ลิงก์ไปยังหัวข้อนี้: ปฏิทินทำงานอย่างไร"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<h3 id="21-ไซต์"><span class="num">2.1</span><span class="ht">ไซต์</span><a class="anchor" href="#21-ไซต์" aria-label="ลิงก์ไปยังหัวข้อนี้: ไซต์"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>ปฏิทินครอบคลุม 7 ไซต์ แต่ละไซต์มีสีประจำที่ใช้กับแถบด้านซ้ายของการ์ด สีปัจจุบันดูได้ที่ <strong>Site Color Code</strong> ในแถบด้านข้างของหน้า Schedule ผู้ดูแลระบบเปลี่ยนสี รวมถึงเพิ่มหรือลบไซต์ได้ที่ <strong>Manage → Options → Site</strong> (ช่องสีข้างแต่ละไซต์) กฎ <code>Shutdown Plant</code> ล็อกได้เฉพาะ 7 ไซต์ด้านล่างนี้เท่านั้น</p>
+<div class="table"><table><thead><tr><th scope="col">ไซต์</th><th scope="col">สีเริ่มต้น</th></tr></thead><tbody>
+<tr><td><span class="site" style="--c:#c0392b">UTL1</span></td><td><span class="hex"><span class="sw" style="--c:#c0392b" aria-hidden="true"></span><code>#c0392b</code></span></td></tr>
+<tr><td><span class="site" style="--c:#2e7d32">UTL2</span></td><td><span class="hex"><span class="sw" style="--c:#2e7d32" aria-hidden="true"></span><code>#2e7d32</code></span></td></tr>
+<tr><td><span class="site" style="--c:#66bb6a">UTL2A</span></td><td><span class="hex"><span class="sw" style="--c:#66bb6a" aria-hidden="true"></span><code>#66bb6a</code></span></td></tr>
+<tr><td><span class="site" style="--c:#1b5e20">UTL2B</span></td><td><span class="hex"><span class="sw" style="--c:#1b5e20" aria-hidden="true"></span><code>#1b5e20</code></span></td></tr>
+<tr><td><span class="site" style="--c:#1e5fa8">UTL3</span></td><td><span class="hex"><span class="sw" style="--c:#1e5fa8" aria-hidden="true"></span><code>#1e5fa8</code></span></td></tr>
+<tr><td><span class="site" style="--c:#4a90d9">UTL3A</span></td><td><span class="hex"><span class="sw" style="--c:#4a90d9" aria-hidden="true"></span><code>#4a90d9</code></span></td></tr>
+<tr><td><span class="site" style="--c:#123f73">UTL3T</span></td><td><span class="hex"><span class="sw" style="--c:#123f73" aria-hidden="true"></span><code>#123f73</code></span></td></tr>
+</tbody></table></div>
+<h3 id="22-สถานะของนัดหมาย"><span class="num">2.2</span><span class="ht">สถานะของนัดหมาย</span><a class="anchor" href="#22-สถานะของนัดหมาย" aria-label="ลิงก์ไปยังหัวข้อนี้: สถานะของนัดหมาย"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>สีพื้นของการ์ดบอกสถานะ ระบบคำนวณสถานะให้เอง ผู้ใช้ไม่ต้องตั้งค่าเอง</p>
+<div class="table"><table><thead><tr><th scope="col">สี</th><th scope="col">สถานะ</th><th scope="col">ความหมาย</th><th scope="col">สิ่งที่ต้องทำ</th></tr></thead><tbody>
+<tr><td><span class="swl"><span class="sw" style="--c:#dc2626" aria-hidden="true"></span>แดง</span></td><td>Incomplete Data</td><td>ฟิลด์ที่จำเป็นหรือช่วงวันที่ยังไม่ครบ</td><td>ดูได้ที่ <strong>Incomplete Appointments</strong> ในแถบด้านข้างของหน้า Schedule แต่ละรายการแสดง &quot;Missing: …&quot; คลิกรายการเพื่อเปิดแบบฟอร์ม</td></tr>
+<tr><td><span class="swl"><span class="sw" style="--c:#0284c7" aria-hidden="true"></span>น้ำเงิน</span></td><td>Updated Data</td><td>ข้อมูลครบ และมีการแก้ไขภายใน 7 วันที่ผ่านมา (การบันทึกผลตรวจนับเป็นการแก้ไข)</td><td>ตรวจว่าการแก้ไขถูกต้อง</td></tr>
+<tr><td><span class="swl"><span class="sw" style="--c:#7c3aed" aria-hidden="true"></span>ม่วง</span></td><td>New Data</td><td>ข้อมูลครบ และสร้างภายใน 7 วันที่ผ่านมา</td><td>ไม่ต้องทำอะไร เป็นนัดหมายใหม่</td></tr>
+<tr><td><span class="swl"><span class="sw" style="--c:#d97706" aria-hidden="true"></span>อำพัน</span></td><td>Pending Result</td><td>ถึงวันแรกของการตรวจแล้ว ยังไม่มีการบันทึกผลที่มากกว่า 0 และไม่ได้สร้างหรือแก้ไขภายใน 7 วันที่ผ่านมา</td><td>บันทึกผลตรวจ</td></tr>
+<tr><td><span class="swl"><span class="sw" style="--c:#059669" aria-hidden="true"></span>เขียว</span></td><td>Complete Data</td><td>ข้อมูลครบและไม่มีงานค้าง</td><td>ไม่ต้องทำอะไร</td></tr>
+</tbody></table></div>
+<p>ระบบตรวจตามลำดับในตาราง: แดงก่อน แล้วน้ำเงิน ม่วง อำพัน และสุดท้ายเขียว ดังนั้นนัดหมายที่สร้างในสัปดาห์นี้แล้วถูกแก้ไข จะแสดงเป็นน้ำเงิน ไม่ใช่ม่วง และการตรวจที่เลยวันตรวจไปแล้วจะแสดงเป็นม่วงหรือน้ำเงิน ไม่ใช่อำพัน ตราบใดที่ยังมีอายุไม่ถึง 7 วัน</p>
+<figure><a class="shot" href="../images/schedule-month.png" target="_blank" rel="noopener" title="เปิดภาพขนาดเต็มในแท็บใหม่"><img src="../images/schedule-month.png" alt="หน้า Schedule มุมมองเดือน แสดงการ์ดครบทั้ง 5 สถานะ และวัน No Customer Audits" width="2880" height="1800" loading="lazy" decoding="async"></a><figcaption><span class="fig">ภาพที่ 3</span> Schedule มุมมองเดือน: สีสถานะครบทุกแบบ แถบสีไซต์ และวัน No Customer Audits (ข้อมูลตัวอย่าง)</figcaption></figure>
+<h3 id="23-กฎของวัน"><span class="num">2.3</span><span class="ht">กฎของวัน</span><a class="anchor" href="#23-กฎของวัน" aria-label="ลิงก์ไปยังหัวข้อนี้: กฎของวัน"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>ช่องวันบอกว่าวันนั้นรับการตรวจได้หรือไม่ ให้อ่านป้ายบนช่องวันทุกครั้ง</p>
+<div class="table"><table><thead><tr><th scope="col">ช่องวัน</th><th scope="col">กฎ</th><th scope="col">Customer Audit (CS)</th><th scope="col">Internal Audit (IA)</th></tr></thead><tbody>
+<tr><td>ขาว</td><td>วันทำงานปกติ</td><td>อนุญาต</td><td>อนุญาต</td></tr>
+<tr><td>เทา</td><td><code>Public Holiday</code></td><td>ไม่ถูกจอง และถูกข้ามเมื่ออยู่ในช่วงวันที่</td><td>ไม่ถูกจอง และถูกข้ามเมื่ออยู่ในช่วงวันที่</td></tr>
+<tr><td>น้ำเงิน</td><td><code>No Customer Audits</code></td><td>ห้าม: ช่วงวันที่ของ CS ที่มีวันนี้อยู่ด้วยจะบันทึกไม่ได้</td><td>อนุญาต</td></tr>
+<tr><td>น้ำเงิน</td><td><code>Shutdown Plant</code></td><td>ห้าม: ช่วงวันที่ของ CS ที่มีวันนี้อยู่ด้วยจะบันทึกไม่ได้</td><td>อนุญาตเฉพาะไซต์ที่กฎไม่ได้ล็อก</td></tr>
+</tbody></table></div>
+<ul>
+<li>วันเสาร์-อาทิตย์และวันหยุดนักขัตฤกษ์ที่อยู่ในช่วงวันที่จะถูกข้าม และระบบจะจองวันที่เหลือ หากทุกวันในช่วงถูกข้ามทั้งหมด ระบบจะไม่ยอมบันทึก ช่องวันเสาร์-อาทิตย์และวันหยุดคลิกไม่ได้</li>
+<li>เมื่อช่วงวันที่มีวัน <code>No Customer Audits</code> หรือ <code>Shutdown Plant</code> แบบฟอร์มจะเปลี่ยนเป็น <strong>Internal Audit</strong> และไซต์ที่ถูกล็อกโดย <code>Shutdown Plant</code> จะถูกนำออกจาก <strong>Site</strong></li>
+<li>การเลือก <strong>Reset to Normal Day</strong> ที่วันหยุดนักขัตฤกษ์ซึ่งระบบตั้งไว้ให้ จะเปลี่ยนวันนั้นเป็นวันทำงาน (<code>Working Day</code>)</li>
+<li>กฎวันหยุดไม่ย้ายหรือลบนัดหมายที่มีอยู่แล้ว นัดหมายในวันที่ภายหลังกลายเป็นวันหยุดนักขัตฤกษ์จะเปิดจากหน้า Schedule ไม่ได้ ให้แก้ไขหรือลบจากหน้า <strong>Table</strong></li>
+</ul>
+<h3 id="24-ฟิลด์ที่จำเป็น"><span class="num">2.4</span><span class="ht">ฟิลด์ที่จำเป็น</span><a class="anchor" href="#24-ฟิลด์ที่จำเป็น" aria-label="ลิงก์ไปยังหัวข้อนี้: ฟิลด์ที่จำเป็น"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<div class="table"><table><thead><tr><th scope="col">ประเภท</th><th scope="col">ฟิลด์ที่จำเป็น</th></tr></thead><tbody>
+<tr><td>Customer Audit (CS)</td><td>Standard, Site, Customer, End Customer, Purpose, Target Package, Customer Name, QMS Host และช่วงวันที่ที่ถูกต้อง</td></tr>
+<tr><td>Internal Audit (IA)</td><td>Standard, Site, Audit Category, Area, QMS Host และช่วงวันที่ที่ถูกต้อง</td></tr>
+</tbody></table></div>
+<p>บันทึกนัดหมายได้แม้ยังกรอกไม่ครบทุกฟิลด์ แต่ปุ่ม <strong>Create appointment</strong> จะกดไม่ได้จนกว่าจะมีค่าในฟิลด์หลักอย่างน้อยหนึ่งฟิลด์: สำหรับ CS คือฟิลด์ใดฟิลด์หนึ่งใน Customer, Standard, Site, Customer Name, Purpose หรือ QMS Host สำหรับ IA คือฟิลด์ใดฟิลด์หนึ่งใน Audit Category, Area, Standard, Site หรือ QMS Host หากเว้นวันที่ <strong>From</strong> ไว้ ระบบจะใช้วันนี้ นัดหมายที่ยังไม่ครบจะเป็นสีแดง และแสดงในรายการ <strong>Incomplete Appointments</strong> จนกว่าจะกรอกครบ</p>
+
+<footer class="sheet-foot"><a href="#1-ก่อนเริ่มใช้งาน" rel="prev"><span class="dir">← ก่อนหน้า</span>ก่อนเริ่มใช้งาน</a><span class="folio">2 / 8</span><a href="#3-qa-planner-วางแผนการตรวจ" rel="next"><span class="dir">ถัดไป →</span>QA Planner: วางแผนการตรวจ</a></footer>
+</section>
+<section class="sheet" id="ch-3" data-ch="3">
+<div class="runhead"><span>คู่มือผู้ใช้ · 3</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="3-qa-planner-วางแผนการตรวจ"><span class="num">3</span><span class="ht">QA Planner: วางแผนการตรวจ</span><a class="anchor" href="#3-qa-planner-วางแผนการตรวจ" aria-label="ลิงก์ไปยังหัวข้อนี้: QA Planner: วางแผนการตรวจ"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<h3 id="31-สร้าง-customer-audit-cs"><span class="num">3.1</span><span class="ht">สร้าง Customer Audit (CS)</span><a class="anchor" href="#31-สร้าง-customer-audit-cs" aria-label="ลิงก์ไปยังหัวข้อนี้: สร้าง Customer Audit (CS)"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li>เปิด <strong>Schedule</strong> เลือก <strong>Month</strong> แล้วใช้ลูกศรไปยังเดือนที่ต้องวางแผน</li>
+<li>ตรวจช่องวัน หากมีวัน <code>No Customer Audits</code> หรือ <code>Shutdown Plant</code> อยู่ในช่วงวันที่ จะจอง CS ไม่ได้ ส่วนวันเสาร์-อาทิตย์และวันหยุดนักขัตฤกษ์จะถูกข้าม</li>
+<li>เลือก <strong>New appointment</strong> หรือคลิกวันที่เพื่อเปิดรายการของวันนั้น แล้วเลือก <strong>+ New Appointment</strong> ระบบเลือก <strong>Customer Audit</strong> ไว้ให้แล้ว ยกเว้นวันนั้นเป็นวัน <code>No Customer Audits</code> หรือ <code>Shutdown Plant</code></li>
+<li>กรอก 8 ฟิลด์ของ CS และกำหนด <strong>From</strong> และ <strong>To</strong> วันสิ้นสุดต้องไม่อยู่ก่อนวันเริ่ม</li>
+<li>เลือก <strong>Create appointment</strong></li>
+<li>ตรวจว่าการ์ดอยู่ในวันและไซต์ที่ถูกต้อง หากเป็นสีแดง ให้กรอกให้ครบจาก <strong>Incomplete Appointments</strong></li>
+</ol>
+<figure><a class="shot" href="../images/form-customer-audit.png" target="_blank" rel="noopener" title="เปิดภาพขนาดเต็มในแท็บใหม่"><img src="../images/form-customer-audit.png" alt="แบบฟอร์ม New appointment พร้อมฟิลด์ของ Customer Audit" width="2880" height="1800" loading="lazy" decoding="async"></a><figcaption><span class="fig">ภาพที่ 4</span> แบบฟอร์ม New appointment แบบ Customer Audit</figcaption></figure>
+<p><strong>Customer</strong> และ <strong>End Customer</strong> รับได้ค่าเดียว: พิมพ์เพื่อค้นหา หรือพิมพ์ชื่อใหม่ ส่วน <strong>Standard</strong>, <strong>Site</strong>, <strong>Purpose</strong>, <strong>Target Package</strong>, <strong>Customer Name</strong> และ <strong>QMS Host</strong> (รวมถึง <strong>Area</strong> สำหรับ IA) รับได้หลายค่า: พิมพ์เพื่อกรอง ติ๊กค่าที่ต้องการ หรือเพิ่มค่าใหม่ด้วย <strong>＋ Add &quot;…&quot;</strong> ปุ่ม <strong>×</strong> บนแท็กที่เลือกไว้จะนำค่านั้นออกจากนัดหมายนี้เท่านั้น ส่วนปุ่ม <strong>✕</strong> ข้างค่าในรายการที่เปิดอยู่จะลบค่านั้นออกจากรายการตัวเลือกที่ใช้ร่วมกัน ซึ่งมีผลกับทุกคน</p>
+<figure><a class="shot" href="../images/multi-select.png" target="_blank" rel="noopener" title="เปิดภาพขนาดเต็มในแท็บใหม่"><img src="../images/multi-select.png" alt="รายการแบบค้นหาและเลือกได้หลายค่า" width="658" height="407" loading="lazy" decoding="async"></a><figcaption><span class="fig">ภาพที่ 5</span> ฟิลด์ค้นหาและเลือกหลายค่า</figcaption></figure>
+<h3 id="32-สร้าง-internal-audit-ia"><span class="num">3.2</span><span class="ht">สร้าง Internal Audit (IA)</span><a class="anchor" href="#32-สร้าง-internal-audit-ia" aria-label="ลิงก์ไปยังหัวข้อนี้: สร้าง Internal Audit (IA)"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li>เลือกวันปกติ วัน <code>No Customer Audits</code> หรือวัน <code>Shutdown Plant</code> ที่กฎไม่ได้ล็อกไซต์ของคุณ</li>
+<li>เลือก <strong>New appointment</strong> หรือคลิกวันที่แล้วเลือก <strong>+ New Appointment</strong> จากนั้นเลือก <strong>Internal Audit</strong></li>
+<li>กรอก 5 ฟิลด์ของ IA และช่วงวันที่ ในช่อง <strong>Area</strong> เลือกได้หลายค่าหรือเพิ่มค่าใหม่ หลายค่าจะแสดงคั่นด้วย <code>/</code></li>
+<li>เลือก <strong>Create appointment</strong> แล้วตรวจการ์ด</li>
+</ol>
+<h3 id="33-ค้นหา-แก้ไข-หรือลบนัดหมาย"><span class="num">3.3</span><span class="ht">ค้นหา แก้ไข หรือลบนัดหมาย</span><a class="anchor" href="#33-ค้นหา-แก้ไข-หรือลบนัดหมาย" aria-label="ลิงก์ไปยังหัวข้อนี้: ค้นหา แก้ไข หรือลบนัดหมาย"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li>กรองปฏิทินด้วยตัวกรองที่แถบด้านข้าง: <strong>Audit Type</strong>, <strong>QMS Host</strong>, <strong>Standard</strong>, <strong>Site</strong>, <strong>Customer</strong>, <strong>Purpose</strong>, <strong>Target Package</strong>, <strong>Customer Name</strong>, <strong>Audit Category</strong> กด <strong>Clear all</strong> เพื่อล้างตัวกรอง ตัวกรองเปลี่ยนเฉพาะสิ่งที่คุณเห็นเท่านั้น</li>
+<li>คลิกวันเพื่อเปิดรายการของวันนั้น การ์ดแต่ละใบมี <strong>Audit Results</strong> (ไอคอนคลิปบอร์ด) ไอคอนรูปตาเพื่อดูรายละเอียด ✏️ เพื่อแก้ไข และ ✕ เพื่อลบ</li>
+<li>สำหรับนัดหมายหลายวัน หน้า Schedule จะถามว่า <strong>Edit this day only</strong> หรือ <strong>Edit entire appointment</strong> และ <strong>Delete this day only</strong> หรือ <strong>Delete entire appointment</strong> เมื่อแก้ไขเพียงวันเดียว ช่อง <strong>From</strong> และ <strong>To</strong> จะถูกล็อก</li>
+<li>เลือก <strong>Save changes</strong> แล้วตรวจวัน ไซต์ และสถานะอีกครั้ง</li>
+</ol>
+<aside class="callout note" role="note"><span class="badge">หมายเหตุ</span><p>ในหน้า <strong>Table</strong> แต่ละแถวคือหนึ่งวัน การกด ✕ ที่วันหนึ่งของนัดหมายหลายวันจะมีตัวเลือก <strong>This day</strong> (ลบเฉพาะวันนั้น) หรือ <strong>All N days</strong> (ลบนัดหมายทั้งชุด) ส่วนนัดหมายวันเดียวจะแสดง <strong>Delete</strong></p>
+</aside>
+<figure><a class="shot" href="../images/schedule-week.png" target="_blank" rel="noopener" title="เปิดภาพขนาดเต็มในแท็บใหม่"><img src="../images/schedule-week.png" alt="หน้า Schedule มุมมองสัปดาห์ พร้อมแถบตัวกรอง รายการ Incomplete Appointments และ legend สถานะ" width="2880" height="1800" loading="lazy" decoding="async"></a><figcaption><span class="fig">ภาพที่ 6</span> Schedule มุมมองสัปดาห์ พร้อมตัวกรองและรายการ Incomplete Appointments (ข้อมูลตัวอย่าง)</figcaption></figure>
+
+<footer class="sheet-foot"><a href="#2-ปฏิทินทำงานอย่างไร" rel="prev"><span class="dir">← ก่อนหน้า</span>ปฏิทินทำงานอย่างไร</a><span class="folio">3 / 8</span><a href="#4-qms-host-ตรวจตารางและบันทึกผล" rel="next"><span class="dir">ถัดไป →</span>QMS Host: ตรวจตารางและบันทึกผล</a></footer>
+</section>
+<section class="sheet" id="ch-4" data-ch="4">
+<div class="runhead"><span>คู่มือผู้ใช้ · 4</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="4-qms-host-ตรวจตารางและบันทึกผล"><span class="num">4</span><span class="ht">QMS Host: ตรวจตารางและบันทึกผล</span><a class="anchor" href="#4-qms-host-ตรวจตารางและบันทึกผล" aria-label="ลิงก์ไปยังหัวข้อนี้: QMS Host: ตรวจตารางและบันทึกผล"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<h3 id="41-ตรวจการตรวจที่ได้รับมอบหมาย"><span class="num">4.1</span><span class="ht">ตรวจการตรวจที่ได้รับมอบหมาย</span><a class="anchor" href="#41-ตรวจการตรวจที่ได้รับมอบหมาย" aria-label="ลิงก์ไปยังหัวข้อนี้: ตรวจการตรวจที่ได้รับมอบหมาย"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li>เปิด <strong>Schedule</strong> แล้วกรองด้วยชื่อของคุณใน <strong>QMS Host</strong> และด้วย <strong>Site</strong> ของคุณ</li>
+<li>ตรวจวันที่ ไซต์ ประเภทการตรวจ Standard และ Customer (CS) หรือ Area (IA)</li>
+<li>หากข้อมูลไม่ถูกต้อง ให้แจ้ง QA Planner แทนการแก้เองโดยไม่ได้รับอนุมัติ</li>
+<li>ก่อนตรวจ IA ในวัน <code>Shutdown Plant</code> ให้ยืนยันว่าไซต์ของคุณไม่ถูกล็อก</li>
+</ol>
+<h3 id="42-บันทึกผลตรวจ"><span class="num">4.2</span><span class="ht">บันทึกผลตรวจ</span><a class="anchor" href="#42-บันทึกผลตรวจ" aria-label="ลิงก์ไปยังหัวข้อนี้: บันทึกผลตรวจ"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li>เปิดนัดหมายแล้วเลือกไอคอน <strong>Audit Results</strong></li>
+<li>กรอก <strong>Major</strong>, <strong>Minor</strong>, <strong>OFI</strong>, <strong>OBS</strong> และ <strong>Finding(s)</strong> ของแต่ละไซต์ แถวจะครอบคลุมทุกไซต์ในชุดนัดหมาย (มีแถว <strong>General</strong> แถวเดียวหากไม่มีไซต์)</li>
+<li>ตรวจตัวเลขและไซต์ แล้วเลือก <strong>Save Results</strong> ผลตรวจใช้กับทั้งชุดของนัดหมายหลายวัน</li>
+<li>สำหรับข้อมูลส่งต่องาน ให้ขยายการ์ดแล้วใช้ส่วน <strong>NOTES</strong> โน้ตเป็นของวันนั้นเท่านั้น และไม่ได้บันทึกว่าใครเขียนหรือเขียนเมื่อใด (ทุกโน้ตแสดง &quot;You&quot; และ &quot;just now&quot;) จึงควรใส่ชื่อและวันที่ไว้ในข้อความ</li>
+<li>หลัง <strong>Save Results</strong> การ์ดจะเป็นสีน้ำเงินเป็นเวลา 7 วัน แล้วจึงเปลี่ยนเป็นสีเขียว</li>
+</ol>
+<aside class="callout important" role="note"><span class="badge">สำคัญ</span><p><strong>Save Results</strong> จะบันทึกผลแม้ทุกจำนวนเป็น 0 ดังนั้นการตรวจที่ไม่มี finding เลยจะเปลี่ยนเป็นสีเขียวได้ <strong>Clear Results</strong> จะลบผลตรวจออก และการ์ดจะกลับเป็นสีอำพัน ผลตรวจที่ทุกจำนวนเป็น 0 ซึ่งบันทึกด้วยแอปเวอร์ชันเก่ายังคงถือว่า &quot;ไม่มีผล&quot;: ให้เปิด <strong>Audit Results</strong> แล้วเลือก <strong>Save Results</strong> อีกครั้ง</p>
+</aside>
+<aside class="callout tip" role="note"><span class="badge">เคล็ดลับ</span><p>หากผลตรวจหายไปหลังรีเฟรช ให้อ่านข้อความแจ้งเตือน และแจ้ง QA Planner หรือผู้ดูแลระบบก่อนบันทึกซ้ำ การบันทึกซ้ำอาจทำให้ข้อมูลซ้ำซ้อน</p>
+</aside>
+
+<footer class="sheet-foot"><a href="#3-qa-planner-วางแผนการตรวจ" rel="prev"><span class="dir">← ก่อนหน้า</span>QA Planner: วางแผนการตรวจ</a><span class="folio">4 / 8</span><a href="#5-qa-admin-ดูแล-qms-host-ตัวเลือก-และวันหยุด" rel="next"><span class="dir">ถัดไป →</span>QA Admin: ดูแล QMS Host ตัวเลือก และวันหยุด</a></footer>
+</section>
+<section class="sheet" id="ch-5" data-ch="5">
+<div class="runhead"><span>คู่มือผู้ใช้ · 5</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="5-qa-admin-ดูแล-qms-host-ตัวเลือก-และวันหยุด"><span class="num">5</span><span class="ht">QA Admin: ดูแล QMS Host ตัวเลือก และวันหยุด</span><a class="anchor" href="#5-qa-admin-ดูแล-qms-host-ตัวเลือก-และวันหยุด" aria-label="ลิงก์ไปยังหัวข้อนี้: QA Admin: ดูแล QMS Host ตัวเลือก และวันหยุด"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<h3 id="51-qms-host"><span class="num">5.1</span><span class="ht">QMS Host</span><a class="anchor" href="#51-qms-host" aria-label="ลิงก์ไปยังหัวข้อนี้: QMS Host"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li>เปิด <strong>Manage → QMS Host</strong></li>
+<li>กรองด้วย <strong>Site</strong>, <strong>Standard</strong> หรือ <strong>Department</strong> เพื่อหาคนที่ต้องการ</li>
+<li>เลือก <strong>New QMS Host</strong> เพื่อเพิ่มคน หรือคลิกแถวเพื่อแก้ <strong>Name</strong>, <strong>Site</strong>, <strong>Standard</strong> (Internal Audit / Customer Audit) และ <strong>Department</strong> (QA / Non-QA) บันทึกด้วย <strong>Create QMS Host</strong> หรือ <strong>Save Changes</strong> การเปลี่ยนชื่อ host จะเปลี่ยนชื่อในนัดหมายที่มีอยู่ของคนนั้นด้วย</li>
+<li>หากต้องการลบ host ให้ย้ายนัดหมายของคนนั้นไปให้คนอื่นก่อน ระบบจะไม่ยอมลบ host ที่ยังอยู่ในนัดหมายใด ๆ ไม่ว่าจะเป็นนัดหมายในอดีตหรืออนาคต</li>
+</ol>
+<p>คุณลากแถวได้ แต่ลำดับใหม่จะไม่ถูกบันทึก: ลำดับจะกลับเป็นแบบเดิมเมื่อโหลดหน้าใหม่ และคนอื่นจะไม่เห็นลำดับนั้น</p>
+<figure><a class="shot" href="../images/manage-qms-host.png" target="_blank" rel="noopener" title="เปิดภาพขนาดเต็มในแท็บใหม่"><img src="../images/manage-qms-host.png" alt="หน้า Manage แท็บ QMS Host" width="2880" height="1800" loading="lazy" decoding="async"></a><figcaption><span class="fig">ภาพที่ 7</span> Manage → QMS Host (ข้อมูลตัวอย่าง)</figcaption></figure>
+<h3 id="52-ตัวเลือกในแบบฟอร์ม"><span class="num">5.2</span><span class="ht">ตัวเลือกในแบบฟอร์ม</span><a class="anchor" href="#52-ตัวเลือกในแบบฟอร์ม" aria-label="ลิงก์ไปยังหัวข้อนี้: ตัวเลือกในแบบฟอร์ม"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li>เปิด <strong>Manage → Options</strong> ระบบแสดงทุกกลุ่ม: <strong>Site</strong> (พร้อมช่องสี), <strong>Standard</strong> (Internal Audit และ Customer Audit), <strong>Customer</strong>, <strong>End Customer</strong>, <strong>Purpose</strong>, <strong>Target Package</strong>, <strong>Customer Name</strong> และ <strong>Audit Category</strong></li>
+<li>เพิ่มค่าด้วยช่องข้อความและ <strong>+ Add</strong> (หรือกด Enter) ลากค่าเพื่อเรียงลำดับใหม่ และลบค่าด้วย <strong>✕</strong> ตรวจตัวสะกดและค่าซ้ำก่อน</li>
+<li>ระบบจะไม่ยอมลบค่าที่ยังมีนัดหมายใช้อยู่ (ทุกกลุ่มยกเว้น Audit Category) การลบนัดหมายสุดท้ายที่ใช้ค่า Customer, End Customer, Purpose หรือ Audit Category จะลบค่านั้นออกจาก Options ด้วย</li>
+</ol>
+<h3 id="53-วันหยุดและข้อจำกัด"><span class="num">5.3</span><span class="ht">วันหยุดและข้อจำกัด</span><a class="anchor" href="#53-วันหยุดและข้อจำกัด" aria-label="ลิงก์ไปยังหัวข้อนี้: วันหยุดและข้อจำกัด"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li>เปิด <strong>Manage → Holidays</strong> เปลี่ยนปีด้วยลูกศร หรือพิมพ์ปี 4 หลักแล้วกด Enter</li>
+<li>คลิกวันที่ หรือเลือก <strong>Add Date Range Rule</strong> ในหน้าต่าง <strong>Configure Calendar Status</strong> ให้เลือก <strong>Public / General Holiday</strong>, <strong>Shutdown Plant</strong> หรือ <strong>No Customer Audits</strong> กฎใหม่จะเริ่มต้นเป็น No Customer Audits จึงต้องตรวจตัวเลือกให้ดี</li>
+<li>สำหรับ <code>Shutdown Plant</code> ให้ติ๊กไซต์ที่ต้องล็อกใน <strong>Affected Sites (Shutdown)</strong> ค่าเริ่มต้นไม่มีไซต์ถูกติ๊ก ใช้ <strong>Select All</strong> หากกระทบทุกไซต์ ปุ่ม <strong>Save Status</strong> จะกดไม่ได้จนกว่าจะติ๊กอย่างน้อยหนึ่งไซต์</li>
+<li>กรอก <strong>Holiday name / note</strong> (ไม่บังคับ) ตรวจวันที่ กฎ และไซต์ แล้วเลือก <strong>Save Status</strong></li>
+<li>เลือกการ์ด <strong>Public Holidays</strong> เพื่อดูวันหยุดของปีเรียงตามวันที่ ใช้ <strong>Reset to Normal Day</strong> เพื่อล้างกฎของวันนั้น</li>
+</ol>
+<figure><a class="shot" href="../images/manage-holidays.png" target="_blank" rel="noopener" title="เปิดภาพขนาดเต็มในแท็บใหม่"><img src="../images/manage-holidays.png" alt="หน้า Manage แท็บ Holidays: จำนวนกฎ legend รายการกฎ และปฏิทินรายปี" width="2880" height="1800" loading="lazy" decoding="async"></a><figcaption><span class="fig">ภาพที่ 8</span> Manage → Holidays (ข้อมูลตัวอย่าง)</figcaption></figure>
+<aside class="callout note" role="note"><span class="badge">หมายเหตุ</span><p>ยังไม่มีการนำเข้าวันหยุดจากไฟล์ Excel หรือ CSV ให้เพิ่มกฎบนปฏิทินหรือด้วย <strong>Add Date Range Rule</strong></p>
+</aside>
+
+<footer class="sheet-foot"><a href="#4-qms-host-ตรวจตารางและบันทึกผล" rel="prev"><span class="dir">← ก่อนหน้า</span>QMS Host: ตรวจตารางและบันทึกผล</a><span class="folio">5 / 8</span><a href="#6-รายงาน-ค้นหา-ส่งออก-และดูประวัติ" rel="next"><span class="dir">ถัดไป →</span>รายงาน: ค้นหา ส่งออก และดูประวัติ</a></footer>
+</section>
+<section class="sheet" id="ch-6" data-ch="6">
+<div class="runhead"><span>คู่มือผู้ใช้ · 6</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="6-รายงาน-ค้นหา-ส่งออก-และดูประวัติ"><span class="num">6</span><span class="ht">รายงาน: ค้นหา ส่งออก และดูประวัติ</span><a class="anchor" href="#6-รายงาน-ค้นหา-ส่งออก-และดูประวัติ" aria-label="ลิงก์ไปยังหัวข้อนี้: รายงาน: ค้นหา ส่งออก และดูประวัติ"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<h3 id="61-table-และการส่งออก"><span class="num">6.1</span><span class="ht">Table และการส่งออก</span><a class="anchor" href="#61-table-และการส่งออก" aria-label="ลิงก์ไปยังหัวข้อนี้: Table และการส่งออก"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li>เปิด <strong>Table</strong> ค้นหาด้วยข้อความ หรือใช้ตัวกรอง <strong>All Audits / Customer Audit / Internal Audit</strong>, <strong>All Sites</strong>, <strong>All Standards</strong>, <strong>All Audit Categories</strong>, <strong>All Target Packages</strong>, <strong>All Customers</strong>, <strong>All QMS Hosts</strong> และวันที่ <strong>From / To</strong></li>
+<li>คลิกหัวคอลัมน์เพื่อเรียง คลิกซ้ำเพื่อกลับลำดับ <strong>Reset filters</strong> ล้างเงื่อนไขทั้งหมด</li>
+<li>ตรวจจำนวนที่ส่วนหัว (&quot;N audits · M scheduled days&quot;) แล้วเลือก <strong>Export Excel</strong> หรือ <strong>Export CSV</strong> ไฟล์จะมีทุกแถวที่ผ่านตัวกรอง เรียงตามลำดับปัจจุบัน ครบทุกหน้า โดยหนึ่งแถวคือหนึ่งวันที่จัดตารางไว้: Date, Audit Type, Customer, Site, Standard, Audit Category, Purpose (Area สำหรับ IA), Target Package, Customer Name และ QMS Host ไม่รวม End Customer ผลตรวจ และโน้ต</li>
+<li>เปิดไฟล์ ตรวจหัวคอลัมน์ จำนวนแถว และไซต์ตัวอย่างก่อนส่งต่อ</li>
+</ol>
+<figure><a class="shot" href="../images/table.png" target="_blank" rel="noopener" title="เปิดภาพขนาดเต็มในแท็บใหม่"><img src="../images/table.png" alt="หน้า Table แสดงยอดรวม ตัวกรอง และรายการนัดหมาย" width="2880" height="1800" loading="lazy" decoding="async"></a><figcaption><span class="fig">ภาพที่ 9</span> หน้า Table (ข้อมูลตัวอย่าง)</figcaption></figure>
+<h3 id="62-summary"><span class="num">6.2</span><span class="ht">Summary</span><a class="anchor" href="#62-summary" aria-label="ลิงก์ไปยังหัวข้อนี้: Summary"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>เปิด <strong>Summary</strong> เพื่อดูยอดรวมของปี: จำนวนการตรวจ การเข้าตรวจของลูกค้าแยกตามไซต์และเดือน และผลตรวจแยกตามไซต์ เลือกปีด้วยลูกศรหรือช่องปี</p>
+<ul>
+<li><strong>Audit Visits by Site → Export to Excel</strong> ดาวน์โหลดไฟล์ <code>audit-visits-YEAR.xlsx</code> (นับเฉพาะวันตรวจรายไซต์ของ Customer Audit)</li>
+<li><strong>Audit Findings by Site → Export to Excel</strong> มีตัวเลือก <strong>Export All Sites (Full Matrix)</strong>, <strong>Export Summary Only</strong> หรือเลือกไซต์เดียว</li>
+</ul>
+<figure><a class="shot" href="../images/summary.png" target="_blank" rel="noopener" title="เปิดภาพขนาดเต็มในแท็บใหม่"><img src="../images/summary.png" alt="หน้า Summary แสดงการเข้าตรวจแยกตามไซต์และเดือน" width="2880" height="1800" loading="lazy" decoding="async"></a><figcaption><span class="fig">ภาพที่ 10</span> แดชบอร์ด Summary (ข้อมูลตัวอย่าง)</figcaption></figure>
+<h3 id="63-history"><span class="num">6.3</span><span class="ht">History</span><a class="anchor" href="#63-history" aria-label="ลิงก์ไปยังหัวข้อนี้: History"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>เปิด <strong>History</strong> เพื่อดูว่าทุกคนเปลี่ยนแปลงอะไรบ้าง ได้แก่ นัดหมาย ผลตรวจ ตัวเลือก และกฎวันหยุด เซิร์ฟเวอร์บันทึกว่าใครเป็นผู้เปลี่ยนแปลงแต่ละรายการและเปลี่ยนเมื่อใด ชื่อที่แสดงจึงเป็นบัญชีที่เข้าสู่ระบบอยู่ในขณะนั้น กรองด้วยข้อความ <strong>Action</strong>, <strong>Entity</strong> และช่วงวันที่ เวลาแสดงตามเวลาท้องถิ่นของคุณ History จะโหลดการเปลี่ยนแปลงล่าสุด 200 รายการก่อน เลือก <strong>Load older changes</strong> ที่ด้านล่างเพื่อดูรายการก่อนหน้า (ตัวกรองค้นหาเฉพาะการเปลี่ยนแปลงที่โหลดมาแล้ว) ระบบไม่บันทึกการเปลี่ยนแปลงรายชื่อ QMS Host ในหน้า Manage หากพบสิ่งผิดปกติ ให้จดเวลาและรายการ แล้วติดต่อ QA Admin</p>
+<aside class="callout note" role="note"><span class="badge">หมายเหตุ</span><p>รายการที่มีป้าย <strong>This browser only</strong> เก็บไว้เฉพาะในเครื่องนี้: เป็นรายการที่บันทึกไว้ก่อนที่ History จะย้ายไปเก็บบนเซิร์ฟเวอร์ หรือบันทึกไปที่เซิร์ฟเวอร์ไม่สำเร็จ (จะมีข้อความแจ้งเตือนเมื่อเกิดกรณีนี้) เพื่อนร่วมงานจะไม่เห็น และจะหายเมื่อล้างข้อมูลเบราว์เซอร์</p>
+</aside>
+<figure><a class="shot" href="../images/history.png" target="_blank" rel="noopener" title="เปิดภาพขนาดเต็มในแท็บใหม่"><img src="../images/history.png" alt="หน้า History: บันทึกกิจกรรม พร้อม action, entity, คำอธิบาย และเวลา" width="2880" height="1800" loading="lazy" decoding="async"></a><figcaption><span class="fig">ภาพที่ 11</span> หน้า History (ข้อมูลตัวอย่าง)</figcaption></figure>
+<aside class="callout warning" role="note"><span class="badge">คำเตือน</span><p>ไฟล์ที่ส่งออกอาจมีชื่อลูกค้าและรายละเอียดการตรวจ ให้จัดเก็บและส่งต่อตามแนวทางการจัดการข้อมูลของ UTAC</p>
+</aside>
+
+<footer class="sheet-foot"><a href="#5-qa-admin-ดูแล-qms-host-ตัวเลือก-และวันหยุด" rel="prev"><span class="dir">← ก่อนหน้า</span>QA Admin: ดูแล QMS Host ตัวเลือก และวันหยุด</a><span class="folio">6 / 8</span><a href="#7-ตรวจสอบก่อนจบวัน" rel="next"><span class="dir">ถัดไป →</span>ตรวจสอบก่อนจบวัน</a></footer>
+</section>
+<section class="sheet" id="ch-7" data-ch="7">
+<div class="runhead"><span>คู่มือผู้ใช้ · 7</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="7-ตรวจสอบก่อนจบวัน"><span class="num">7</span><span class="ht">ตรวจสอบก่อนจบวัน</span><a class="anchor" href="#7-ตรวจสอบก่อนจบวัน" aria-label="ลิงก์ไปยังหัวข้อนี้: ตรวจสอบก่อนจบวัน"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<ul>
+<li><strong>QA Planner:</strong> ไม่มีการ์ดสีแดงค้าง นัดหมายใหม่และที่แก้ไขมีวันที่และผู้รับผิดชอบถูกต้อง</li>
+<li><strong>QMS Host:</strong> บันทึกผลของการตรวจที่เสร็จแล้ว รายการที่ค้างมีผู้รับผิดชอบและวันติดตาม</li>
+<li><strong>QA Admin:</strong> ตรวจคำขอแก้ข้อมูลหลักและกฎวันหยุดกับไซต์และวันที่ที่ถูกต้อง</li>
+<li><strong>ผู้ทำรายงาน:</strong> ยืนยันตัวกรองและช่วงเวลาก่อนส่งไฟล์</li>
+<li><strong>ทุกคน:</strong> Sign out เมื่อใช้เครื่องร่วมกัน</li>
+</ul>
+
+<footer class="sheet-foot"><a href="#6-รายงาน-ค้นหา-ส่งออก-และดูประวัติ" rel="prev"><span class="dir">← ก่อนหน้า</span>รายงาน: ค้นหา ส่งออก และดูประวัติ</a><span class="folio">7 / 8</span><a href="#8-แก้ปัญหาเบื้องต้น" rel="next"><span class="dir">ถัดไป →</span>แก้ปัญหาเบื้องต้น</a></footer>
+</section>
+<section class="sheet" id="ch-8" data-ch="8">
+<div class="runhead"><span>คู่มือผู้ใช้ · 8</span><span>ปรับปรุง 2026-11-27</span></div>
+<h2 id="8-แก้ปัญหาเบื้องต้น"><span class="num">8</span><span class="ht">แก้ปัญหาเบื้องต้น</span><a class="anchor" href="#8-แก้ปัญหาเบื้องต้น" aria-label="ลิงก์ไปยังหัวข้อนี้: แก้ปัญหาเบื้องต้น"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<div class="table"><table><thead><tr><th scope="col">ปัญหา</th><th scope="col">สิ่งที่ต้องตรวจ</th></tr></thead><tbody>
+<tr><td>ไม่พบนัดหมาย</td><td>เดือนหรือปี มุมมอง (Week / Month / Year) และตัวกรองที่ใช้อยู่ ลองกด <strong>Clear all</strong> มุมมองเดือนแสดงการ์ดได้สูงสุด 3 ใบต่อวัน พร้อม &quot;+N more&quot;</td></tr>
+<tr><td>การ์ดเป็นสีแดง</td><td><strong>Incomplete Appointments</strong> ในแถบด้านข้างของหน้า Schedule แสดง &quot;Missing: …&quot; ของการ์ดนั้น</td></tr>
+<tr><td>จอง CS ไม่ได้</td><td>มีวัน <code>No Customer Audits</code> หรือ <code>Shutdown Plant</code> อยู่ในช่วงวันที่ หรือทุกวันในช่วงเป็นวันเสาร์-อาทิตย์หรือวันหยุดนักขัตฤกษ์</td></tr>
+<tr><td>จอง IA ไม่ได้</td><td>ทุกวันในช่วงเป็นวันเสาร์-อาทิตย์หรือวันหยุดนักขัตฤกษ์ หรือมีวัน <code>Shutdown Plant</code> ในช่วงวันที่ที่ล็อกไซต์ของคุณไซต์ใดไซต์หนึ่ง</td></tr>
+<tr><td>เปิดนัดหมายจากหน้า Schedule ไม่ได้</td><td>วันนั้นกลายเป็นวันหยุดนักขัตฤกษ์ ให้เปิดจากหน้า <strong>Table</strong></td></tr>
+<tr><td>ข้อมูลดูไม่เป็นปัจจุบัน หรือทุกการเปลี่ยนแปลงแสดง &quot;A change could not be saved to the shared calendar&quot;</td><td>เซสชันของคุณสิ้นสุดแล้ว (ปิดเบราว์เซอร์โดยไม่ได้ติ๊ก Remember me, ครบกำหนด 12 ชั่วโมงหรือ 30 วัน หรือมีการเปลี่ยนรหัสผ่าน) แต่แอปยังแสดงสำเนาข้อมูลในเบราว์เซอร์นี้อยู่ ให้เลือก <strong>Sign out</strong> แล้วเข้าสู่ระบบใหม่</td></tr>
+<tr><td>การเปลี่ยนแปลงหายไปหลังรีเฟรช</td><td>อ่านข้อความแจ้งเตือนและตรวจการเชื่อมต่อ แจ้งปัญหาก่อนลองทำซ้ำ</td></tr>
+<tr><td>ไฟล์ส่งออกไม่ตรง</td><td>ตัวกรอง ช่วงวันที่ ปี และจำนวนผลลัพธ์</td></tr>
+<tr><td>หน้าเข้าสู่ระบบขึ้นมาทุกครั้ง</td><td>ใช้ InPrivate/Incognito หรือเบราว์เซอร์ล้างข้อมูลเว็บไซต์เมื่อปิด</td></tr>
+<tr><td>เข้าสู่ระบบหรือสมัครไม่ได้</td><td>ตรวจ User ID และรหัสผ่าน ขอรหัสลงทะเบียนจากผู้ดูแลระบบ หรือขอให้รีเซ็ตรหัสผ่านที่ลืม</td></tr>
+</tbody></table></div>
+<p>เมื่อแจ้งปัญหา ให้ระบุหน้า เวลา ไซต์ และขั้นตอนที่ทำ และลบข้อมูลลูกค้าออกจากภาพหน้าจอ</p>
+
+<footer class="sheet-foot"><a href="#7-ตรวจสอบก่อนจบวัน" rel="prev"><span class="dir">← ก่อนหน้า</span>ตรวจสอบก่อนจบวัน</a><span class="folio">8 / 8</span><span></span></footer>
+</section>
+</main>
+</div>
+</body>
+</html>

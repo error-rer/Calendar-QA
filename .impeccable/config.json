@@ -1,0 +1,98 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "docs/**/*.html"
+        ],
+        "createdAt": "2026-11-27T06:10:48.159Z",
+        "reason": "model judgment: generated doc sheets (72px/20px inset) and table frames (cells padded 10-14px) verified in 1440 and 390 captures"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "docs/index.html"
+        ],
+        "createdAt": "2026-11-27T06:10:48.177Z",
+        "reason": "model judgment: same generated sheet inset"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(160, 178, 199)",
+        "createdAt": "2026-11-27T06:39:54.061Z",
+        "reason": "model judgment: site-chip border = site color mixed 40% with white, the derivation DESIGN.md documents (Site set); detector cannot evaluate color-mix"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(164, 191, 166)",
+        "createdAt": "2026-11-27T06:39:54.084Z",
+        "reason": "model judgment: site-chip border = site color mixed 40% with white, the derivation DESIGN.md documents (Site set); detector cannot evaluate color-mix"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(165, 191, 220)",
+        "createdAt": "2026-11-27T06:39:54.105Z",
+        "reason": "model judgment: site-chip border = site color mixed 40% with white, the derivation DESIGN.md documents (Site set); detector cannot evaluate color-mix"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(171, 203, 173)",
+        "createdAt": "2026-11-27T06:39:54.124Z",
+        "reason": "model judgment: site-chip border = site color mixed 40% with white, the derivation DESIGN.md documents (Site set); detector cannot evaluate color-mix"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(183, 211, 240)",
+        "createdAt": "2026-11-27T06:39:54.144Z",
+        "reason": "model judgment: site-chip border = site color mixed 40% with white, the derivation DESIGN.md documents (Site set); detector cannot evaluate color-mix"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(194, 228, 195)",
+        "createdAt": "2026-11-27T06:39:54.161Z",
+        "reason": "model judgment: site-chip border = site color mixed 40% with white, the derivation DESIGN.md documents (Site set); detector cannot evaluate color-mix"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(230, 176, 170)",
+        "createdAt": "2026-11-27T06:39:54.180Z",
+        "reason": "model judgment: site-chip border = site color mixed 40% with white, the derivation DESIGN.md documents (Site set); detector cannot evaluate color-mix"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "archivo',sans-serif",
+        "createdAt": "2026-11-27T07:02:05.726Z",
+        "reason": "model judgment: Archivo is the app's incumbent font and is declared in DESIGN.md; only the inline stack string differs"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "ibm plex mono',monospace",
+        "createdAt": "2026-11-27T09:17:40.905Z",
+        "reason": "model judgment: IBM Plex Mono is declared in DESIGN.md as the label/mono font; only the inline stack string differs"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "\\'archivo\\',sans-serif')",
+        "createdAt": "2026-11-27T09:48:44.358Z",
+        "reason": "model judgment: Archivo is the app's incumbent font and is declared in DESIGN.md; only the inline stack string differs"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "\\'archivo\\',sans-serif",
+        "createdAt": "2026-11-27T09:48:44.375Z",
+        "reason": "model judgment: Archivo is the app's incumbent font and is declared in DESIGN.md; only the inline stack string differs"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "\\'ibm plex mono\\',monospace",
+        "createdAt": "2026-11-27T09:48:55.027Z",
+        "reason": "model judgment: IBM Plex Mono is declared in DESIGN.md as the label/mono font; only the inline stack string differs"
+      }
+    ]
+  }
+}

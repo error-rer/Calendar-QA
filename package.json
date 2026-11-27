@@ -9,9 +9,12 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "deploy": "npm run build && wrangler deploy",
+    "deploy": "node scripts/deploy.mjs",
     "migrate:local": "wrangler d1 migrations apply calendar-qa-db --local",
-    "migrate:remote": "wrangler d1 migrations apply calendar-qa-db --remote"
+    "migrate:remote": "wrangler d1 migrations apply calendar-qa-db --remote",
+    "docs": "node scripts/build-docs.mjs",
+    "docs:screenshots": "node scripts/capture-docs-screenshots.mjs",
+    "test": "node tests/audit-type.test.mjs && node tests/audit-results.test.mjs"
   },
   "dependencies": {
     "react": "^19.2.7",
@@ -25,6 +28,7 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
+    "marked": "^18.3.0",
     "oxlint": "^1.69.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.0",

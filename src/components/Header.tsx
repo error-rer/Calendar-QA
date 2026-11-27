@@ -1,16 +1,16 @@
 import type { VM } from '../useScheduler';
-import { css, HButton, HDiv } from '../ui';
+import { css, HButton } from '../ui';
 
 export function Header({ vm }: { vm: VM }) {
   const user = vm.currentUser;
-  const userName = user?.name || user?.username || 'Jordan Lee';
+  const userName = user?.name || user?.username || 'Signed in';
   const userInitials = (userName.split(' ').map((w) => w[0]).join('') || userName.slice(0, 2)).toUpperCase();
   const userRole = user?.role === 'admin' ? 'QA Admin' : (user?.role ? user.role : 'QA Planner');
-  const userSubtext = user?.username ? `ID: ${user.username}` : 'jordan.lee@nexsil.com';
+  const userSubtext = user?.username ? `ID: ${user.username}` : '';
 
   return (
-    <header style={css('height:58px;flex-shrink:0;display:flex;align-items:center;gap:14px;padding:0 14px 0 16px;background:#fff;border-bottom:1px solid #d8dcd4;z-index:30;position:relative')}>
-      <div style={css('display:flex;align-items:center;gap:11px')}>
+    <header style={css('height:58px;flex-shrink:0;display:flex;align-items:center;gap:14px;padding:0 14px 0 16px;background:#fff;border-bottom:1px solid #d8dcd4;z-index:30;position:relative;min-width:0')}>
+      <div style={css('display:flex;align-items:center;gap:11px;flex-shrink:0')}>
         <img
           src="/utac-logo.jpg"
           alt="UTAC Logo"
@@ -18,45 +18,31 @@ export function Header({ vm }: { vm: VM }) {
         />
         <div style={css('line-height:1.05')}>
           <div style={css('font-size:14.5px;font-weight:700;letter-spacing:-.2px')}>Calendar Auditor</div>
-          {vm.showPresence && (
-            <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8a9088;letter-spacing:.3px;margin-top:1px")}>UTAC</div>
-          )}
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8a9088;letter-spacing:.3px;margin-top:1px")}>UTAC</div>
         </div>
       </div>
 
-      <div style={css('display:flex;background:#f1f3ee;border:1px solid #e0e3dc;border-radius:8px;padding:2px;gap:2px;margin-left:2px')}>
-        <button onClick={vm.goSchedule} style={vm.navSchedStyle}>Schedule</button>
-        <button onClick={vm.goTable} style={vm.navTableStyle}>Table</button>
-        <button onClick={vm.goSummary} style={vm.navSummaryStyle}>Summary</button>
-        <button onClick={vm.goAdmin} style={vm.navAdminStyle}>Manage</button>
-        <button onClick={vm.goHistory} style={vm.navHistoryStyle}>History</button>
-      </div>
+      {/* On phones the pages move to the bottom tab bar (BottomNav). */}
+      {!vm.isMobile && (
+      <nav aria-label="Main" className="nav-scroll" style={css('display:flex;background:#f1f3ee;border:1px solid #e0e3dc;border-radius:8px;padding:2px;gap:2px;margin-left:2px;min-width:0;overflow-x:auto;flex-shrink:1')}>
+        <button className="tap" onClick={vm.goSchedule} style={vm.navSchedStyle}>Schedule</button>
+        <button className="tap" onClick={vm.goTable} style={vm.navTableStyle}>Table</button>
+        <button className="tap" onClick={vm.goSummary} style={vm.navSummaryStyle}>Summary</button>
+        <button className="tap" onClick={vm.goAdmin} style={vm.navAdminStyle}>Manage</button>
+        <button className="tap" onClick={vm.goHistory} style={vm.navHistoryStyle}>History</button>
+      </nav>
+      )}
 
       <div style={css('flex:1')} />
 
-      {vm.showPresence && (
-        <>
-          <div style={css('display:flex;align-items:center;gap:9px')}>
-            <div style={css('display:flex')}>
-              {vm.presence.map((p, i) => (
-                <div key={i} title={p.name} style={p.avatarStyle}>{p.initials}</div>
-              ))}
-            </div>
-            <div style={css('line-height:1.1;margin-right:4px')}>
-              <div style={css('font-size:11.5px;font-weight:600;color:#2a2f28')}>3 teammates</div>
-              <div style={css('font-size:10px;color:#1f9d57;display:flex;align-items:center;gap:4px')}>
-                <span style={css('width:6px;height:6px;border-radius:50%;background:#1f9d57;animation:pulse 2s infinite')} />editing now
-              </div>
-            </div>
-          </div>
-          <div style={css('width:1px;height:26px;background:#e3e6df')} />
-        </>
-      )}
-
       <div style={css('position:relative')}>
-        <HDiv
+        <HButton
           onClick={vm.toggleUserMenu}
-          style={css('display:flex;align-items:center;gap:9px;cursor:pointer;padding:4px 8px 4px 4px;border-radius:9px')}
+          aria-haspopup="menu"
+          aria-expanded={vm.userMenuOpen}
+          aria-label={`Account menu for ${userName}`}
+          className="tap"
+          style={css("display:flex;align-items:center;gap:9px;cursor:pointer;padding:4px 8px 4px 4px;border-radius:9px;background:none;border:none;font-family:'Archivo',sans-serif;text-align:left;color:inherit")}
           hover={{ background: '#f4f6f1' }}
         >
           <div style={css("width:30px;height:30px;border-radius:8px;background:#15191e;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;flex-shrink:0")}>
@@ -68,10 +54,10 @@ export function Header({ vm }: { vm: VM }) {
                 <div style={css('font-size:12px;font-weight:600;color:#23282a')}>{userName}</div>
                 <div style={css('font-size:10px;color:#8a9088')}>{userRole}</div>
               </div>
-              <span style={css('color:#a6aca2;font-size:10px')}>▾</span>
+              <span aria-hidden="true" style={css('color:#a6aca2;font-size:10px')}>▾</span>
             </>
           )}
-        </HDiv>
+        </HButton>
         {vm.userMenuOpen && (
           <div style={css('position:absolute;right:0;top:48px;width:212px;background:#fff;border:1px solid #e2e5de;border-radius:11px;box-shadow:0 10px 30px rgba(20,25,30,.13);padding:7px;z-index:40;animation:fadeUp .14s ease')}>
             <div style={css('padding:8px 10px 9px')}>

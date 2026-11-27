@@ -2,6 +2,7 @@ import { useScheduler } from './useScheduler';
 import { css } from './ui';
 import { Login } from './components/Login';
 import { Header } from './components/Header';
+import { BottomNav } from './components/BottomNav';
 import { Schedule } from './components/Schedule';
 import { Admin } from './components/Admin';
 import { Profile } from './components/Profile';
@@ -18,7 +19,7 @@ export default function App() {
   const vm = useScheduler();
 
   return (
-    <div style={css('height:100vh;width:100%;display:flex;flex-direction:column;overflow:hidden;background:#e9ebe6')}>
+    <div className="app-shell" style={css('width:100%;display:flex;flex-direction:column;overflow:hidden;background:#e9ebe6')}>
       {vm.loading && (
         <div style={css('flex:1;display:flex;align-items:center;justify-content:center;color:#8a9088;font-size:14px')}>Loading…</div>
       )}
@@ -40,6 +41,7 @@ export default function App() {
           {vm.isProfile && <Profile vm={vm} />}
           {vm.isSummary && <SummaryDashboard vm={vm} />}
           {vm.isHistory && <HistoryView vm={vm} />}
+          {vm.isMobile && <BottomNav vm={vm} />}
           <CreateModal vm={vm} />
           <EditModal vm={vm} />
           <EditScopeModal vm={vm} />

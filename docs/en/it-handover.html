@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="scripts/build-docs.mjs">
+<title>IT Handover · UTAC QA Calendar</title>
+<link rel="icon" href="../images/utac-logo.jpg">
+<link rel="stylesheet" href="../assets/docs.css">
+<script src="../assets/search-index.js" defer></script>
+<script src="../assets/docs.js" defer></script>
+</head>
+<body class="" data-root="../" data-search-scope="lang">
+<!-- Generated file. Edit the Markdown source and run: npm run docs -->
+<a class="skip" href="#main">Skip to content</a>
+<header class="bar">
+  <a class="brand" href="../index.html"><img src="../images/utac-logo.jpg" alt="" width="28" height="28"><span><b>UTAC QA Calendar</b><small>QMS-CASS · DOCUMENTATION</small></span></a>
+  <div class="search" role="search">
+    <input id="doc-search" type="search" placeholder="Search the docs" aria-label="Search the docs" autocomplete="off" spellcheck="false"
+      role="combobox" aria-expanded="false" aria-controls="search-results" aria-autocomplete="list"
+      data-no-results="No results for" data-results="results" data-clear="Clear search highlights">
+    <kbd class="search-key" aria-hidden="true">/</kbd>
+    <div id="search-results" class="search-results" role="listbox" hidden></div>
+  </div>
+  <div class="bar-tools"><details class="toc-menu"><summary>Contents</summary><ol><li><a href="#1-system-at-a-glance"><span class="n">1</span>System at a glance</a></li><li><a href="#2-configuration-to-verify"><span class="n">2</span>Configuration to verify</a></li><li><a href="#3-ownership-and-takeover"><span class="n">3</span>Ownership and takeover</a></li><li><a href="#4-security-findings"><span class="n">4</span>Security findings</a></li><li><a href="#5-release-and-database-runbook"><span class="n">5</span>Release and database runbook</a></li><li><a href="#6-monitoring-and-incidents"><span class="n">6</span>Monitoring and incidents</a></li><li><a href="#7-known-application-issues"><span class="n">7</span>Known application issues</a></li><li><a href="#8-handover-acceptance"><span class="n">8</span>Handover acceptance</a></li><li><a href="#references">References</a></li></ol></details><nav class="lang" aria-label="Language"><a class="seg" href="../th/it-handover.html" hreflang="th" lang="th" data-keep-chapter>ไทย</a><a class="seg on" href="../en/it-handover.html" hreflang="en" lang="en" aria-current="true">EN</a></nav><button type="button" class="btn ink" data-print>Print</button></div>
+</header>
+<div class="desk">
+<nav class="rail" aria-label="Chapters"><a class="rail-home" href="#top">IT Handover</a><ol><li><a href="#1-system-at-a-glance" data-ch="1"><span class="n">1</span><span>System at a glance</span></a></li><li><a href="#2-configuration-to-verify" data-ch="2"><span class="n">2</span><span>Configuration to verify</span></a></li><li><a href="#3-ownership-and-takeover" data-ch="3"><span class="n">3</span><span>Ownership and takeover</span></a></li><li><a href="#4-security-findings" data-ch="4"><span class="n">4</span><span>Security findings</span></a></li><li><a href="#5-release-and-database-runbook" data-ch="5"><span class="n">5</span><span>Release and database runbook</span></a></li><li><a href="#6-monitoring-and-incidents" data-ch="6"><span class="n">6</span><span>Monitoring and incidents</span></a></li><li><a href="#7-known-application-issues" data-ch="7"><span class="n">7</span><span>Known application issues</span></a></li><li><a href="#8-handover-acceptance" data-ch="8"><span class="n">8</span><span>Handover acceptance</span></a></li><li><a href="#references" data-ch="9"><span>References</span></a></li></ol></nav>
+<main id="main" class="binder" style="--tab:#123f73">
+<nav class="tabs" aria-label="Guides"><div class="tabs-in"><a class="tab" style="--c:#2e7d32" href="../en/user-guide.html">User Guide</a><a class="tab" style="--c:#1e5fa8" href="../en/developer-guide.html">Developer</a><a class="tab on" style="--c:#123f73" href="../en/it-handover.html" aria-current="page">IT Handover</a></div></nav>
+<section class="sheet cover" id="top" data-ch="0">
+<div class="runhead"><span>IT Handover</span><span>Rev 2026-11-27</span></div>
+<h1>IT Handover</h1>
+<p class="lede">Everything UTAC IT needs to take over UTAC QA Calendar (QMS-CASS): what to verify, who should own what, the open security findings and known issues, and how to release, migrate, recover, and respond to incidents. For how the code works, see the <a href="developer-guide.html">Developer Guide</a>.</p>
+<aside class="callout important" role="note"><span class="badge">Important</span><p>Reviewed against the repository on 27 November 2026. The live Cloudflare account, URL, deployed version, and database have <strong>not</strong> been verified from the repository. Confirm them before treating this as a production runbook.</p>
+</aside>
+
+<h2 class="contents-title">Contents</h2>
+<ol class="contents"><li><a href="#1-system-at-a-glance"><span class="n">1</span><span class="ct"><span class="cn">System at a glance</span></span></a></li><li><a href="#2-configuration-to-verify"><span class="n">2</span><span class="ct"><span class="cn">Configuration to verify</span></span></a></li><li><a href="#3-ownership-and-takeover"><span class="n">3</span><span class="ct"><span class="cn">Ownership and takeover</span><span class="cs">Proposed owners · Takeover checklist</span></span></a></li><li><a href="#4-security-findings"><span class="n">4</span><span class="ct"><span class="cn">Security findings</span></span></a></li><li><a href="#5-release-and-database-runbook"><span class="n">5</span><span class="ct"><span class="cn">Release and database runbook</span><span class="cs">Code release · D1 schema migration · Rollback and recovery</span></span></a></li><li><a href="#6-monitoring-and-incidents"><span class="n">6</span><span class="ct"><span class="cn">Monitoring and incidents</span></span></a></li><li><a href="#7-known-application-issues"><span class="n">7</span><span class="ct"><span class="cn">Known application issues</span></span></a></li><li><a href="#8-handover-acceptance"><span class="n">8</span><span class="ct"><span class="cn">Handover acceptance</span></span></a></li><li><a href="#references"><span class="n"></span><span class="ct"><span class="cn">References</span></span></a></li></ol>
+</section>
+<section class="sheet" id="ch-1" data-ch="1">
+<div class="runhead"><span>IT Handover · 1</span><span>Rev 2026-11-27</span></div>
+<h2 id="1-system-at-a-glance"><span class="num">1</span><span class="ht">System at a glance</span><a class="anchor" href="#1-system-at-a-glance" aria-label="Link to this section: System at a glance"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<ul>
+<li><strong>What it is:</strong> a shared web app for planning Customer Audits (CS) and Internal Audits (IA) across seven UTAC sites (<span class="site" style="--c:#c0392b">UTL1</span>, <span class="site" style="--c:#2e7d32">UTL2</span>, <span class="site" style="--c:#66bb6a">UTL2A</span>, <span class="site" style="--c:#1b5e20">UTL2B</span>, <span class="site" style="--c:#1e5fa8">UTL3</span>, <span class="site" style="--c:#4a90d9">UTL3A</span>, <span class="site" style="--c:#123f73">UTL3T</span>), replacing spreadsheets. The app calls itself &quot;Calendar Auditor&quot;.</li>
+<li><strong>Stack:</strong> React 19, TypeScript, Vite; one Cloudflare Worker serving static assets and the <code>/api/*</code> API; Cloudflare D1 (SQLite).</li>
+<li><strong>Users:</strong> QA Planners, QMS Hosts, QA Admins, and report users on Microsoft Edge or Google Chrome.</li>
+<li><strong>Data in D1:</strong> audit schedules, customer names, QMS Host names, results, notes, holiday rules, the shared History (<code>history_log</code>), user accounts, and sessions.</li>
+<li><strong>Data in each browser (<code>localStorage</code>):</strong> a copy of the schedule (<code>calendar_qa_snapshot</code>, which also holds option lists and any History entries that could not be saved to the server), notes (<code>calendar_qa_comments</code>), the remembered user (<code>calendar_qa_session_user</code>), and accounts created in that browser (<code>calendar_qa_users</code>).</li>
+</ul>
+<figure class="diagram"><a class="shot" href="../images/architecture.svg" target="_blank" rel="noopener" title="Open full size in a new tab"><img src="../images/architecture.svg" alt="Architecture: browser, Worker, D1, and the local snapshot cache." width="720" height="590" loading="lazy" decoding="async"></a><figcaption><span class="fig">Fig. 1</span> System architecture</figcaption></figure>
+
+<footer class="sheet-foot"><span></span><span class="folio">1 / 9</span><a href="#2-configuration-to-verify" rel="next"><span class="dir">Next →</span>Configuration to verify</a></footer>
+</section>
+<section class="sheet" id="ch-2" data-ch="2">
+<div class="runhead"><span>IT Handover · 2</span><span>Rev 2026-11-27</span></div>
+<h2 id="2-configuration-to-verify"><span class="num">2</span><span class="ht">Configuration to verify</span><a class="anchor" href="#2-configuration-to-verify" aria-label="Link to this section: Configuration to verify"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>These values come from the repository. Confirm each one in the company&#39;s Cloudflare and GitHub accounts.</p>
+<div class="table"><table><thead><tr><th scope="col">Item</th><th scope="col">Repository value</th><th scope="col">Notes</th></tr></thead><tbody>
+<tr><td>Worker name</td><td><code>utac-qa-calendar</code></td><td><code>wrangler.toml</code></td></tr>
+<tr><td>Worker entry</td><td><code>worker/index.ts</code></td><td>Handles <code>/api/*</code> and serves the built app</td></tr>
+<tr><td>Static assets</td><td><code>dist</code>, binding <code>ASSETS</code></td><td>Produced by <code>npm run build</code></td></tr>
+<tr><td>D1 binding</td><td><code>DB</code> → <code>calendar-qa-db</code></td><td>Database ID <code>11c524c4-b02e-4d38-840e-ee98294f2118</code></td></tr>
+<tr><td>Compatibility date</td><td><code>2025-04-01</code></td><td></td></tr>
+<tr><td>Secret</td><td><code>REGISTRATION_CODE</code></td><td>Gates sign-up; if it is not set, every sign-up is refused. Set with <code>npx wrangler secret put REGISTRATION_CODE</code>; never store its value in Git, tickets, or documents.</td></tr>
+<tr><td>Session lifetime</td><td>30 days with Remember me; otherwise until the browser closes, at most 12 hours</td><td>Constants in <code>worker/index.ts</code></td></tr>
+<tr><td>Logging</td><td>No <code>[observability]</code> block in <code>wrangler.toml</code></td><td>Workers Logs may be off; check the dashboard</td></tr>
+<tr><td>Source</td><td>GitHub remote <code>origin</code></td><td>Ownership not confirmed</td></tr>
+</tbody></table></div>
+<p><strong>Pending schema changes:</strong> migration <code>0020_assignment_audit_type.sql</code> adds and backfills <code>assignments.audit_type</code>, and <code>0021_history_log.sql</code> creates the <code>history_log</code> table for the shared History. The next <code>npm run deploy</code> applies both (see <a href="#52-d1-schema-migration">5.2</a>). Both only add, so the live Worker keeps working while they run. Before that first release, check that the column does not already exist (an earlier test build added it at runtime): <code>npx wrangler d1 execute calendar-qa-db --remote --command &quot;PRAGMA table_info(assignments)&quot;</code>. If <code>audit_type</code> is listed, ask the maintainer how to mark 0020 as applied instead of running it.</p>
+<p><strong>Not declared in the repository:</strong> a staging environment, custom domain, Cloudflare account ID, CI/CD workflow, or monitoring alerts. That does not prove they do not exist; check the dashboards. A Git push alone does not deploy anything; deployment is <code>npm run deploy</code>.</p>
+
+<footer class="sheet-foot"><a href="#1-system-at-a-glance" rel="prev"><span class="dir">← Previous</span>System at a glance</a><span class="folio">2 / 9</span><a href="#3-ownership-and-takeover" rel="next"><span class="dir">Next →</span>Ownership and takeover</a></footer>
+</section>
+<section class="sheet" id="ch-3" data-ch="3">
+<div class="runhead"><span>IT Handover · 3</span><span>Rev 2026-11-27</span></div>
+<h2 id="3-ownership-and-takeover"><span class="num">3</span><span class="ht">Ownership and takeover</span><a class="anchor" href="#3-ownership-and-takeover" aria-label="Link to this section: Ownership and takeover"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<h3 id="31-proposed-owners"><span class="num">3.1</span><span class="ht">Proposed owners</span><a class="anchor" href="#31-proposed-owners" aria-label="Link to this section: Proposed owners"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>Replace each role with a named person and escalation contact during the formal handover.</p>
+<div class="table"><table><thead><tr><th scope="col">Area</th><th scope="col">Proposed owner</th><th scope="col">Responsibilities</th></tr></thead><tbody>
+<tr><td>Cloudflare account and Worker</td><td>UTAC IT Cloud / Platform Operations</td><td>Account ownership, least-privilege access, Worker settings, deploy control, domain and routes, account recovery</td></tr>
+<tr><td>D1 and data protection</td><td>IT Data / Platform Operations with the QA data owner</td><td>Migration approval, backup and restore policy, access, retention, recovery exercises, export decisions</td></tr>
+<tr><td>QA process and data quality</td><td>QA / QMS process owner</td><td>Audit definitions, required fields, statuses, QMS Host roster, holiday rules, user acceptance</td></tr>
+<tr><td>Source code and releases</td><td>Named IT application maintainer with a QA change approver</td><td>Repository access, code review, release process, change log, defect triage</td></tr>
+<tr><td>Identity and security</td><td>UTAC IT Identity / Security</td><td>Registration policy, admin lifecycle, authentication review, incident response, any SSO / MFA / role-based access work</td></tr>
+</tbody></table></div>
+<h3 id="32-takeover-checklist"><span class="num">3.2</span><span class="ht">Takeover checklist</span><a class="anchor" href="#32-takeover-checklist" aria-label="Link to this section: Takeover checklist"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li>Assign a Cloudflare account owner and at least two company-controlled administrators. Remove individual-only ownership and review user and token access.</li>
+<li>Confirm the production Worker, URL or custom domain, D1 database, deployed version, Cloudflare account, and GitHub repository ownership. Record them in the company&#39;s service register, not in a public document.</li>
+<li>Confirm whether <code>REGISTRATION_CODE</code> is set, who can rotate it, and whether self-registration should stay on.</li>
+<li>Create IT-owned secrets and API access. Do not reuse a developer&#39;s personal Cloudflare credentials.</li>
+<li>Review the <a href="#4-security-findings">security findings</a> and <a href="#7-known-application-issues">known issues</a> with IT Security and the QA data owner; assign an owner and decision to each.</li>
+<li>Name the release approver, rollback decision-maker, support contact, data classification, retention, RPO / RTO, and escalation path.</li>
+<li>Check D1 recovery coverage on the current Cloudflare plan and rehearse a recovery outside production.</li>
+<li>Agree what proves a release succeeded: tests, lint and build, sign-in and sign-out, create / edit / delete, Excel download, D1 persistence seen from a second browser, and a clean Worker error log.</li>
+</ol>
+
+<footer class="sheet-foot"><a href="#2-configuration-to-verify" rel="prev"><span class="dir">← Previous</span>Configuration to verify</a><span class="folio">3 / 9</span><a href="#4-security-findings" rel="next"><span class="dir">Next →</span>Security findings</a></footer>
+</section>
+<section class="sheet" id="ch-4" data-ch="4">
+<div class="runhead"><span>IT Handover · 4</span><span>Rev 2026-11-27</span></div>
+<h2 id="4-security-findings"><span class="num">4</span><span class="ht">Security findings</span><a class="anchor" href="#4-security-findings" aria-label="Link to this section: Security findings"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>Decide on each of these before broad production use.</p>
+<div class="table"><table><thead><tr><th scope="col">#</th><th scope="col">Finding</th><th scope="col">Risk</th><th scope="col">Suggested decision</th></tr></thead><tbody>
+<tr><td>1</td><td><code>admin</code> / <code>user</code> is not an authorization boundary. The header shows a role, but every signed-in user can open Manage, and the Worker checks only for a valid session.</td><td>Any account can change master data and holiday rules.</td><td>Add and test server-side role checks, or accept the risk in writing.</td></tr>
+<tr><td>2</td><td>Sign-up uses one shared <code>REGISTRATION_CODE</code>. The first account in an empty database becomes <code>admin</code>; later ones are <code>user</code>. The Worker promotes the oldest account to admin whenever none exists, on every cold start, so removing the last admin is undone. User IDs are case-insensitive. There is no screen to manage admins or disable leavers.</td><td>Anyone holding the code can create an account; leavers keep access.</td><td>Agree an account lifecycle and code-rotation process, or move to company SSO.</td></tr>
+<tr><td>3</td><td>Passwords are hashed with salted SHA-256 and need only 4 characters. There is no rate limiting or lockout on sign-in or password change, error messages reveal whether an account exists, and the hash comparison is not constant-time. No SSO or MFA.</td><td>Password guessing; weak passwords; fast hash.</td><td>IT Security to approve, or require stronger hashing, rate limiting, a password policy, and SSO / MFA.</td></tr>
+<tr><td>4</td><td>The browser keeps business data after sign-out: the schedule copy, option lists, notes, unsaved History entries and the remembered user (see section 1). When the server session has ended (for example the browser was closed without Remember me), the app still opens signed in and shows this cached data, without a valid session. If an account was created in that browser, changing its password also stores a salted hash of the new password in <code>calendar_qa_users</code>.</td><td>Data exposed on shared or lost devices. Medium on shared computers.</td><td>Apply managed-device policy; decide whether the app should clear or minimize <code>localStorage</code> on sign-out and when a session has ended.</td></tr>
+<tr><td>5</td><td>History is stored in D1 (<code>history_log</code>) and shared, and the Worker records the signed-in account and the time. But the browser writes each entry: what is described comes from the app, a change is recorded only if the browser sends the entry, and any signed-in user can add entries through the API. QMS Host roster changes are not recorded.</td><td>History is reliable for who and when, but not proof of what changed.</td><td>Decide whether this is enough as the official audit trail; if not, have the Worker record changes itself in each write route.</td></tr>
+<tr><td>6</td><td>The Worker trusts the browser: required fields and holiday rules are checked only in the browser, ids are generated by the browser (two people creating at once can collide, which fails a save or merges two appointments), and edits are last-write-wins.</td><td>Inconsistent or merged records.</td><td>Add server-side validation and server-generated ids.</td></tr>
+<tr><td>7</td><td>A 500 response returns the raw exception text, and errors are not logged.</td><td>Internal details disclosed; failures invisible in logs.</td><td>Log errors server-side and return a generic message.</td></tr>
+<tr><td>8</td><td>The <code>xlsx@0.18.5</code> dependency is unused and has published security advisories.</td><td>Supply-chain exposure for no benefit.</td><td>Remove it; run <code>npm audit</code> as part of releases.</td></tr>
+</tbody></table></div>
+<p>Other controls already in place: sessions are random tokens stored only as hashes in D1 and sent in an HttpOnly, <code>SameSite=Lax</code> cookie (<code>Secure</code> over HTTPS); changing a password revokes all of that account&#39;s sessions; the Worker rejects cross-origin requests; all SQL uses bound parameters.</p>
+
+<footer class="sheet-foot"><a href="#3-ownership-and-takeover" rel="prev"><span class="dir">← Previous</span>Ownership and takeover</a><span class="folio">4 / 9</span><a href="#5-release-and-database-runbook" rel="next"><span class="dir">Next →</span>Release and database runbook</a></footer>
+</section>
+<section class="sheet" id="ch-5" data-ch="5">
+<div class="runhead"><span>IT Handover · 5</span><span>Rev 2026-11-27</span></div>
+<h2 id="5-release-and-database-runbook"><span class="num">5</span><span class="ht">Release and database runbook</span><a class="anchor" href="#5-release-and-database-runbook" aria-label="Link to this section: Release and database runbook"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>The repository has one Wrangler configuration and no staging environment. Run production commands only from an IT-controlled checkout after confirming the target account and database.</p>
+<h3 id="51-code-release"><span class="num">5.1</span><span class="ht">Code release</span><a class="anchor" href="#51-code-release" aria-label="Link to this section: Code release"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ol>
+<li>Review the approved commit and confirm the branch and production target.</li>
+<li>Install exact dependencies: <code>npm ci</code>.</li>
+<li>Run <code>npm test</code>, <code>npm run lint</code> and <code>npm run build</code>; fix any failure before continuing.</li>
+<li>In the Cloudflare dashboard, check the current deployed version and Worker logs. Confirm bindings and secrets exist without printing secret values.</li>
+<li>If the release contains a new file in <code>migrations/</code>, complete the checks in <a href="#52-d1-schema-migration">5.2</a> first.</li>
+<li>Deploy: <code>npm run deploy</code> (<code>scripts/deploy.mjs</code>). It builds, lists any pending D1 migrations and asks you to confirm, prints a D1 Time Travel restore point for the change record, applies the migrations, then deploys the Worker. Answering anything but <code>y</code>, or a failed migration, stops the release before the code is deployed. In CI or with <code>-- --yes</code> it does not ask.</li>
+<li>Smoke-check: sign in, the current month&#39;s Schedule loads, create and edit an appointment, a holiday rule blocks as expected, Table filters and exports. Reload in a second browser and confirm the change is there and listed in <strong>History</strong> under your name. Check Worker errors.</li>
+<li>Record the commit, deploy time, operator, outcome, migrations applied, the restore point, and the change reference.</li>
+</ol>
+<h3 id="52-d1-schema-migration"><span class="num">5.2</span><span class="ht">D1 schema migration</span><a class="anchor" href="#52-d1-schema-migration" aria-label="Link to this section: D1 schema migration"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<p>Migrations run as part of <code>npm run deploy</code>, just before the new code goes live. Only migrations that have not run yet are applied, so a release without a new migration changes nothing in the database. Before a release that <strong>does</strong> contain one:</p>
+<ol>
+<li>Read the new SQL in <code>migrations/</code> and judge rollback impact. Never release an unreviewed destructive migration.</li>
+<li>Check it works with the Worker that is live now, because the database changes a moment before the new code deploys. Adding tables or columns is safe, unless the same column is also created by the Worker&#39;s <code>ensure*()</code> functions (the migration would then fail with &quot;duplicate column name&quot;). Dropping or renaming a column the live code still uses must wait for a later release.</li>
+<li>See what will run: <code>npx wrangler d1 migrations list calendar-qa-db --remote</code>. Optionally rehearse locally with <code>npm run deploy -- --local</code>.</li>
+<li>Get QA data-owner approval and follow the company change process. Wrangler takes no backup of its own; D1 Time Travel is the recovery point, and the release prints it.</li>
+<li>Release with <code>npm run deploy</code> (<a href="#51-code-release">5.1</a>) and confirm the migration list when asked.</li>
+<li>Afterwards, re-run the list command; it should report nothing pending.</li>
+</ol>
+<p>To apply migrations without deploying code (for example, to run a large backfill on its own), use <code>npm run migrate:remote</code>. Note that Wrangler&#39;s own prompt treats &quot;No&quot; as success, so only use it when you intend to apply.</p>
+<h3 id="53-rollback-and-recovery"><span class="num">5.3</span><span class="ht">Rollback and recovery</span><a class="anchor" href="#53-rollback-and-recovery" aria-label="Link to this section: Rollback and recovery"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h3>
+<ul>
+<li>Rolling back Worker code and restoring D1 data are separate actions. A code rollback does not undo a migration or bring back deleted rows. Check code and schema compatibility before rolling back either.</li>
+<li>A Worker version rollback takes effect immediately. Confirm the target version and approval, and record it.</li>
+<li>To recover data: limit writes, find the right point in time (the restore point printed by the release, or <code>npx wrangler d1 time-travel info calendar-qa-db</code>), keep evidence, and follow the company-approved D1 recovery process, tested outside production where possible. Cloudflare currently documents D1 Time Travel windows of 7 days (Workers Free) and 30 days (Workers Paid); confirm the plan before relying on them.</li>
+<li>Any recovery that touches production records needs QA data-owner approval and an incident or change record.</li>
+</ul>
+
+<footer class="sheet-foot"><a href="#4-security-findings" rel="prev"><span class="dir">← Previous</span>Security findings</a><span class="folio">5 / 9</span><a href="#6-monitoring-and-incidents" rel="next"><span class="dir">Next →</span>Monitoring and incidents</a></footer>
+</section>
+<section class="sheet" id="ch-6" data-ch="6">
+<div class="runhead"><span>IT Handover · 6</span><span>Rev 2026-11-27</span></div>
+<h2 id="6-monitoring-and-incidents"><span class="num">6</span><span class="ht">Monitoring and incidents</span><a class="anchor" href="#6-monitoring-and-incidents" aria-label="Link to this section: Monitoring and incidents"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<ol>
+<li>Stream live requests from an authorized checkout with <code>npx wrangler tail</code>; check status codes, and read the body of any 500 (it contains the exception text, which the Worker does not log). Check the <code>utac-qa-calendar</code> Worker logs in the dashboard if Workers Logs is enabled.</li>
+<li>Classify the failure: static assets, Worker API or authentication, D1 query or migration, or client connectivity. A 401 points to the session, a 403 to a cross-origin request, a 5xx to the Worker or database.</li>
+<li>For missing or stale data, check Worker errors, D1 persistence from a second browser, and the app&#39;s save warning before asking users to repeat edits. A user whose session ended keeps seeing cached data and gets a save warning on every change; they should sign out and in again.</li>
+<li>Record the time and time zone, affected user and site, request path (without credentials), deployed version, and impact. Never record passwords, cookies, registration codes, or session tokens.</li>
+<li>Escalate suspected data loss or unauthorized access to UTAC IT Security and the QA data owner under the company incident procedure.</li>
+</ol>
+
+<footer class="sheet-foot"><a href="#5-release-and-database-runbook" rel="prev"><span class="dir">← Previous</span>Release and database runbook</a><span class="folio">6 / 9</span><a href="#7-known-application-issues" rel="next"><span class="dir">Next →</span>Known application issues</a></footer>
+</section>
+<section class="sheet" id="ch-7" data-ch="7">
+<div class="runhead"><span>IT Handover · 7</span><span>Rev 2026-11-27</span></div>
+<h2 id="7-known-application-issues"><span class="num">7</span><span class="ht">Known application issues</span><a class="anchor" href="#7-known-application-issues" aria-label="Link to this section: Known application issues"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>Behaviour confirmed in the current code that users and support should know about. Each is a candidate for a fix.</p>
+<div class="table"><table><thead><tr><th scope="col">Issue</th><th scope="col">Effect</th></tr></thead><tbody>
+<tr><td>Results saved as all zeros before the fix</td><td>Older audits with zero findings stay amber until someone opens <strong>Audit Results</strong> and selects <strong>Save Results</strong> again.</td></tr>
+<tr><td>QMS Host drag order is not saved</td><td>It resets on reload and other users never see it.</td></tr>
+<tr><td>Notes have no author or time</td><td>Every note shows &quot;You&quot; and &quot;just now&quot;.</td></tr>
+<tr><td>Drag-move ignores day rules</td><td>Dragging, duplicating or copying a week can place an appointment on a blocked day.</td></tr>
+<tr><td>Appointments on a day that later becomes a public holiday</td><td>They cannot be opened from Schedule; use Table.</td></tr>
+<tr><td>QMS Host roster changes are not in History</td><td>Adding, editing, removing or reordering hosts leaves no record.</td></tr>
+<tr><td>Possible foreign-key failures on create</td><td>The browser sends the new order, host and appointment days without waiting for each other; a create can occasionally fail with &quot;FOREIGN KEY constraint failed&quot;.</td></tr>
+<tr><td>Lunar public holidays are defined only for 2026–2028</td><td>Later years need updating in <code>src/holidays.ts</code>.</td></tr>
+</tbody></table></div>
+
+<footer class="sheet-foot"><a href="#6-monitoring-and-incidents" rel="prev"><span class="dir">← Previous</span>Monitoring and incidents</a><span class="folio">7 / 9</span><a href="#8-handover-acceptance" rel="next"><span class="dir">Next →</span>Handover acceptance</a></footer>
+</section>
+<section class="sheet" id="ch-8" data-ch="8">
+<div class="runhead"><span>IT Handover · 8</span><span>Rev 2026-11-27</span></div>
+<h2 id="8-handover-acceptance"><span class="num">8</span><span class="ht">Handover acceptance</span><a class="anchor" href="#8-handover-acceptance" aria-label="Link to this section: Handover acceptance"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>Complete jointly, with an owner and evidence for each line.</p>
+<ul>
+<li><input disabled="" type="checkbox"> Company ownership of the source repository and Cloudflare account confirmed.</li>
+<li><input disabled="" type="checkbox"> Live Worker, URL or domain, D1 database, secrets, and deployed version recorded in an approved internal location.</li>
+<li><input disabled="" type="checkbox"> Production migration state inspected; database recovery rehearsed outside production.</li>
+<li><input disabled="" type="checkbox"> Registration, admin lifecycle, and role-enforcement findings reviewed by IT Security and QA.</li>
+<li><input disabled="" type="checkbox"> Browser cache, audit-trail, and data-retention findings addressed or formally accepted by the data owner.</li>
+<li><input disabled="" type="checkbox"> Known application issues triaged, each with an owner or an accepted risk.</li>
+<li><input disabled="" type="checkbox"> Release, rollback, monitoring, support, RPO / RTO, and escalation owners assigned.</li>
+<li><input disabled="" type="checkbox"> QA users have validated the agreed audit workflows and exports.</li>
+</ul>
+
+<footer class="sheet-foot"><a href="#7-known-application-issues" rel="prev"><span class="dir">← Previous</span>Known application issues</a><span class="folio">8 / 9</span><a href="#references" rel="next"><span class="dir">Next →</span>References</a></footer>
+</section>
+<section class="sheet" id="ch-9" data-ch="9">
+<div class="runhead"><span>IT Handover · 9</span><span>Rev 2026-11-27</span></div>
+<h2 id="references"><span class="ht">References</span><a class="anchor" href="#references" aria-label="Link to this section: References"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></a></h2>
+<p>Cloudflare documentation (check for changes before each operation): <a href="https://developers.cloudflare.com/workers/wrangler/commands/workers/" rel="noopener">Workers deploy and rollback</a> · <a href="https://developers.cloudflare.com/d1/wrangler-commands/" rel="noopener">D1 migrations</a> · <a href="https://developers.cloudflare.com/d1/reference/time-travel/" rel="noopener">D1 Time Travel and backups</a> · <a href="https://developers.cloudflare.com/workers/configuration/secrets/" rel="noopener">Worker secrets</a> · <a href="https://developers.cloudflare.com/workers/observability/logs/" rel="noopener">Worker logs</a> · <a href="https://developers.cloudflare.com/workers/authorization/workers/" rel="noopener">Workers roles and permissions</a></p>
+
+<footer class="sheet-foot"><a href="#8-handover-acceptance" rel="prev"><span class="dir">← Previous</span>Handover acceptance</a><span class="folio">9 / 9</span><span></span></footer>
+</section>
+</main>
+</div>
+</body>
+</html>

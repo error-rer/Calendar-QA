@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
+import { Fragment, useState, useMemo } from 'react';
 import type { VM } from '../useScheduler';
 import { getApptCardColors } from '../useScheduler';
 import type { Assignment } from '../types';
-import { isInternalAssignment, calculateAuditStats, formatAreaString, normalizeSite, normalizeSites, getSiteOrderIndex } from '../types';
+import { isInternalAssignment, calculateAuditStats, formatAreaString, normalizeSite, normalizeSites, getSiteOrderIndex, getSeriesSiblings } from '../types';
 import { getActiveDropdownOptions, MASTER_PLANT_SITES } from '../utils/auditOptionsHelper';
 import { css, HButton } from '../ui';
 
@@ -82,6 +82,7 @@ function TableMultiSelectFilter({
     <div style={css('position:relative')}>
       <button
         type="button"
+        className="tap"
         onClick={() => setOpen(!open)}
         style={css(
           'display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;border:1px solid ' +
@@ -222,6 +223,8 @@ export function TableView({ vm }: { vm: VM }) {
 
   // Delete confirmation state
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  // Phones: the filters fold away behind a button so the rows come first.
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Engineers map for lookup
   const engMap = useMemo(() => {
@@ -540,6 +543,12 @@ export function TableView({ vm }: { vm: VM }) {
     dateFrom !== '' ||
     dateTo !== '';
 
+  const activeFilterCount =
+    (auditTypeFilter !== 'ALL' ? 1 : 0) +
+    [selectedSites, selectedStandards, selectedCategories, selectedPackages, selectedCustomers, selectedHosts].filter((x) => x.length > 0).length +
+    (dateFrom ? 1 : 0) +
+    (dateTo ? 1 : 0);
+
   const handleResetFilters = () => {
     setSearch('');
     setAuditTypeFilter('ALL');
@@ -662,128 +671,14 @@ export function TableView({ vm }: { vm: VM }) {
     XLSX.writeFile(workbook, `calendar-qa-audits-${todayISO}.xlsx`);
   };
 
-  const handleDelete = (id: string, e: React.MouseEvent) => {
+  const handleDelete = (id: string, scope: 'day' | 'all', e: React.MouseEvent) => {
     e.stopPropagation();
-    vm.removeAssign(id);
+    vm.removeAssign(id, scope);
     setDeleteConfirmId(null);
   };
 
-  return (
-    <div style={css('flex:1;display:flex;flex-direction:column;min-height:0;background:#e9ebe6;padding:16px 20px;gap:14px;overflow-y:auto')}>
-      {/* Top Header Card */}
-      <div style={css('background:#fff;border:1px solid #d8dcd4;border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.03);flex-wrap:wrap;gap:12px')}>
-        <div>
-          <div style={css('display:flex;align-items:center;gap:10px')}>
-            <div style={css('font-size:18px;font-weight:700;color:#15191e;letter-spacing:-.3px')}>
-              Audit Appointments Table
-            </div>
-            <span style={css('display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;background:#f4f6f1;border:1px solid #dde0d9;font-size:11.5px;font-weight:600;color:#5c625c')}>
-              {hasActiveFilters ? `${filteredStats.total} audits · ${filteredRows.length} scheduled days` : `${stats.total} audits · ${allRows.length} scheduled days`}
-            </span>
-          </div>
-          <div style={css('font-size:12.5px;color:#7a807a;margin-top:3px')}>
-            Comprehensive schedule table matching the 7-column format (DD/MM/YYYY, Audit Type, Customer, Site, Standard, Purpose, QMS Host).
-          </div>
-        </div>
-
-        <div style={css('display:flex;align-items:center;gap:8px')}>
-          <HButton
-            onClick={handleExportExcel}
-            title="Download formatted Microsoft Excel (.xlsx) spreadsheet"
-            style={css("background:#fff;border:1px solid #c5ebd0;color:#0f7e3e;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;display:flex;align-items:center;gap:6px")}
-            hover={{ background: '#f0fdf4' }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <polyline points="14 2 14 8 20 8" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <line x1="8" y1="13" x2="16" y2="13" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <line x1="8" y1="17" x2="16" y2="17" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <polyline points="10 9 9 9 8 9" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Export Excel
-          </HButton>
-
-          <HButton
-            onClick={handleExportCSV}
-            title="Download CSV file matching the 7-column layout"
-            style={css("background:#fff;border:1px solid #dde0d9;color:#23282a;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;display:flex;align-items:center;gap:6px")}
-            hover={{ background: '#f4f6f1' }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="#23282a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <polyline points="7 10 12 15 17 10" stroke="#23282a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <line x1="12" y1="15" x2="12" y2="3" stroke="#23282a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Export CSV
-          </HButton>
-        </div>
-      </div>
-
-      {/* Summary KPI Counters Row */}
-      <div style={css('display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:10px')}>
-        <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Total Audits</div>
-          <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>
-            {filteredStats.total}
-          </div>
-          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>
-            {hasActiveFilters ? `Showing ${filteredStats.total} of ${stats.total} audits` : 'All scheduled audits'}
-          </div>
-        </div>
-
-        <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Customer Audits</div>
-          <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>
-            {filteredStats.customerCount}
-          </div>
-          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>
-            {hasActiveFilters ? `Showing ${filteredStats.customerCount} of ${stats.customerCount} visits` : 'Consecutive day visits'}
-          </div>
-        </div>
-
-        <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Internal Audits</div>
-          <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>
-            {filteredStats.internalCount}
-          </div>
-          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>
-            {hasActiveFilters ? `Showing ${filteredStats.internalCount} of ${stats.internalCount} audits` : 'Plant & process audits'}
-          </div>
-        </div>
-
-        <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
-          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Active QMS Hosts</div>
-          <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>
-            {filteredStats.uniqueAuditors}
-          </div>
-          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>
-            {hasActiveFilters ? `Across ${filteredStats.uniqueSites} plant ${filteredStats.uniqueSites === 1 ? 'site' : 'sites'}` : `Across ${stats.uniqueSites} plant sites`}
-          </div>
-        </div>
-      </div>
-
-      {/* Filter & Search Bar */}
-      <div style={css('background:#fff;border:1px solid #d8dcd4;border-radius:12px;padding:14px 18px;display:flex;flex-direction:column;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,0.03)')}>
-        <div style={css('display:flex;align-items:center;gap:10px;flex-wrap:wrap')}>
-          {/* Global Search Input */}
-          <div style={css('position:relative;flex:1;min-width:240px')}>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Search date, customer, site, standard, purpose, target package, customer name, QMS host..."
-              style={css("width:100%;box-sizing:border-box;border:1px solid #dde0d9;border-radius:8px;padding:8px 30px 8px 12px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fafbfa")}
-            />
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                style={css('position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9aa097;font-size:14px;padding:2px')}
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
+  const filterControls = (
+    <>
           {/* Audit Type Segmented Selector */}
           <div style={css('display:flex;background:#f1f3ee;border:1px solid #e0e3dc;border-radius:8px;padding:2px;gap:2px')}>
             {(['ALL', 'Customer Audit', 'Internal Audit'] as const).map((type) => {
@@ -791,6 +686,7 @@ export function TableView({ vm }: { vm: VM }) {
               return (
                 <button
                   key={type}
+                  className="tap"
                   onClick={() => { setAuditTypeFilter(type); setPage(1); }}
                   style={css(
                     "padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-size:11.5px;font-weight:600;font-family:'Archivo',sans-serif;white-space:nowrap;transition:all .12s;" +
@@ -856,9 +752,181 @@ export function TableView({ vm }: { vm: VM }) {
             selected={selectedHosts}
             onChange={(next) => { setSelectedHosts(next); setPage(1); }}
           />
+    </>
+  );
+
+  const sortValue = `${sortCol}:${sortDir}`;
+  const SORT_CHOICES: [string, string][] = [
+    ['date:asc', 'Date, oldest first'],
+    ['date:desc', 'Date, newest first'],
+    ['customer:asc', 'Customer, A–Z'],
+    ['site:asc', 'Site'],
+    ['auditor:asc', 'QMS Host, A–Z'],
+  ];
+
+  return (
+    <div style={css('flex:1;display:flex;flex-direction:column;min-height:0;background:#e9ebe6;overflow-y:auto;' + (vm.isMobile ? 'padding:12px;gap:12px' : 'padding:16px 20px;gap:14px'))}>
+      {/* Top Header Card */}
+      <div style={css('background:#fff;border:1px solid #d8dcd4;border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.03);flex-wrap:wrap;gap:12px')}>
+        <div>
+          <div style={css('display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap')}>
+            <div style={css('font-size:18px;font-weight:700;color:#15191e;letter-spacing:-.3px')}>
+              Audit Appointments Table
+            </div>
+            <span style={css('display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;background:#f4f6f1;border:1px solid #dde0d9;font-size:11.5px;font-weight:600;color:#5c625c;white-space:nowrap')}>
+              {hasActiveFilters ? `${filteredStats.total} audits · ${filteredRows.length} scheduled days` : `${stats.total} audits · ${allRows.length} scheduled days`}
+            </span>
+          </div>
+          <div style={css('font-size:12.5px;color:#7a807a;margin-top:3px')}>
+            Every scheduled audit day. Search, filter, sort, and export what you see.
+          </div>
         </div>
 
+        <div style={css('display:flex;align-items:center;gap:8px')}>
+          <HButton
+            className="tap"
+            onClick={handleExportExcel}
+            title="Download formatted Microsoft Excel (.xlsx) spreadsheet"
+            style={css("background:#fff;border:1px solid #c5ebd0;color:#0f7e3e;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;display:flex;align-items:center;gap:6px")}
+            hover={{ background: '#f0fdf4' }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <polyline points="14 2 14 8 20 8" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="8" y1="13" x2="16" y2="13" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="8" y1="17" x2="16" y2="17" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <polyline points="10 9 9 9 8 9" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Export Excel
+          </HButton>
+
+          <HButton
+            className="tap"
+            onClick={handleExportCSV}
+            title="Download CSV file matching the 7-column layout"
+            style={css("background:#fff;border:1px solid #dde0d9;color:#23282a;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;display:flex;align-items:center;gap:6px")}
+            hover={{ background: '#f4f6f1' }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="#23282a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <polyline points="7 10 12 15 17 10" stroke="#23282a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="12" y1="15" x2="12" y2="3" stroke="#23282a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Export CSV
+          </HButton>
+        </div>
+      </div>
+
+      {/* Summary KPI Counters Row */}
+      <div style={css('display:grid;gap:10px;grid-template-columns:repeat(auto-fit, minmax(' + (vm.isMobile ? '140px' : '180px') + ', 1fr))')}>
+        <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Total Audits</div>
+          <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>
+            {filteredStats.total}
+          </div>
+          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>
+            {hasActiveFilters ? `Showing ${filteredStats.total} of ${stats.total} audits` : 'All scheduled audits'}
+          </div>
+        </div>
+
+        <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Customer Audits</div>
+          <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>
+            {filteredStats.customerCount}
+          </div>
+          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>
+            {hasActiveFilters ? `Showing ${filteredStats.customerCount} of ${stats.customerCount} visits` : 'Consecutive day visits'}
+          </div>
+        </div>
+
+        <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Internal Audits</div>
+          <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>
+            {filteredStats.internalCount}
+          </div>
+          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>
+            {hasActiveFilters ? `Showing ${filteredStats.internalCount} of ${stats.internalCount} audits` : 'Plant & process audits'}
+          </div>
+        </div>
+
+        <div style={css('background:#fff;border:1px solid #e0e3dc;border-radius:10px;padding:12px 16px')}>
+          <div style={css("font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:#8a9088;text-transform:uppercase;letter-spacing:0.5px")}>Active QMS Hosts</div>
+          <div style={css('font-size:22px;font-weight:700;color:#15191e;margin-top:2px')}>
+            {filteredStats.uniqueAuditors}
+          </div>
+          <div style={css('font-size:11px;color:#8a9088;margin-top:1px')}>
+            {hasActiveFilters ? `Across ${filteredStats.uniqueSites} plant ${filteredStats.uniqueSites === 1 ? 'site' : 'sites'}` : `Across ${stats.uniqueSites} plant sites`}
+          </div>
+        </div>
+      </div>
+
+      {/* Filter & Search Bar */}
+      <div style={css('background:#fff;border:1px solid #d8dcd4;border-radius:12px;padding:14px 18px;display:flex;flex-direction:column;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,0.03)')}>
+        <div style={css('display:flex;align-items:center;gap:10px;flex-wrap:wrap')}>
+          {/* Global Search Input */}
+          <div style={css('position:relative;flex:1;min-width:240px')}>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              placeholder={vm.isMobile ? 'Search customer, site, host…' : 'Search date, customer, site, standard, purpose, target package, customer name, QMS host...'}
+              aria-label="Search audits"
+              style={css("width:100%;box-sizing:border-box;border:1px solid #dde0d9;border-radius:8px;padding:8px 30px 8px 12px;font-size:12.5px;font-family:'Archivo',sans-serif;color:#23282a;outline:none;background:#fafbfa")}
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                style={css('position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9aa097;font-size:14px;padding:2px')}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {!vm.isMobile && filterControls}
+        </div>
+
+        {vm.isMobile && (
+          <div style={css('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
+            <button
+              type="button"
+              className="tap"
+              aria-expanded={filtersOpen}
+              aria-controls="table-filters"
+              onClick={() => setFiltersOpen((o) => !o)}
+              style={css(
+                "display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:8px;font-size:13px;font-weight:600;font-family:'Archivo',sans-serif;cursor:pointer;" +
+                (filtersOpen || activeFilterCount ? 'background:#15191e;color:#fff;border:1px solid #15191e;' : 'background:#fff;color:#23282a;border:1px solid #dde0d9;')
+              )}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M3 5h18M6 12h12M10 19h4" />
+              </svg>
+              Filters{activeFilterCount ? ` (${activeFilterCount})` : ''}
+            </button>
+            <select
+              aria-label="Sort"
+              value={sortValue}
+              onChange={(e) => { const [c, d] = e.target.value.split(':'); setSortCol(c as SortColumn); setSortDir(d as 'asc' | 'desc'); setPage(1); }}
+              style={css("border:1px solid #dde0d9;background:#fff;border-radius:8px;padding:6px 8px;font-size:13px;color:#23282a;font-family:'Archivo',sans-serif;cursor:pointer;min-width:0;flex:1;max-width:190px")}
+            >
+              {!SORT_CHOICES.some(([v]) => v === sortValue) && <option value={sortValue}>Custom sort</option>}
+              {SORT_CHOICES.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+            </select>
+            <div style={css('margin-left:auto;font-size:12.5px;color:#6a706a')}>
+              <b style={css('color:#15191e')}>{filteredRows.length}</b> of {allRows.length}
+            </div>
+          </div>
+        )}
+
+        {vm.isMobile && filtersOpen && (
+          <div id="table-filters" style={css('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
+            {filterControls}
+          </div>
+        )}
+
         {/* Date Range & Reset Row */}
+        {(!vm.isMobile || filtersOpen) && (
         <div style={css('display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:4px')}>
           <div style={css('display:flex;align-items:center;gap:6px')}>
             <span style={css("font-size:11px;font-weight:600;color:#7a807a;font-family:'IBM Plex Mono',monospace;text-transform:uppercase")}>From:</span>
@@ -882,6 +950,7 @@ export function TableView({ vm }: { vm: VM }) {
 
           {hasActiveFilters && (
             <button
+              className="tap"
               onClick={handleResetFilters}
               style={css("background:none;border:none;color:#2756d6;font-size:12px;font-weight:600;cursor:pointer;padding:4px 8px;font-family:'Archivo',sans-serif;display:flex;align-items:center;gap:4px")}
             >
@@ -889,14 +958,139 @@ export function TableView({ vm }: { vm: VM }) {
             </button>
           )}
 
+          {!vm.isMobile && (
           <div style={css('margin-left:auto;font-size:12px;color:#8a9088')}>
             Showing <b style={css('color:#15191e')}>{filteredRows.length}</b> of {allRows.length} audits
           </div>
+          )}
         </div>
+        )}
       </div>
 
       {/* Main Table Card */}
       <div style={css('background:#fff;border:1px solid #d8dcd4;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.03);display:flex;flex-direction:column')}>
+        {vm.isMobile ? (
+          <ul aria-label="Audit appointments" style={css('list-style:none;margin:0;padding:8px;display:flex;flex-direction:column;gap:8px')}>
+            {paginatedRows.length === 0 ? (
+              <li style={css('padding:36px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px')}>
+                <div style={css('font-size:15px;font-weight:600;color:#23282a')}>No audit appointments found</div>
+                <div style={css('font-size:13px;color:#6a706a')}>
+                  {hasActiveFilters ? 'Try adjusting or clearing your filters to see more results.' : 'Create an appointment to start tracking.'}
+                </div>
+                <HButton
+                  className="tap"
+                  onClick={hasActiveFilters ? handleResetFilters : vm.openCreate}
+                  style={css("margin-top:4px;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif;" + (hasActiveFilters ? 'background:#f4f6f1;border:1px solid #dde0d9;color:#23282a' : 'background:#15191e;border:none;color:#fff'))}
+                >
+                  {hasActiveFilters ? 'Clear all filters' : '+ New appointment'}
+                </HButton>
+              </li>
+            ) : (
+              paginatedRows.map((row) => {
+                const siteStrip = getSiteStripBackground(row.site, vm.siteColors);
+                const cardBackground = getApptCardColors(row.assignment, Date.now(), false).barBg;
+                const isCustomer = row.auditType === 'Customer Audit';
+                const isConfirmingDelete = deleteConfirmId === row.id;
+                const seriesDays = isConfirmingDelete ? getSeriesSiblings(vm.assignments, row.assignment).length : 1;
+                const title = isCustomer ? (row.customer || 'Customer not set') : (row.auditCategory || 'Internal Audit');
+                const details = ([
+                  ['Site', row.site],
+                  ['Standard', row.standard],
+                  [isCustomer ? 'Purpose' : 'Area', row.purpose],
+                  ...(isCustomer ? [['Package', row.targetPackage], ['Customer name', row.customerNames]] : []),
+                  ['QMS Host', row.auditor],
+                ] as [string, string][]).filter(([, v]) => v);
+
+                return (
+                  <li
+                    key={row.id}
+                    onClick={() => {
+                      if (isConfirmingDelete || window.getSelection()?.toString()) return;
+                      vm.openEdit(row.id);
+                    }}
+                    style={css('display:flex;border:1px solid #e0e3dc;border-radius:10px;overflow:hidden;cursor:pointer;background:' + cardBackground)}
+                  >
+                    <div aria-hidden="true" style={{ width: '5px', flexShrink: 0, background: siteStrip }} />
+                    <div style={css('flex:1;min-width:0;padding:11px 12px 10px')}>
+                      <div style={css('display:flex;align-items:center;gap:7px;flex-wrap:wrap')}>
+                        <span style={css("font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;color:#15191e")}>{row.dateStr}</span>
+                        <span style={css('font-size:12px;padding:1px 6px;border-radius:4px;background:#f1f3ee;color:#5c625c;font-weight:600')}>{row.dayName}</span>
+                        <span style={css(
+                          'margin-left:auto;padding:2px 8px;border-radius:5px;font-size:12px;font-weight:600;' +
+                          (isCustomer ? 'background:#eef2fd;color:#2756d6;border:1px solid #d4def0;' : 'background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;')
+                        )}>
+                          {row.auditType}
+                        </span>
+                      </div>
+                      <div style={css('margin-top:7px;font-size:15.5px;font-weight:650;line-height:1.3;color:#15191e;overflow-wrap:anywhere')}>{title}</div>
+                      <dl style={css('display:grid;grid-template-columns:max-content minmax(0,1fr);gap:3px 12px;margin:8px 0 0;font-size:13px;line-height:1.4')}>
+                        {details.map(([label, value]) => (
+                          <Fragment key={label}>
+                            <dt style={css('color:#6a706a')}>{label}</dt>
+                            <dd style={css('margin:0;color:#23282a;overflow-wrap:anywhere')}>{value}</dd>
+                          </Fragment>
+                        ))}
+                      </dl>
+                      <div onClick={(e) => e.stopPropagation()} style={css('display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:10px')}>
+                        {isConfirmingDelete ? (
+                          <>
+                            {seriesDays > 1 && (
+                              <button
+                                type="button"
+                                className="tap"
+                                onClick={(e) => handleDelete(row.id, 'day', e)}
+                                style={css("background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
+                              >
+                                This day
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="tap"
+                              onClick={(e) => handleDelete(row.id, 'all', e)}
+                              style={css("background:#dc2626;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
+                            >
+                              {seriesDays > 1 ? `All ${seriesDays} days` : 'Delete'}
+                            </button>
+                            <button
+                              type="button"
+                              className="tap"
+                              onClick={() => setDeleteConfirmId(null)}
+                              style={css("background:#fff;color:#3c423d;border:1px solid #dde0d9;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              className="tap"
+                              onClick={() => vm.openEdit(row.id)}
+                              style={css("background:#fff;border:1px solid #dde0d9;color:#23282a;border-radius:8px;padding:6px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="tap-square"
+                              aria-label="Delete appointment"
+                              title="Delete appointment"
+                              onClick={() => setDeleteConfirmId(row.id)}
+                              style={css('background:#fff;border:1px solid #dde0d9;color:#6a706a;border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:13px;line-height:1')}
+                            >
+                              ✕
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })
+            )}
+          </ul>
+        ) : (
         <div style={css('overflow-x:auto')}>
           <table style={css('width:100%;border-collapse:collapse;font-size:12.5px;text-align:left')}>
             <thead>
@@ -1032,7 +1226,7 @@ export function TableView({ vm }: { vm: VM }) {
                 </th>
 
                 {/* 8. Actions */}
-                <th style={css('padding:10px 14px;font-weight:700;text-align:right;white-space:nowrap')}>
+                <th style={css('padding:10px 14px;font-weight:700;text-align:right;white-space:nowrap;position:sticky;right:0;z-index:1;background:#f8f9f6;box-shadow:inset 1px 0 0 #e8ebe4')}>
                   Actions
                 </th>
               </tr>
@@ -1073,11 +1267,17 @@ export function TableView({ vm }: { vm: VM }) {
                   const rowBackground = getApptCardColors(row.assignment, Date.now(), false).barBg;
                   const isCustomer = row.auditType === 'Customer Audit';
                   const isConfirmingDelete = deleteConfirmId === row.id;
+                  // Each row is one day; a multi-day appointment asks whether to delete this day or all of its days.
+                  const seriesDays = isConfirmingDelete ? getSeriesSiblings(vm.assignments, row.assignment).length : 1;
 
                   return (
                     <tr
                       key={row.id}
-                      onClick={() => vm.openEdit(row.id)}
+                      onClick={() => {
+                        // Selecting text in a cell to copy it should not open the editor.
+                        if (window.getSelection()?.toString()) return;
+                        vm.openEdit(row.id);
+                      }}
                       style={css(
                         'border-bottom:1px solid #f0f2ee;transition:background .12s;cursor:pointer;' +
                         'background:' + rowBackground + ';'
@@ -1223,15 +1423,25 @@ export function TableView({ vm }: { vm: VM }) {
                         )}
                       </td>
 
-                      {/* 8. Actions */}
-                      <td style={css('padding:11px 14px;text-align:right;white-space:nowrap')}>
+                      {/* 8. Actions (pinned so Edit/Delete stay reachable when the table scrolls sideways) */}
+                      <td style={css('padding:11px 14px;text-align:right;white-space:nowrap;position:sticky;right:0;background:inherit;box-shadow:inset 1px 0 0 #e8ebe4')}>
                         {isConfirmingDelete ? (
                           <div style={css('display:flex;align-items:center;justify-content:flex-end;gap:5px')} onClick={(e) => e.stopPropagation()}>
+                            {seriesDays > 1 && (
+                              <button
+                                onClick={(e) => handleDelete(row.id, 'day', e)}
+                                title={`Delete only ${row.dateStr} and keep the other days`}
+                                style={css("background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
+                              >
+                                This day
+                              </button>
+                            )}
                             <button
-                              onClick={(e) => handleDelete(row.id, e)}
+                              onClick={(e) => handleDelete(row.id, 'all', e)}
+                              title={seriesDays > 1 ? `Delete all ${seriesDays} days of this appointment` : 'Delete this appointment'}
                               style={css("background:#dc2626;color:#fff;border:none;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
                             >
-                              Delete
+                              {seriesDays > 1 ? `All ${seriesDays} days` : 'Delete'}
                             </button>
                             <button
                               onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(null); }}
@@ -1243,6 +1453,7 @@ export function TableView({ vm }: { vm: VM }) {
                         ) : (
                           <div style={css('display:flex;align-items:center;justify-content:flex-end;gap:6px')}>
                             <button
+                              className="tap"
                               onClick={(e) => { e.stopPropagation(); vm.openEdit(row.id); }}
                               title="Edit appointment"
                               style={css("background:#f4f6f1;border:1px solid #dde0d9;color:#3c423d;border-radius:6px;padding:3px 8px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
@@ -1250,6 +1461,7 @@ export function TableView({ vm }: { vm: VM }) {
                               Edit
                             </button>
                             <button
+                              className="tap-square"
                               onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(row.id); }}
                               title="Delete appointment"
                               style={css('background:none;border:none;color:#9aa097;border-radius:6px;padding:4px 6px;cursor:pointer;font-size:12px;line-height:1')}
@@ -1268,6 +1480,7 @@ export function TableView({ vm }: { vm: VM }) {
             </tbody>
           </table>
         </div>
+        )}
 
         {/* Pagination & Page Size Footer */}
         {sortedRows.length > 0 && (
@@ -1296,6 +1509,7 @@ export function TableView({ vm }: { vm: VM }) {
             {pageSize !== 'ALL' && totalPages > 1 && (
               <div style={css('display:flex;align-items:center;gap:4px')}>
                 <button
+                  className="tap"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage <= 1}
                   style={css(
@@ -1316,6 +1530,7 @@ export function TableView({ vm }: { vm: VM }) {
                       <span key={pNum} style={css('display:flex;align-items:center;gap:4px')}>
                         {showEllipsis && <span style={css('padding:0 4px;color:#9aa097')}>…</span>}
                         <button
+                          className="tap tap-square"
                           onClick={() => setPage(pNum)}
                           style={css(
                             "border:1px solid " + (isCurrent ? '#15191e' : '#dde0d9') + ";border-radius:6px;padding:4px 9px;font-size:11.5px;font-weight:600;font-family:'Archivo',sans-serif;cursor:pointer;" +
@@ -1329,6 +1544,7 @@ export function TableView({ vm }: { vm: VM }) {
                   })}
 
                 <button
+                  className="tap"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage >= totalPages}
                   style={css(

@@ -1,0 +1,1025 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-27T06:24:07+00:00",
+  "title": "Design System: UTAC QA Calendar (QMS-CASS) Documentation",
+  "extensions": {
+    "colorMeta": {
+      "desk": {
+        "role": "neutral",
+        "displayName": "Sage Desk",
+        "canonical": "#e9ebe6",
+        "tonalRamp": [
+          "#0a0c09",
+          "#242622",
+          "#41433f",
+          "#60625e",
+          "#81837f",
+          "#a4a6a1",
+          "#c8cac5",
+          "#edefea"
+        ],
+        "source": "src/index.css body background"
+      },
+      "sheet": {
+        "role": "neutral",
+        "displayName": "Sheet White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Binder Ink",
+        "canonical": "#15191e",
+        "tonalRamp": [
+          "#080b10",
+          "#21252b",
+          "#3e4248",
+          "#5d6268",
+          "#7e8389",
+          "#a0a6ac",
+          "#c4cad1",
+          "#e9eff6"
+        ],
+        "source": "src/index.css body color"
+      },
+      "ink-raised": {
+        "role": "primary",
+        "displayName": "Raised Ink",
+        "canonical": "#2b3134",
+        "tonalRamp": [
+          "#070c0f",
+          "#202629",
+          "#3d4346",
+          "#5c6266",
+          "#7d8487",
+          "#9fa6aa",
+          "#c3cace",
+          "#e8f0f4"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink 2",
+        "canonical": "#3a403a",
+        "tonalRamp": [
+          "#080d08",
+          "#212721",
+          "#3e443e",
+          "#5d635d",
+          "#7e847e",
+          "#a0a7a0",
+          "#c4cbc4",
+          "#e9f1e9"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink 3",
+        "canonical": "#4a5048",
+        "tonalRamp": [
+          "#080d07",
+          "#222720",
+          "#3e443c",
+          "#5d635b",
+          "#7e857c",
+          "#a1a79e",
+          "#c4ccc2",
+          "#eaf1e7"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "label": {
+        "role": "neutral",
+        "displayName": "Ledger Gray",
+        "canonical": "#5f665e",
+        "tonalRamp": [
+          "#080d07",
+          "#212720",
+          "#3e443d",
+          "#5d645c",
+          "#7d857c",
+          "#a0a89f",
+          "#c4ccc3",
+          "#e9f1e8"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "label-disabled": {
+        "role": "neutral",
+        "displayName": "Disabled Gray",
+        "canonical": "#7d837b",
+        "tonalRamp": [
+          "#080d07",
+          "#222720",
+          "#3e443d",
+          "#5d635c",
+          "#7e847c",
+          "#a1a79f",
+          "#c5cbc3",
+          "#eaf1e8"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "hairline-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "canonical": "#d8dcd4",
+        "tonalRamp": [
+          "#0a0c07",
+          "#232620",
+          "#40433d",
+          "#5f635c",
+          "#80847c",
+          "#a3a69f",
+          "#c7cbc3",
+          "#ecf0e8"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "sheet-edge": {
+        "role": "neutral",
+        "displayName": "Sheet Edge",
+        "canonical": "#dfe2db",
+        "tonalRamp": [
+          "#0a0c08",
+          "#242621",
+          "#41433d",
+          "#60625c",
+          "#81837d",
+          "#a3a6a0",
+          "#c7cac3",
+          "#edf0e9"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#e0e3dc",
+        "tonalRamp": [
+          "#0a0c08",
+          "#242621",
+          "#41433d",
+          "#60625c",
+          "#81837d",
+          "#a3a6a0",
+          "#c7cac3",
+          "#edf0e9"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "rule-2": {
+        "role": "neutral",
+        "displayName": "Faint Rule",
+        "canonical": "#eef1ea",
+        "tonalRamp": [
+          "#0a0c08",
+          "#242621",
+          "#41433d",
+          "#60625c",
+          "#81837d",
+          "#a3a6a0",
+          "#c7cac4",
+          "#edf0e9"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "wash": {
+        "role": "neutral",
+        "displayName": "Wash",
+        "canonical": "#f4f6f1",
+        "tonalRamp": [
+          "#0a0c09",
+          "#242622",
+          "#41433f",
+          "#60625e",
+          "#81837f",
+          "#a4a6a1",
+          "#c8cac5",
+          "#edefea"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "wash-2": {
+        "role": "neutral",
+        "displayName": "Wash 2",
+        "canonical": "#f1f3ee",
+        "tonalRamp": [
+          "#0a0c09",
+          "#242622",
+          "#41433f",
+          "#60625e",
+          "#81837f",
+          "#a4a6a1",
+          "#c8cac5",
+          "#edefea"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "scroll-thumb": {
+        "role": "neutral",
+        "displayName": "Scroll Thumb",
+        "canonical": "#c8ccc4",
+        "tonalRamp": [
+          "#0a0c07",
+          "#232620",
+          "#40433d",
+          "#5f635c",
+          "#80847c",
+          "#a3a79f",
+          "#c7cbc3",
+          "#ecf0e8"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "link": {
+        "role": "secondary",
+        "displayName": "Procedure Blue",
+        "canonical": "#2756d6",
+        "tonalRamp": [
+          "#020922",
+          "#0c2054",
+          "#1b3a8b",
+          "#2b56c7",
+          "#4a7aee",
+          "#79a2fd",
+          "#aac9ff",
+          "#dcefff"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "focus": {
+        "role": "secondary",
+        "displayName": "Focus Blue",
+        "canonical": "#2756d6",
+        "tonalRamp": [
+          "#020922",
+          "#0c2054",
+          "#1b3a8b",
+          "#2b56c7",
+          "#4a7aee",
+          "#79a2fd",
+          "#aac9ff",
+          "#dcefff"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "selection": {
+        "role": "secondary",
+        "displayName": "Selection",
+        "canonical": "#cdd9ff",
+        "tonalRamp": [
+          "#090b11",
+          "#202432",
+          "#3b4156",
+          "#57607d",
+          "#7881a0",
+          "#9ca4bd",
+          "#c3c9db",
+          "#ebeef9"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "status-incomplete": {
+        "role": "tertiary",
+        "displayName": "Status Incomplete",
+        "canonical": "#dc2626",
+        "tonalRamp": [
+          "#1e0101",
+          "#4c0304",
+          "#7f090c",
+          "#b51117",
+          "#de433c",
+          "#f47d71",
+          "#ffafa4",
+          "#ffe0d9"
+        ],
+        "source": "src/types.ts STATUS_COLOR_MAP"
+      },
+      "status-new": {
+        "role": "tertiary",
+        "displayName": "Status New",
+        "canonical": "#7c3aed",
+        "tonalRamp": [
+          "#0e0324",
+          "#2a1058",
+          "#4a2191",
+          "#6c34d0",
+          "#8c5cf7",
+          "#ab8dff",
+          "#ccbbff",
+          "#efe7ff"
+        ],
+        "source": "src/types.ts STATUS_COLOR_MAP"
+      },
+      "status-updated": {
+        "role": "tertiary",
+        "displayName": "Status Updated",
+        "canonical": "#0284c7",
+        "tonalRamp": [
+          "#000c1a",
+          "#002842",
+          "#004670",
+          "#0067a1",
+          "#2d8ac6",
+          "#6dacdc",
+          "#a3cff1",
+          "#d9f2ff"
+        ],
+        "source": "src/types.ts STATUS_COLOR_MAP"
+      },
+      "status-pending": {
+        "role": "tertiary",
+        "displayName": "Status Pending",
+        "canonical": "#d97706",
+        "tonalRamp": [
+          "#180600",
+          "#3f1900",
+          "#6a2f00",
+          "#994700",
+          "#bf690d",
+          "#d8945d",
+          "#efbe99",
+          "#ffe8d3"
+        ],
+        "source": "src/types.ts STATUS_COLOR_MAP"
+      },
+      "status-complete": {
+        "role": "tertiary",
+        "displayName": "Status Complete",
+        "canonical": "#059669",
+        "tonalRamp": [
+          "#001007",
+          "#002e1c",
+          "#005034",
+          "#00754e",
+          "#2e976f",
+          "#6fb796",
+          "#a5d6be",
+          "#dbf6e8"
+        ],
+        "source": "src/types.ts STATUS_COLOR_MAP"
+      },
+      "site-utl1": {
+        "role": "tertiary",
+        "displayName": "Site UTL1",
+        "canonical": "#c0392b",
+        "tonalRamp": [
+          "#1b0302",
+          "#450f0a",
+          "#752017",
+          "#a83225",
+          "#cf5747",
+          "#e68778",
+          "#fbb5a9",
+          "#ffe3dc"
+        ],
+        "source": "src/data.ts initialSiteColors"
+      },
+      "site-utl2": {
+        "role": "tertiary",
+        "displayName": "Site UTL2",
+        "canonical": "#2e7d32",
+        "tonalRamp": [
+          "#030f03",
+          "#0d2d0f",
+          "#1d4e1f",
+          "#2e7231",
+          "#519552",
+          "#81b580",
+          "#b0d5af",
+          "#e0f5df"
+        ],
+        "source": "src/data.ts initialSiteColors"
+      },
+      "site-utl2a": {
+        "role": "tertiary",
+        "displayName": "Site UTL2A",
+        "canonical": "#66bb6a",
+        "tonalRamp": [
+          "#020f03",
+          "#0b2d0e",
+          "#184f1e",
+          "#27732f",
+          "#4c9650",
+          "#7eb57f",
+          "#aed5ae",
+          "#dff6df"
+        ],
+        "source": "src/data.ts initialSiteColors"
+      },
+      "site-utl2b": {
+        "role": "tertiary",
+        "displayName": "Site UTL2B",
+        "canonical": "#1b5e20",
+        "tonalRamp": [
+          "#040f04",
+          "#122c13",
+          "#244d25",
+          "#387039",
+          "#59935a",
+          "#86b386",
+          "#b4d3b3",
+          "#e2f4e2"
+        ],
+        "source": "src/data.ts initialSiteColors"
+      },
+      "site-utl3": {
+        "role": "tertiary",
+        "displayName": "Site UTL3",
+        "canonical": "#1e5fa8",
+        "tonalRamp": [
+          "#020b1a",
+          "#0c2543",
+          "#1b4371",
+          "#2b62a3",
+          "#4d84c8",
+          "#7da8de",
+          "#adccf3",
+          "#def0ff"
+        ],
+        "source": "src/data.ts initialSiteColors"
+      },
+      "site-utl3a": {
+        "role": "tertiary",
+        "displayName": "Site UTL3A",
+        "canonical": "#4a90d9",
+        "tonalRamp": [
+          "#020c1a",
+          "#0a2642",
+          "#174470",
+          "#2563a1",
+          "#4986c6",
+          "#7ba9dc",
+          "#accdf2",
+          "#def1ff"
+        ],
+        "source": "src/data.ts initialSiteColors"
+      },
+      "site-utl3t": {
+        "role": "tertiary",
+        "displayName": "Site UTL3T",
+        "canonical": "#123f73",
+        "tonalRamp": [
+          "#040b17",
+          "#14263c",
+          "#274366",
+          "#3c6394",
+          "#5c85b8",
+          "#88a8d1",
+          "#b4cbe9",
+          "#e2f0ff"
+        ],
+        "source": "src/data.ts initialSiteColors"
+      },
+      "callout-note-fg": {
+        "role": "tertiary",
+        "displayName": "Callout Note Label",
+        "canonical": "#2756d6",
+        "tonalRamp": [
+          "#020922",
+          "#0c2054",
+          "#1b3a8b",
+          "#2b56c7",
+          "#4a7aee",
+          "#79a2fd",
+          "#aac9ff",
+          "#dcefff"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "callout-note-bg": {
+        "role": "tertiary",
+        "displayName": "Callout Note Tint",
+        "canonical": "#f4f7ff",
+        "tonalRamp": [
+          "#090b10",
+          "#23252b",
+          "#3f4248",
+          "#5f6168",
+          "#7f8289",
+          "#a2a5ac",
+          "#c6c9d1",
+          "#ebeef6"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "callout-note-border": {
+        "role": "tertiary",
+        "displayName": "Callout Note Border",
+        "canonical": "#cdd9ff",
+        "tonalRamp": [
+          "#090b11",
+          "#202432",
+          "#3b4156",
+          "#57607d",
+          "#7881a0",
+          "#9ca4bd",
+          "#c3c9db",
+          "#ebeef9"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "callout-tip-fg": {
+        "role": "tertiary",
+        "displayName": "Callout Tip Label",
+        "canonical": "#047857",
+        "tonalRamp": [
+          "#010f08",
+          "#052d1f",
+          "#0e4e39",
+          "#197254",
+          "#429475",
+          "#79b49a",
+          "#abd4c1",
+          "#def5ea"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "callout-tip-bg": {
+        "role": "tertiary",
+        "displayName": "Callout Tip Tint",
+        "canonical": "#f0fdf6",
+        "tonalRamp": [
+          "#050d09",
+          "#1e2823",
+          "#3a453f",
+          "#59645e",
+          "#7a867f",
+          "#9ca8a2",
+          "#c0cdc6",
+          "#e5f2eb"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "callout-tip-border": {
+        "role": "tertiary",
+        "displayName": "Callout Tip Border",
+        "canonical": "#b5ecd0",
+        "tonalRamp": [
+          "#050e09",
+          "#152a20",
+          "#2a4a3b",
+          "#3f6c57",
+          "#608e78",
+          "#8baf9c",
+          "#b7d0c3",
+          "#e4f3eb"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "callout-important-fg": {
+        "role": "tertiary",
+        "displayName": "Callout Important Label",
+        "canonical": "#6d28d9",
+        "tonalRamp": [
+          "#0d0324",
+          "#2a1157",
+          "#492390",
+          "#6b36ce",
+          "#8b5df5",
+          "#aa8eff",
+          "#cbbbff",
+          "#efe7ff"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "callout-important-bg": {
+        "role": "tertiary",
+        "displayName": "Callout Important Tint",
+        "canonical": "#f7f5ff",
+        "tonalRamp": [
+          "#0b0a10",
+          "#25242b",
+          "#424149",
+          "#626068",
+          "#83818a",
+          "#a5a3ad",
+          "#c9c8d1",
+          "#efedf7"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "callout-important-border": {
+        "role": "tertiary",
+        "displayName": "Callout Important Border",
+        "canonical": "#d6ccfd",
+        "tonalRamp": [
+          "#0c0a12",
+          "#262233",
+          "#433d59",
+          "#635b81",
+          "#847ca4",
+          "#a6a0c0",
+          "#cac5dd",
+          "#efecfa"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "callout-warning-fg": {
+        "role": "tertiary",
+        "displayName": "Callout Warning Label",
+        "canonical": "#a4500b",
+        "tonalRamp": [
+          "#170601",
+          "#3c1a03",
+          "#663109",
+          "#944a13",
+          "#b96c3a",
+          "#d39570",
+          "#ecbea4",
+          "#ffe8d9"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "callout-warning-bg": {
+        "role": "tertiary",
+        "displayName": "Callout Warning Tint",
+        "canonical": "#fffaeb",
+        "tonalRamp": [
+          "#0c0b09",
+          "#272520",
+          "#45423a",
+          "#656156",
+          "#868276",
+          "#a8a59b",
+          "#cbc9c2",
+          "#f0eeea"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "callout-warning-border": {
+        "role": "tertiary",
+        "displayName": "Callout Warning Border",
+        "canonical": "#f8d98a",
+        "tonalRamp": [
+          "#100a01",
+          "#2f2303",
+          "#513f0a",
+          "#775e13",
+          "#997f3b",
+          "#b7a371",
+          "#d6c8a5",
+          "#f6eeda"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "callout-caution-fg": {
+        "role": "tertiary",
+        "displayName": "Callout Caution Label",
+        "canonical": "#b91c1c",
+        "tonalRamp": [
+          "#1c0202",
+          "#480b09",
+          "#791916",
+          "#ad2823",
+          "#d54f45",
+          "#ec8377",
+          "#ffb3a9",
+          "#ffe2dc"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "callout-caution-bg": {
+        "role": "tertiary",
+        "displayName": "Callout Caution Tint",
+        "canonical": "#fef4f4",
+        "tonalRamp": [
+          "#0f0909",
+          "#2a2323",
+          "#484040",
+          "#675f5f",
+          "#898080",
+          "#aca2a2",
+          "#d0c6c6",
+          "#f6ecec"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "callout-caution-border": {
+        "role": "tertiary",
+        "displayName": "Callout Caution Border",
+        "canonical": "#f9c0c0",
+        "tonalRamp": [
+          "#120808",
+          "#331f1f",
+          "#583839",
+          "#7f5454",
+          "#a37475",
+          "#c09a9a",
+          "#ddc1c1",
+          "#faeaea"
+        ],
+        "source": "docs/assets/docs.css"
+      },
+      "copied": {
+        "role": "tertiary",
+        "displayName": "Copied Mint",
+        "canonical": "#86efac",
+        "tonalRamp": [
+          "#000f05",
+          "#002e16",
+          "#01502a",
+          "#037540",
+          "#3a9760",
+          "#74b78b",
+          "#a8d6b6",
+          "#dcf6e4"
+        ],
+        "source": "docs/assets/docs.css"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Sheet title, once per page. Thai: line-height 1.25, -0.01em."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Chapter titles with an audience-colored mono number badge. Thai: 1.35, 0 tracking."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Sections within a chapter with a mono section number. Thai: 1.45, 0 tracking."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "Paragraph under the sheet title, max 62ch. Thai: 1.75."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All English prose, max 70ch; 16px under 700px; 11pt in print."
+      },
+      "body-th": {
+        "displayName": "Body (Thai)",
+        "purpose": "All Thai prose on body.th pages."
+      },
+      "body-small": {
+        "displayName": "Body Small",
+        "purpose": "Tables (Thai 15px / 1.7), captions and footers at 13.5px."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Buttons, segments, open links."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Running heads, table headers, contents title, footer labels, figure numbers, uppercase. Thai: 12px, 0 tracking; table headers, badges and figure labels switch to the sans."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "Code slabs; inline code at 0.84em / 500."
+      }
+    },
+    "shadows": [
+      {
+        "name": "sheet-on-desk",
+        "value": "0 1px 0 #d8dcd4, 0 24px 46px -32px rgba(21,25,30,.4)",
+        "purpose": "Every sheet at rest."
+      },
+      {
+        "name": "sheet-pulled",
+        "value": "0 1px 0 #d8dcd4, 0 34px 60px -28px rgba(21,25,30,.5)",
+        "purpose": "Start frame of the jump-to-sheet animation."
+      },
+      {
+        "name": "divider-tab",
+        "value": "-6px 6px 14px -12px rgba(21,25,30,.4)",
+        "purpose": "Current rail entry."
+      },
+      {
+        "name": "popover",
+        "value": "0 18px 40px -18px rgba(21,25,30,.35)",
+        "purpose": "Contents menu."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-expo",
+        "value": "cubic-bezier(.16,1,.3,1)",
+        "purpose": "Tab slide (.3s), rail hover (.25s), sheet pull (.7s)."
+      },
+      {
+        "name": "fade",
+        "value": "0.2s",
+        "purpose": "Background and color changes on controls."
+      },
+      {
+        "name": "sheet-pull",
+        "value": "pull .7s cubic-bezier(.16,1,.3,1): translateX(-14px) to none",
+        "purpose": "The sheet you jump to slides out of the binder; only under prefers-reduced-motion: no-preference, as is smooth scrolling."
+      },
+      {
+        "name": "copied-hold",
+        "value": "1600ms",
+        "purpose": "Copy button shows the localized Copied state."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "no-rail",
+        "value": "1259px",
+        "purpose": "Rail hides; Contents menu appears in the bar."
+      },
+      {
+        "name": "tabs-top",
+        "value": "999px",
+        "purpose": "Binder full width; audience tabs turn horizontal above the sheet."
+      },
+      {
+        "name": "phone",
+        "value": "699px",
+        "purpose": "Bar 56px, Print and product line hide, sheet padding 24/20, footer two columns, shelf collapses."
+      },
+      {
+        "name": "print",
+        "value": "A4, 16mm 14mm margins",
+        "purpose": "Each chapter sheet is a page; chrome hidden; code inverts to light; color-adjust exact on tabs, badges, spines, swatches."
+      }
+    ],
+    "fonts": [
+      {
+        "family": "Archivo",
+        "weights": "400-700 variable",
+        "subsets": "latin, latin-ext",
+        "path": "docs/assets/fonts/"
+      },
+      {
+        "family": "IBM Plex Mono",
+        "weights": "400, 500, 600",
+        "subsets": "latin",
+        "path": "docs/assets/fonts/"
+      },
+      {
+        "family": "IBM Plex Sans Thai",
+        "weights": "400, 600 (serves 600-700)",
+        "subsets": "thai",
+        "path": "docs/assets/fonts/"
+      }
+    ],
+    "accessibility": {
+      "focus": "2px solid #2756d6 outline, 2px offset, 4px radius, on :focus-visible",
+      "skipLink": "Ink skip link, visible on focus",
+      "contrast": {
+        "label-on-sheet": 5.92,
+        "label-on-desk": 4.93,
+        "link-on-sheet": 6.2,
+        "callout-labels-min": 5.48,
+        "tab-inactive-text-min": 6.38,
+        "white-on-tab-min": 5.13,
+        "disabled-segment": "3.48 (disabled, exempt)"
+      },
+      "reducedMotion": "Smooth scroll, sheet pull animation gated behind prefers-reduced-motion: no-preference"
+    }
+  },
+  "components": [
+    {
+      "name": "Print Button (Ink)",
+      "kind": "button",
+      "refersTo": "button-ink",
+      "description": "The single action color: ink fill, used for Print and other primary actions in the bar.",
+      "html": "<button class=\"ds-btn-ink\" type=\"button\">Print</button>",
+      "css": ".ds-btn-ink{font:600 13px/1 'Archivo','IBM Plex Sans Thai',system-ui,sans-serif;padding:10px 14px;border-radius:9px;border:1px solid #15191e;background:#15191e;color:#fff;cursor:pointer;transition:background-color .2s,border-color .2s}.ds-btn-ink:hover{background:#2b3134}.ds-btn-ink:focus-visible{outline:2px solid #2756d6;outline-offset:2px}"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "White hairline button; the Contents disclosure uses it and turns ink while open.",
+      "html": "<button class=\"ds-btn-quiet\" type=\"button\">Contents</button>",
+      "css": ".ds-btn-quiet{font:600 13px/1 'Archivo','IBM Plex Sans Thai',system-ui,sans-serif;padding:10px 14px;border-radius:9px;border:1px solid #d8dcd4;background:#fff;color:#15191e;cursor:pointer;transition:background-color .2s,border-color .2s}.ds-btn-quiet:hover{background:#f1f3ee}.ds-btn-quiet[aria-expanded=true]{background:#15191e;border-color:#15191e;color:#fff}.ds-btn-quiet:focus-visible{outline:2px solid #2756d6;outline-offset:2px}"
+    },
+    {
+      "name": "Language Switch",
+      "kind": "nav",
+      "refersTo": "segment-on",
+      "description": "Segmented Thai/English switch in the bar; current language in ink, unavailable language disabled.",
+      "html": "<div class=\"ds-lang\" role=\"group\" aria-label=\"Language\"><a class=\"ds-seg\" href=\"#\">ไทย</a><a class=\"ds-seg ds-on\" href=\"#\" aria-current=\"page\">EN</a></div>",
+      "css": ".ds-lang{display:inline-flex;gap:2px;background:#f1f3ee;border:1px solid #d8dcd4;border-radius:10px;padding:3px}.ds-seg{font:600 13px/1 'Archivo','IBM Plex Sans Thai',system-ui,sans-serif;padding:8px 12px;border-radius:7px;color:#3a403a;text-decoration:none;transition:background-color .2s,color .2s}.ds-seg:hover{background:#e3e6df}.ds-seg.ds-on{background:#15191e;color:#fff}.ds-seg:focus-visible{outline:2px solid #2756d6;outline-offset:2px}"
+    },
+    {
+      "name": "Audience Tabs",
+      "kind": "nav",
+      "refersTo": "audience-tab-user",
+      "description": "Vertical binder tabs hanging off the sheet's right edge in site colors; current binder solid.",
+      "html": "<nav class=\"ds-tabs\"><a class=\"ds-tab ds-on\" style=\"--c:#2e7d32\" href=\"#\" aria-current=\"page\">User Guide</a><a class=\"ds-tab\" style=\"--c:#1e5fa8\" href=\"#\">Developer</a><a class=\"ds-tab\" style=\"--c:#123f73\" href=\"#\">IT Handover</a></nav>",
+      "css": ".ds-tabs{display:flex;flex-direction:column;gap:6px;width:46px}.ds-tab{writing-mode:vertical-rl;display:block;padding:18px 0;width:44px;text-align:center;font:700 12.5px/44px 'Archivo','IBM Plex Sans Thai',system-ui,sans-serif;letter-spacing:.03em;border-radius:0 10px 10px 0;text-decoration:none;color:color-mix(in srgb,var(--c) 78%,#000);background:color-mix(in srgb,var(--c) 11%,#fff);border:1px solid color-mix(in srgb,var(--c) 30%,#fff);border-left:0;transition:transform .3s cubic-bezier(.16,1,.3,1),background-color .2s}.ds-tab:hover{background:color-mix(in srgb,var(--c) 15%,#fff);transform:translateX(3px)}.ds-tab.ds-on{background:var(--c);border-color:var(--c);color:#fff;transform:none}.ds-tab:focus-visible{outline:2px solid #2756d6;outline-offset:2px}@media (prefers-reduced-motion:reduce){.ds-tab{transition:none}.ds-tab:hover{transform:none}}"
+    },
+    {
+      "name": "Sheet with Running Head",
+      "kind": "card",
+      "refersTo": "sheet",
+      "description": "A chapter sheet on the desk: ruled mono running head, title, lede.",
+      "html": "<div class=\"ds-desk\"><article class=\"ds-sheet\"><div class=\"ds-runhead\"><span>User Guide</span><span>Rev 2026-11-27</span></div><h1 class=\"ds-h1\">User Guide</h1><p class=\"ds-lede\">How to plan Customer Audits and Internal Audits, record results, and report on them.</p></article></div>",
+      "css": ".ds-desk{background:#e9ebe6;padding:28px}.ds-sheet{background:#fff;border:1px solid #dfe2db;border-radius:4px;box-shadow:0 1px 0 #d8dcd4,0 24px 46px -32px rgba(21,25,30,.4);padding:34px 48px 30px;color:#15191e;font-family:'Archivo','IBM Plex Sans Thai',system-ui,sans-serif}.ds-runhead{display:flex;justify-content:space-between;gap:16px;font:500 11.5px/1.4 'IBM Plex Mono','IBM Plex Sans Thai',ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;color:#5f665e;padding-bottom:11px;border-bottom:2px solid #15191e;margin-bottom:32px}.ds-h1{font-size:44px;line-height:1.03;letter-spacing:-.03em;font-weight:700;margin:0 0 14px}.ds-lede{font-size:19px;line-height:1.58;color:#3a403a;max-width:62ch;margin:0}"
+    },
+    {
+      "name": "Step List",
+      "kind": "custom",
+      "refersTo": "step-badge",
+      "description": "Numbered procedure: ruled rows with 25px ink step badges.",
+      "html": "<ol class=\"ds-steps\"><li>Open <b>Schedule</b> and choose the week.</li><li>Click an empty day cell to start a Customer Audit.</li><li>Fill the required fields, then save.</li></ol>",
+      "css": ".ds-steps{list-style:none;padding:0;margin:0;counter-reset:step;font:16.5px/1.68 'Archivo','IBM Plex Sans Thai',system-ui,sans-serif;color:#15191e}.ds-steps li{counter-increment:step;position:relative;padding:12px 0 12px 42px;border-top:1px solid #eef1ea}.ds-steps li:last-child{border-bottom:1px solid #eef1ea}.ds-steps li::before{content:counter(step);position:absolute;left:0;top:13px;width:25px;height:25px;display:grid;place-items:center;border-radius:7px;background:#15191e;color:#fff;font:600 12px/1 'IBM Plex Mono','IBM Plex Sans Thai',ui-monospace,monospace}"
+    },
+    {
+      "name": "Callouts",
+      "kind": "custom",
+      "refersTo": "callout-note",
+      "description": "Status-badge form: tint, 1px border, white mono label chip; five kinds.",
+      "html": "<aside class=\"ds-callout\" role=\"note\"><span class=\"ds-badge\">Note</span><p>Roles describe who usually does a task.</p></aside><aside class=\"ds-callout ds-warning\" role=\"note\"><span class=\"ds-badge\">Warning</span><p>Deleting an appointment cannot be undone.</p></aside>",
+      "css": ".ds-callout{--fg:#2756d6;--bg:#f4f7ff;--b:#cdd9ff;margin:0 0 16px;padding:14px 18px 4px;border-radius:10px;border:1px solid var(--b);background:var(--bg);max-width:70ch;font-family:'Archivo','IBM Plex Sans Thai',system-ui,sans-serif;color:#15191e}.ds-callout.ds-tip{--fg:#047857;--bg:#f0fdf6;--b:#b5ecd0}.ds-callout.ds-important{--fg:#6d28d9;--bg:#f7f5ff;--b:#d6ccfd}.ds-callout.ds-warning{--fg:#a4500b;--bg:#fffaeb;--b:#f8d98a}.ds-callout.ds-caution{--fg:#b91c1c;--bg:#fef4f4;--b:#f9c0c0}.ds-badge{display:inline-block;font:700 11px/1.5 'IBM Plex Mono','IBM Plex Sans Thai',ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--fg);background:#fff;border:1px solid var(--b);border-radius:5px;padding:1px 7px;margin-bottom:7px}.ds-callout p{font-size:16.5px;line-height:1.68;margin:0 0 10px}"
+    },
+    {
+      "name": "Site Chips and Status Swatches",
+      "kind": "chip",
+      "refersTo": "site-chip",
+      "description": "Site names as mono chips in the app's site colors; statuses as 12px swatches.",
+      "html": "<p class=\"ds-p\"><span class=\"ds-site\" style=\"--c:#c0392b\">UTL1</span> <span class=\"ds-site\" style=\"--c:#2e7d32\">UTL2</span> <span class=\"ds-site\" style=\"--c:#1e5fa8\">UTL3</span> <span class=\"ds-swl\"><span class=\"ds-sw\" style=\"--c:#dc2626\"></span>Incomplete</span> <span class=\"ds-swl\"><span class=\"ds-sw\" style=\"--c:#059669\"></span>Complete</span></p>",
+      "css": ".ds-p{font:16.5px/1.68 'Archivo','IBM Plex Sans Thai',system-ui,sans-serif;color:#15191e}.ds-site{display:inline-flex;align-items:center;gap:6px;font:600 12px/1.5 'IBM Plex Mono','IBM Plex Sans Thai',ui-monospace,monospace;padding:0 8px 0 6px;border-radius:6px;border:1px solid color-mix(in srgb,var(--c) 40%,#fff);background:color-mix(in srgb,var(--c) 8%,#fff);color:#15191e;white-space:nowrap}.ds-site::before{content:\"\";width:8px;height:8px;border-radius:2px;background:var(--c)}.ds-swl{white-space:nowrap}.ds-sw{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--c);box-shadow:inset 0 0 0 1px rgba(0,0,0,.1);margin-right:8px;vertical-align:-1px}"
+    },
+    {
+      "name": "Code Slab",
+      "kind": "custom",
+      "refersTo": "code-slab",
+      "description": "Ink code block with a mono copy button.",
+      "html": "<div class=\"ds-code\"><pre><code>npm run docs</code></pre><button class=\"ds-copy\" type=\"button\">Copy</button></div>",
+      "css": ".ds-code{position:relative;max-width:70ch}.ds-code pre{margin:0;background:#15191e;color:#e9ebe6;border-radius:10px;padding:15px 18px;overflow-x:auto;font:400 13.5px/1.6 'IBM Plex Mono','IBM Plex Sans Thai',ui-monospace,monospace}.ds-copy{position:absolute;top:8px;right:8px;font:500 11.5px/1 'IBM Plex Mono','IBM Plex Sans Thai',ui-monospace,monospace;color:#e9ebe6;background:#2b3134;border:1px solid #3d4447;border-radius:7px;padding:6px 9px;cursor:pointer;transition:background-color .2s,color .2s}.ds-copy:hover{background:#383f43}.ds-copy:focus-visible{outline:2px solid #2756d6;outline-offset:2px}"
+    },
+    {
+      "name": "Ruled Table",
+      "kind": "custom",
+      "refersTo": "table",
+      "description": "White ruled table with mono uppercase headers on wash.",
+      "html": "<div class=\"ds-table\"><table><thead><tr><th>Status</th><th>Meaning</th></tr></thead><tbody><tr><td>Pending Result</td><td>Audit date passed; results not yet recorded.</td></tr><tr><td>Complete</td><td>All required fields and results recorded.</td></tr></tbody></table></div>",
+      "css": ".ds-table{overflow-x:auto;border:1px solid #e0e3dc;border-radius:10px;background:#fff}.ds-table table{border-collapse:collapse;width:100%;font:14.5px/1.55 'Archivo','IBM Plex Sans Thai',system-ui,sans-serif;color:#15191e;font-variant-numeric:tabular-nums}.ds-table th{font:600 11px/1.55 'IBM Plex Mono','IBM Plex Sans Thai',ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:#5f665e;background:#f4f6f1;text-align:left;padding:10px 14px;border-bottom:1px solid #e0e3dc}.ds-table td{padding:10px 14px;border-top:1px solid #eef1ea;vertical-align:top}.ds-table tbody tr:first-child td{border-top:0}.ds-table td:first-child{font-weight:550}.ds-table tbody tr:hover td{background:#fafbf8}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The QA Procedure Binder",
+    "overview": "Every guide is a binder of controlled procedure sheets. Each chapter is a white sheet laid on the app's sage desk, headed by a ruled running head (guide name left, revision right) and closed by a revision footer with previous/next links and a folio. Colored audience tabs hang off the sheet's right edge and switch binders; at wide widths a divider rail of chapter titles on the left tracks the chapter in view. The documentation index is the binder shelf: one spine per audience, each in that audience's site color.\n\nThe system is scoped to the documentation surface (`docs/`), and it inherits rather than invents. The desk, ink and Archivo text come from the app's global stylesheet (`src/index.css`); the status swatches come from `STATUS_COLOR_MAP` in `src/types.ts`; the site chips and audience tab colors come from `initialSiteColors` in `src/data.ts`. The user confirmed that the docs match the app. When the app's values change, these tokens follow; the docs never fork a private shade of a site or status.\n\nThe density is that of a printed manual: one centered sheet, generous side margins, 70ch reading measure, mono for anything that is a label, code or a number, and print as a first-class output where each chapter becomes its own A4 page. It explicitly refuses the generic three-pane docs site.",
+    "keyCharacteristics": [
+      "Sage desk, white sheets, near-black ink; color appears only where it carries meaning (audience, site, status, callout kind, link).",
+      "Archivo for reading, IBM Plex Mono for running heads, numbers, table labels and code, IBM Plex Sans Thai for every Thai glyph; all self-hosted for offline use.",
+      "Ink is the action color: the Print button, the active language segment, step badges and code slabs are all ink.",
+      "Paper-like depth: one soft drop under each sheet, flat blocks inside it.",
+      "Thai gets its own looser metrics, never just the English values."
+    ],
+    "rules": [
+      {
+        "name": "The Borrowed Palette Rule",
+        "body": "Every semantic color in the docs is the app's value: sites from `initialSiteColors`, statuses from `STATUS_COLOR_MAP`, desk and ink from `src/index.css`. Change the app first, then the docs; never tune a site or status shade for the docs alone.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink Acts Rule",
+        "body": "The single action color is ink. Blue is for links and focus only; site colors are for audience and site identity only.",
+        "section": "colors"
+      },
+      {
+        "name": "The Thai Metrics Rule",
+        "body": "Thai pages (`body.th`) run body at 17px / 1.85, loosen heading line-heights (display 1.25, headline 1.35, title 1.45), drop negative and positive tracking to 0, and set uppercase-mono labels (table headers, callout badges, figure numbers) in the sans at 12–13px with no case transform. Thai never inherits English tracking.",
+        "section": "typography"
+      },
+      {
+        "name": "The Mono Is Furniture Rule",
+        "body": "Mono marks the binder's apparatus (numbers, revisions, labels, code). It is never used for prose or headings.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Inside Rule",
+        "body": "Inside a sheet nothing casts a shadow. Tables, callouts, figures and code separate by border and fill.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** take every site and status color from `initialSiteColors` and `STATUS_COLOR_MAP` (The Borrowed Palette Rule).",
+      "**Do** start each chapter as its own sheet with a running head and revision footer, so it prints as its own page.",
+      "**Do** set numbers, revisions, table headers and code in IBM Plex Mono, and everything readers read in Archivo.",
+      "**Do** apply the Thai metrics (17px / 1.85 body, zero tracking, sans labels) on every Thai page.",
+      "**Do** keep prose, lists, callouts and code at or under 70ch.",
+      "**Do** keep the 2px outline focus ring in Procedure Blue (offset 2px) on every interactive element.",
+      "**Do** gate every movement (smooth scroll, the 0.7s sheet pull on jump, the tab slide) behind `prefers-reduced-motion: no-preference`; state transitions use `cubic-bezier(.16,1,.3,1)` or plain 0.2s color fades.",
+      "**Do** check contrast: Ledger Gray labels are 5.9:1 on white and 4.9:1 on the desk; inactive tab text, callout labels and white-on-tab text all clear 4.5:1."
+    ],
+    "donts": [
+      "**Don't** build a three-pane docs site (fixed sidebar, content, right-hand TOC); the binder and its tabs are the navigation.",
+      "**Don't** use a site or status color as text or as a fill behind body text; they mark identity as tabs, spines, chips and swatches.",
+      "**Don't** use blue for buttons or emphasis; actions are ink.",
+      "**Don't** add shadows inside a sheet (The Flat Inside Rule).",
+      "**Don't** let a Thai page inherit English tracking or English line-heights.",
+      "**Don't** load fonts from a CDN; the docs must work offline from the repository."
+    ]
+  }
+}

@@ -286,7 +286,24 @@ interface MonthCell {
   more?: number;
   moreTxt?: string;
   onClick?: () => void;
+  // Phone month grid: one status-colored dot per appointment (first 3), and a select that never opens a dialog.
+  dots?: string[];
+  count?: number;
+  isToday?: boolean;
+  isWeekend?: boolean;
+  isAgendaDay?: boolean;
+  onSelect?: () => void;
 }
+
+/** History entries that exist only in this browser (never stored on the server). Only these are cached locally. */
+const unsyncedLogs = (logs?: ActivityLog[]): ActivityLog[] => (logs || []).filter((l) => !l.synced);
+
+/** Server History entries carry only the user's name; add the initials the History table shows. */
+const withInitials = (l: ActivityLog): ActivityLog => {
+  const name = l.user?.name || 'Unknown user';
+  const initials = name.split(/\s+/).filter(Boolean).map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '?';
+  return { ...l, user: { ...l.user, name, avatarInitials: l.user?.avatarInitials || initials } };
+};
 
 const idNumber = (id: string): number => {
   const m = /(\d+)$/.exec(id || '');
@@ -334,24 +351,22 @@ export function useScheduler() {
     [],
   );
 
+  const historyOnServerRef = useRef(false);
+  const [historyLoadingOlder, setHistoryLoadingOlder] = useState(false);
+
   const logActivity = useCallback((
     actionType: ActionType,
     entityType: EntityType,
     description: string,
     metadata?: Record<string, any>
   ) => {
-    const now = new Date();
-    const dd = String(now.getDate()).padStart(2, '0');
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const yyyy = now.getFullYear();
-    const hh = String(now.getHours()).padStart(2, '0');
-    const min = String(now.getMinutes()).padStart(2, '0');
-    const ss = String(now.getSeconds()).padStart(2, '0');
-    const timestamp = `${dd}/${mm}/${yyyy} ${hh}:${min}:${ss}`;
+    // ISO (UTC) so History can sort, filter by date, and show the viewer's local time.
+    const timestamp = new Date().toISOString();
+    const localId = 'log_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
 
     setRaw((prev) => {
-      const uName = prev.currentUser?.name || 'Jordan Lee';
-      const uEmail = prev.currentUser?.email || (uName === 'Jordan Lee' ? 'jordan.lee@nexsil.com' : undefined);
+      const uName = prev.currentUser?.name || prev.currentUser?.username || 'Unknown user';
+      const uEmail = prev.currentUser?.email || undefined;
       const uInitials =
         prev.currentUser?.avatarInitials ||
         uName
@@ -360,10 +375,10 @@ export function useScheduler() {
           .join('')
           .slice(0, 2)
           .toUpperCase() ||
-        'JL';
+        '?';
 
       const newLog: ActivityLog = {
-        id: 'log_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+        id: localId,
         timestamp,
         user: {
           name: uName,
@@ -380,11 +395,26 @@ export function useScheduler() {
       try {
         const snap = localStorage.getItem('calendar_qa_snapshot');
         const parsed = snap ? JSON.parse(snap) : {};
-        parsed.activityLogs = updatedLogs;
+        parsed.activityLogs = unsyncedLogs(updatedLogs);
         localStorage.setItem('calendar_qa_snapshot', JSON.stringify(parsed));
       } catch {}
       return { ...prev, activityLogs: updatedLogs };
     });
+
+    // Store it in the shared History; the server's copy (real user and time) replaces the local one.
+    api.addHistory({ actionType, entityType, description, metadata })
+      .then((saved) => {
+        setRaw((prev) => ({
+          ...prev,
+          activityLogs: (prev.activityLogs || []).map((l) => (l.id === localId ? withInitials({ ...saved, synced: true }) : l)),
+        }));
+      })
+      .catch((err) => {
+        // Before the server has History (or in frontend-only mode) the entry simply stays in this browser.
+        if (historyOnServerRef.current) {
+          setSaveError(`A History entry could not be saved to the server, so it is kept only in this browser. (${String(err)})`);
+        }
+      });
   }, []);
 
   useEffect(() => {
@@ -440,29 +470,22 @@ export function useScheduler() {
           const customerNameOptions = data.customerNameOptions || [];
           const auditCategoryOptions = data.auditCategoryOptions || [];
 
-          // Purge orphan customer options (e.g. IFX) that have no active assignments
-          const activeCustomerLower = new Set(
-            mergedAssignments.map((a) => (a.customer || '').trim().toLowerCase()).filter(Boolean)
-          );
-          let nextCustomerOptions = customerOptions;
-          let nextRemovedOptions: string[] = [];
-          let nextFilterCompany = s.filterCompany || [];
-          let nextMasterCreated = { ...(s.masterCreatedOptions || {}) };
+          // Customer values are master data: keep every value D1 returns, even if no appointment uses it yet.
+          const nextCustomerOptions = customerOptions;
+          const nextRemovedOptions: string[] = [];
+          const nextFilterCompany = s.filterCompany || [];
+          const nextMasterCreated = { ...(s.masterCreatedOptions || {}) };
 
-          for (const cust of customerOptions) {
-            const cLower = cust.trim().toLowerCase();
-            if (!activeCustomerLower.has(cLower)) {
-              if (cLower === 'ifx' || !nextMasterCreated['customerOptions:' + cLower]) {
-                nextCustomerOptions = nextCustomerOptions.filter((c) => c.trim().toLowerCase() !== cLower);
-                if (!nextRemovedOptions.some((r) => r.toLowerCase() === cLower)) {
-                  nextRemovedOptions = [...nextRemovedOptions, cust];
-                }
-                nextFilterCompany = nextFilterCompany.filter((f) => f.trim().toLowerCase() !== cLower);
-                delete nextMasterCreated['customerOptions:' + cLower];
-                api.deleteOption('customer_name', cust).catch(reportSaveFailure);
-              }
-            }
-          }
+          // History: the server's entries, plus any entry this browser could not store there (kept, marked as local).
+          const serverHistory = Array.isArray(data.activityLogs) ? data.activityLogs.map((l) => withInitials({ ...l, synced: true })) : null;
+          historyOnServerRef.current = serverHistory !== null;
+          const nextActivityLogs = serverHistory
+            ? (() => {
+                const ids = new Set(serverHistory.map((l) => l.id));
+                const localOnly = unsyncedLogs(s.activityLogs || []).filter((l) => !ids.has(l.id));
+                return [...serverHistory, ...localOnly].sort((x, y) => String(y.timestamp).localeCompare(String(x.timestamp)));
+              })()
+            : (s.activityLogs || []);
 
           const customHolidaysMap: Record<string, CustomHoliday> = {};
           if (data.customHolidays && Array.isArray(data.customHolidays)) {
@@ -481,7 +504,9 @@ export function useScheduler() {
             assignments: mergedAssignments.map(normalizeAssignment),
             comments: mergedComments,
             activity: data.activity || [],
-            activityLogs: s.activityLogs && s.activityLogs.length ? s.activityLogs : (data.activityLogs || []),
+            activityLogs: nextActivityLogs,
+            historyOnServer: serverHistory !== null,
+            historyHasMore: serverHistory !== null && Boolean(data.historyHasMore),
             purposeOptions,
             auditorOptions,
             customerDepartmentOptions,
@@ -506,7 +531,7 @@ export function useScheduler() {
               assignments: mergedState.assignments,
               comments: mergedState.comments,
               activity: mergedState.activity,
-              activityLogs: mergedState.activityLogs,
+              activityLogs: unsyncedLogs(mergedState.activityLogs),
               purposeOptions: mergedState.purposeOptions,
               auditorOptions: mergedState.auditorOptions,
               targetPackageOptions: mergedState.targetPackageOptions,
@@ -558,7 +583,8 @@ export function useScheduler() {
         assignments: state.assignments,
         comments: state.comments,
         activity: state.activity,
-        activityLogs: state.activityLogs,
+        // Only entries not yet on the server; the shared History is loaded from D1 on startup.
+        activityLogs: unsyncedLogs(state.activityLogs),
         purposeOptions: state.purposeOptions,
         customerDepartmentOptions: state.customerDepartmentOptions,
         internalDepartmentOptions: state.internalDepartmentOptions,
@@ -608,7 +634,7 @@ export function useScheduler() {
     name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
   const siteToSiteCode = (site: string): string => (site.startsWith('UTL3') || site.startsWith('U3') ? 'UTL3' : site.startsWith('UTL2') || site.startsWith('U2') ? 'UTL2' : 'UTL1');
   /** "CS" for Customer appointments, "IA" for Internal Audit. */
-  const apptAbbr = (a: Assignment) => (a.site2 || a.auditor2 || a.department2 || a.area ? 'IA' : 'CS');
+  const apptAbbr = (a: Assignment) => (isInternalAssignment(a) ? 'IA' : 'CS');
   /** Returns Customer name with CS prefix for Customer Audit or Area/topic with IA prefix for Internal Audit. */
   const apptTitle = (a: Assignment) => formatApptDisplayTitle(a, orderById(a.order));
   const fmtDate = (d: Date) => {
@@ -759,7 +785,7 @@ export function useScheduler() {
 
   // ---- auth / nav ----
   const onAuthSuccess = (user?: { id: string; username: string; name?: string; role?: string }, _rememberMe = false) => {
-    const sessionUser = user || { id: 'usr_jordan', username: 'jordan.lee', name: 'Jordan Lee', role: 'admin' };
+    const sessionUser = user || { id: '', username: '', name: '', role: 'user' };
     const currentCalendar = getCurrentCalendarDefaults(new Date());
     authClient.persistSession(sessionUser);
     setState({
@@ -773,6 +799,23 @@ export function useScheduler() {
     });
   };
   const signIn = (user?: { id: string; username: string; name?: string; role?: string }) => onAuthSuccess(user);
+  const loadOlderHistory = () => {
+    const oldest = (S.activityLogs || []).filter((l) => l.synced).at(-1);
+    if (!oldest || historyLoadingOlder) return;
+    setHistoryLoadingOlder(true);
+    api.fetchHistory({ timestamp: oldest.timestamp, id: oldest.id })
+      .then((page) => {
+        setRaw((prev) => {
+          const have = new Set((prev.activityLogs || []).map((l) => l.id));
+          const older = page.entries.filter((l) => !have.has(l.id)).map((l) => withInitials({ ...l, synced: true }));
+          const all = [...(prev.activityLogs || []), ...older].sort((x, y) => String(y.timestamp).localeCompare(String(x.timestamp)));
+          return { ...prev, activityLogs: all, historyHasMore: page.hasMore };
+        });
+      })
+      .catch((err) => setSaveError(`Could not load older History from the server. (${String(err)})`))
+      .finally(() => setHistoryLoadingOlder(false));
+  };
+
   const signOut = async () => {
     try {
       await authClient.logout();
@@ -798,6 +841,11 @@ export function useScheduler() {
         if (s.monthSelectedDate) {
           // a specific date was clicked in Month view — jump to its week
           patch.weekOffset = s.monthSelectedDate.weekOffset;
+          patch.selectedDay = Math.min(4, s.monthSelectedDate.day);
+        } else if ((s.monthOffset || 0) === todayMonthOffset) {
+          // no date selected in the current month — open this week (the phone month view shows today's list)
+          patch.weekOffset = todayWeekOffset;
+          patch.selectedDay = Math.min(4, dateSlot(today).wd);
         } else {
           // no date selected — jump to the week containing the first day of the month currently being viewed
           const monthFirst = new Date(2026, 5 + (s.monthOffset || 0), 1);
@@ -895,6 +943,8 @@ export function useScheduler() {
     setState({ dayDialog: { weekOffset, day }, monthSelectedDate: { weekOffset, day } });
   };
   const closeDayDialog = () => setState({ dayDialog: null });
+  /** Phone month view: show a day's appointments under the grid (any day, including weekends and holidays). */
+  const selectMonthDay = (weekOffset: number, day: number) => setState({ monthSelectedDate: { weekOffset, day } });
 
   const copyWeek = () => {
     const off = S.weekOffset;
@@ -1652,7 +1702,7 @@ export function useScheduler() {
           department1: d.sectionType === 'customer' ? stdVal : '',
           department2: d.sectionType === 'internal' ? stdVal : '',
           department: hostDept,
-          createdBy: profile.name || 'Jordan Lee',
+          createdBy: S.currentUser?.name || S.currentUser?.username || '',
           createdAt: new Date().toISOString(),
         });
       }
@@ -2181,6 +2231,7 @@ export function useScheduler() {
           ofi: Number(prev.ofi) || 0,
           obs: Number(prev.obs) || 0,
           findings: Number(prev.findings) || 0,
+          ...(prev.recorded ? { recorded: true } : {}),
         };
       } else {
         reconciledResults[s] = { major: 0, minor: 0, ofi: 0, obs: 0, findings: 0 };
@@ -3579,6 +3630,15 @@ export function useScheduler() {
   const blankCellStyle = (): CSSProperties => ({ background: '#f8f9f6', borderRight: '1px solid #e6e9e2', borderTop: '1px solid #e6e9e2', minHeight: isMobile ? '52px' : '112px' });
   const monthCells: MonthCell[] = [];
   for (let i = 0; i < firstWd; i++) monthCells.push({ blank: true, style: blankCellStyle() });
+  const slotDate = (weekOffset: number, day: number) => new Date(2026, 5, 29 + weekOffset * 7 + day);
+  const inShownMonth = (sl: { weekOffset: number; day: number }) => {
+    const d = slotDate(sl.weekOffset, sl.day);
+    return d.getFullYear() === mYear && d.getMonth() === mMon;
+  };
+  const todaySlot = { weekOffset: dateSlot(today).weekOffset, day: dateSlot(today).wd };
+  const agendaSlot = S.monthSelectedDate && inShownMonth(S.monthSelectedDate)
+    ? S.monthSelectedDate
+    : inShownMonth(todaySlot) ? todaySlot : null;
   const monthOrderAgg: Record<string, { appointments: number; days: Record<number, 1>; engs: Record<string, 1> }> = {};
   for (let dn = 1; dn <= daysInMonth; dn++) {
     const date = new Date(mYear, mMon, dn);
@@ -3658,6 +3718,12 @@ export function useScheduler() {
     const isHolidayOrWeekend = weekend || isDateCompletelyBlocked(holiday);
     monthCells.push({
       blank: false,
+      dots: appointments.slice(0, 3).map((a) => getApptCardColors(a, nowTick, true).accentBg),
+      count: appointments.length,
+      isToday,
+      isWeekend: weekend,
+      isAgendaDay: !!agendaSlot && agendaSlot.weekOffset === slot.weekOffset && agendaSlot.day === slot.wd,
+      onSelect: () => selectMonthDay(slot.weekOffset, slot.wd),
       dateNum: String(dn),
       dateISO: fmtISO(date),
       holiday,
@@ -3828,11 +3894,12 @@ export function useScheduler() {
     : weekTag;
 
   const daySel = days.map((d, i) => {
+    const isTodayChip = d.dateISO === fmtISO(today);
     return {
-      label: d.label, date: d.date,
+      label: d.label, date: isTodayChip ? 'Today' : d.date, isToday: isTodayChip,
       style: sx({ position: 'relative', flex: 1, minWidth: 0, padding: '6px 3px', borderRadius: '8px', border: '1px solid ' + (selDay === i ? '#15191e' : '#e2e5de'), background: selDay === i ? '#15191e' : '#fff', cursor: 'pointer', textAlign: 'center', fontFamily: "'Archivo',sans-serif" }),
-      labelStyle: sx({ fontSize: '11px', fontWeight: 700, color: selDay === i ? '#fff' : '#23282a' }),
-      dateStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '8px', color: selDay === i ? '#aeb6c8' : '#9aa097', marginTop: '1px' }),
+      labelStyle: sx({ fontSize: '13px', fontWeight: 700, color: selDay === i ? '#fff' : '#23282a' }),
+      dateStyle: sx({ fontFamily: "'IBM Plex Mono',monospace", fontSize: '11px', fontWeight: isTodayChip ? 700 : 500, color: selDay === i ? '#c9cfdb' : isTodayChip ? '#15191e' : '#6a706a', marginTop: '2px' }),
       onClick: () => setSelectedDay(i),
     };
   });
@@ -4369,16 +4436,6 @@ export function useScheduler() {
   const timetableGridCols = '200px repeat(5, minmax(168px, 1fr))';
   const mobileTimetableRows = timetableRows.map((r) => ({ slotId: r.slotId, label: r.label, hours: r.hours, cell: r.cells[selDay] }));
 
-  const team = [
-    { name: 'You', initials: 'YO', color: '#15191e' },
-    { name: 'Marco Ruiz', initials: 'MR', color: '#0f9d8c' },
-    { name: 'Priya Nair', initials: 'PN', color: '#c2620c' },
-    { name: 'Lena Fischer', initials: 'LF', color: '#7a4ddb' },
-  ];
-  const presence = team.map((t, i) => ({
-    name: t.name, initials: t.initials,
-    avatarStyle: sx({ width: '27px', height: '27px', borderRadius: '50%', background: t.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Mono',monospace", fontSize: '9.5px', fontWeight: 600, border: '2px solid #fff', marginLeft: i ? '-8px' : 0, position: 'relative', zIndex: 10 - i }),
-  }));
   const activity = S.activity.map((a) => ({
     who: a.who, text: a.text.replace(/NEW-\d+/g, 'appointment'), ago: a.ago,
     dotStyle: sx({ width: '7px', height: '7px', borderRadius: '50%', background: a.color, marginTop: '4px', flexShrink: 0 }),
@@ -4495,14 +4552,19 @@ export function useScheduler() {
 
   // ---- profile VM ----
   const myWeekAppointments = S.assignments.filter((a) => a.week === todayWeekOffset).length;
+  const profileName = S.currentUser?.name || S.currentUser?.username || 'Signed-in user';
+  const profileSites: string[] = (S.siteCodeOptions && S.siteCodeOptions.length ? S.siteCodeOptions : initialSiteCodeOptions);
   const profile = {
-    name: 'Jordan Lee', role: 'QA Planner - Operations', email: 'jordan.lee@nexsil.com', phone: '+1 (480) 555-0173', team: 'Front-end Quality, Reliability', joined: 'Joined March 2023',
+    name: profileName,
+    initials: (profileName.split(/\s+/).map((w: string) => w[0]).join('').slice(0, 2) || '?').toUpperCase(),
+    role: S.currentUser?.role === 'admin' ? 'QA Admin' : 'QA Planner',
+    userId: S.currentUser?.username || '',
     stats: [
-      { label: 'APPOINTMENTS PLANNED', value: String(myWeekAppointments), sub: 'this week' },
-      { label: 'OPEN ORDERS', value: String(poolOrders.length), sub: 'awaiting staffing' },
-      { label: 'SITES', value: String(S.plants.length), sub: 'under coverage' },
+      { label: 'APPOINTMENTS', value: String(myWeekAppointments), sub: 'scheduled days this week' },
+      { label: 'INCOMPLETE', value: String(S.assignments.filter((a) => isAppointmentFormIncomplete(a)).length), sub: 'appointment days missing data' },
+      { label: 'SITES', value: String(profileSites.length), sub: 'on the calendar' },
     ],
-    sites: S.plants.map((p) => ({ name: p.name, code: p.code, swatchStyle: sx({ width: '10px', height: '10px', borderRadius: '3px', background: p.color, flexShrink: 0 }) })),
+    sites: profileSites.map((code) => ({ name: code, code: '', swatchStyle: sx({ width: '10px', height: '10px', borderRadius: '3px', background: (S.siteColors && S.siteColors[code]) || '#8a9088', flexShrink: 0 }) })),
     activity: S.activity.slice(0, 5).map((a) => ({ who: a.who, text: a.text, ago: a.ago, dotStyle: sx({ width: '7px', height: '7px', borderRadius: '50%', background: a.color, marginTop: '4px', flexShrink: 0 }) })),
   };
 
@@ -4965,35 +5027,65 @@ export function useScheduler() {
         return fmtDate(base);
       })()
     : '';
-  const dayDialogAssignments = dayDialogOpen
-    ? S.assignments.filter((a) => {
-        if (a.week !== S.dayDialog!.weekOffset || a.day !== S.dayDialog!.day) return false;
-        const o = orderById(a.order);
-        return !!o && matchesFilters(a, o);
-      })
-    : [];
+  const chipsForDay = (weekOffset: number, day: number) => {
+    const list = S.assignments.filter((a) => {
+      if (a.week !== weekOffset || a.day !== day) return false;
+      const o = orderById(a.order);
+      return !!o && matchesFilters(a, o);
+    });
+    list.sort((a, b) => {
+      const aInc = isIncompleteAssignment(a);
+      const bInc = isIncompleteAssignment(b);
+      if (aInc && !bInc) return -1;
+      if (!aInc && bInc) return 1;
+      return 0;
+    });
+    return list.map((a) => {
+      const e = engById(a.eng);
+      if (!e) return null;
+      return {
+        ...apptChipFields(a),
+        onResults: () => openResultsModal(a.id),
+        onEdit: () => { closeDayDialog(); openEdit(a.id); },
+        onDelete: () => removeAssign(a.id),
+      };
+    }).filter(Boolean) as (ReturnType<typeof apptChipFields> & {
+      onResults: () => void;
+      onEdit: () => void;
+      onDelete: () => void;
+    })[];
+  };
+  const dayDialogChips = dayDialogOpen ? chipsForDay(S.dayDialog!.weekOffset, S.dayDialog!.day) : [];
 
-  dayDialogAssignments.sort((a, b) => {
-    const aInc = isIncompleteAssignment(a);
-    const bInc = isIncompleteAssignment(b);
-    if (aInc && !bInc) return -1;
-    if (!aInc && bInc) return 1;
-    return 0;
-  });
-  const dayDialogChips = dayDialogAssignments.map((a) => {
-    const e = engById(a.eng);
-    if (!e) return null;
-    return {
-      ...apptChipFields(a),
-      onResults: () => openResultsModal(a.id),
-      onEdit: () => { closeDayDialog(); openEdit(a.id); },
-      onDelete: () => removeAssign(a.id),
-    };
-  }).filter(Boolean) as (ReturnType<typeof apptChipFields> & {
-    onResults: () => void;
-    onEdit: () => void;
-    onDelete: () => void;
-  })[];
+  // Phone month view: the chosen day's appointments, listed under the grid.
+  const monthAgenda = isMonth && isMobile && agendaSlot
+    ? (() => {
+        const d = slotDate(agendaSlot.weekOffset, agendaSlot.day);
+        const holiday = getHolidayForDate(d);
+        const blocked = agendaSlot.day > 4 || isDateCompletelyBlocked(holiday);
+        return {
+          title: d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }),
+          iso: fmtISO(d),
+          isToday: agendaSlot.weekOffset === todaySlot.weekOffset && agendaSlot.day === todaySlot.day,
+          holiday,
+          isWeekend: agendaSlot.day > 4,
+          canCreate: !blocked,
+          chips: chipsForDay(agendaSlot.weekOffset, agendaSlot.day),
+        };
+      })()
+    : null;
+  /** Phone period bar: back to the current week (today's day selected), month (today's list) or year. */
+  const goToday = () =>
+    setState(
+      S.timeScale === 'week'
+        ? { weekOffset: todayWeekOffset, selectedDay: Math.min(4, todaySlot.day), selected: null }
+        : S.timeScale === 'month'
+        ? { monthOffset: todayMonthOffset, monthSelectedDate: todaySlot }
+        : { monthOffset: todayMonthOffset }
+    );
+  // The week label has no year ("Nov 23 – Nov 27"); the phone bar adds it.
+  const periodYear = S.timeScale === 'week' ? String(new Date(2026, 5, 29 + S.weekOffset * 7).getFullYear()) : '';
+
   const dayDialogInfo = dayDialogOpen
     ? { label: S.dayDialog!.day >= 0 && S.dayDialog!.day < 5 ? dayNames[S.dayDialog!.day] : '', date: dayDialogDate }
     : null;
@@ -5018,7 +5110,8 @@ export function useScheduler() {
 
       const isInternal = isInternalAssignment(a);
       const code = formatApptDisplayTitle(a, orderById(a.order));
-      const creatorName = a.createdBy || profile.name || 'Jordan Lee';
+      // The Worker does not store a creator; show one only when this session recorded it.
+      const creatorName = a.createdBy || '';
 
       // Compute multi-date range across all sibling slots for this appointment
       const siblings = S.assignments.filter((x) => x.order === a.order && x.eng === a.eng);
@@ -5089,7 +5182,7 @@ export function useScheduler() {
     ? { display: 'flex', flexDirection: 'column' }
     : { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 };
   const adminMainStyle = sx({ flex: 1, overflow: 'auto', background: '#eef0ea', minHeight: 0 });
-  const adminWrapStyle = sx({ maxWidth: '1080px', margin: '0 auto', padding: isMobile ? '18px 14px 50px' : '26px 28px 60px', minWidth: isMobile ? '700px' : 'auto' });
+  const adminWrapStyle = sx({ maxWidth: '1080px', margin: '0 auto', padding: isMobile ? '16px 12px 28px' : '26px 28px 60px', minWidth: 0 });
   const adminStatGridStyle = sx({ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '12px', marginBottom: '22px' });
   const loginWrapStyle: CSSProperties = isMobile
     ? { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' }
@@ -5117,6 +5210,10 @@ export function useScheduler() {
     goSchedule, goTable, goAdmin, goProfile, goSummary, goHistory,
     navSchedStyle: S.page === 'schedule' ? tabOn : tabOff, navTableStyle: S.page === 'table' ? tabOn : tabOff, navAdminStyle: S.page === 'admin' ? tabOn : tabOff, navSummaryStyle: S.page === 'summary' ? tabOn : tabOff, navHistoryStyle: S.page === 'history' ? tabOn : tabOff,
     activityLogs: S.activityLogs || [],
+    historyOnServer: Boolean(S.historyOnServer),
+    historyHasMore: Boolean(S.historyHasMore),
+    historyLoadingOlder,
+    loadOlderHistory,
     userMenuOpen: S.userMenuOpen, toggleUserMenu,
     isPerson: S.view === 'person', isPlant: S.view === 'plant', isSiteDept: S.view === 'site',
     isMonth, isYear,
@@ -5167,7 +5264,7 @@ export function useScheduler() {
     weekCalendarDays, weekMergedSpans,
     showTimetable, timetableRows, timetableGridCols, timetableEngName: timetableEng?.name || '',
     closeTimetable, mobileTimetableRows,
-    presence, activity, detail, incompleteAppointments,
+    activity, detail, incompleteAppointments,
     emptyWeek: S.timeScale === 'week' && S.weekOffset !== todayWeekOffset && wk.length === 0, copyWeek,
     toggleSidebar, closeSidebar, showSidebarBackdrop: isMobile && S.sidebarOpen,
     sidebarStyle, toolbarStyle, detailAsideStyle, modalOverlayStyle, modalCardStyle, modalColsStyle, modalColLeftStyle, modalColRightStyle,
@@ -5183,6 +5280,7 @@ export function useScheduler() {
     toggleFilterApptType,
     clearFilters,
     dayDialogOpen, dayDialogDate, dayDialogDateISO, dayDialogChips, dayDialogInfo, closeDayDialog,
+    monthAgenda, goToday, periodYear,
     openCreate, openCreateWithDate, closeCreate, createOpen: S.createOpen, create, stop: (e: React.MouseEvent) => e.stopPropagation(),
     editOpen: S.editOpen, editDraft: S.editDraft, setEditDraft, closeEdit, submitEdit, canEdit, editMissing, editSubmitStyle,
     editScopePrompt: S.editScopePrompt, chooseEditScope, closeEditScopePrompt,

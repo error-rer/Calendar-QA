@@ -36,6 +36,8 @@ export interface SiteAuditResult {
   ofi: number;
   obs: number;
   findings: number;
+  /** Set by Save Results, so an audit with zero findings still counts as having a result. */
+  recorded?: boolean;
 }
 
 
@@ -142,6 +144,7 @@ export function normalizeAuditResults(results?: Record<string, SiteAuditResult>)
         ofi: Number(val.ofi) || 0,
         obs: Number(val.obs) || 0,
         findings: Number(val.findings) || 0,
+        ...(val.recorded ? { recorded: true } : {}),
       };
     } else {
       out[normKey] = {
@@ -150,6 +153,7 @@ export function normalizeAuditResults(results?: Record<string, SiteAuditResult>)
         ofi: out[normKey].ofi + (Number(val.ofi) || 0),
         obs: out[normKey].obs + (Number(val.obs) || 0),
         findings: out[normKey].findings + (Number(val.findings) || 0),
+        ...((out[normKey].recorded || val.recorded) ? { recorded: true } : {}),
       };
     }
   }
@@ -263,16 +267,18 @@ export function isInternalAssignment(a: Assignment | any): boolean {
   if (typeof a.id === 'string' && a.id.startsWith('IA')) return true;
   if (typeof a.order === 'string' && a.order.startsWith('IA')) return true;
 
-  // 3. If explicitly marked customer, override only if it has internal fields and zero customer fields
+  // 3. Decide from the audit's own content. site2/auditor2/department2 are NOT signals: the Worker
+  //    (assignmentOut) and normalizeAssignment fill them as copies of site/auditor/standard on every row.
+  const hasCustomerData = Boolean(a.customer || a.customerName || a.customerNames || a.endCustomer || a.targetPackage);
+  const hasInternalData = Boolean(a.area || a.auditCategory);
+
+  // 4. Explicitly marked customer stays customer unless it holds only internal-audit data
   if (a.sectionType === 'customer' || a.type === 'customer' || auditTypeStr === 'customer' || auditTypeStr === 'customer audit') {
-    if (!a.customer && !a.customerName && !a.customerNames && !a.targetPackage && (a.area || a.department2 || a.site2 || a.auditor2)) {
-      return true;
-    }
-    return false;
+    return !hasCustomerData && hasInternalData;
   }
 
-  // 4. Fallback internal property detection
-  return !!(a.site2 || a.auditor2 || a.department2 || a.area);
+  // 5. No explicit type (rows saved before audit_type existed): internal only when it carries IA data and no CS data
+  return hasInternalData && !hasCustomerData;
 }
 
 export interface StatusColorItem {
@@ -746,61 +752,49 @@ export function getAssignmentDateRange(a: Assignment, allAssignments: Assignment
   return { fromDate, toDate };
 }
 
+/** Every day of the multi-day appointment `a` belongs to (including `a`), matched the same way edit and delete match them. */
+export function getSeriesSiblings<T extends { id: string; eng: string; order: string; seriesId?: string; groupId?: string }>(all: T[], a: T): T[] {
+  const key = a.seriesId || a.groupId || a.order;
+  return all.filter(
+    (x) => (x.seriesId && x.seriesId === key) || (x.groupId && x.groupId === key) || (x.eng === a.eng && x.order === a.order) || x.id === a.id
+  );
+}
+
 /**
- * Helper to check if actual result data exists and is completed.
- * Used for evaluation of audit results across calendar cards and forms.
+ * Whether an audit has a result.
  *
- * Rules:
- * - Check if results object/fields exist and are not empty
- * - If result is an object with finding categories (Major, Minor, OFI, etc.):
- *   Ensure at least one finding count or status field is officially recorded,
- *   or check dedicated completed flag if schema uses `isCompleted` / `status === 'Completed'`.
- * - If results were previously entered but later deleted/cleared (all 0s/empty), returns false.
+ * - Results saved with Save Results carry `recorded: true` per site, so an audit
+ *   with zero findings counts as having a result.
+ * - Any finding count above 0 also counts (older records saved before `recorded` existed).
+ * - Clear Results saves zeros without the flag, which counts as no result.
  */
 export function isAuditResultCompleted(audit?: any): boolean {
   if (!audit) return false;
+  if (audit.status === 'Completed' || Boolean(audit.isCompleted) || Boolean(audit.resultSummary)) return true;
 
-  // Check dedicated completed flags
-  if (audit.status === 'Completed' || Boolean(audit.isCompleted) || Boolean(audit.resultSummary)) {
-    return true;
-  }
+  // Totals kept on the record itself (legacy fields, and the copy saveResults keeps in memory).
+  const total = ['major', 'minor', 'ofi', 'obs'].reduce((sum, k) => sum + (Number(audit[k]) || 0), 0)
+    + (typeof audit.findings === 'object' ? 0 : Number(audit.findings) || 0);
+  if (total > 0) return true;
 
-  // Check legacy top-level finding fields
-  const legacySum =
-    (Number(audit.major) || 0) +
-    (Number(audit.minor) || 0) +
-    (Number(audit.ofi) || 0) +
-    (Number(audit.obs) || 0) +
-    (Number(audit.findings) || 0);
-  if (legacySum > 0) return true;
+  // Per-site results. `findings` is a number on current records, so it is only a results map when it is an object.
+  const candidates = [audit.results, audit.result, audit.auditResult, typeof audit.findings === 'object' ? audit.findings : undefined];
+  const res = candidates.find((v) => v !== undefined && v !== null && v !== '');
+  if (res === undefined) return false;
+  if (typeof res !== 'object') return typeof res === 'string' ? res.trim() !== '' : Boolean(res);
 
-  // Check if results object/fields exist and are not empty
-  if (!audit.result && !audit.findings && !audit.auditResult && !audit.results) {
+  const hasResult = (val: any): boolean => {
+    if (val === null || val === undefined || val === '') return false;
+    if (typeof val === 'boolean') return val;
+    if (typeof val === 'number') return val > 0;
+    if (typeof val === 'string') {
+      const num = Number(val);
+      return !isNaN(num) ? num > 0 : val.trim() !== '';
+    }
+    if (typeof val === 'object') return Object.values(val).some(hasResult);
     return false;
-  }
-
-  const res = audit.result ?? audit.findings ?? audit.auditResult ?? audit.results;
-
-  // If result is an object with finding categories (Major, Minor, OFI, etc.)
-  if (typeof res === 'object' && res !== null) {
-    const hasRecordedFinding = (val: any): boolean => {
-      if (val === null || val === undefined || val === '') return false;
-      if (typeof val === 'number') return val > 0;
-      if (typeof val === 'string') {
-        const num = Number(val);
-        return !isNaN(num) ? num > 0 : val.trim() !== '';
-      }
-      if (typeof val === 'object') {
-        return Object.values(val).some(hasRecordedFinding);
-      }
-      return Boolean(val);
-    };
-
-    const hasFindings = Object.values(res).some(hasRecordedFinding);
-    return hasFindings || audit.status === 'Completed' || Boolean(audit.isCompleted) || Boolean(audit.resultSummary);
-  }
-
-  return Boolean(res);
+  };
+  return Object.values(res).some(hasResult);
 }
 
 export function hasAuditResultsEntered(a?: any): boolean {
@@ -1215,6 +1209,8 @@ export interface ActivityLog {
   entityType: EntityType;
   description: string;
   metadata?: Record<string, any>;
+  /** True once the entry is stored in the shared History on the server (user and time then come from the server). */
+  synced?: boolean;
 }
 
 export type { CustomHolidayType, CustomHoliday, HolidayInfo, HolidayStyle, EffectivePublicHoliday } from './holidays';
@@ -1326,5 +1322,9 @@ export interface State {
   comments: Record<string, Comment[]>;
   activity: Activity[];
   activityLogs: ActivityLog[];
+  /** The server stores History (migration 0021 applied and the user signed in). */
+  historyOnServer?: boolean;
+  /** Older History entries exist on the server beyond those loaded. */
+  historyHasMore?: boolean;
   customHolidays: Record<string, import('./holidays').CustomHoliday>;
 }

@@ -136,6 +136,8 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
         ofi: Number(r.ofi) || 0,
         obs: Number(r.obs) || 0,
         findings: Number(r.findings) || 0,
+        // Saving is what records a result, even when every count is 0.
+        recorded: true,
       };
     }
     vm.saveResults(target.id, cleanResults);
@@ -200,6 +202,7 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
             </div>
           </div>
           <HButton
+            className="tap-square"
             onClick={vm.closeResultsModal}
             style={css('width:28px;height:28px;border:1px solid #e2e5de;background:#fff;border-radius:7px;cursor:pointer;color:#6a706a;font-size:14px;display:flex;align-items:center;justify-content:center')}
             hover={{ background: '#f1f3ee' }}
@@ -466,7 +469,7 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
         <div style={css('padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:9px;border-top:1px solid #eef1ea')}>
           <div>
             {isAuditResultCompleted(target) && (
-              <button
+              <button className="tap"
                 type="button"
                 onClick={handleClear}
                 style={css("background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:8px;padding:9px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
@@ -477,13 +480,14 @@ function AuditResultsDialog({ vm, target }: { vm: VM; target: Assignment }) {
           </div>
           <div style={css('display:flex;align-items:center;gap:9px')}>
             <HButton
+              className="tap"
               onClick={vm.closeResultsModal}
               style={css("background:#f4f6f1;border:1px solid #e0e3dc;color:#3c423d;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
               hover={{ background: '#eaede6' }}
             >
               Cancel
             </HButton>
-            <button
+            <button className="tap"
               onClick={handleSave}
               style={css("background:#15191e;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Archivo',sans-serif")}
             >
